@@ -1,4 +1,4 @@
-# Ember — Requirements
+# Tryst — Requirements
 
 Status: **Draft v0.1** · Last updated from scoping conversation.
 
@@ -57,7 +57,7 @@ with deeply personal data. Inspired by the iOS app *Nice*.
 - **NFR-1 (privacy)** No `INTERNET` permission; no analytics/ads/crash SDKs; `allowBackup=false`.
 - **NFR-2 (security)** Encrypted DB (SQLCipher) + encrypted media; key never stored in plaintext.
   See [SECURITY_DESIGN.md](SECURITY_DESIGN.md).
-- **NFR-3 (platform)** Latest Android (`targetSdk 36`); `minSdk 29`.
+- **NFR-3 (platform)** Latest Android (`targetSdk 36`); `minSdk 31` (Android 12).
 - **NFR-4 (FOSS)** All dependencies open-source-license compatible.
 - **NFR-5 (performance)** Logging an encounter is <3 taps to start; app cold-start unlock is snappy.
 - **NFR-6 (accessibility)** Compose + Material 3 a11y: TalkBack labels, dynamic type, contrast.

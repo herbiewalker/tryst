@@ -1,10 +1,10 @@
-# Ember — Project Context for Claude Code
+# Tryst — Project Context for Claude Code
 
-> **Ember** is a private, local-only, open-source Android app for tracking intimate
+> **Tryst** is a private, local-only, open-source Android app for tracking intimate
 > encounters (inspired by the iOS app *Nice*). Sensitive subject → privacy is the
 > headline feature, not an afterthought.
 
-**"Ember" and package `app.ember` are working names — rename freely; nothing is shipped yet.**
+App name **Tryst**, package **`app.tryst`** (prefix with your own domain/handle later if desired).
 
 ---
 
@@ -43,11 +43,11 @@ for later), social/sharing features. See [docs/REQUIREMENTS.md](docs/REQUIREMENT
 
 ---
 
-## Tech stack (defaults — confirm/override before scaffolding code)
+## Tech stack
 
 - **Language:** Kotlin (JDK 17)
 - **UI:** Jetpack Compose + Material 3
-- **SDK:** `minSdk 29` (Android 10) · `compileSdk`/`targetSdk 36` (Android 16, latest)
+- **SDK:** `minSdk 31` (Android 12) · `compileSdk`/`targetSdk 36` (Android 16, latest)
 - **DB:** Room + **SQLCipher** (encrypted)
 - **Media crypto:** AES-256-GCM streaming (Google Tink) into app-internal storage
 - **Key derivation:** Argon2id (passphrase → key); Android Keystore for biometric convenience unlock

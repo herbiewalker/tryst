@@ -1,4 +1,4 @@
-# Ember — Data Model
+# Tryst — Data Model
 
 Status: **Draft v0.1** — entities and fields; refine when defining the Room schema.
 

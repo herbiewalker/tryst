@@ -1,4 +1,4 @@
-# Ember — Security & Encryption Design
+# Tryst — Security & Encryption Design
 
 Status: **Draft v0.1** — the key model is the one **open decision** (you asked me to write
 up the trade-off; finalize at milestone M2). Everything else is the working design.
@@ -37,6 +37,9 @@ device + its lock; export needs its own independent password anyway.
 **Option A.** It directly satisfies the chosen "device seizure / forensics" threat, and the
 biometric wrapper removes most of the day-to-day friction. We can offer Option B's flow as a
 "convenience-only" toggle for users who accept the weaker guarantee. **Decision deferred to M2.**
+
+> Note: `minSdk 31` gives us modern Keystore behavior (and StrongBox on supporting devices),
+> which strengthens the biometric-gated wrapper in either option.
 
 ---
 
