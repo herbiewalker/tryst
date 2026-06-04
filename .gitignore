@@ -17,6 +17,15 @@ signing.properties
 *.iml
 .DS_Store
 
+# Build artifacts
+*.apk
+*.aab
+*.ap_
+.kotlin/
+
 # Misc
 *.log
 *.hprof
+
+# NOTE: the Gradle wrapper IS committed (gradlew, gradlew.bat,
+# gradle/wrapper/gradle-wrapper.jar) — do not add it here.

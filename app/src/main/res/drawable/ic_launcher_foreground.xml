@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Placeholder mark (a simple flame within the adaptive-icon safe zone). Replace at M8. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,32
+            C58,40 66,44 66,54
+            C66,62 60.6,68 54,68
+            C47.4,68 42,62 42,54
+            C42,49 45,46 47,42
+            C48.5,45.5 51,46 53,44.5
+            C52,40.5 52.5,36 54,32 Z" />
+</vector>
