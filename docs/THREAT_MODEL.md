@@ -1,4 +1,4 @@
-# Ember — Threat Model
+# Tryst — Threat Model
 
 Status: **Draft v0.1**
 

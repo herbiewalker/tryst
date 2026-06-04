@@ -1,12 +1,12 @@
-# Ember — Architecture
+# Tryst — Architecture
 
 Status: **Draft v0.1**
 
-## Stack (defaults — see [CLAUDE.md](../CLAUDE.md))
+## Stack (see [CLAUDE.md](../CLAUDE.md))
 Kotlin (JDK 17) · Jetpack Compose + Material 3 · Room+SQLCipher · Hilt · Coroutines/Flow ·
 Tink (media crypto) · Argon2id (KDF) · AndroidX Biometric · Gradle KTS + version catalog.
 
-`minSdk 29` · `compileSdk`/`targetSdk 36`.
+`minSdk 31` · `compileSdk`/`targetSdk 36`.
 
 ## Pattern
 - **MVVM + Repository**, unidirectional data flow.

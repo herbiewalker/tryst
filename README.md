@@ -1,6 +1,4 @@
-# Ember
-
-> Working name — easy to change.
+# Tryst
 
 A **private, local-only, open-source** Android app for tracking intimate encounters.
 Inspired by the iOS app *Nice*. Built so your most personal data never has to leave your

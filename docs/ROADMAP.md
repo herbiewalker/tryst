@@ -1,4 +1,4 @@
-# Ember — Roadmap / Milestones
+# Tryst — Roadmap / Milestones
 
 Status: **Draft v0.1** — high-level sequencing. Each milestone should end runnable & tested.
 

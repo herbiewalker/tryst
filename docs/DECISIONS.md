@@ -1,4 +1,4 @@
-# Ember — Decision Log
+# Tryst — Decision Log
 
 Lightweight ADR log. Newest at top. "Open" items still need a call.
 
@@ -14,8 +14,10 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
 - **D-5 Entry data:** Rich details + photo attachments.
 - **D-6 Insights:** Stats + charts + achievements/badges (all local).
 - **D-7 Backup:** Manual, user-initiated **encrypted** export/import only.
-- **D-8 Platform/stack (default):** Kotlin, Compose/Material 3, Room+SQLCipher, Hilt,
-  `minSdk 29`/`targetSdk 36`. (Override before M0 if desired.)
+- **D-8 Platform/stack:** Kotlin, Compose/Material 3, Room+SQLCipher, Hilt,
+  **`minSdk 31` (Android 12)** / `targetSdk 36` (Android 16).
+- **D-9 App name & package:** **Tryst** / `app.tryst`. (Prefix with a personal domain/handle
+  later if publishing.)
 
 ## Open
 
@@ -23,6 +25,5 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   Recommendation = A. **Decide at M2.** See [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §1.
 - **O-2 License & distribution:** GPLv3 vs MIT/Apache; F-Droid and/or Play. **Decide at M8.**
   Repo structured to keep options open.
-- **O-3 App name & package:** working name "Ember" / `app.ember` — confirm or rename.
-- **O-4 Charts library:** Vico vs alternatives — decide at M6.
-- **O-5 Multi-partner per encounter in UI:** data model supports M:N; confirm v1 UI scope.
+- **O-3 Charts library:** Vico vs alternatives — decide at M6.
+- **O-4 Multi-partner per encounter in UI:** data model supports M:N; confirm v1 UI scope.
