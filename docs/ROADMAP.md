@@ -2,10 +2,14 @@
 
 Status: **Draft v0.1** — high-level sequencing. Each milestone should end runnable & tested.
 
-## M0 — Project scaffold
-- Android project: Gradle KTS, version catalog, Compose, Hilt, base theme.
-- CI skeleton + the **anti-leak guard** (no `INTERNET`, no banned SDKs) wired early.
-- `allowBackup=false`, `FLAG_SECURE` baseline.
+## M0 — Project scaffold  ⏳ in progress
+- [x] Android project: Gradle KTS, version catalog, Compose, Hilt, base theme.
+- [x] CI skeleton + the **anti-leak guard** (no network permission, no banned SDKs), enforced
+      both in-build (`checkNoNetwork*` Gradle task) and in CI.
+- [x] `allowBackup=false`, `FLAG_SECURE`, data-extraction exclusions baseline.
+- [x] Placeholder launcher icon + sample unit/instrumented tests.
+- [ ] **Verify the build** in Android Studio (blocked on local toolchain install — see
+      [SETUP_WINDOWS.md](SETUP_WINDOWS.md)); commit the generated Gradle wrapper.
 
 ## M1 — Encrypted storage foundation
 - Room + SQLCipher wired with an injectable key.

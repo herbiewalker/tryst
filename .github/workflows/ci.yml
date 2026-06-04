@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Fast pre-build guard: no network permission declared in source manifests.
+      - name: Anti-leak guard (source manifests)
+        run: |
+          if grep -rn -E "android.permission.(INTERNET|ACCESS_NETWORK_STATE|ACCESS_WIFI_STATE)" app/src; then
+            echo "::error::Network permission found in source manifests — Tryst must have no network access."
+            exit 1
+          fi
+          echo "OK: no network permission in source manifests."
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Build + unit tests + lint. `check` also runs the in-build merged-manifest guard
+      # (checkNoNetworkDebug/Release) defined in app/build.gradle.kts.
+      - name: Build, test, lint
+        run: ./gradlew assembleDebug testDebugUnitTest lint checkNoNetworkDebug --stacktrace
+
+      # Belt-and-suspenders: scan the resolved dependency tree for banned SDKs.
+      - name: Banned-SDK dependency guard
+        run: |
+          ./gradlew :app:dependencies --configuration debugRuntimeClasspath > deps.txt
+          if grep -E -i "firebase|crashlytics|com\.google\.android\.gms|facebook|appsflyer|adjust|io\.segment|amplitude|mixpanel|bugsnag|sentry" deps.txt; then
+            echo "::error::Banned analytics/ads/tracking SDK found in dependency tree."
+            exit 1
+          fi
+          echo "OK: no banned SDKs in dependency tree."
