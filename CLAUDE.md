@@ -1,0 +1,81 @@
+# Ember — Project Context for Claude Code
+
+> **Ember** is a private, local-only, open-source Android app for tracking intimate
+> encounters (inspired by the iOS app *Nice*). Sensitive subject → privacy is the
+> headline feature, not an afterthought.
+
+**"Ember" and package `app.ember` are working names — rename freely; nothing is shipped yet.**
+
+---
+
+## Hard constraints (these OVERRIDE default behavior — do not violate)
+
+1. **No network. Ever.** The app declares **no `android.permission.INTERNET`** in the
+   manifest. If a feature seems to need the network, it is out of scope — flag it,
+   do not add the permission. This is the single strongest "data cannot leak" guarantee.
+2. **No third-party telemetry/ads/crash SDKs.** No Firebase, Crashlytics, Google
+   Analytics, ad networks, attribution SDKs. Crash handling, if any, is fully local.
+3. **Encrypted at rest.** All persistent user data lives in an encrypted SQLCipher DB;
+   photo/media blobs are stored encrypted in app-internal storage (never MediaStore /
+   shared storage / system gallery).
+4. **No plaintext sensitive data in logs.** No PII, entry contents, or partner names in
+   logcat. Logging is stripped/neutered in release builds.
+5. **`android:allowBackup="false"`** and excluded from cloud auto-backup. The only backup
+   path is the app's own **manual encrypted export**.
+6. **`FLAG_SECURE`** on all windows: blocks screenshots and redacts the app-switcher preview.
+7. **Open source.** Keep dependencies FOSS-compatible; no proprietary blobs.
+
+If a request conflicts with the above, say so and propose an alternative — don't quietly comply.
+
+---
+
+## What the app does (v1 scope)
+
+- **Solo user, multiple partners.** No accounts, no login, no sync, no second device.
+  Partners can be named or anonymous; per-partner stats supported.
+- **Rich encounter logging** + optional **photo attachments** (encrypted).
+- **Insights:** stats, charts, streaks/trends, and **achievements/badges**.
+- **App lock:** biometric / PIN, auto-lock on background.
+- **Manual encrypted export/import** for migrating to a new phone.
+
+Out of scope for v1: cross-device sync, cloud anything, disguise/decoy mode (hook left
+for later), social/sharing features. See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).
+
+---
+
+## Tech stack (defaults — confirm/override before scaffolding code)
+
+- **Language:** Kotlin (JDK 17)
+- **UI:** Jetpack Compose + Material 3
+- **SDK:** `minSdk 29` (Android 10) · `compileSdk`/`targetSdk 36` (Android 16, latest)
+- **DB:** Room + **SQLCipher** (encrypted)
+- **Media crypto:** AES-256-GCM streaming (Google Tink) into app-internal storage
+- **Key derivation:** Argon2id (passphrase → key); Android Keystore for biometric convenience unlock
+- **DI:** Hilt · **Async:** Coroutines + Flow
+- **Charts:** Vico (Compose) — candidate, TBD
+- **Build:** Gradle Kotlin DSL + version catalog (`gradle/libs.versions.toml`)
+- **Test:** JUnit, Turbine, Robolectric, Compose UI tests, Room migration tests
+
+## Architecture
+
+MVVM + repository pattern, unidirectional data flow. Package-by-feature. Start as a single
+`:app` module; split into `:core`, `:data`, `:feature-*` if/when it pays off. Details in
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Build & run commands
+
+> Android project not scaffolded yet. Once it is:
+> - Build debug: `./gradlew assembleDebug`
+> - Unit tests: `./gradlew test`
+> - Instrumented tests: `./gradlew connectedAndroidTest`
+> - Lint: `./gradlew lint`
+
+## Key documents
+
+- [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) — functional + non-functional requirements
+- [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md) — adversaries, mitigations, residual risk
+- [docs/SECURITY_DESIGN.md](docs/SECURITY_DESIGN.md) — encryption & key-management design
+- [docs/DATA_MODEL.md](docs/DATA_MODEL.md) — entities & fields
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — stack & module layout
+- [docs/ROADMAP.md](docs/ROADMAP.md) — milestones
+- [docs/DECISIONS.md](docs/DECISIONS.md) — decision log + open questions
