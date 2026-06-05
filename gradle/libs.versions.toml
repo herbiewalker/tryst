@@ -4,9 +4,9 @@
 # at M0. Keep AGP/Kotlin/KSP versions mutually compatible when bumping.
 
 [versions]
-agp = "8.9.1"
-kotlin = "2.1.0"
-ksp = "2.1.0-1.0.29"
+agp = "9.2.1"
+kotlin = "2.2.10"
+ksp = "2.3.2"
 hilt = "2.54"
 coreKtx = "1.15.0"
 lifecycle = "2.8.7"
