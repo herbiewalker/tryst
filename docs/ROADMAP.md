@@ -24,10 +24,23 @@ Status: **Draft v0.1** — high-level sequencing. Each milestone should end runn
       (no "SQLite format 3" header, no plaintext values); media crypto round-trips & rejects
       wrong associated data. Room bumped 2.6.1 → 2.7.1 for KSP2/Kotlin 2.2 compatibility.
 
-## M2 — Security & app lock  ← finalize the key model here
-- Decide Option A vs B ([SECURITY_DESIGN.md](SECURITY_DESIGN.md) §1).
-- First-run setup (passphrase + biometric), Argon2id KDF, Keystore wrapping.
-- App lock, auto-lock, key lifecycle/zeroization.
+## M2 — Security & app lock
+Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). See
+[SECURITY_DESIGN.md](SECURITY_DESIGN.md) §1.
+
+### M2a — Key vault core  ✅ done (verified on emulator)
+- [x] Keystore KEK (StrongBox when available, TEE fallback) + PIN-derived layer (PBKDF2);
+      double-wrapped DEK.
+- [x] Vault: `setup(pin)`, `unlock(pin)→DEK`, `changePin`, `isInitialized`, failed-attempt
+      lockout + self-wipe.
+- [x] Instrumented tests pass (real Keystore on emulator): setup/unlock returns same DEK,
+      wrong-PIN countdown, persistence across instances, changePin, lockout-wipe after 10 fails.
+
+### M2b — Biometric, UI & session
+- [ ] Biometric unlock (second auth-gated Keystore key wrapping the DEK).
+- [ ] First-run PIN setup screen + lock screen; gate the nav graph.
+- [ ] Wire the vault DEK into the DB session (DB built post-unlock); replace `InsecureDevKeyProvider`.
+- [ ] Auto-lock (configurable, default immediate); clear DEK on lock/background.
 
 ## M3 — Core logging
 - Add/edit/delete encounters with rich fields.
