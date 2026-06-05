@@ -12,10 +12,17 @@ Status: **Draft v0.1** — high-level sequencing. Each milestone should end runn
       `assembleDebug` succeeds, anti-leak guard passes, unit test passes, app installs & runs
       on emulator. Gradle wrapper committed.
 
-## M1 — Encrypted storage foundation
-- Room + SQLCipher wired with an injectable key.
-- Media crypto module (Tink AES-GCM) + encrypted file store.
-- Core entities (Encounter, Partner, etc.) and migrations.
+## M1 — Encrypted storage foundation  ✅ done (verified on emulator)
+- [x] Room + SQLCipher wired via an injectable key behind `DatabaseKeyProvider`
+      (M1 placeholder = `InsecureDevKeyProvider`; real key is M2). Native lib loaded once
+      via `SqlCipherLibrary.ensureLoaded()`.
+- [x] Media crypto module (Tink AES-256-GCM-HKDF streaming) + `EncryptedMediaStore`
+      (encrypted blobs in app-internal storage, never MediaStore).
+- [x] Core entities + cross-refs (Encounter, Partner, Location, Tag, Position, Media) with
+      converters; schema v1 exported to `app/schemas/`. Repositories for Encounter & Partner.
+- [x] Instrumented tests pass: relations round-trip; **DB file on disk is verified encrypted**
+      (no "SQLite format 3" header, no plaintext values); media crypto round-trips & rejects
+      wrong associated data. Room bumped 2.6.1 → 2.7.1 for KSP2/Kotlin 2.2 compatibility.
 
 ## M2 — Security & app lock  ← finalize the key model here
 - Decide Option A vs B ([SECURITY_DESIGN.md](SECURITY_DESIGN.md) §1).
