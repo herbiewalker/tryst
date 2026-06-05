@@ -21,15 +21,25 @@ data class EncounterEntity(
     @PrimaryKey val id: String,
     /** Epoch millis of when the encounter started. */
     val startAt: Long,
-    val durationMin: Int?,
-    val note: String?,
+    val durationMin: Int? = null,
+    val note: String? = null,
     /** e.g. 1..5; null if unrated. */
-    val satisfactionRating: Int?,
-    val orgasm: Orgasm?,
-    val mood: Mood?,
-    val initiator: Initiator?,
-    val protectionUsed: Set<Protection>,
-    val locationId: String?,
+    val satisfactionRating: Int? = null,
+    /** Legacy (M3) — superseded by [orgasmCountSelf]/[orgasmCountPartner]; kept for migration. */
+    val orgasm: Orgasm? = null,
+    val mood: Mood? = null,
+    val initiator: Initiator? = null,
+    val protectionUsed: Set<Protection> = emptySet(),
+    // --- added in schema v2 ---
+    /** Number of orgasms the user had this session. */
+    val orgasmCountSelf: Int? = null,
+    /** Number of orgasms the partner(s) had this session. */
+    val orgasmCountPartner: Int? = null,
+    val ejaculationLocations: Set<EjaculationLocation>? = null,
+    val practicesPerformed: Set<Practice>? = null,
+    val practicesReceived: Set<Practice>? = null,
+    // ---------------------------
+    val locationId: String? = null,
     val createdAt: Long,
     val updatedAt: Long,
 )
