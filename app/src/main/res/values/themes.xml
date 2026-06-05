@@ -1,7 +1,8 @@
 <resources>
-    <!-- Pre-Compose window theme. Compose (Material 3) drives the actual UI colors;
-         edge-to-edge handles the system bars in MainActivity. -->
-    <style name="Theme.Tryst" parent="android:Theme.DeviceDefault.DayNight.NoActionBar">
+    <!-- Pre-Compose window theme (light). Compose (Material 3) drives the actual UI colors;
+         edge-to-edge handles the system bars in MainActivity. A values-night/ variant
+         provides the dark equivalent. -->
+    <style name="Theme.Tryst" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
     </style>
