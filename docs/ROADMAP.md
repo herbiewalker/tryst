@@ -36,11 +36,16 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 - [x] Instrumented tests pass (real Keystore on emulator): setup/unlock returns same DEK,
       wrong-PIN countdown, persistence across instances, changePin, lockout-wipe after 10 fails.
 
-### M2b — Biometric, UI & session
-- [ ] Biometric unlock (second auth-gated Keystore key wrapping the DEK).
-- [ ] First-run PIN setup screen + lock screen; gate the nav graph.
-- [ ] Wire the vault DEK into the DB session (DB built post-unlock); replace `InsecureDevKeyProvider`.
-- [ ] Auto-lock (configurable, default immediate); clear DEK on lock/background.
+### M2b — Biometric, UI & session  ⏳ in progress (PIN flow done; biometric next)
+- [x] First-run PIN **setup screen** + **lock screen** (PinPad), driven by `LockViewModel`;
+      `MainActivity` renders by `LockState` (NeedsSetup / Locked / Unlocked).
+- [x] **Session lifecycle**: `SessionManager` builds the SQLCipher DB *after* unlock from the
+      vault DEK and closes it on lock; `InsecureDevKeyProvider` and the eager DB module removed.
+      Repositories + media store now read from the session.
+- [x] **Auto-lock** on background (ProcessLifecycle ON_STOP → `lock()`), clearing the DEK.
+- [x] Instrumented `SessionManagerTest`: setup→unlock→lock, persistence across restart, wrong-PIN.
+- [ ] Biometric unlock (second auth-gated Keystore key wrapping the DEK), with PIN fallback.
+- [ ] Configurable auto-lock timeout (a settings toggle; default immediate already in place).
 
 ## M3 — Core logging
 - Add/edit/delete encounters with rich fields.
