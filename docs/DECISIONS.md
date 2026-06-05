@@ -33,6 +33,14 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
 - **D-14 Auto-lock:** lock on background by default (immediate); timeout is user-configurable.
 - **D-15 PIN KDF:** PBKDF2-HMAC-SHA256 (high iteration count) for M2a to avoid a native-lib
   dependency on the new AGP 9 toolchain; abstracted so it can be upgraded to Argon2id later.
+- **D-16 (M3+) Expanded encounter fields (schema v2):** per-person **orgasm counts**
+  (self/partner, replacing the single who-finished enum — the legacy `orgasm` column is kept,
+  unused, for migration safety), **ejaculation locations** (multi), and **practices
+  performed/received** (two multi-selects over a `Practice` enum). Expanded `Mood` and
+  `Protection` option sets. Delivered via the project's **first Room migration** (v1→v2,
+  additive nullable columns), validated by an instrumented `MigrationTest` against the exported
+  schemas. New set columns are nullable to keep the migration default-free (avoids Room's
+  NOT-NULL-default schema-validation mismatch).
 
 ## Open
 

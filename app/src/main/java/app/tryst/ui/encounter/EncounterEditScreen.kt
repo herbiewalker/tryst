@@ -31,14 +31,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
-import app.tryst.data.db.entity.Orgasm
+import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.entity.Protection
 import app.tryst.ui.common.Format
 import app.tryst.ui.common.MultiSelectChips
@@ -136,12 +138,38 @@ fun EncounterEditScreen(
                 )
             }
 
-            Field("Orgasm") {
-                SingleSelectChips(
-                    options = Orgasm.entries,
-                    selected = viewModel.orgasm,
+            Field("Orgasms — you") {
+                Stepper(value = viewModel.orgasmCountSelf, onChange = { viewModel.orgasmCountSelf = it })
+            }
+
+            Field("Orgasms — partner") {
+                Stepper(value = viewModel.orgasmCountPartner, onChange = { viewModel.orgasmCountPartner = it })
+            }
+
+            Field("Ejaculation") {
+                MultiSelectChips(
+                    options = EjaculationLocation.entries,
+                    selected = viewModel.ejaculationLocations,
                     label = { Format.enumLabel(it) },
-                    onSelect = { viewModel.orgasm = it },
+                    onToggle = { viewModel.toggleEjaculation(it) },
+                )
+            }
+
+            Field("Practices — performed (gave)") {
+                MultiSelectChips(
+                    options = Practice.entries,
+                    selected = viewModel.practicesPerformed,
+                    label = { Format.enumLabel(it) },
+                    onToggle = { viewModel.togglePerformed(it) },
+                )
+            }
+
+            Field("Practices — received (got)") {
+                MultiSelectChips(
+                    options = Practice.entries,
+                    selected = viewModel.practicesReceived,
+                    label = { Format.enumLabel(it) },
+                    onToggle = { viewModel.toggleReceived(it) },
                 )
             }
 
@@ -235,6 +263,22 @@ private fun Field(label: String, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(label, style = MaterialTheme.typography.labelLarge)
         content()
+    }
+}
+
+@Composable
+private fun Stepper(value: Int, onChange: (Int) -> Unit, min: Int = 0, max: Int = 20) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        OutlinedButton(onClick = { if (value > min) onChange(value - 1) }, enabled = value > min) {
+            Text("−")
+        }
+        Text("$value", style = MaterialTheme.typography.titleLarge)
+        OutlinedButton(onClick = { if (value < max) onChange(value + 1) }, enabled = value < max) {
+            Text("+")
+        }
     }
 }
 

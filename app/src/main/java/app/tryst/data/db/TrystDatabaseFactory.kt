@@ -21,6 +21,7 @@ class TrystDatabaseFactory @Inject constructor(
         val factory = SupportOpenHelperFactory(databaseKey, null, true)
         return Room.databaseBuilder(context, TrystDatabase::class.java, TrystDatabase.NAME)
             .openHelperFactory(factory)
+            .addMigrations(*ALL_MIGRATIONS)
             .build()
     }
 
