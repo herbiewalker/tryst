@@ -3,6 +3,7 @@ package app.tryst.core.session
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.tryst.core.security.BiometricVault
 import app.tryst.core.security.Vault
 import app.tryst.core.security.WrongPinException
 import app.tryst.data.db.TrystDatabase
@@ -22,17 +23,20 @@ class SessionManagerTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val pin = "246810"
 
-    private fun newManager() = SessionManager(Vault(context), TrystDatabaseFactory(context))
+    private fun newManager() =
+        SessionManager(Vault(context), TrystDatabaseFactory(context), BiometricVault(context))
 
     @Before
     fun setUp() {
         Vault(context).wipe()
+        BiometricVault(context).disable()
         context.deleteDatabase(TrystDatabase.NAME)
     }
 
     @After
     fun tearDown() {
         Vault(context).wipe()
+        BiometricVault(context).disable()
         context.deleteDatabase(TrystDatabase.NAME)
     }
 
