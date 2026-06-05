@@ -11,9 +11,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,10 +34,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.data.db.relation.EncounterWithDetails
 import app.tryst.ui.common.Format
+import app.tryst.ui.common.PracticeVisuals
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,10 +104,20 @@ private fun EncounterCard(item: EncounterWithDetails, onClick: () -> Unit) {
                 modifier = Modifier.padding(start = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
-                Text(
-                    text = if (item.partners.isEmpty()) "Solo" else item.partners.joinToString(", ") { Format.partnerName(it) },
-                    style = MaterialTheme.typography.titleMedium,
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    PracticeBadge(
+                        PracticeVisuals.emoji(
+                            PracticeVisuals.primaryPractice(e.practicesPerformed, e.practicesReceived),
+                        ),
+                    )
+                    Text(
+                        text = if (item.partners.isEmpty()) "Solo" else item.partners.joinToString(", ") { Format.partnerName(it) },
+                        style = MaterialTheme.typography.titleMedium,
+                    )
+                }
                 Text(
                     text = Format.time(e.startAt),
                     style = MaterialTheme.typography.bodySmall,
@@ -151,6 +165,19 @@ private fun DateBadge(epochMillis: Long) {
         ) {
             Text(Format.dayOfMonth(epochMillis), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text(Format.monthShort(epochMillis), style = MaterialTheme.typography.labelSmall)
+        }
+    }
+}
+
+@Composable
+private fun PracticeBadge(emoji: String) {
+    Surface(
+        color = MaterialTheme.colorScheme.primaryContainer,
+        shape = CircleShape,
+        modifier = Modifier.size(32.dp),
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(emoji, fontSize = 16.sp)
         }
     }
 }
