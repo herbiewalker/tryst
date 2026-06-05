@@ -5,11 +5,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
-import app.tryst.data.db.entity.Orgasm
 import app.tryst.data.db.entity.PartnerEntity
+import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.PartnerRepository
@@ -37,9 +38,13 @@ class EncounterEditViewModel @Inject constructor(
     var durationText by mutableStateOf("")
     var rating by mutableStateOf<Int?>(null)
     var mood by mutableStateOf<Mood?>(null)
-    var orgasm by mutableStateOf<Orgasm?>(null)
     var initiator by mutableStateOf<Initiator?>(null)
     var protection by mutableStateOf<Set<Protection>>(emptySet())
+    var orgasmCountSelf by mutableStateOf(0)
+    var orgasmCountPartner by mutableStateOf(0)
+    var ejaculationLocations by mutableStateOf<Set<EjaculationLocation>>(emptySet())
+    var practicesPerformed by mutableStateOf<Set<Practice>>(emptySet())
+    var practicesReceived by mutableStateOf<Set<Practice>>(emptySet())
     var note by mutableStateOf("")
     var selectedPartnerIds by mutableStateOf<Set<String>>(emptySet())
 
@@ -61,9 +66,13 @@ class EncounterEditViewModel @Inject constructor(
             durationText = e.durationMin?.toString() ?: ""
             rating = e.satisfactionRating
             mood = e.mood
-            orgasm = e.orgasm
             initiator = e.initiator
             protection = e.protectionUsed
+            orgasmCountSelf = e.orgasmCountSelf ?: 0
+            orgasmCountPartner = e.orgasmCountPartner ?: 0
+            ejaculationLocations = e.ejaculationLocations ?: emptySet()
+            practicesPerformed = e.practicesPerformed ?: emptySet()
+            practicesReceived = e.practicesReceived ?: emptySet()
             note = e.note ?: ""
             selectedPartnerIds = details.partners.map { it.id }.toSet()
         }
@@ -77,6 +86,21 @@ class EncounterEditViewModel @Inject constructor(
         protection = if (value in protection) protection - value else protection + value
     }
 
+    fun toggleEjaculation(value: EjaculationLocation) {
+        ejaculationLocations =
+            if (value in ejaculationLocations) ejaculationLocations - value else ejaculationLocations + value
+    }
+
+    fun togglePerformed(value: Practice) {
+        practicesPerformed =
+            if (value in practicesPerformed) practicesPerformed - value else practicesPerformed + value
+    }
+
+    fun toggleReceived(value: Practice) {
+        practicesReceived =
+            if (value in practicesReceived) practicesReceived - value else practicesReceived + value
+    }
+
     fun save(onDone: () -> Unit) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
@@ -87,10 +111,15 @@ class EncounterEditViewModel @Inject constructor(
                 durationMin = durationText.toIntOrNull(),
                 note = note.ifBlank { null },
                 satisfactionRating = rating,
-                orgasm = orgasm,
+                orgasm = null,
                 mood = mood,
                 initiator = initiator,
                 protectionUsed = protection,
+                orgasmCountSelf = orgasmCountSelf,
+                orgasmCountPartner = orgasmCountPartner,
+                ejaculationLocations = ejaculationLocations,
+                practicesPerformed = practicesPerformed,
+                practicesReceived = practicesReceived,
                 locationId = null,
                 createdAt = if (isEditing) createdAt else now,
                 updatedAt = now,
