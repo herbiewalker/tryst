@@ -30,7 +30,7 @@ private object Routes {
 private data class TopDestination(val route: String, val icon: String, val label: String)
 
 private val topDestinations = listOf(
-    TopDestination(Routes.HISTORY, "📖", "History"),
+    TopDestination(Routes.HISTORY, "📖", "Trysts"),
     TopDestination(Routes.PARTNERS, "👤", "Partners"),
     TopDestination(Routes.SETTINGS, "⚙️", "Settings"),
 )
