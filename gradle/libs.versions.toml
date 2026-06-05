@@ -17,9 +17,10 @@ androidxJunit = "1.2.1"
 espresso = "3.6.1"
 
 # --- Reserved for later milestones (M1+); declared but not yet wired into :app ---
-room = "2.6.1"
+room = "2.7.1"
 sqlcipher = "4.6.1"
 tink = "1.15.0"
+coroutines = "1.9.0"
 navigationCompose = "2.8.5"
 hiltNavigationCompose = "1.2.0"
 
@@ -47,6 +48,8 @@ room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 sqlcipher = { group = "net.zetetic", name = "sqlcipher-android", version.ref = "sqlcipher" }
 tink-android = { group = "com.google.crypto.tink", name = "tink-android", version.ref = "tink" }
+coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
 

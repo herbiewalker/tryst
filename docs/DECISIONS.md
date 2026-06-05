@@ -18,6 +18,11 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   **`minSdk 31` (Android 12)** / `targetSdk 36` (Android 16).
 - **D-9 App name & package:** **Tryst** / `app.tryst`. (Prefix with a personal domain/handle
   later if publishing.)
+- **D-10 (M1) Key behind an interface:** all data-at-rest keys come from `DatabaseKeyProvider`.
+  M1 binds a clearly-labeled `InsecureDevKeyProvider` placeholder so the storage layer can be
+  built/tested; the real implementation (O-1) swaps only that one Hilt binding at M2.
+- **D-11 (M1) Media encryption:** Tink `AesGcmHkdfStreaming` (AES-256-GCM-HKDF, streaming),
+  built directly from key material — no Tink keyset/Keystore management until M2.
 
 ## Open
 
