@@ -24,7 +24,7 @@ class SessionManagerTest {
     private val pin = "246810"
 
     private fun newManager() =
-        SessionManager(Vault(context), TrystDatabaseFactory(context), BiometricVault(context))
+        SessionManager(context, Vault(context), TrystDatabaseFactory(context), BiometricVault(context))
 
     @Before
     fun setUp() {

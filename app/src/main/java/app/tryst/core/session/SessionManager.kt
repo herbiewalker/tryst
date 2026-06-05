@@ -1,12 +1,15 @@
 package app.tryst.core.session
 
+import android.content.Context
 import app.tryst.core.security.BiometricVault
 import app.tryst.core.security.SessionKeys
 import app.tryst.core.security.Vault
 import app.tryst.core.security.VaultWipedException
 import app.tryst.data.db.TrystDatabase
 import app.tryst.data.db.TrystDatabaseFactory
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import java.io.File
 import javax.crypto.Cipher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +25,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class SessionManager @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val vault: Vault,
     private val databaseFactory: TrystDatabaseFactory,
     private val biometricVault: BiometricVault,
@@ -79,6 +83,20 @@ class SessionManager @Inject constructor(
     }
 
     fun disableBiometric() = biometricVault.disable()
+
+    /** Irreversibly destroy ALL app data: keys, database, and encrypted media. Returns to setup. */
+    @Synchronized
+    fun deleteAllData() {
+        db?.close()
+        db = null
+        dek?.fill(0)
+        dek = null
+        databaseFactory.deleteDatabase()
+        biometricVault.disable()
+        vault.wipe()
+        File(context.filesDir, "media").deleteRecursively()
+        _state.value = LockState.NeedsSetup
+    }
 
     /** Unlock using a BiometricPrompt-authenticated decrypt cipher. */
     suspend fun unlockWithBiometric(authenticatedCipher: Cipher) = withContext(Dispatchers.IO) {
