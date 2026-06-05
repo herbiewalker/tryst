@@ -1,11 +1,13 @@
 package app.tryst.core.session
 
+import app.tryst.core.security.BiometricVault
 import app.tryst.core.security.SessionKeys
 import app.tryst.core.security.Vault
 import app.tryst.core.security.VaultWipedException
 import app.tryst.data.db.TrystDatabase
 import app.tryst.data.db.TrystDatabaseFactory
 import kotlinx.coroutines.Dispatchers
+import javax.crypto.Cipher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +24,7 @@ import javax.inject.Singleton
 class SessionManager @Inject constructor(
     private val vault: Vault,
     private val databaseFactory: TrystDatabaseFactory,
+    private val biometricVault: BiometricVault,
 ) {
     private val _state = MutableStateFlow(initialState())
     val state: StateFlow<LockState> = _state.asStateFlow()
@@ -39,8 +42,9 @@ class SessionManager @Inject constructor(
 
     /** First-run: create the vault with [pin] and open a session. */
     suspend fun setupPin(pin: String) = withContext(Dispatchers.IO) {
-        // Remove any stale DB left by a previously wiped vault (its key is gone).
+        // Remove any stale DB / biometric blob left by a previously wiped vault.
         databaseFactory.deleteDatabase()
+        biometricVault.disable()
         openSession(vault.setup(pin))
     }
 
@@ -49,10 +53,36 @@ class SessionManager @Inject constructor(
         val unlocked = try {
             vault.unlock(pin)
         } catch (e: VaultWipedException) {
+            biometricVault.disable() // the wrapped DEK is gone; biometric is now meaningless
             _state.value = LockState.NeedsSetup
             throw e
         }
         openSession(unlocked)
+    }
+
+    // --- Biometric unlock (see BiometricVault) -----------------------------------------
+
+    fun isBiometricEnabled(): Boolean = biometricVault.isEnabled()
+
+    fun canUseBiometrics(): Boolean = biometricVault.canUseBiometrics()
+
+    /** Cipher to feed BiometricPrompt when enabling biometric unlock. */
+    fun biometricEncryptCipher(): Cipher = biometricVault.encryptCipher()
+
+    /** Cipher to feed BiometricPrompt when unlocking with biometrics. */
+    fun biometricDecryptCipher(): Cipher = biometricVault.decryptCipher()
+
+    /** Enable biometric unlock for the current (unlocked) session. */
+    fun enableBiometric(authenticatedCipher: Cipher) {
+        val currentDek = dek ?: throw IllegalStateException("Cannot enable biometric while locked")
+        biometricVault.store(currentDek, authenticatedCipher)
+    }
+
+    fun disableBiometric() = biometricVault.disable()
+
+    /** Unlock using a BiometricPrompt-authenticated decrypt cipher. */
+    suspend fun unlockWithBiometric(authenticatedCipher: Cipher) = withContext(Dispatchers.IO) {
+        openSession(biometricVault.recover(authenticatedCipher))
     }
 
     /** Clear all in-memory secrets and lock the app. */

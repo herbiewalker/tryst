@@ -36,16 +36,20 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 - [x] Instrumented tests pass (real Keystore on emulator): setup/unlock returns same DEK,
       wrong-PIN countdown, persistence across instances, changePin, lockout-wipe after 10 fails.
 
-### M2b — Biometric, UI & session  ⏳ in progress (PIN flow done; biometric next)
+### M2b — Biometric, UI & session  ✅ done (PIN/session verified; biometric pending manual test)
 - [x] First-run PIN **setup screen** + **lock screen** (PinPad), driven by `LockViewModel`;
-      `MainActivity` renders by `LockState` (NeedsSetup / Locked / Unlocked).
+      `MainActivity` (now a `FragmentActivity`) renders by `LockState`.
 - [x] **Session lifecycle**: `SessionManager` builds the SQLCipher DB *after* unlock from the
       vault DEK and closes it on lock; `InsecureDevKeyProvider` and the eager DB module removed.
       Repositories + media store now read from the session.
 - [x] **Auto-lock** on background (ProcessLifecycle ON_STOP → `lock()`), clearing the DEK.
+- [x] **Biometric unlock** (`BiometricVault`: a separate auth-gated Keystore key wraps the DEK;
+      `BiometricPrompt` CryptoObject flow), enable/disable from Home, PIN always a fallback.
+      Builds & graceful when unavailable; **needs manual test with an enrolled fingerprint**.
 - [x] Instrumented `SessionManagerTest`: setup→unlock→lock, persistence across restart, wrong-PIN.
-- [ ] Biometric unlock (second auth-gated Keystore key wrapping the DEK), with PIN fallback.
-- [ ] Configurable auto-lock timeout (a settings toggle; default immediate already in place).
+
+> Deferred (minor): a user-configurable auto-lock *timeout* (settings UI, with M3) — the
+> default (immediate on background) is already active. Tracked as a small enhancement.
 
 ## M3 — Core logging
 - Add/edit/delete encounters with rich fields.

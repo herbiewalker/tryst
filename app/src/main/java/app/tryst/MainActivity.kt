@@ -2,7 +2,6 @@ package app.tryst
 
 import android.os.Bundle
 import android.view.WindowManager
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
@@ -13,24 +12,33 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import app.tryst.core.session.LockState
+import app.tryst.ui.lock.BiometricPromptHelper
 import app.tryst.ui.lock.LockScreen
 import app.tryst.ui.lock.LockViewModel
 import app.tryst.ui.lock.SetupScreen
+import app.tryst.ui.lock.findFragmentActivity
 import app.tryst.ui.theme.TrystTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -53,7 +61,7 @@ class MainActivity : ComponentActivity() {
                     when (state) {
                         LockState.NeedsSetup -> SetupScreen(viewModel)
                         LockState.Locked -> LockScreen(viewModel)
-                        LockState.Unlocked -> HomeScreen(onLock = viewModel::lock)
+                        LockState.Unlocked -> HomeScreen(viewModel)
                     }
                 }
             }
@@ -62,7 +70,12 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun HomeScreen(onLock: () -> Unit) {
+private fun HomeScreen(viewModel: LockViewModel) {
+    val context = LocalContext.current
+    val activity = remember(context) { context.findFragmentActivity() }
+    val biometricAvailable = remember { viewModel.canUseBiometrics() }
+    var biometricEnabled by remember { mutableStateOf(viewModel.isBiometricEnabled()) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -77,7 +90,54 @@ private fun HomeScreen(onLock: () -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+
         Spacer(Modifier.height(24.dp))
-        Button(onClick = onLock) { Text("Lock now") }
+        when {
+            !biometricAvailable -> Text(
+                "Biometric unlock isn't available on this device.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            biometricEnabled -> OutlinedButton(
+                onClick = {
+                    viewModel.disableBiometric()
+                    biometricEnabled = false
+                },
+            ) { Text("Disable biometric unlock") }
+
+            else -> Button(
+                onClick = {
+                    val cipher = try {
+                        viewModel.biometricEncryptCipher()
+                    } catch (e: Exception) {
+                        viewModel.reportError("Biometric unavailable: ${e.message}")
+                        return@Button
+                    }
+                    BiometricPromptHelper.authenticate(
+                        activity = activity,
+                        cipher = cipher,
+                        title = "Enable biometric unlock",
+                        subtitle = "Confirm to allow unlocking Tryst with your fingerprint",
+                        onSuccess = { authed -> if (viewModel.enableBiometric(authed)) biometricEnabled = true },
+                        onError = { viewModel.reportError(it) },
+                        onCancel = { },
+                    )
+                },
+            ) { Text("Enable biometric unlock") }
+        }
+
+        Spacer(Modifier.height(24.dp))
+        Button(onClick = viewModel::lock) { Text("Lock now") }
+
+        viewModel.error?.let {
+            Spacer(Modifier.height(16.dp))
+            Text(
+                it,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
