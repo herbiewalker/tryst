@@ -2,6 +2,7 @@ package app.tryst.ui.common
 
 import app.tryst.data.db.entity.PartnerEntity
 import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -33,6 +34,27 @@ object Format {
 
     fun partnerName(partner: PartnerEntity): String =
         partner.displayName?.takeIf { it.isNotBlank() } ?: "Anonymous"
+
+    fun dayOfMonth(epochMillis: Long): String = zoned(epochMillis).dayOfMonth.toString()
+
+    fun monthShort(epochMillis: Long): String =
+        zoned(epochMillis).format(monthFormatter).uppercase(Locale.getDefault())
+
+    /** "Today" / "Yesterday" / "Monday, Jun 12" / "Jun 12, 2025" — used for list section headers. */
+    fun relativeDay(epochMillis: Long): String {
+        val date = zoned(epochMillis).toLocalDate()
+        val today = LocalDate.now()
+        return when {
+            date.isEqual(today) -> "Today"
+            date.isEqual(today.minusDays(1)) -> "Yesterday"
+            date.year == today.year -> date.format(sameYearFormatter)
+            else -> date.format(otherYearFormatter)
+        }
+    }
+
+    private val monthFormatter = DateTimeFormatter.ofPattern("MMM")
+    private val sameYearFormatter = DateTimeFormatter.ofPattern("EEEE, MMM d")
+    private val otherYearFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
 
     private fun zoned(epochMillis: Long) =
         Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault())
