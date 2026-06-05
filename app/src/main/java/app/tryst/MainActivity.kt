@@ -8,15 +8,24 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import app.tryst.core.session.LockState
+import app.tryst.ui.lock.LockScreen
+import app.tryst.ui.lock.LockViewModel
+import app.tryst.ui.lock.SetupScreen
 import app.tryst.ui.theme.TrystTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -26,8 +35,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // Privacy hardening: block screenshots and redact the app-switcher preview.
-        // (See CLAUDE.md. A later milestone moves this to an app-wide hook so every
-        // future Activity inherits it automatically.)
         window.setFlags(
             WindowManager.LayoutParams.FLAG_SECURE,
             WindowManager.LayoutParams.FLAG_SECURE,
@@ -36,8 +43,18 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TrystTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    PlaceholderScreen(modifier = Modifier.padding(innerPadding))
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background,
+                ) {
+                    val viewModel: LockViewModel = hiltViewModel()
+                    val state by viewModel.state.collectAsState()
+
+                    when (state) {
+                        LockState.NeedsSetup -> SetupScreen(viewModel)
+                        LockState.Locked -> LockScreen(viewModel)
+                        LockState.Unlocked -> HomeScreen(onLock = viewModel::lock)
+                    }
                 }
             }
         }
@@ -45,26 +62,22 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-private fun PlaceholderScreen(modifier: Modifier = Modifier) {
+private fun HomeScreen(onLock: () -> Unit) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(text = "Tryst", style = MaterialTheme.typography.headlineLarge)
+        Text("Tryst", style = MaterialTheme.typography.headlineLarge)
+        Spacer(Modifier.height(8.dp))
         Text(
-            text = "M0 scaffold — private, local-only.",
+            "Unlocked — encrypted session active.",
             style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun PlaceholderPreview() {
-    TrystTheme {
-        PlaceholderScreen()
+        Spacer(Modifier.height(24.dp))
+        Button(onClick = onLock) { Text("Lock now") }
     }
 }
