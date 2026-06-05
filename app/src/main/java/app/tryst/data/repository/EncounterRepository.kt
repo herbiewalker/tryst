@@ -1,7 +1,6 @@
 package app.tryst.data.repository
 
-import app.tryst.data.db.dao.EncounterDao
-import app.tryst.data.db.dao.MediaDao
+import app.tryst.core.session.SessionManager
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.relation.EncounterWithDetails
@@ -14,10 +13,12 @@ import javax.inject.Singleton
 
 @Singleton
 class EncounterRepository @Inject constructor(
-    private val encounterDao: EncounterDao,
-    private val mediaDao: MediaDao,
+    private val session: SessionManager,
     private val mediaStore: EncryptedMediaStore,
 ) {
+    private val encounterDao get() = session.database().encounterDao()
+    private val mediaDao get() = session.database().mediaDao()
+
     fun observeAll(): Flow<List<EncounterWithDetails>> = encounterDao.observeAllWithDetails()
 
     suspend fun get(id: String): EncounterWithDetails? = encounterDao.getWithDetails(id)
@@ -35,7 +36,6 @@ class EncounterRepository @Inject constructor(
         encounterDao.delete(encounter)
     }
 
-    /** Encrypts [source] to disk and records it against [encounterId]. */
     suspend fun attachMedia(
         encounterId: String,
         mimeType: String,
@@ -55,7 +55,6 @@ class EncounterRepository @Inject constructor(
         return media
     }
 
-    /** Decrypting stream for a stored blob; caller closes it. */
     fun openMedia(media: MediaEntity): InputStream = mediaStore.open(media.id)
 
     suspend fun deleteMedia(media: MediaEntity) {

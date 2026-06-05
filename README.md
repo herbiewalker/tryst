@@ -33,7 +33,8 @@ Progress against the [roadmap](docs/ROADMAP.md):
   (DB verified encrypted on disk).
 - ✅ **M2a** — Key vault: random data key double-wrapped by an Android Keystore key + a
   distinct 6-digit app PIN, with failed-attempt self-wipe.
-- ⏳ **M2b (next)** — Biometric unlock, PIN setup/lock screens, auto-lock.
+- ⏳ **M2b** — PIN setup/lock screens, post-unlock database session, and auto-lock on
+  background are **done**; biometric unlock is next.
 - ⬜ M3 logging · M4 media UI · M5 encrypted backup · M6 insights · M7 achievements · M8 release.
 
 New here? See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for scope and
