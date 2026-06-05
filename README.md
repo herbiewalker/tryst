@@ -35,8 +35,9 @@ Progress against the [roadmap](docs/ROADMAP.md):
   distinct 6-digit app PIN, with failed-attempt self-wipe.
 - ✅ **M2b** — PIN setup/lock screens, post-unlock database session, auto-lock on background,
   and biometric unlock (with PIN fallback).
-- ⬜ **M3 (next)** — encounter logging UI.
-- ⬜ M3 logging · M4 media UI · M5 encrypted backup · M6 insights · M7 achievements · M8 release.
+- ✅ **M3** — Navigation shell, encounter logging (add/edit/delete with rich fields), partner
+  management, history list, and a settings screen (biometric, lock, delete-all-data).
+- ⬜ M4 media UI · M5 encrypted backup · M6 insights · M7 achievements · M8 release.
 
 New here? See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for scope and
 [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) to build it.

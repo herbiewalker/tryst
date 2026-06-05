@@ -95,6 +95,8 @@ class LockViewModel @Inject constructor(
 
     fun disableBiometric() = session.disableBiometric()
 
+    fun deleteAllData() = session.deleteAllData()
+
     fun unlockWithBiometric(authenticatedCipher: Cipher) {
         viewModelScope.launch {
             busy = true

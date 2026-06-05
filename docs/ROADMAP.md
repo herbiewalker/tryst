@@ -51,10 +51,18 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 > Deferred (minor): a user-configurable auto-lock *timeout* (settings UI, with M3) — the
 > default (immediate on background) is already active. Tracked as a small enhancement.
 
-## M3 — Core logging
-- Add/edit/delete encounters with rich fields.
-- Partner management (named/anonymous, archive).
-- History list + filters.
+## M3 — Core logging  ✅ done (verified building & running on emulator)
+- [x] Compose Navigation shell (bottom nav: History / Partners / Settings) replacing the
+      placeholder home; `MainActivity` Unlocked branch renders `TrystApp()`.
+- [x] **Add/edit/delete encounters**: date/time pickers, duration, partner multi-select,
+      protection (multi), mood / orgasm / initiator, 1–5 rating, note (`EncounterEditScreen`).
+- [x] **Partner management**: list, add/edit dialog (named or anonymous, note), archive.
+- [x] **History** list with empty state; tap to edit.
+- [x] **Settings**: biometric enable/disable (relocated from home), Lock now, **Delete all data**
+      (`SessionManager.deleteAllData()` wipes keys + DB + media → setup).
+- [x] ViewModels use `stateIn` + `.catch` (survive the DB closing on auto-lock).
+- [ ] Deferred: history **filters/search**, positions/tags/location pickers, change-PIN UI,
+      configurable auto-lock timeout. (Schema already supports positions/tags/location.)
 
 ## M4 — Media attachments
 - Attach/view photos (encrypted end-to-end on device), in-memory decryption only.
