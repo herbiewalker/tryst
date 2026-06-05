@@ -1,7 +1,7 @@
 # Tryst — Security & Encryption Design
 
-Status: **Draft v0.1** — the key model is the one **open decision** (you asked me to write
-up the trade-off; finalize at milestone M2). Everything else is the working design.
+Status: **Draft v0.2** — key model decided at M2: **Keystore-only** with a distinct app PIN
+(see §1 Decision). Everything else is the working design.
 
 ---
 
@@ -33,13 +33,36 @@ heavier first-run UX.
 **Cons:** Weaker vs. a sophisticated T2 with the unlocked/rooted device; recovery is tied to the
 device + its lock; export needs its own independent password anyway.
 
-### Recommendation
-**Option A.** It directly satisfies the chosen "device seizure / forensics" threat, and the
-biometric wrapper removes most of the day-to-day friction. We can offer Option B's flow as a
-"convenience-only" toggle for users who accept the weaker guarantee. **Decision deferred to M2.**
+### Decision (M2): Option B — Keystore-only, with a distinct app PIN
 
-> Note: `minSdk 31` gives us modern Keystore behavior (and StrongBox on supporting devices),
-> which strengthens the biometric-gated wrapper in either option.
+Chosen for UX. The original recommendation was Option A; the user accepted Option B's weaker
+guarantee against forensic seizure in exchange for not having to remember a passphrase. The
+`DatabaseKeyProvider` seam means an optional passphrase mode can be added later with no rework.
+
+**Implemented design:**
+- Random 256-bit **DEK** (generated once at first setup) encrypts the SQLCipher DB and is the
+  media key material.
+- The DEK is persisted on disk **double-wrapped**: `Enc(KEK_keystore, Enc(pinKey, DEK))` where
+  - `KEK_keystore` = a non-exportable **Android Keystore** AES-256-GCM key (StrongBox when the
+    device supports it), and
+  - `pinKey` = a key derived from a **distinct 6-digit app PIN** (separate from the device lock)
+    via a slow KDF (PBKDF2-HMAC-SHA256, high iteration count — abstracted, upgradeable to Argon2id).
+- **Unlock:** the Keystore strips the outer layer; the entered PIN derives `pinKey` to strip the
+  inner layer → DEK in memory. A wrong PIN causes an AEAD auth failure → failed-attempt counter.
+- **Lockout:** after N failed attempts the vault self-wipes (wrapped blobs + Keystore keys deleted).
+- **Biometric (M2b):** a second Keystore key with `setUserAuthenticationRequired(true)` wraps a
+  copy of the DEK for fingerprint/face unlock; the PIN remains the fallback.
+
+**Residual risks (honest):**
+- A short PIN is brute-forceable in principle. The hardware-bound outer layer means a *disk image
+  alone* can't crack it (the Keystore key can't be extracted), but a **rooted, live device** could
+  attempt an on-device brute force. The slow KDF + self-wipe raise the cost; a passphrase would be
+  strictly stronger.
+- The attempt counter lives in the (encrypted-at-rest) vault file, not tamper-proof hardware, so it
+  deters casual on-device guessing more than a determined forensic attacker. (Upgrade path:
+  Keystore-backed monotonic counter.)
+
+> `minSdk 31` gives modern Keystore behavior and StrongBox on supporting devices.
 
 ---
 
@@ -78,6 +101,6 @@ biometric wrapper removes most of the day-to-day friction. We can offer Option B
 
 ## 6. Open items
 
-- Finalize key model (A vs B vs hybrid) — **M2**.
-- Argon2id parameter tuning per device class.
+- KDF tuning (PBKDF2 iteration count per device class); optional upgrade to Argon2id.
+- Keystore-backed monotonic attempt counter (harden lockout against file tampering).
 - Decoy/duress mode — **deferred** (leave seams; do not build in v1).
