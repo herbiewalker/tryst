@@ -23,8 +23,21 @@ device or be trusted to anyone.
 
 ## Status
 
-🚧 **Early planning.** No code yet — see [`docs/`](docs/) for requirements, threat model,
-and architecture. Start with [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).
+🚧 **In development.** Kotlin + Jetpack Compose, `minSdk 31` / `targetSdk 36`. Builds and runs.
+
+Progress against the [roadmap](docs/ROADMAP.md):
+
+- ✅ **M0** — Project scaffold; CI with an anti-leak guard (build fails if any network
+  permission appears); `allowBackup=false`, `FLAG_SECURE`.
+- ✅ **M1** — Encrypted storage: Room over SQLCipher, Tink-encrypted media store
+  (DB verified encrypted on disk).
+- ✅ **M2a** — Key vault: random data key double-wrapped by an Android Keystore key + a
+  distinct 6-digit app PIN, with failed-attempt self-wipe.
+- ⏳ **M2b (next)** — Biometric unlock, PIN setup/lock screens, auto-lock.
+- ⬜ M3 logging · M4 media UI · M5 encrypted backup · M6 insights · M7 achievements · M8 release.
+
+New here? See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for scope and
+[docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) to build it.
 
 ## Documentation
 
@@ -37,6 +50,7 @@ and architecture. Start with [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack & module layout |
 | [ROADMAP.md](docs/ROADMAP.md) | Milestones |
 | [DECISIONS.md](docs/DECISIONS.md) | Decision log & open questions |
+| [SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) | Build & run on Windows |
 
 ## License
 
