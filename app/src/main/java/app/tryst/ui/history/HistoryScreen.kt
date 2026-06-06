@@ -19,10 +19,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ViewList
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.ChevronLeft
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -38,10 +38,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.annotation.DrawableRes
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -79,9 +80,9 @@ fun HistoryScreen(
                 actions = {
                     IconButton(onClick = { calendarMode = !calendarMode }) {
                         if (calendarMode) {
-                            Icon(Icons.AutoMirrored.Filled.ViewList, contentDescription = "List view")
+                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = "List view")
                         } else {
-                            Icon(Icons.Filled.CalendarMonth, contentDescription = "Calendar view")
+                            Icon(Icons.Filled.DateRange, contentDescription = "Calendar view")
                         }
                     }
                 },
@@ -205,15 +206,15 @@ private fun DateBadge(epochMillis: Long) {
 }
 
 @Composable
-private fun PracticeBadge(icon: ImageVector) {
+private fun PracticeBadge(@DrawableRes icon: Int) {
     Surface(
         color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         shape = CircleShape,
-        modifier = Modifier.size(32.dp),
+        modifier = Modifier.size(34.dp),
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Icon(icon, contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(22.dp))
         }
     }
 }
@@ -304,7 +305,7 @@ private fun MonthHeader(month: YearMonth, onPrev: () -> Unit, onNext: () -> Unit
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onPrev) {
-            Icon(Icons.Filled.ChevronLeft, contentDescription = "Previous month")
+            Icon(Icons.Filled.KeyboardArrowLeft, contentDescription = "Previous month")
         }
         Text(
             text = "${month.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${month.year}",
@@ -312,7 +313,7 @@ private fun MonthHeader(month: YearMonth, onPrev: () -> Unit, onNext: () -> Unit
             fontWeight = FontWeight.SemiBold,
         )
         IconButton(onClick = onNext) {
-            Icon(Icons.Filled.ChevronRight, contentDescription = "Next month")
+            Icon(Icons.Filled.KeyboardArrowRight, contentDescription = "Next month")
         }
     }
 }
@@ -340,7 +341,7 @@ private fun WeekdayLabels() {
 @Composable
 private fun MonthGrid(
     month: YearMonth,
-    dayIcons: Map<LocalDate, ImageVector>,
+    dayIcons: Map<LocalDate, Int>,
     selected: LocalDate?,
     onSelect: (LocalDate) -> Unit,
 ) {
@@ -378,7 +379,7 @@ private fun MonthGrid(
 @Composable
 private fun DayCell(
     date: LocalDate,
-    icon: ImageVector?,
+    @DrawableRes icon: Int?,
     selected: Boolean,
     isToday: Boolean,
     onClick: () -> Unit,
@@ -407,10 +408,10 @@ private fun DayCell(
             )
             if (icon != null) {
                 Icon(
-                    icon,
+                    painterResource(icon),
                     contentDescription = null,
                     tint = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(14.dp),
+                    modifier = Modifier.size(18.dp),
                 )
             }
         }
