@@ -40,12 +40,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
-import app.tryst.data.db.entity.Position
 import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.entity.Protection
 import app.tryst.ui.common.Format
 import app.tryst.ui.common.MultiSelectChips
 import app.tryst.ui.common.MultiSelectField
+import app.tryst.ui.common.PositionOptions
 import app.tryst.ui.common.SingleSelectChips
 import app.tryst.ui.common.SingleSelectField
 import java.time.Instant
@@ -62,6 +62,7 @@ fun EncounterEditScreen(
     LaunchedEffect(encounterId) { viewModel.load(encounterId) }
 
     val partners by viewModel.availablePartners.collectAsStateWithLifecycle()
+    val customPositions by viewModel.customPositions.collectAsStateWithLifecycle()
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -158,13 +159,14 @@ fun EncounterEditScreen(
                 onToggle = { viewModel.toggleEjaculation(it) },
             )
 
+            val positionOptions = PositionOptions.builtIns + PositionOptions.custom(customPositions)
             MultiSelectField(
                 label = "Positions",
-                all = Position.entries,
-                common = CommonOptions.POSITION,
-                selected = viewModel.positions,
-                labelOf = { Format.enumLabel(it) },
-                onToggle = { viewModel.togglePosition(it) },
+                all = positionOptions,
+                common = PositionOptions.common,
+                selected = positionOptions.filter { it.id in viewModel.selectedPositionIds }.toSet(),
+                labelOf = { it.label },
+                onToggle = { viewModel.togglePosition(it.id) },
             )
 
             MultiSelectField(
@@ -328,9 +330,5 @@ private object CommonOptions {
     val PRACTICE = listOf(
         Practice.KISSING, Practice.ORAL, Practice.VAGINAL, Practice.ANAL,
         Practice.MANUAL, Practice.FINGERING, Practice.HANDJOB, Practice.TOYS,
-    )
-    val POSITION = listOf(
-        Position.MISSIONARY, Position.DOGGY_STYLE, Position.COWGIRL, Position.REVERSE_COWGIRL,
-        Position.SPOONING, Position.STANDING, Position.SIDE_BY_SIDE, Position.SIXTY_NINE,
     )
 }

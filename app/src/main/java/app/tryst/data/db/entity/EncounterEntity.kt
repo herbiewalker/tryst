@@ -39,7 +39,8 @@ data class EncounterEntity(
     val practicesPerformed: Set<Practice>? = null,
     val practicesReceived: Set<Practice>? = null,
     // --- added in schema v3 ---
-    val positions: Set<Position>? = null,
+    /** Selected position IDs: a built-in [Position] name, or "custom:<uuid>" for user-defined. */
+    val positions: Set<String>? = null,
     // ---------------------------
     val locationId: String? = null,
     val createdAt: Long,
