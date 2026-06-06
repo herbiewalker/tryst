@@ -4,9 +4,10 @@ Status: **Draft v0.1**
 
 ## Stack (see [CLAUDE.md](../CLAUDE.md))
 Kotlin (JDK 17) · Jetpack Compose + Material 3 · Room+SQLCipher · Hilt · Coroutines/Flow ·
-Tink (media crypto) · Argon2id (KDF) · AndroidX Biometric · Gradle KTS + version catalog.
+Tink (media crypto) · PBKDF2-HMAC-SHA256 (PIN KDF; Argon2id reserved for the M5 export passphrase) ·
+AndroidX Biometric · Gradle KTS + version catalog.
 
-`minSdk 31` · `compileSdk`/`targetSdk 36`.
+`minSdk 31` · `compileSdk`/`targetSdk 36`. Toolchain: AGP 9.2.1 / Kotlin 2.2.10 / Gradle 9.5.
 
 ## Pattern
 - **MVVM + Repository**, unidirectional data flow.

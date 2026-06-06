@@ -50,7 +50,9 @@ for later), social/sharing features. See [docs/REQUIREMENTS.md](docs/REQUIREMENT
 - **SDK:** `minSdk 31` (Android 12) · `compileSdk`/`targetSdk 36` (Android 16, latest)
 - **DB:** Room + **SQLCipher** (encrypted)
 - **Media crypto:** AES-256-GCM streaming (Google Tink) into app-internal storage
-- **Key derivation:** Argon2id (passphrase → key); Android Keystore for biometric convenience unlock
+- **Key derivation:** PBKDF2-HMAC-SHA256 (600k iters, OWASP) for the app PIN; a hardware-backed
+  Android Keystore key (StrongBox when available) double-wraps the DEK; biometric via a second
+  auth-gated Keystore key. (Argon2id reserved for the M5 export passphrase.)
 - **DI:** Hilt · **Async:** Coroutines + Flow
 - **Charts:** Vico (Compose) — candidate, TBD
 - **Build:** Gradle Kotlin DSL + version catalog (`gradle/libs.versions.toml`)
@@ -64,11 +66,18 @@ MVVM + repository pattern, unidirectional data flow. Package-by-feature. Start a
 
 ## Build & run commands
 
-> Android project not scaffolded yet. Once it is:
-> - Build debug: `./gradlew assembleDebug`
-> - Unit tests: `./gradlew test`
-> - Instrumented tests: `./gradlew connectedAndroidTest`
-> - Lint: `./gradlew lint`
+Windows (build env not on PATH): set the JVM first, then use the wrapper from the repo root.
+```powershell
+$env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"
+.\gradlew.bat assembleDebug              # build debug APK
+.\gradlew.bat checkNoNetworkDebug        # anti-leak guard (no network permission)
+.\gradlew.bat connectedDebugAndroidTest  # instrumented tests on a running emulator/device
+.\gradlew.bat lint
+```
+Install + launch on the emulator (adb at `%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe`):
+`adb install -r app\build\outputs\apk\debug\app-debug.apk` then
+`adb shell am start -n app.tryst/.MainActivity`. Screenshots are black by design (`FLAG_SECURE`).
+See [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) for toolchain details.
 
 ## Key documents
 

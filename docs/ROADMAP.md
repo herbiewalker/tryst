@@ -61,11 +61,29 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 - [x] **Settings**: biometric enable/disable (relocated from home), Lock now, **Delete all data**
       (`SessionManager.deleteAllData()` wipes keys + DB + media → setup).
 - [x] ViewModels use `stateIn` + `.catch` (survive the DB closing on auto-lock).
-- [ ] Deferred: history **filters/search**, positions/tags/location pickers, change-PIN UI,
-      configurable auto-lock timeout. (Schema already supports positions/tags/location.)
+- [ ] Deferred: history **filters/search**, change-PIN UI, configurable auto-lock timeout.
 
-## M4 — Media attachments
-- Attach/view photos (encrypted end-to-end on device), in-memory decryption only.
+## M3.x — Category, partner & presentation expansion  ✅ done (verified on emulator)
+- [x] **M3.1 (schema v5):** partner sex/gender/relationship (+ `photoMediaId` M4 hook); custom
+      **acts** (new `acts` table; practices → string IDs gave/received); big enum expansion;
+      **Setting & Context** → **Setting & Location** (places) + new **Occasion** category;
+      threesome/group/swinging moved to Kink. **Theming:** purple/green palette + Material You
+      toggle + Light/Dark/System (persisted in `ThemePreferences`).
+- [x] **M3.2:** Trysts card badge → **custom per-act vector icons** (intensity-ranked); **calendar
+      view** toggle (month grid; each day shows its headline act icon). Icons swappable for realistic
+      art later with no code change.
+- [x] **M3.3 (schema v6):** per-partner orgasm counts + per-orgasm ejaculation; blowjob & oral-for-her
+      acts.
+- [x] **Cleanup:** PBKDF2 → 600k (OWASP); dependency refresh (Room pinned 2.7.1); modern Kotlin DSL.
+
+## M4 — Media attachments  ← next
+Data layer already exists (`MediaEntity`, `EncryptedMediaStore`, `MediaCrypto`, repo
+attach/open/delete, `Partner.photoMediaId`). M4 is the **UI**:
+- [ ] Pick photos via the Android Photo Picker (no storage permission → keeps the zero-permission guarantee).
+- [ ] Encrypt on attach into app-internal storage; thumbnails + full view **decrypted in-memory only** (no temp files).
+- [ ] Attach/remove photos on the encounter editor; show them on the encounter + history card.
+- [ ] Partner photo (reuses `photoMediaId`) on the partner add/edit dialog + card avatar.
+- [ ] Tests: media attach/detach round-trip; on-disk blobs verified encrypted; deletion cleans up blobs.
 
 ## M5 — Backup & portability
 - Encrypted export + import; write `docs/EXPORT_FORMAT.md`.
@@ -78,7 +96,9 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 - Local achievement rules, progress tracking, unlock UI.
 
 ## M8 — Polish & release prep
-- A11y pass, theming, onboarding copy (esp. passphrase-loss warning).
+- A11y pass + **i18n: extract all hardcoded UI strings to `strings.xml`** (deferred "chunk 6").
+- Optional cleanup: refactor large editor VMs to a single immutable `UiState` (deferred "chunk 6").
+- Onboarding copy (esp. PIN-loss / no-recovery warning).
 - Finalize **license & distribution** ([DECISIONS.md](DECISIONS.md)); F-Droid metadata if chosen.
 - Security self-review against [THREAT_MODEL.md](THREAT_MODEL.md).
 

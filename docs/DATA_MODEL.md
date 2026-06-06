@@ -1,77 +1,94 @@
 # Tryst — Data Model
 
-Status: **Draft v0.1** — entities and fields; refine when defining the Room schema.
+Status: **Live — schema v6** (Room over SQLCipher). Matches the entities in
+`app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change
+ships a non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 
-> All tables live in the encrypted SQLCipher DB. IDs are app-local (UUID or autoincrement).
-> Nothing here ever leaves the device except via the user's encrypted export.
+> All tables live in the encrypted SQLCipher DB. IDs are app-local UUID strings. Nothing here
+> leaves the device except via the user's encrypted export (M5).
 
-## Entities
+## Encoding conventions
 
-### Encounter
+Category values are stored as TEXT via Room `TypeConverters` (`data/db/Converters.kt`):
+
+- **Enum-name sets** (e.g. `protectionUsed`, `kinks`, `contexts`, `occasions`, `toys`): comma-joined
+  enum `name`s. Parsing **skips unknown names**, so values that are renamed or moved between
+  categories never crash older rows — they're dropped on read.
+- **String-id sets** (`positions`, `practicesPerformed`, `practicesReceived`): comma-joined IDs where
+  each ID is a built-in enum `name` **or** `custom:<uuid>` for a user-defined entry.
+- **Maps**: `partnerOrgasms` = `partnerId=count` pairs; `ejaculationLocations` = `orgasmIndex=LOCATION`
+  pairs (one ejaculation location per self-orgasm).
+
+## Encounter (table `encounters`)
 The central record.
+
 | Field | Type | Notes |
 |-------|------|-------|
-| id | UUID | |
-| startAt | timestamp | date & time |
-| durationMin | int? | optional |
-| note | text? | free text |
-| satisfactionRating | int? | e.g. 1–5 |
-| orgasm | enum/bool? | none / self / partner / both — TBD |
-| mood | enum? | small curated set |
-| initiator | enum? | me / partner / mutual |
-| protectionUsed | enum/set? | none / condom / other (multi) |
-| locationId | FK? | → Location |
-| createdAt / updatedAt | timestamp | audit |
+| id | String (UUID) | PK |
+| startAt | Long | epoch millis (date & time) |
+| durationMin | Int? | optional |
+| note | String? | free text |
+| satisfactionRating | Int? | 1–5 |
+| mood | Mood? | single |
+| initiator | Initiator? | me / partner / mutual |
+| protectionUsed | Set\<Protection\> | multi |
+| orgasmCountSelf | Int? | times the user came |
+| partnerOrgasms | Map\<String,Int\>? | **per-partner** orgasm counts (partnerId → count) |
+| ejaculationLocations | Map\<Int,EjaculationLocation\>? | **per-orgasm** location (orgasm index → where) |
+| practicesPerformed / practicesReceived | Set\<String\>? | **Acts** gave/received (built-in `Practice` name or `custom:<uuid>`) |
+| positions | Set\<String\>? | built-in `Position` name or `custom:<uuid>` |
+| kinks | Set\<Kink\>? | Kink & BDSM |
+| contexts | Set\<Setting\>? | **Setting & Location** (places) |
+| occasions | Set\<Occasion\>? | occasion / context |
+| toys | Set\<ToyType\>? | |
+| locationId | FK? | → Location (legacy; UI uses `contexts`) |
+| createdAt / updatedAt | Long | audit |
+| orgasm, orgasmCountPartner | legacy | superseded; kept for migration safety |
 
-Relations: many partners (M:N), many positions (M:N), many tags (M:N), many media.
+Relations: many partners (M:N via `EncounterPartnerCrossRef`), many media (1:N). The M1
+position/tag cross-refs are legacy/unused (positions live in the `positions` column now).
 
-### Partner
+## Partner (table `partners`)
 | Field | Type | Notes |
 |-------|------|-------|
-| id | UUID | |
-| displayName | text? | null/blank ⇒ **anonymous** |
-| isAnonymous | bool | |
-| color/avatar | text? | local only |
-| archivedAt | timestamp? | soft-archive |
-| note | text? | |
+| id | String (UUID) | PK |
+| displayName | String? | null/blank ⇒ **anonymous** |
+| isAnonymous | Bool | |
+| sex | Sex? | Male / Female / Intersex |
+| gender | Gender? | Man / Woman / Non-binary / Other |
+| relationshipType | RelationshipType? | spouse / partner / FWB / … |
+| photoMediaId | String? | **M4 hook** — encrypted partner photo (wired in M4) |
+| color | String? | optional UI accent, local only |
+| note | String? | |
+| archivedAt | Long? | soft-archive |
+| createdAt / updatedAt | Long | |
 
-### Position
-Curated + user-addable list. `EncounterPosition` join table (M:N).
+## Custom-option tables
+- **Position** (`positions`): `id`, `label`, `isBuiltIn`. Built-ins come from the `Position` enum;
+  user-defined rows (`isBuiltIn=false`) are managed in Settings → Manage custom positions.
+- **Act** (`acts`): same shape; built-ins from the `Practice` enum, custom rows managed in
+  Settings → Manage custom acts.
 
-### Location
-| id | UUID |
-| label | text | e.g. "home", "hotel" — user-defined, generic by default (no GPS) |
+## Location / Tag / Media
+- **Location** (`locations`): `id`, `label` — user-typed generic label. **No GPS / coarse location**
+  (privacy; avoids tempting a location permission).
+- **Tag** (`tags`): freeform user tags (legacy/unused in the current UI).
+- **Media** (`media`): `id`, `encounterId` (FK, CASCADE), `encFilePath` (AES-GCM blob in app-internal
+  storage), `mimeType`, `createdAt`. Bytes are **not** in the DB and **not** in MediaStore. (M4 wires
+  the attach/view UI; partner photos reuse this via `Partner.photoMediaId`.)
 
-> **No GPS / coarse location.** Locations are user-typed labels only — collecting real
-> location would be both a privacy risk and would tempt a location permission. Keep it textual.
+## Category enums (`data/db/entity/Enums.kt`)
+All implement `DisplayLabel` (human-written `label` shown in the UI): `Initiator`, `Mood`,
+`Protection`, `EjaculationLocation`, `Practice` (acts), `Kink`, `Setting` (places),
+`Occasion`, `ToyType`, `Position`, plus partner enums `Sex`, `Gender`, `RelationshipType`.
+`Orgasm` is a legacy enum kept for migration.
 
-### Tag
-Freeform user tags. `EncounterTag` join table (M:N).
-
-### Media (attachment)
-| Field | Type | Notes |
-|-------|------|-------|
-| id | UUID | |
-| encounterId | FK | |
-| encFilePath | text | path to AES-GCM-encrypted blob in app-internal storage |
-| mimeType | text | |
-| createdAt | timestamp | |
-
-> Media bytes are **not** in the DB and **not** in MediaStore — encrypted files referenced by path.
-
-### Achievement / AchievementProgress
-| Achievement: id, key, title, description, rule metadata (all local/static) |
-| AchievementProgress: achievementId, unlockedAt?, progress counters |
-
-## Derived / computed (not stored, or cached)
-- Stats: totals, frequency per period, streaks, per-partner and per-attribute breakdowns.
-  Compute from the encounter tables; cache only if needed for performance.
+## Achievements (M7 — not yet built)
+- Achievement: id, key, title, description, rule metadata (local/static).
+- AchievementProgress: achievementId, unlockedAt?, progress counters.
 
 ## Schema / migration rules
-- Versioned Room migrations; **never destructive**.
-- Export format is decoupled from the live schema and versioned independently
+- Versioned Room migrations; **never destructive**. Bump `TrystDatabase.version`, add a
+  `MIGRATION_x_y` (additive/nullable columns), extend `MigrationTest`.
+- Export format (M5) is decoupled from the live schema and versioned independently
   (see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §4).
-
-## Open questions
-- Exact enums (mood, protection, orgasm) — curate during UI design.
-- Whether an encounter can have >1 partner in v1 (model supports M:N; UI may start with 1).

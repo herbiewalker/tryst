@@ -46,7 +46,9 @@ guarantee against forensic seizure in exchange for not having to remember a pass
   - `KEK_keystore` = a non-exportable **Android Keystore** AES-256-GCM key (StrongBox when the
     device supports it), and
   - `pinKey` = a key derived from a **distinct 6-digit app PIN** (separate from the device lock)
-    via a slow KDF (PBKDF2-HMAC-SHA256, high iteration count — abstracted, upgradeable to Argon2id).
+    via a slow KDF (PBKDF2-HMAC-SHA256, **600,000 iterations** per OWASP 2023 — the count is stored
+    per-vault in the `iter` field, so it can be raised without breaking existing vaults; abstracted,
+    upgradeable to Argon2id).
 - **Unlock:** the Keystore strips the outer layer; the entered PIN derives `pinKey` to strip the
   inner layer → DEK in memory. A wrong PIN causes an AEAD auth failure → failed-attempt counter.
 - **Lockout:** after N failed attempts the vault self-wipes (wrapped blobs + Keystore keys deleted).
@@ -73,8 +75,9 @@ guarantee against forensic seizure in exchange for not having to remember a pass
 - **Media (photos):** never via MediaStore. Stored in app-internal storage as
   **AES-256-GCM** streams (Google Tink) under a media key derived/wrapped from the DEK.
   Decrypted only in-memory for display; no decrypted temp files.
-- **Preferences:** app settings via DataStore; anything sensitive encrypted, non-sensitive
-  prefs (theme, lock timeout) may be plaintext.
+- **Preferences:** non-sensitive prefs (theme mode, Material You toggle) in plain
+  `SharedPreferences` (`tryst_appearance`), excluded from backup/transfer like everything else.
+  Anything sensitive would be encrypted; none is stored yet.
 
 ## 3. App lock & UI hardening
 
@@ -101,6 +104,6 @@ guarantee against forensic seizure in exchange for not having to remember a pass
 
 ## 6. Open items
 
-- KDF tuning (PBKDF2 iteration count per device class); optional upgrade to Argon2id.
+- KDF: PBKDF2 set to 600k iterations (OWASP); optional upgrade to Argon2id (memory-hard) later.
 - Keystore-backed monotonic attempt counter (harden lockout against file tampering).
 - Decoy/duress mode — **deferred** (leave seams; do not build in v1).
