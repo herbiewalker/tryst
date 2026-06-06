@@ -9,6 +9,7 @@ import app.tryst.data.db.entity.Gender
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.RelationshipType
 import app.tryst.data.db.entity.Sex
+import app.tryst.core.session.SessionManager
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.ui.common.MediaImages
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,8 +28,12 @@ import javax.inject.Inject
 @HiltViewModel
 class PartnersViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val session: SessionManager,
     private val repository: PartnerRepository,
 ) : ViewModel() {
+
+    /** Keep the app unlocked across the photo-picker/camera handoff. */
+    fun suppressAutoLock() = session.suppressNextAutoLock()
 
     val partners: StateFlow<List<PartnerEntity>> =
         repository.observeActive()

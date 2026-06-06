@@ -33,7 +33,7 @@ class TrystApplication : Application() {
         ProcessLifecycleOwner.get().lifecycle.addObserver(
             object : DefaultLifecycleObserver {
                 override fun onStop(owner: LifecycleOwner) {
-                    session.lock()
+                    session.onAppBackgrounded()
                 }
             },
         )

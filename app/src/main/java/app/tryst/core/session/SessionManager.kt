@@ -36,6 +36,9 @@ class SessionManager @Inject constructor(
     @Volatile private var dek: ByteArray? = null
     @Volatile private var db: TrystDatabase? = null
 
+    /** When >now, the next background event is NOT auto-locked (a photo picker/camera is up). */
+    @Volatile private var autoLockSuppressedUntil = 0L
+
     /** The open database. Throws if accessed while locked. */
     fun database(): TrystDatabase =
         db ?: throw IllegalStateException("Database accessed while locked")
@@ -103,6 +106,24 @@ class SessionManager @Inject constructor(
         openSession(biometricVault.recover(authenticatedCipher))
     }
 
+    /**
+     * Suppress the very next background auto-lock, for ~2 min, while we hand off to the OS photo
+     * picker or camera (which unavoidably backgrounds us). Consumed on first use; the time window
+     * means a failed launch can't leave auto-lock disabled.
+     */
+    fun suppressNextAutoLock() {
+        autoLockSuppressedUntil = System.currentTimeMillis() + AUTO_LOCK_GRACE_MS
+    }
+
+    /** Called when the app goes to background: lock, unless a picker/camera launch just suppressed it. */
+    fun onAppBackgrounded() {
+        if (System.currentTimeMillis() < autoLockSuppressedUntil) {
+            autoLockSuppressedUntil = 0L
+            return
+        }
+        lock()
+    }
+
     /** Clear all in-memory secrets and lock the app. */
     @Synchronized
     fun lock() {
@@ -124,4 +145,8 @@ class SessionManager @Inject constructor(
 
     private fun initialState(): LockState =
         if (vault.isInitialized()) LockState.Locked else LockState.NeedsSetup
+
+    private companion object {
+        const val AUTO_LOCK_GRACE_MS = 120_000L
+    }
 }
