@@ -5,6 +5,7 @@ import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.Orgasm
+import app.tryst.data.db.entity.Position
 import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.entity.Protection
 
@@ -55,6 +56,17 @@ class Converters {
         value == null -> null
         value.isBlank() -> emptySet()
         else -> value.split(SEP).map { Practice.valueOf(it) }.toSet()
+    }
+
+    @TypeConverter
+    fun positionSetToString(value: Set<Position>?): String? =
+        value?.joinToString(SEP) { it.name }
+
+    @TypeConverter
+    fun stringToPositionSet(value: String?): Set<Position>? = when {
+        value == null -> null
+        value.isBlank() -> emptySet()
+        else -> value.split(SEP).map { Position.valueOf(it) }.toSet()
     }
 
     private companion object {

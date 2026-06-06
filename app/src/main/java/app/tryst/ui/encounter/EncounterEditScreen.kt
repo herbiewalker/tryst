@@ -40,11 +40,14 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
+import app.tryst.data.db.entity.Position
 import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.entity.Protection
 import app.tryst.ui.common.Format
 import app.tryst.ui.common.MultiSelectChips
+import app.tryst.ui.common.MultiSelectField
 import app.tryst.ui.common.SingleSelectChips
+import app.tryst.ui.common.SingleSelectField
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -120,23 +123,23 @@ fun EncounterEditScreen(
                 }
             }
 
-            Field("Protection") {
-                MultiSelectChips(
-                    options = Protection.entries,
-                    selected = viewModel.protection,
-                    label = { Format.enumLabel(it) },
-                    onToggle = { viewModel.toggleProtection(it) },
-                )
-            }
+            MultiSelectField(
+                label = "Protection",
+                all = Protection.entries,
+                common = CommonOptions.PROTECTION,
+                selected = viewModel.protection,
+                labelOf = { Format.enumLabel(it) },
+                onToggle = { viewModel.toggleProtection(it) },
+            )
 
-            Field("Mood") {
-                SingleSelectChips(
-                    options = Mood.entries,
-                    selected = viewModel.mood,
-                    label = { Format.enumLabel(it) },
-                    onSelect = { viewModel.mood = it },
-                )
-            }
+            SingleSelectField(
+                label = "Mood",
+                all = Mood.entries,
+                common = CommonOptions.MOOD,
+                selected = viewModel.mood,
+                labelOf = { Format.enumLabel(it) },
+                onSelect = { viewModel.mood = it },
+            )
 
             Field("Orgasms — you") {
                 Stepper(value = viewModel.orgasmCountSelf, onChange = { viewModel.orgasmCountSelf = it })
@@ -146,32 +149,41 @@ fun EncounterEditScreen(
                 Stepper(value = viewModel.orgasmCountPartner, onChange = { viewModel.orgasmCountPartner = it })
             }
 
-            Field("Ejaculation") {
-                MultiSelectChips(
-                    options = EjaculationLocation.entries,
-                    selected = viewModel.ejaculationLocations,
-                    label = { Format.enumLabel(it) },
-                    onToggle = { viewModel.toggleEjaculation(it) },
-                )
-            }
+            MultiSelectField(
+                label = "Ejaculation",
+                all = EjaculationLocation.entries,
+                common = CommonOptions.EJACULATION,
+                selected = viewModel.ejaculationLocations,
+                labelOf = { Format.enumLabel(it) },
+                onToggle = { viewModel.toggleEjaculation(it) },
+            )
 
-            Field("Practices — performed (gave)") {
-                MultiSelectChips(
-                    options = Practice.entries,
-                    selected = viewModel.practicesPerformed,
-                    label = { Format.enumLabel(it) },
-                    onToggle = { viewModel.togglePerformed(it) },
-                )
-            }
+            MultiSelectField(
+                label = "Positions",
+                all = Position.entries,
+                common = CommonOptions.POSITION,
+                selected = viewModel.positions,
+                labelOf = { Format.enumLabel(it) },
+                onToggle = { viewModel.togglePosition(it) },
+            )
 
-            Field("Practices — received (got)") {
-                MultiSelectChips(
-                    options = Practice.entries,
-                    selected = viewModel.practicesReceived,
-                    label = { Format.enumLabel(it) },
-                    onToggle = { viewModel.toggleReceived(it) },
-                )
-            }
+            MultiSelectField(
+                label = "Practices — performed (gave)",
+                all = Practice.entries,
+                common = CommonOptions.PRACTICE,
+                selected = viewModel.practicesPerformed,
+                labelOf = { Format.enumLabel(it) },
+                onToggle = { viewModel.togglePerformed(it) },
+            )
+
+            MultiSelectField(
+                label = "Practices — received (got)",
+                all = Practice.entries,
+                common = CommonOptions.PRACTICE,
+                selected = viewModel.practicesReceived,
+                labelOf = { Format.enumLabel(it) },
+                onToggle = { viewModel.toggleReceived(it) },
+            )
 
             Field("Who initiated") {
                 SingleSelectChips(
@@ -295,4 +307,30 @@ private fun combineTime(base: Long, hour: Int, minute: Int): Long {
     return Instant.ofEpochMilli(base).atZone(zone)
         .withHour(hour).withMinute(minute).withSecond(0).withNano(0)
         .toInstant().toEpochMilli()
+}
+
+/** The handful of most-common options shown inline per category; the rest live in "More…". */
+private object CommonOptions {
+    val PROTECTION = listOf(
+        Protection.NONE, Protection.CONDOM, Protection.BIRTH_CONTROL, Protection.IUD,
+        Protection.PREP, Protection.WITHDRAWAL, Protection.INTERNAL_CONDOM,
+        Protection.EMERGENCY_CONTRACEPTION,
+    )
+    val MOOD = listOf(
+        Mood.AMAZING, Mood.HORNY, Mood.PASSIONATE, Mood.PLAYFUL,
+        Mood.ROMANTIC, Mood.CONNECTED, Mood.RELAXED, Mood.GOOD,
+    )
+    val EJACULATION = listOf(
+        EjaculationLocation.NONE, EjaculationLocation.IN_CONDOM, EjaculationLocation.VAGINAL,
+        EjaculationLocation.ANAL, EjaculationLocation.ORAL, EjaculationLocation.SWALLOWED,
+        EjaculationLocation.ON_FACE, EjaculationLocation.ON_CHEST,
+    )
+    val PRACTICE = listOf(
+        Practice.KISSING, Practice.ORAL, Practice.VAGINAL, Practice.ANAL,
+        Practice.MANUAL, Practice.FINGERING, Practice.HANDJOB, Practice.TOYS,
+    )
+    val POSITION = listOf(
+        Position.MISSIONARY, Position.DOGGY_STYLE, Position.COWGIRL, Position.REVERSE_COWGIRL,
+        Position.SPOONING, Position.STANDING, Position.SIDE_BY_SIDE, Position.SIXTY_NINE,
+    )
 }
