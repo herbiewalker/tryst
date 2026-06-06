@@ -8,11 +8,14 @@ import androidx.lifecycle.viewModelScope
 import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Initiator
+import app.tryst.data.db.entity.Kink
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.PositionEntity
 import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.entity.Protection
+import app.tryst.data.db.entity.Setting
+import app.tryst.data.db.entity.ToyType
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.data.repository.PositionRepository
@@ -54,6 +57,9 @@ class EncounterEditViewModel @Inject constructor(
     var practicesPerformed by mutableStateOf<Set<Practice>>(emptySet())
     var practicesReceived by mutableStateOf<Set<Practice>>(emptySet())
     var selectedPositionIds by mutableStateOf<Set<String>>(emptySet())
+    var kinks by mutableStateOf<Set<Kink>>(emptySet())
+    var contexts by mutableStateOf<Set<Setting>>(emptySet())
+    var toys by mutableStateOf<Set<ToyType>>(emptySet())
     var note by mutableStateOf("")
     var selectedPartnerIds by mutableStateOf<Set<String>>(emptySet())
 
@@ -83,6 +89,9 @@ class EncounterEditViewModel @Inject constructor(
             practicesPerformed = e.practicesPerformed ?: emptySet()
             practicesReceived = e.practicesReceived ?: emptySet()
             selectedPositionIds = e.positions ?: emptySet()
+            kinks = e.kinks ?: emptySet()
+            contexts = e.contexts ?: emptySet()
+            toys = e.toys ?: emptySet()
             note = e.note ?: ""
             selectedPartnerIds = details.partners.map { it.id }.toSet()
         }
@@ -116,6 +125,18 @@ class EncounterEditViewModel @Inject constructor(
             if (id in selectedPositionIds) selectedPositionIds - id else selectedPositionIds + id
     }
 
+    fun toggleKink(value: Kink) {
+        kinks = if (value in kinks) kinks - value else kinks + value
+    }
+
+    fun toggleContext(value: Setting) {
+        contexts = if (value in contexts) contexts - value else contexts + value
+    }
+
+    fun toggleToy(value: ToyType) {
+        toys = if (value in toys) toys - value else toys + value
+    }
+
     fun save(onDone: () -> Unit) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
@@ -136,6 +157,9 @@ class EncounterEditViewModel @Inject constructor(
                 practicesPerformed = practicesPerformed,
                 practicesReceived = practicesReceived,
                 positions = selectedPositionIds,
+                kinks = kinks,
+                contexts = contexts,
+                toys = toys,
                 locationId = null,
                 createdAt = if (isEditing) createdAt else now,
                 updatedAt = now,
