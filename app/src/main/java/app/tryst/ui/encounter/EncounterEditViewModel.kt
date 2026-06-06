@@ -5,17 +5,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tryst.data.db.entity.ActEntity
 import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Kink
 import app.tryst.data.db.entity.Mood
+import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.PositionEntity
-import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.db.entity.Setting
 import app.tryst.data.db.entity.ToyType
+import app.tryst.data.repository.ActRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.data.repository.PositionRepository
@@ -33,6 +35,7 @@ class EncounterEditViewModel @Inject constructor(
     private val encounters: EncounterRepository,
     partners: PartnerRepository,
     positions: PositionRepository,
+    acts: ActRepository,
 ) : ViewModel() {
 
     val availablePartners: StateFlow<List<PartnerEntity>> =
@@ -45,6 +48,11 @@ class EncounterEditViewModel @Inject constructor(
             .catch { emit(emptyList()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    val customActs: StateFlow<List<ActEntity>> =
+        acts.observeCustom()
+            .catch { emit(emptyList()) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     var startAt by mutableStateOf(System.currentTimeMillis())
     var durationText by mutableStateOf("")
     var rating by mutableStateOf<Int?>(null)
@@ -54,11 +62,12 @@ class EncounterEditViewModel @Inject constructor(
     var orgasmCountSelf by mutableStateOf(0)
     var orgasmCountPartner by mutableStateOf(0)
     var ejaculationLocations by mutableStateOf<Set<EjaculationLocation>>(emptySet())
-    var practicesPerformed by mutableStateOf<Set<Practice>>(emptySet())
-    var practicesReceived by mutableStateOf<Set<Practice>>(emptySet())
+    var practicesPerformed by mutableStateOf<Set<String>>(emptySet())
+    var practicesReceived by mutableStateOf<Set<String>>(emptySet())
     var selectedPositionIds by mutableStateOf<Set<String>>(emptySet())
     var kinks by mutableStateOf<Set<Kink>>(emptySet())
     var contexts by mutableStateOf<Set<Setting>>(emptySet())
+    var occasions by mutableStateOf<Set<Occasion>>(emptySet())
     var toys by mutableStateOf<Set<ToyType>>(emptySet())
     var note by mutableStateOf("")
     var selectedPartnerIds by mutableStateOf<Set<String>>(emptySet())
@@ -91,6 +100,7 @@ class EncounterEditViewModel @Inject constructor(
             selectedPositionIds = e.positions ?: emptySet()
             kinks = e.kinks ?: emptySet()
             contexts = e.contexts ?: emptySet()
+            occasions = e.occasions ?: emptySet()
             toys = e.toys ?: emptySet()
             note = e.note ?: ""
             selectedPartnerIds = details.partners.map { it.id }.toSet()
@@ -110,14 +120,14 @@ class EncounterEditViewModel @Inject constructor(
             if (value in ejaculationLocations) ejaculationLocations - value else ejaculationLocations + value
     }
 
-    fun togglePerformed(value: Practice) {
+    fun togglePerformed(id: String) {
         practicesPerformed =
-            if (value in practicesPerformed) practicesPerformed - value else practicesPerformed + value
+            if (id in practicesPerformed) practicesPerformed - id else practicesPerformed + id
     }
 
-    fun toggleReceived(value: Practice) {
+    fun toggleReceived(id: String) {
         practicesReceived =
-            if (value in practicesReceived) practicesReceived - value else practicesReceived + value
+            if (id in practicesReceived) practicesReceived - id else practicesReceived + id
     }
 
     fun togglePosition(id: String) {
@@ -131,6 +141,10 @@ class EncounterEditViewModel @Inject constructor(
 
     fun toggleContext(value: Setting) {
         contexts = if (value in contexts) contexts - value else contexts + value
+    }
+
+    fun toggleOccasion(value: Occasion) {
+        occasions = if (value in occasions) occasions - value else occasions + value
     }
 
     fun toggleToy(value: ToyType) {
@@ -159,6 +173,7 @@ class EncounterEditViewModel @Inject constructor(
                 positions = selectedPositionIds,
                 kinks = kinks,
                 contexts = contexts,
+                occasions = occasions,
                 toys = toys,
                 locationId = null,
                 createdAt = if (isEditing) createdAt else now,

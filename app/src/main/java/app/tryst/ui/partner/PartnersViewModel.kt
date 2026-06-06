@@ -2,7 +2,10 @@ package app.tryst.ui.partner
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tryst.data.db.entity.Gender
 import app.tryst.data.db.entity.PartnerEntity
+import app.tryst.data.db.entity.RelationshipType
+import app.tryst.data.db.entity.Sex
 import app.tryst.data.repository.PartnerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,7 +26,15 @@ class PartnersViewModel @Inject constructor(
             .catch { emit(emptyList()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    fun save(id: String?, name: String, anonymous: Boolean, note: String) {
+    fun save(
+        id: String?,
+        name: String,
+        anonymous: Boolean,
+        note: String,
+        sex: Sex?,
+        gender: Gender?,
+        relationshipType: RelationshipType?,
+    ) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
             val existing = id?.let { repository.getById(it) }
@@ -34,6 +45,10 @@ class PartnersViewModel @Inject constructor(
                     isAnonymous = anonymous,
                     color = existing?.color,
                     note = note.trim().ifBlank { null },
+                    sex = sex,
+                    gender = gender,
+                    relationshipType = relationshipType,
+                    photoMediaId = existing?.photoMediaId,
                     archivedAt = existing?.archivedAt,
                     createdAt = existing?.createdAt ?: now,
                     updatedAt = now,
