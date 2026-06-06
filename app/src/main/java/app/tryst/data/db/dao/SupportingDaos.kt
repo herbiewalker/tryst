@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
+import app.tryst.data.db.entity.ActEntity
 import app.tryst.data.db.entity.LocationEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.PositionEntity
@@ -43,6 +44,18 @@ interface PositionDao {
     fun observeCustom(): Flow<List<PositionEntity>>
 
     @Query("DELETE FROM positions WHERE id = :id")
+    suspend fun deleteById(id: String)
+}
+
+@Dao
+interface ActDao {
+    @Upsert
+    suspend fun upsert(act: ActEntity)
+
+    @Query("SELECT * FROM acts WHERE isBuiltIn = 0 ORDER BY label COLLATE NOCASE")
+    fun observeCustom(): Flow<List<ActEntity>>
+
+    @Query("DELETE FROM acts WHERE id = :id")
     suspend fun deleteById(id: String)
 }
 

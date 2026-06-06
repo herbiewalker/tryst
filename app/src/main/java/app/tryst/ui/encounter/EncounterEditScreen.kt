@@ -41,10 +41,11 @@ import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Kink
 import app.tryst.data.db.entity.Mood
-import app.tryst.data.db.entity.Practice
+import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.db.entity.Setting
 import app.tryst.data.db.entity.ToyType
+import app.tryst.ui.common.ActOptions
 import app.tryst.ui.common.Format
 import app.tryst.ui.common.MultiSelectChips
 import app.tryst.ui.common.MultiSelectField
@@ -66,6 +67,7 @@ fun EncounterEditScreen(
 
     val partners by viewModel.availablePartners.collectAsStateWithLifecycle()
     val customPositions by viewModel.customPositions.collectAsStateWithLifecycle()
+    val customActs by viewModel.customActs.collectAsStateWithLifecycle()
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -172,22 +174,23 @@ fun EncounterEditScreen(
                 onToggle = { viewModel.togglePosition(it.id) },
             )
 
+            val actOptions = ActOptions.builtIns + ActOptions.custom(customActs)
             MultiSelectField(
                 label = "Acts — gave",
-                all = Practice.entries,
-                common = CommonOptions.PRACTICE,
-                selected = viewModel.practicesPerformed,
+                all = actOptions,
+                common = ActOptions.common,
+                selected = actOptions.filter { it.id in viewModel.practicesPerformed }.toSet(),
                 labelOf = { it.label },
-                onToggle = { viewModel.togglePerformed(it) },
+                onToggle = { viewModel.togglePerformed(it.id) },
             )
 
             MultiSelectField(
                 label = "Acts — received",
-                all = Practice.entries,
-                common = CommonOptions.PRACTICE,
-                selected = viewModel.practicesReceived,
+                all = actOptions,
+                common = ActOptions.common,
+                selected = actOptions.filter { it.id in viewModel.practicesReceived }.toSet(),
                 labelOf = { it.label },
-                onToggle = { viewModel.toggleReceived(it) },
+                onToggle = { viewModel.toggleReceived(it.id) },
             )
 
             MultiSelectField(
@@ -200,12 +203,21 @@ fun EncounterEditScreen(
             )
 
             MultiSelectField(
-                label = "Setting & context",
+                label = "Setting & location",
                 all = Setting.entries,
                 common = CommonOptions.SETTING,
                 selected = viewModel.contexts,
                 labelOf = { it.label },
                 onToggle = { viewModel.toggleContext(it) },
+            )
+
+            MultiSelectField(
+                label = "Occasion",
+                all = Occasion.entries,
+                common = CommonOptions.OCCASION,
+                selected = viewModel.occasions,
+                labelOf = { it.label },
+                onToggle = { viewModel.toggleOccasion(it) },
             )
 
             MultiSelectField(
@@ -357,17 +369,17 @@ private object CommonOptions {
         EjaculationLocation.ANAL, EjaculationLocation.ORAL, EjaculationLocation.SWALLOWED,
         EjaculationLocation.ON_FACE, EjaculationLocation.ON_CHEST,
     )
-    val PRACTICE = listOf(
-        Practice.KISSING, Practice.ORAL, Practice.SIXTY_NINE, Practice.VAGINAL,
-        Practice.ANAL, Practice.MANUAL, Practice.FINGERING, Practice.MUTUAL_MASTURBATION,
-    )
     val KINK = listOf(
         Kink.DOMINATION, Kink.SUBMISSION, Kink.BONDAGE, Kink.SPANKING,
         Kink.CHOKING, Kink.DIRTY_TALK, Kink.ROLEPLAY, Kink.EDGING,
     )
     val SETTING = listOf(
         Setting.HOME, Setting.BEDROOM, Setting.SHOWER, Setting.CAR,
-        Setting.HOTEL, Setting.OUTDOORS, Setting.QUICKIE, Setting.MORNING_SEX,
+        Setting.HOTEL, Setting.OUTDOORS, Setting.LIVING_ROOM, Setting.HOT_TUB,
+    )
+    val OCCASION = listOf(
+        Occasion.QUICKIE, Occasion.MORNING_SEX, Occasion.MAKEUP_SEX, Occasion.SPONTANEOUS,
+        Occasion.DATE_NIGHT, Occasion.DRUNK_HIGH, Occasion.PERIOD_SEX, Occasion.ANNIVERSARY,
     )
     val TOY = listOf(
         ToyType.VIBRATOR, ToyType.DILDO, ToyType.BUTT_PLUG, ToyType.COCK_RING,

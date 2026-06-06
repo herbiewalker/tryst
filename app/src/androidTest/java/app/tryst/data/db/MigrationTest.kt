@@ -26,23 +26,37 @@ class MigrationTest {
     )
 
     @Test
-    fun migrate1To4_preservesRowsAndAddsColumns() {
+    fun migrate1To5_preservesRowsAndAddsColumns() {
         helper.createDatabase(dbName, 1).use { db ->
             db.execSQL(
                 "INSERT INTO encounters (id, startAt, protectionUsed, createdAt, updatedAt) " +
                     "VALUES ('e1', 1000, 'CONDOM', 1, 1)",
             )
+            db.execSQL(
+                "INSERT INTO partners (id, displayName, isAnonymous, createdAt, updatedAt) " +
+                    "VALUES ('p1', 'Alex', 0, 1, 1)",
+            )
         }
 
-        // Applies the full migration chain and validates the schema equals the exported v4 schema.
-        helper.runMigrationsAndValidate(dbName, 4, true, MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).use { db ->
+        // Applies the full migration chain and validates the schema equals the exported v5 schema.
+        helper.runMigrationsAndValidate(
+            dbName, 5, true,
+            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
+        ).use { db ->
             db.query(
-                "SELECT id, positions, kinks FROM encounters WHERE id = 'e1'",
+                "SELECT id, positions, kinks, occasions FROM encounters WHERE id = 'e1'",
             ).use { cursor ->
                 assertTrue(cursor.moveToFirst())
                 assertEquals("e1", cursor.getString(0))
                 assertTrue("positions column should be NULL for migrated row", cursor.isNull(1))
                 assertTrue("kinks column should be NULL for migrated row", cursor.isNull(2))
+                assertTrue("occasions column should be NULL for migrated row", cursor.isNull(3))
+            }
+            db.query("SELECT id, displayName, sex, relationshipType FROM partners WHERE id = 'p1'").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals("Alex", cursor.getString(1))
+                assertTrue("sex column should be NULL for migrated row", cursor.isNull(2))
+                assertTrue("relationshipType column should be NULL for migrated row", cursor.isNull(3))
             }
         }
     }
