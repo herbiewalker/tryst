@@ -41,7 +41,10 @@ import androidx.compose.runtime.setValue
 import androidx.annotation.DrawableRes
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,7 +52,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.relation.EncounterWithDetails
+import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
 import app.tryst.ui.common.PracticeVisuals
 import java.time.DayOfWeek
@@ -99,6 +104,7 @@ fun HistoryScreen(
             calendarMode -> CalendarView(
                 modifier = Modifier.padding(padding),
                 items = encounters,
+                onLoadThumb = { viewModel.decode(it, CARD_THUMB_PX) },
                 onOpenEncounter = onOpenEncounter,
             )
             else -> LazyColumn(
@@ -109,7 +115,11 @@ fun HistoryScreen(
                 grouped.forEach { (label, items) ->
                     item(key = label) { DateHeader(label) }
                     items(items, key = { it.encounter.id }) { item ->
-                        EncounterCard(item, onClick = { onOpenEncounter(item.encounter.id) })
+                        EncounterCard(
+                            item,
+                            onLoadThumb = { viewModel.decode(it, CARD_THUMB_PX) },
+                            onClick = { onOpenEncounter(item.encounter.id) },
+                        )
                     }
                 }
             }
@@ -131,13 +141,17 @@ private fun DateHeader(label: String) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun EncounterCard(item: EncounterWithDetails, onClick: () -> Unit) {
+private fun EncounterCard(
+    item: EncounterWithDetails,
+    onLoadThumb: suspend (MediaEntity) -> ImageBitmap?,
+    onClick: () -> Unit,
+) {
     val e = item.encounter
     Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
         Row(modifier = Modifier.padding(12.dp)) {
             DateBadge(e.startAt)
             Column(
-                modifier = Modifier.padding(start = 14.dp),
+                modifier = Modifier.weight(1f).padding(start = 14.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Row(
@@ -184,6 +198,18 @@ private fun EncounterCard(item: EncounterWithDetails, onClick: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
+            }
+            item.media.firstOrNull()?.let { media ->
+                DecodedImage(
+                    model = media.id,
+                    contentDescription = "Photo",
+                    modifier = Modifier
+                        .padding(start = 10.dp)
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(10.dp)),
+                    contentScale = ContentScale.Crop,
+                    load = { onLoadThumb(media) },
+                )
             }
         }
     }
@@ -236,12 +262,14 @@ private fun Pill(text: String) {
     }
 }
 
+private const val CARD_THUMB_PX = 140
 private val selectedDayFormatter = DateTimeFormatter.ofPattern("EEEE, MMM d")
 
 @Composable
 private fun CalendarView(
     modifier: Modifier = Modifier,
     items: List<EncounterWithDetails>,
+    onLoadThumb: suspend (MediaEntity) -> ImageBitmap?,
     onOpenEncounter: (String) -> Unit,
 ) {
     val byDay = remember(items) { items.groupBy { Format.localDate(it.encounter.startAt) } }
@@ -292,7 +320,11 @@ private fun CalendarView(
                 }
             } else {
                 items(dayItems, key = { it.encounter.id }) { item ->
-                    EncounterCard(item, onClick = { onOpenEncounter(item.encounter.id) })
+                    EncounterCard(
+                        item,
+                        onLoadThumb = onLoadThumb,
+                        onClick = { onOpenEncounter(item.encounter.id) },
+                    )
                 }
             }
         }
