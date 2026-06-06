@@ -148,6 +148,8 @@ enum class Practice(override val label: String) : DisplayLabel {
     KISSING("Kissing"),
     MAKING_OUT("Making out"),
     ORAL("Oral"),
+    BLOWJOB("Blowjob"),
+    BALL_SUCKING("Ball sucking / teabagging"),
     DEEP_THROAT("Deep throat"),
     SIXTY_NINE("69"),
     RIMMING("Rimming"),

@@ -148,21 +148,33 @@ fun EncounterEditScreen(
             )
 
             Field("Orgasms — you") {
-                Stepper(value = viewModel.orgasmCountSelf, onChange = { viewModel.orgasmCountSelf = it })
+                Stepper(value = viewModel.orgasmCountSelf, onChange = { viewModel.setSelfOrgasms(it) })
             }
 
-            Field("Orgasms — partner") {
-                Stepper(value = viewModel.orgasmCountPartner, onChange = { viewModel.orgasmCountPartner = it })
+            // One ejaculation location per orgasm you had.
+            repeat(viewModel.orgasmCountSelf) { i ->
+                SingleSelectField(
+                    label = if (viewModel.orgasmCountSelf > 1) "Ejaculation ${i + 1}" else "Ejaculation",
+                    all = EjaculationLocation.entries,
+                    common = CommonOptions.EJACULATION,
+                    selected = viewModel.ejaculations[i],
+                    labelOf = { it.label },
+                    onSelect = { viewModel.setEjaculation(i, it) },
+                )
             }
 
-            MultiSelectField(
-                label = "Ejaculation",
-                all = EjaculationLocation.entries,
-                common = CommonOptions.EJACULATION,
-                selected = viewModel.ejaculationLocations,
-                labelOf = { it.label },
-                onToggle = { viewModel.toggleEjaculation(it) },
-            )
+            // One orgasm counter per selected partner, ordered by name.
+            partners
+                .filter { it.id in viewModel.selectedPartnerIds }
+                .sortedBy { Format.partnerName(it).lowercase() }
+                .forEach { partner ->
+                    Field("Orgasms — ${Format.partnerName(partner)}") {
+                        Stepper(
+                            value = viewModel.partnerOrgasms[partner.id] ?: 0,
+                            onChange = { viewModel.setPartnerOrgasms(partner.id, it) },
+                        )
+                    }
+                }
 
             val positionOptions = PositionOptions.builtIns + PositionOptions.custom(customPositions)
             MultiSelectField(
