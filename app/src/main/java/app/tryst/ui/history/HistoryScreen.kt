@@ -127,7 +127,7 @@ private fun EncounterCard(item: EncounterWithDetails, onClick: () -> Unit) {
                 val pills = buildList {
                     e.satisfactionRating?.let { add("★ $it") }
                     e.durationMin?.let { add("$it min") }
-                    e.mood?.let { add(Format.enumLabel(it)) }
+                    e.mood?.let { add(it.label) }
                     val orgasms = (e.orgasmCountSelf ?: 0) + (e.orgasmCountPartner ?: 0)
                     if (orgasms > 0) add("✨ $orgasms")
                 }
