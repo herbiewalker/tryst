@@ -26,7 +26,7 @@ class MigrationTest {
     )
 
     @Test
-    fun migrate1To3_preservesRowsAndAddsColumns() {
+    fun migrate1To4_preservesRowsAndAddsColumns() {
         helper.createDatabase(dbName, 1).use { db ->
             db.execSQL(
                 "INSERT INTO encounters (id, startAt, protectionUsed, createdAt, updatedAt) " +
@@ -34,15 +34,15 @@ class MigrationTest {
             )
         }
 
-        // Applies the full migration chain and validates the schema equals the exported v3 schema.
-        helper.runMigrationsAndValidate(dbName, 3, true, MIGRATION_1_2, MIGRATION_2_3).use { db ->
+        // Applies the full migration chain and validates the schema equals the exported v4 schema.
+        helper.runMigrationsAndValidate(dbName, 4, true, MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).use { db ->
             db.query(
-                "SELECT id, orgasmCountSelf, positions FROM encounters WHERE id = 'e1'",
+                "SELECT id, positions, kinks FROM encounters WHERE id = 'e1'",
             ).use { cursor ->
                 assertTrue(cursor.moveToFirst())
                 assertEquals("e1", cursor.getString(0))
-                assertTrue("new column should be NULL for migrated row", cursor.isNull(1))
-                assertTrue("positions column should be NULL for migrated row", cursor.isNull(2))
+                assertTrue("positions column should be NULL for migrated row", cursor.isNull(1))
+                assertTrue("kinks column should be NULL for migrated row", cursor.isNull(2))
             }
         }
     }

@@ -41,6 +41,10 @@ data class EncounterEntity(
     // --- added in schema v3 ---
     /** Selected position IDs: a built-in [Position] name, or "custom:<uuid>" for user-defined. */
     val positions: Set<String>? = null,
+    // --- added in schema v4 ---
+    val kinks: Set<Kink>? = null,
+    val contexts: Set<Setting>? = null,
+    val toys: Set<ToyType>? = null,
     // ---------------------------
     val locationId: String? = null,
     val createdAt: Long,

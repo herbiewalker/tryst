@@ -24,5 +24,14 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
     }
 }
 
+/** v3 → v4: adds kinks, contexts (setting), and toys columns to `encounters` (additive, nullable). */
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE encounters ADD COLUMN kinks TEXT")
+        db.execSQL("ALTER TABLE encounters ADD COLUMN contexts TEXT")
+        db.execSQL("ALTER TABLE encounters ADD COLUMN toys TEXT")
+    }
+}
+
 /** All migrations, in order. */
-val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
+val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)

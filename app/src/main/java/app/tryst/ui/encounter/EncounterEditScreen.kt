@@ -39,9 +39,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Initiator
+import app.tryst.data.db.entity.Kink
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.entity.Protection
+import app.tryst.data.db.entity.Setting
+import app.tryst.data.db.entity.ToyType
 import app.tryst.ui.common.Format
 import app.tryst.ui.common.MultiSelectChips
 import app.tryst.ui.common.MultiSelectField
@@ -129,7 +132,7 @@ fun EncounterEditScreen(
                 all = Protection.entries,
                 common = CommonOptions.PROTECTION,
                 selected = viewModel.protection,
-                labelOf = { Format.enumLabel(it) },
+                labelOf = { it.label },
                 onToggle = { viewModel.toggleProtection(it) },
             )
 
@@ -138,7 +141,7 @@ fun EncounterEditScreen(
                 all = Mood.entries,
                 common = CommonOptions.MOOD,
                 selected = viewModel.mood,
-                labelOf = { Format.enumLabel(it) },
+                labelOf = { it.label },
                 onSelect = { viewModel.mood = it },
             )
 
@@ -155,7 +158,7 @@ fun EncounterEditScreen(
                 all = EjaculationLocation.entries,
                 common = CommonOptions.EJACULATION,
                 selected = viewModel.ejaculationLocations,
-                labelOf = { Format.enumLabel(it) },
+                labelOf = { it.label },
                 onToggle = { viewModel.toggleEjaculation(it) },
             )
 
@@ -170,28 +173,55 @@ fun EncounterEditScreen(
             )
 
             MultiSelectField(
-                label = "Practices — performed (gave)",
+                label = "Acts — gave",
                 all = Practice.entries,
                 common = CommonOptions.PRACTICE,
                 selected = viewModel.practicesPerformed,
-                labelOf = { Format.enumLabel(it) },
+                labelOf = { it.label },
                 onToggle = { viewModel.togglePerformed(it) },
             )
 
             MultiSelectField(
-                label = "Practices — received (got)",
+                label = "Acts — received",
                 all = Practice.entries,
                 common = CommonOptions.PRACTICE,
                 selected = viewModel.practicesReceived,
-                labelOf = { Format.enumLabel(it) },
+                labelOf = { it.label },
                 onToggle = { viewModel.toggleReceived(it) },
+            )
+
+            MultiSelectField(
+                label = "Kink & BDSM",
+                all = Kink.entries,
+                common = CommonOptions.KINK,
+                selected = viewModel.kinks,
+                labelOf = { it.label },
+                onToggle = { viewModel.toggleKink(it) },
+            )
+
+            MultiSelectField(
+                label = "Setting & context",
+                all = Setting.entries,
+                common = CommonOptions.SETTING,
+                selected = viewModel.contexts,
+                labelOf = { it.label },
+                onToggle = { viewModel.toggleContext(it) },
+            )
+
+            MultiSelectField(
+                label = "Toys",
+                all = ToyType.entries,
+                common = CommonOptions.TOY,
+                selected = viewModel.toys,
+                labelOf = { it.label },
+                onToggle = { viewModel.toggleToy(it) },
             )
 
             Field("Who initiated") {
                 SingleSelectChips(
                     options = Initiator.entries,
                     selected = viewModel.initiator,
-                    label = { Format.enumLabel(it) },
+                    label = { it.label },
                     onSelect = { viewModel.initiator = it },
                 )
             }
@@ -314,7 +344,7 @@ private fun combineTime(base: Long, hour: Int, minute: Int): Long {
 /** The handful of most-common options shown inline per category; the rest live in "More…". */
 private object CommonOptions {
     val PROTECTION = listOf(
-        Protection.NONE, Protection.CONDOM, Protection.BIRTH_CONTROL, Protection.IUD,
+        Protection.NONE, Protection.CONDOM, Protection.PILL, Protection.IUD,
         Protection.PREP, Protection.WITHDRAWAL, Protection.INTERNAL_CONDOM,
         Protection.EMERGENCY_CONTRACEPTION,
     )
@@ -328,7 +358,19 @@ private object CommonOptions {
         EjaculationLocation.ON_FACE, EjaculationLocation.ON_CHEST,
     )
     val PRACTICE = listOf(
-        Practice.KISSING, Practice.ORAL, Practice.VAGINAL, Practice.ANAL,
-        Practice.MANUAL, Practice.FINGERING, Practice.HANDJOB, Practice.TOYS,
+        Practice.KISSING, Practice.ORAL, Practice.SIXTY_NINE, Practice.VAGINAL,
+        Practice.ANAL, Practice.MANUAL, Practice.FINGERING, Practice.MUTUAL_MASTURBATION,
+    )
+    val KINK = listOf(
+        Kink.DOMINATION, Kink.SUBMISSION, Kink.BONDAGE, Kink.SPANKING,
+        Kink.CHOKING, Kink.DIRTY_TALK, Kink.ROLEPLAY, Kink.EDGING,
+    )
+    val SETTING = listOf(
+        Setting.HOME, Setting.BEDROOM, Setting.SHOWER, Setting.CAR,
+        Setting.HOTEL, Setting.OUTDOORS, Setting.QUICKIE, Setting.MORNING_SEX,
+    )
+    val TOY = listOf(
+        ToyType.VIBRATOR, ToyType.DILDO, ToyType.BUTT_PLUG, ToyType.COCK_RING,
+        ToyType.STRAP_ON, ToyType.WAND, ToyType.ANAL_BEADS, ToyType.NIPPLE_CLAMPS,
     )
 }

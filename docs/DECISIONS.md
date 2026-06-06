@@ -51,6 +51,16 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   full set **alphabetical** by label). `MigrationTest` validates v1→v3. (The M1 position cross-ref
   relation is unused; kept for migration safety.)
 
+- **D-18 (M3+) Category restructure + display labels (schema v4):** "Practices" split into
+  **Acts** (gave/received, `Practice` enum), **Kink & BDSM** (`Kink`), **Setting & context**
+  (`Setting`), and **Toys** (`ToyType`) — each its own nullable column (kinks/contexts/toys;
+  `MIGRATION_3_4`). Every category enum implements **`DisplayLabel`** with explicit human-written
+  labels (fixes IUD/PrEP/PEP/DoxyPEP/69 casing, "Birth control"→"Pill", "Gave/Received" wording),
+  shown in the UI via `it.label`. Added moods (tipsy, confident, desired, loved, safe…), acts
+  (titjob, anal fingering, spit play, face-fucking), the full setting list, and toy types. Enum-set
+  converters now **skip unknown names**, so values that moved categories don't crash older rows.
+  `MigrationTest` validates v1→v4.
+
 ## Open
 
 - **O-2 License & distribution:** GPLv3 vs MIT/Apache; F-Droid and/or Play. **Decide at M8.**

@@ -16,7 +16,7 @@ object PositionOptions {
     ).map { it.name }.toSet()
 
     val builtIns: List<PositionOption> =
-        Position.entries.map { PositionOption(it.name, Format.enumLabel(it)) }
+        Position.entries.map { PositionOption(it.name, it.label) }
 
     val common: List<PositionOption> = builtIns.filter { it.id in COMMON_IDS }
 
