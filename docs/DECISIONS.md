@@ -85,6 +85,13 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   **per-orgasm ejaculation** (the `ejaculationLocations` column repurposed to orgasmIndex→location —
   your self-orgasm count drives N single-select ejaculation rows). Added Blowjob, Ball-sucking,
   Cunnilingus, Clit-sucking acts. `MigrationTest` v1→v6.
+- **D-24 (M4):** Photo input = Android **Photo Picker** with an **ACTION_GET_CONTENT fallback**
+  (some devices/emulators advertise the picker without providing the activity → `ActivityNotFoundException`).
+  Plus **in-app camera capture** via a `FileProvider` into a private cache file, encrypted into the media
+  store and the plaintext temp then deleted — sensitive shots never touch MediaStore / gallery / cloud
+  backup. No CAMERA permission (ACTION_IMAGE_CAPTURE delegates to the camera app), so the zero-permission
+  / no-network guarantee holds (anti-leak guard still green). Encounter photos stage on pick and commit
+  on Save; partner photo is a single avatar; both clean up camera temps on save/cancel.
 - **D-23 (deferred):** Chunk 6 — extracting hardcoded UI strings to `strings.xml` and refactoring
   `EncounterEditViewModel` to a single `UiState` — is **deferred to M8**. String extraction belongs
   with the a11y/i18n pass; the per-field `mutableStateOf` VM pattern is already idiomatic, so the

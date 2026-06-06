@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  FileProvider paths for in-app camera capture only. Captures are written to a private cache
+  subdir, handed to the camera app via a content:// URI, then encrypted into the media store and
+  the plaintext temp deleted. Nothing is ever written to shared storage / MediaStore.
+-->
+<paths>
+    <cache-path name="captures" path="captures/" />
+</paths>

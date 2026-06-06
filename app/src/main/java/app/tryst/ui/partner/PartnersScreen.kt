@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
@@ -55,7 +57,9 @@ import app.tryst.data.db.entity.Sex
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
 import app.tryst.ui.common.MediaImages
+import app.tryst.ui.common.rememberCameraCapture
 import app.tryst.ui.common.rememberImagePicker
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,8 +106,8 @@ fun PartnersScreen(viewModel: PartnersViewModel = hiltViewModel()) {
             initial = target.partner,
             onLoadPhoto = { viewModel.decodePhoto(it, AVATAR_PX) },
             onDismiss = { dialogTarget = null },
-            onSave = { name, anonymous, note, sex, gender, rel, photoUri, removePhoto ->
-                viewModel.save(target.partner?.id, name, anonymous, note, sex, gender, rel, photoUri, removePhoto)
+            onSave = { name, anonymous, note, sex, gender, rel, photoUri, removePhoto, tempFile ->
+                viewModel.save(target.partner?.id, name, anonymous, note, sex, gender, rel, photoUri, removePhoto, tempFile)
                 dialogTarget = null
             },
         )
@@ -182,7 +186,7 @@ private fun PartnerDialog(
     onSave: (
         name: String, anonymous: Boolean, note: String,
         sex: Sex?, gender: Gender?, rel: RelationshipType?,
-        photoUri: Uri?, removePhoto: Boolean,
+        photoUri: Uri?, removePhoto: Boolean, captureTempFile: File?,
     ) -> Unit,
 ) {
     val context = LocalContext.current
@@ -194,12 +198,19 @@ private fun PartnerDialog(
     var relationship by remember { mutableStateOf(initial?.relationshipType) }
     var photoUri by remember { mutableStateOf<Uri?>(null) }
     var photoRemoved by remember { mutableStateOf(false) }
+    var captureTempFile by remember { mutableStateOf<File?>(null) }
+    var photoMenu by remember { mutableStateOf(false) }
     val existingPhotoId = initial?.photoMediaId?.takeIf { !photoRemoved }
     val hasPhoto = photoUri != null || existingPhotoId != null
-    val pickImage = rememberImagePicker { photoUri = it; photoRemoved = false }
+    val pickImage = rememberImagePicker { captureTempFile?.delete(); captureTempFile = null; photoUri = it; photoRemoved = false }
+    val captureImage = rememberCameraCapture { uri, file ->
+        captureTempFile?.delete(); photoUri = uri; photoRemoved = false; captureTempFile = file
+    }
+    // On cancel, drop any unsaved camera temp (on Save the ViewModel deletes it after encrypting).
+    val dismiss = { captureTempFile?.delete(); onDismiss() }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = dismiss,
         title = { Text(if (initial == null) "Add partner" else "Edit partner") },
         text = {
             Column(
@@ -223,9 +234,25 @@ private fun PartnerDialog(
                         PartnerAvatar(existingPhotoId, name, 72.dp, onLoadPhoto)
                     }
                     Column {
-                        TextButton(onClick = { pickImage() }) { Text(if (hasPhoto) "Change photo" else "Add photo") }
+                        Box {
+                            TextButton(onClick = { photoMenu = true }) {
+                                Text(if (hasPhoto) "Change photo" else "Add photo")
+                            }
+                            DropdownMenu(expanded = photoMenu, onDismissRequest = { photoMenu = false }) {
+                                DropdownMenuItem(
+                                    text = { Text("Take photo") },
+                                    onClick = { photoMenu = false; captureImage() },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Choose from gallery") },
+                                    onClick = { photoMenu = false; pickImage() },
+                                )
+                            }
+                        }
                         if (hasPhoto) {
-                            TextButton(onClick = { photoUri = null; photoRemoved = true }) { Text("Remove") }
+                            TextButton(onClick = {
+                                captureTempFile?.delete(); captureTempFile = null; photoUri = null; photoRemoved = true
+                            }) { Text("Remove") }
                         }
                     }
                 }
@@ -254,11 +281,11 @@ private fun PartnerDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { onSave(name, anonymous, note, sex, gender, relationship, photoUri, photoRemoved) },
+                onClick = { onSave(name, anonymous, note, sex, gender, relationship, photoUri, photoRemoved, captureTempFile) },
                 enabled = anonymous || name.isNotBlank(),
             ) { Text("Save") }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = dismiss) { Text("Cancel") } },
     )
 }
 

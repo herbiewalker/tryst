@@ -21,6 +21,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -66,6 +68,7 @@ import app.tryst.ui.common.MultiSelectField
 import app.tryst.ui.common.PositionOptions
 import app.tryst.ui.common.SingleSelectChips
 import app.tryst.ui.common.SingleSelectField
+import app.tryst.ui.common.rememberCameraCapture
 import app.tryst.ui.common.rememberImagePicker
 import java.time.Instant
 import java.time.ZoneId
@@ -88,6 +91,7 @@ fun EncounterEditScreen(
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var viewer by remember { mutableStateOf<PhotoView?>(null) }
     val pickImage = rememberImagePicker { viewModel.addPhoto(it) }
+    val captureImage = rememberCameraCapture { uri, file -> viewModel.addCapturedPhoto(uri, file) }
 
     Scaffold(
         topBar = {
@@ -309,7 +313,7 @@ fun EncounterEditScreen(
                             onRemove = { viewModel.removePending(photo) },
                         )
                     }
-                    AddPhotoTile(onClick = { pickImage() })
+                    AddPhotoTile(onCamera = { captureImage() }, onGallery = { pickImage() })
                 }
             }
 
@@ -471,20 +475,33 @@ private fun PhotoThumb(
 }
 
 @Composable
-private fun AddPhotoTile(onClick: () -> Unit) {
-    Box(
-        modifier = Modifier
-            .size(84.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            "＋",
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+private fun AddPhotoTile(onCamera: () -> Unit, onGallery: () -> Unit) {
+    var menuOpen by remember { mutableStateOf(false) }
+    Box {
+        Box(
+            modifier = Modifier
+                .size(84.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .clickable { menuOpen = true },
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                "＋",
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            DropdownMenuItem(
+                text = { Text("Take photo") },
+                onClick = { menuOpen = false; onCamera() },
+            )
+            DropdownMenuItem(
+                text = { Text("Choose from gallery") },
+                onClick = { menuOpen = false; onGallery() },
+            )
+        }
     }
 }
 
