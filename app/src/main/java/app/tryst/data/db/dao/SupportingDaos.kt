@@ -38,6 +38,12 @@ interface PositionDao {
 
     @Query("SELECT * FROM positions ORDER BY label COLLATE NOCASE")
     fun observeAll(): Flow<List<PositionEntity>>
+
+    @Query("SELECT * FROM positions WHERE isBuiltIn = 0 ORDER BY label COLLATE NOCASE")
+    fun observeCustom(): Flow<List<PositionEntity>>
+
+    @Query("DELETE FROM positions WHERE id = :id")
+    suspend fun deleteById(id: String)
 }
 
 @Dao

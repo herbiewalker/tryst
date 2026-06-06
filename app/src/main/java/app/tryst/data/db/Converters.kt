@@ -5,7 +5,6 @@ import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.Orgasm
-import app.tryst.data.db.entity.Position
 import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.entity.Protection
 
@@ -58,15 +57,17 @@ class Converters {
         else -> value.split(SEP).map { Practice.valueOf(it) }.toSet()
     }
 
+    // Positions are stored as string IDs (built-in enum name, or "custom:<uuid>") so the set can
+    // include user-defined custom positions. IDs never contain commas, so SEP is safe here.
     @TypeConverter
-    fun positionSetToString(value: Set<Position>?): String? =
-        value?.joinToString(SEP) { it.name }
+    fun positionSetToString(value: Set<String>?): String? =
+        value?.joinToString(SEP)
 
     @TypeConverter
-    fun stringToPositionSet(value: String?): Set<Position>? = when {
+    fun stringToPositionSet(value: String?): Set<String>? = when {
         value == null -> null
         value.isBlank() -> emptySet()
-        else -> value.split(SEP).map { Position.valueOf(it) }.toSet()
+        else -> value.split(SEP).toSet()
     }
 
     private companion object {
