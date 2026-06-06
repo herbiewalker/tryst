@@ -192,6 +192,7 @@ enum class Kink(override val label: String) : DisplayLabel {
     SPANKING("Spanking"),
     FLOGGING("Flogging"),
     CHOKING("Choking / breath play"),
+    HAND_ON_NECK("Hand on neck (no choking)"),
     HAIR_PULLING("Hair pulling"),
     GAGGING("Gagging"),
     BITING("Biting"),
@@ -229,6 +230,7 @@ enum class Kink(override val label: String) : DisplayLabel {
     HOTWIFE("Hotwife"),
     WATERSPORTS("Watersports"),
     CUM_PLAY("Cum play"),
+    CREAMPIE_EATING("Creampie eating"),
     CUM_KISSING("Cum kissing (snowballing)"),
     CUM_SWAPPING("Cum swapping"),
     AFTERCARE("Aftercare"),
@@ -275,6 +277,8 @@ enum class Setting(override val label: String) : DisplayLabel {
 
 /** Occasion / context of the encounter (single multi-select). */
 enum class Occasion(override val label: String) : DisplayLabel {
+    NONE("None"),
+    REGULAR("Regular"),
     QUICKIE("Quickie"),
     MORNING_SEX("Morning sex"),
     WAKE_UP_SEX("Wake-up sex"),
@@ -295,6 +299,7 @@ enum class Occasion(override val label: String) : DisplayLabel {
 
 /** Toys used (multi-select). */
 enum class ToyType(override val label: String) : DisplayLabel {
+    NONE("None"),
     VIBRATOR("Vibrator"),
     WAND("Wand"),
     AIR_PULSE("Air-pulse / suction"),

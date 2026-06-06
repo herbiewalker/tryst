@@ -378,11 +378,11 @@ private object CommonOptions {
         Setting.HOTEL, Setting.OUTDOORS, Setting.LIVING_ROOM, Setting.HOT_TUB,
     )
     val OCCASION = listOf(
-        Occasion.QUICKIE, Occasion.MORNING_SEX, Occasion.MAKEUP_SEX, Occasion.SPONTANEOUS,
-        Occasion.DATE_NIGHT, Occasion.DRUNK_HIGH, Occasion.PERIOD_SEX, Occasion.ANNIVERSARY,
+        Occasion.REGULAR, Occasion.NONE, Occasion.QUICKIE, Occasion.MORNING_SEX,
+        Occasion.MAKEUP_SEX, Occasion.SPONTANEOUS, Occasion.DATE_NIGHT, Occasion.DRUNK_HIGH,
     )
     val TOY = listOf(
-        ToyType.VIBRATOR, ToyType.DILDO, ToyType.BUTT_PLUG, ToyType.COCK_RING,
-        ToyType.STRAP_ON, ToyType.WAND, ToyType.ANAL_BEADS, ToyType.NIPPLE_CLAMPS,
+        ToyType.NONE, ToyType.VIBRATOR, ToyType.DILDO, ToyType.BUTT_PLUG,
+        ToyType.COCK_RING, ToyType.STRAP_ON, ToyType.WAND, ToyType.ANAL_BEADS,
     )
 }
