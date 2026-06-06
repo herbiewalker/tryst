@@ -2,13 +2,16 @@ package app.tryst.data.db
 
 import androidx.room.TypeConverter
 import app.tryst.data.db.entity.EjaculationLocation
+import app.tryst.data.db.entity.Gender
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Kink
 import app.tryst.data.db.entity.Mood
+import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.Orgasm
-import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.entity.Protection
+import app.tryst.data.db.entity.RelationshipType
 import app.tryst.data.db.entity.Setting
+import app.tryst.data.db.entity.Sex
 import app.tryst.data.db.entity.ToyType
 
 /**
@@ -29,6 +32,18 @@ class Converters {
     @TypeConverter fun stringToOrgasm(value: String?): Orgasm? =
         value?.let { runCatching { Orgasm.valueOf(it) }.getOrNull() }
 
+    @TypeConverter fun sexToString(value: Sex?): String? = value?.name
+    @TypeConverter fun stringToSex(value: String?): Sex? =
+        value?.let { runCatching { Sex.valueOf(it) }.getOrNull() }
+
+    @TypeConverter fun genderToString(value: Gender?): String? = value?.name
+    @TypeConverter fun stringToGender(value: String?): Gender? =
+        value?.let { runCatching { Gender.valueOf(it) }.getOrNull() }
+
+    @TypeConverter fun relationshipToString(value: RelationshipType?): String? = value?.name
+    @TypeConverter fun stringToRelationship(value: String?): RelationshipType? =
+        value?.let { runCatching { RelationshipType.valueOf(it) }.getOrNull() }
+
     @TypeConverter
     fun protectionSetToString(value: Set<Protection>): String = value.joinToString(SEP) { it.name }
 
@@ -45,13 +60,6 @@ class Converters {
         value?.toEnumSet { EjaculationLocation.valueOf(it) }
 
     @TypeConverter
-    fun practiceSetToString(value: Set<Practice>?): String? = value?.joinToString(SEP) { it.name }
-
-    @TypeConverter
-    fun stringToPracticeSet(value: String?): Set<Practice>? =
-        value?.toEnumSet { Practice.valueOf(it) }
-
-    @TypeConverter
     fun kinkSetToString(value: Set<Kink>?): String? = value?.joinToString(SEP) { it.name }
 
     @TypeConverter
@@ -62,6 +70,12 @@ class Converters {
 
     @TypeConverter
     fun stringToSettingSet(value: String?): Set<Setting>? = value?.toEnumSet { Setting.valueOf(it) }
+
+    @TypeConverter
+    fun occasionSetToString(value: Set<Occasion>?): String? = value?.joinToString(SEP) { it.name }
+
+    @TypeConverter
+    fun stringToOccasionSet(value: String?): Set<Occasion>? = value?.toEnumSet { Occasion.valueOf(it) }
 
     @TypeConverter
     fun toyTypeSetToString(value: Set<ToyType>?): String? = value?.joinToString(SEP) { it.name }

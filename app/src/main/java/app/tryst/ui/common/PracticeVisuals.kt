@@ -4,16 +4,20 @@ import app.tryst.data.db.entity.Practice
 
 /**
  * Maps acts to emoji and picks the single "headline" act for an encounter (the most notable one
- * gave or received), used for the card badge. Approximate by design.
+ * gave or received), used for the card badge. Acts are string ids: a built-in [Practice] name or
+ * "custom:<uuid>". Custom acts fall back to the generic badge. Approximate by design.
  */
 object PracticeVisuals {
 
-    fun primaryPractice(gave: Set<Practice>?, received: Set<Practice>?): Practice? {
+    /** Returns the highest-priority built-in act id present, or any id (e.g. a custom one), or null. */
+    fun primaryPractice(gave: Set<String>?, received: Set<String>?): String? {
         val all = (gave ?: emptySet()) + (received ?: emptySet())
-        return PRIORITY.firstOrNull { it in all }
+        if (all.isEmpty()) return null
+        return PRIORITY.firstOrNull { it.name in all }?.name ?: all.first()
     }
 
-    fun emoji(practice: Practice?): String = practice?.let { EMOJI[it] } ?: FALLBACK
+    fun emoji(actId: String?): String =
+        actId?.let { id -> runCatching { Practice.valueOf(id) }.getOrNull()?.let { EMOJI[it] } } ?: FALLBACK
 
     private const val FALLBACK = "❤️‍🔥"
 
@@ -22,6 +26,8 @@ object PracticeVisuals {
         Practice.DOUBLE_PENETRATION,
         Practice.FISTING,
         Practice.PEGGING,
+        Practice.ANAL_CREAMPIE,
+        Practice.ASS_TO_MOUTH,
         Practice.ANAL,
         Practice.VAGINAL,
         Practice.PROSTATE_MASSAGE,
@@ -34,6 +40,7 @@ object PracticeVisuals {
         Practice.CREAMPIE,
         Practice.FACIAL,
         Practice.SQUIRTING,
+        Practice.SCISSORING,
         Practice.ANAL_FINGERING,
         Practice.FINGERING,
         Practice.MANUAL,
@@ -65,6 +72,8 @@ object PracticeVisuals {
         Practice.ANAL_FINGERING to "👈",
         Practice.VAGINAL to "🍆",
         Practice.ANAL to "🍑",
+        Practice.ASS_TO_MOUTH to "🍑",
+        Practice.SCISSORING to "✂️",
         Practice.DOUBLE_PENETRATION to "✌️",
         Practice.PEGGING to "🍆",
         Practice.FISTING to "🤜",
@@ -80,6 +89,7 @@ object PracticeVisuals {
         Practice.MASTURBATION to "✊",
         Practice.SPIT_PLAY to "💧",
         Practice.CREAMPIE to "💦",
+        Practice.ANAL_CREAMPIE to "💦",
         Practice.FACIAL to "💦",
         Practice.SQUIRTING to "💦",
         Practice.CUDDLING to "🫂",

@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
+import app.tryst.core.prefs.ThemePreferences
 import app.tryst.core.session.LockState
 import app.tryst.ui.TrystApp
 import app.tryst.ui.lock.LockScreen
@@ -19,9 +20,13 @@ import app.tryst.ui.lock.LockViewModel
 import app.tryst.ui.lock.SetupScreen
 import app.tryst.ui.theme.TrystTheme
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : FragmentActivity() {
+
+    @Inject lateinit var themePreferences: ThemePreferences
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -33,7 +38,9 @@ class MainActivity : FragmentActivity() {
 
         enableEdgeToEdge()
         setContent {
-            TrystTheme {
+            val themeMode by themePreferences.themeMode.collectAsState()
+            val dynamicColor by themePreferences.dynamicColor.collectAsState()
+            TrystTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,

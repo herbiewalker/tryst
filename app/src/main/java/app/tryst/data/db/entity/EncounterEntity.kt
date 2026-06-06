@@ -36,15 +36,19 @@ data class EncounterEntity(
     /** Number of orgasms the partner(s) had this session. */
     val orgasmCountPartner: Int? = null,
     val ejaculationLocations: Set<EjaculationLocation>? = null,
-    val practicesPerformed: Set<Practice>? = null,
-    val practicesReceived: Set<Practice>? = null,
+    /** Act IDs gave/received: a built-in [Practice] name, or "custom:<uuid>" for user-defined. */
+    val practicesPerformed: Set<String>? = null,
+    val practicesReceived: Set<String>? = null,
     // --- added in schema v3 ---
     /** Selected position IDs: a built-in [Position] name, or "custom:<uuid>" for user-defined. */
     val positions: Set<String>? = null,
     // --- added in schema v4 ---
     val kinks: Set<Kink>? = null,
+    /** Place (built-in [Setting]). */
     val contexts: Set<Setting>? = null,
     val toys: Set<ToyType>? = null,
+    // --- added in schema v5 ---
+    val occasions: Set<Occasion>? = null,
     // ---------------------------
     val locationId: String? = null,
     val createdAt: Long,

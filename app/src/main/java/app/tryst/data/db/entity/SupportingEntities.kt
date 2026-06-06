@@ -26,6 +26,13 @@ data class PositionEntity(
     val isBuiltIn: Boolean = false,
 )
 
+@Entity(tableName = "acts", indices = [Index(value = ["label"], unique = true)])
+data class ActEntity(
+    @PrimaryKey val id: String,
+    val label: String,
+    val isBuiltIn: Boolean = false,
+)
+
 @Entity(
     tableName = "media",
     foreignKeys = [

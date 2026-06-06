@@ -33,5 +33,26 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
     }
 }
 
+/**
+ * v4 → v5: partner sex/gender/relationship/photo (M4 hook); an `occasions` column on encounters;
+ * and a custom `acts` table (mirrors `positions`). All additive — existing rows keep their data.
+ * The practicesPerformed/Received columns are unchanged (TEXT); only their app-side type moved
+ * from a Practice-set to string ids, which the same TEXT storage already holds.
+ */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE partners ADD COLUMN sex TEXT")
+        db.execSQL("ALTER TABLE partners ADD COLUMN gender TEXT")
+        db.execSQL("ALTER TABLE partners ADD COLUMN relationshipType TEXT")
+        db.execSQL("ALTER TABLE partners ADD COLUMN photoMediaId TEXT")
+        db.execSQL("ALTER TABLE encounters ADD COLUMN occasions TEXT")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `acts` " +
+                "(`id` TEXT NOT NULL, `label` TEXT NOT NULL, `isBuiltIn` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_acts_label` ON `acts` (`label`)")
+    }
+}
+
 /** All migrations, in order. */
-val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
