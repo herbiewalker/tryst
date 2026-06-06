@@ -84,6 +84,10 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 - [x] Attach/remove photos on the encounter editor (staged, committed on Save), full-screen viewer,
       thumbnail on the history/calendar card.
 - [x] Partner photo (reuses `photoMediaId`) on the partner add/edit dialog + card avatar.
+- [x] **In-app camera capture** (FileProvider → private cache → encrypt → delete plaintext temp);
+      sensitive shots never touch MediaStore/gallery/cloud. No CAMERA permission needed.
+- [x] Resilient picker: Photo Picker with an ACTION_GET_CONTENT fallback (some emulators advertise
+      the picker without providing it).
 - [x] `MediaAttachmentTest`: attach round-trip, on-disk blob verified encrypted, delete cleans up. 14/14 green.
 
 ## M5 — Backup & portability

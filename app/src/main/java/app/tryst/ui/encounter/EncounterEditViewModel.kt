@@ -35,11 +35,15 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.UUID
 import javax.inject.Inject
 
-/** A photo picked but not yet attached (attached on Save). */
-data class PendingPhoto(val uri: Uri, val mimeType: String)
+/**
+ * A photo picked but not yet attached (attached on Save). [tempFile] is set only for in-app camera
+ * captures — a plaintext file in private cache that must be deleted once it's encrypted (or discarded).
+ */
+data class PendingPhoto(val uri: Uri, val mimeType: String, val tempFile: File? = null)
 
 @HiltViewModel
 class EncounterEditViewModel @Inject constructor(
@@ -138,8 +142,14 @@ class EncounterEditViewModel @Inject constructor(
         pendingPhotos = pendingPhotos + PendingPhoto(uri, mime)
     }
 
+    /** From the in-app camera: [file] is the plaintext capture in cache, deleted once encrypted. */
+    fun addCapturedPhoto(uri: Uri, file: File) {
+        pendingPhotos = pendingPhotos + PendingPhoto(uri, "image/jpeg", file)
+    }
+
     fun removePending(photo: PendingPhoto) {
         pendingPhotos = pendingPhotos - photo
+        photo.tempFile?.delete()
     }
 
     fun removeExisting(media: MediaEntity) {
@@ -252,9 +262,15 @@ class EncounterEditViewModel @Inject constructor(
                     }
                 }
                 removedExisting.forEach { encounters.deleteMedia(it) }
+                pendingPhotos.forEach { it.tempFile?.delete() } // remove plaintext camera temps
             }
             onDone()
         }
+    }
+
+    override fun onCleared() {
+        // Best-effort cleanup of any uncommitted camera temps (e.g. on Cancel / back).
+        pendingPhotos.forEach { it.tempFile?.delete() }
     }
 
     fun delete(onDone: () -> Unit) {

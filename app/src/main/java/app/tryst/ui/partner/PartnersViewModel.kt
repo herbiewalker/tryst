@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.UUID
 import javax.inject.Inject
 
@@ -44,6 +45,7 @@ class PartnersViewModel @Inject constructor(
         relationshipType: RelationshipType?,
         newPhotoUri: Uri?,
         removePhoto: Boolean,
+        captureTempFile: File? = null,
     ) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
@@ -79,6 +81,7 @@ class PartnersViewModel @Inject constructor(
                     updatedAt = now,
                 ),
             )
+            captureTempFile?.delete() // plaintext camera temp, now encrypted into the blob
         }
     }
 
