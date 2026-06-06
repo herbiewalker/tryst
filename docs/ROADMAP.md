@@ -76,14 +76,15 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
       acts.
 - [x] **Cleanup:** PBKDF2 → 600k (OWASP); dependency refresh (Room pinned 2.7.1); modern Kotlin DSL.
 
-## M4 — Media attachments  ← next
-Data layer already exists (`MediaEntity`, `EncryptedMediaStore`, `MediaCrypto`, repo
-attach/open/delete, `Partner.photoMediaId`). M4 is the **UI**:
-- [ ] Pick photos via the Android Photo Picker (no storage permission → keeps the zero-permission guarantee).
-- [ ] Encrypt on attach into app-internal storage; thumbnails + full view **decrypted in-memory only** (no temp files).
-- [ ] Attach/remove photos on the encounter editor; show them on the encounter + history card.
-- [ ] Partner photo (reuses `photoMediaId`) on the partner add/edit dialog + card avatar.
-- [ ] Tests: media attach/detach round-trip; on-disk blobs verified encrypted; deletion cleans up blobs.
+## M4 — Media attachments  ✅ done (verified on emulator)
+- [x] Pick photos via the Android Photo Picker (`PickVisualMedia`, image-only — no storage permission,
+      keeps the zero-permission guarantee).
+- [x] Encrypt on attach into app-internal storage; thumbnails + full view **decrypted in-memory only**
+      (manual `BitmapFactory` downsampling via `ui/common/MediaImages` — no third-party loader, no temp files).
+- [x] Attach/remove photos on the encounter editor (staged, committed on Save), full-screen viewer,
+      thumbnail on the history/calendar card.
+- [x] Partner photo (reuses `photoMediaId`) on the partner add/edit dialog + card avatar.
+- [x] `MediaAttachmentTest`: attach round-trip, on-disk blob verified encrypted, delete cleans up. 14/14 green.
 
 ## M5 — Backup & portability
 - Encrypted export + import; write `docs/EXPORT_FORMAT.md`.

@@ -1,6 +1,13 @@
 package app.tryst.ui.encounter
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -8,7 +15,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -33,8 +43,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.data.db.entity.EjaculationLocation
@@ -46,6 +62,7 @@ import app.tryst.data.db.entity.Protection
 import app.tryst.data.db.entity.Setting
 import app.tryst.data.db.entity.ToyType
 import app.tryst.ui.common.ActOptions
+import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
 import app.tryst.ui.common.MultiSelectChips
 import app.tryst.ui.common.MultiSelectField
@@ -71,6 +88,10 @@ fun EncounterEditScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var viewer by remember { mutableStateOf<PhotoView?>(null) }
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        uri?.let { viewModel.addPhoto(it) }
+    }
 
     Scaffold(
         topBar = {
@@ -269,6 +290,37 @@ fun EncounterEditScreen(
                 )
             }
 
+            Field("Photos") {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    viewModel.existingPhotos.forEach { media ->
+                        PhotoThumb(
+                            key = media.id,
+                            load = { viewModel.decodeExisting(media, THUMB_PX) },
+                            onClick = { viewer = PhotoView(media.id) { viewModel.decodeExisting(media, FULL_PX) } },
+                            onRemove = { viewModel.removeExisting(media) },
+                        )
+                    }
+                    viewModel.pendingPhotos.forEach { photo ->
+                        PhotoThumb(
+                            key = photo.uri,
+                            load = { viewModel.decodePending(photo.uri, THUMB_PX) },
+                            onClick = { viewer = PhotoView(photo.uri) { viewModel.decodePending(photo.uri, FULL_PX) } },
+                            onRemove = { viewModel.removePending(photo) },
+                        )
+                    }
+                    AddPhotoTile {
+                        photoPicker.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
+                        )
+                    }
+                }
+            }
+
             if (viewModel.isEditing) {
                 OutlinedButton(
                     onClick = { showDeleteConfirm = true },
@@ -324,6 +376,28 @@ fun EncounterEditScreen(
             dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") } },
         )
     }
+
+    viewer?.let { v ->
+        Dialog(
+            onDismissRequest = { viewer = null },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable { viewer = null },
+                contentAlignment = Alignment.Center,
+            ) {
+                DecodedImage(
+                    model = v.key,
+                    contentDescription = "Photo",
+                    modifier = Modifier.fillMaxWidth(),
+                    contentScale = ContentScale.Fit,
+                    load = v.load,
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -363,6 +437,63 @@ private fun combineTime(base: Long, hour: Int, minute: Int): Long {
     return Instant.ofEpochMilli(base).atZone(zone)
         .withHour(hour).withMinute(minute).withSecond(0).withNano(0)
         .toInstant().toEpochMilli()
+}
+
+private const val THUMB_PX = 300
+private const val FULL_PX = 1600
+
+/** A photo selected for full-screen viewing: its [key] for recomposition + its decode [load]. */
+private class PhotoView(val key: Any, val load: suspend () -> ImageBitmap?)
+
+@Composable
+private fun PhotoThumb(
+    key: Any,
+    load: suspend () -> ImageBitmap?,
+    onClick: () -> Unit,
+    onRemove: () -> Unit,
+) {
+    Box(modifier = Modifier.size(84.dp)) {
+        DecodedImage(
+            model = key,
+            contentDescription = "Photo",
+            modifier = Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(12.dp))
+                .clickable(onClick = onClick),
+            contentScale = ContentScale.Crop,
+            load = load,
+        )
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(4.dp)
+                .size(22.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f))
+                .clickable(onClick = onRemove),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("×", color = Color.White, style = MaterialTheme.typography.titleMedium)
+        }
+    }
+}
+
+@Composable
+private fun AddPhotoTile(onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .size(84.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            "＋",
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
 }
 
 /** The handful of most-common options shown inline per category; the rest live in "More…". */
