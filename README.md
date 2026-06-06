@@ -37,7 +37,12 @@ Progress against the [roadmap](docs/ROADMAP.md):
   and biometric unlock (with PIN fallback).
 - ✅ **M3** — Navigation shell, encounter logging (add/edit/delete with rich fields), partner
   management, history list, and a settings screen (biometric, lock, delete-all-data).
-- ⬜ M4 media UI · M5 encrypted backup · M6 insights · M7 achievements · M8 release.
+- ✅ **M3.x** — Partner sex/gender/relationship; custom **acts** (alongside custom positions);
+  big category expansion; **Setting & Location** split out from **Occasion**; per-partner orgasm
+  counts + per-orgasm ejaculation; **theming** (purple/green palette, Light/Dark/System, optional
+  Material You); a **calendar** view on the Trysts screen with custom per-act icons. Schema at **v6**.
+- ⬜ **M4** media attachments UI (encrypted photos on encounters & partners) · M5 encrypted backup ·
+  M6 insights · M7 achievements · M8 release (incl. string/i18n + a11y pass).
 
 New here? See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for scope and
 [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) to build it.

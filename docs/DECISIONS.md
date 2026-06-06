@@ -61,9 +61,39 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   converters now **skip unknown names**, so values that moved categories don't crash older rows.
   `MigrationTest` validates v1→v4.
 
+- **D-19 (cleanup, 2026-06-06):** PBKDF2 iterations **200k → 600k** (OWASP; per-vault `iter` so it's
+  back-compatible). Dependency refresh (Hilt 2.57.1, Compose BOM 2026.04.01, lifecycle 2.10.0,
+  activity 1.12.4, coroutines 1.11.0, navigation 2.9.0, coreKtx 1.16.0). **Room pinned at 2.7.1** —
+  2.8+ `room-testing` needs a newer kotlinx-serialization than the Kotlin 2.2.10 toolchain ships
+  (breaks `MigrationTest`); bump with the next Kotlin upgrade. Deprecated `kotlinOptions` →
+  `kotlin { compilerOptions }`.
+- **D-20 (M3.1, schema v5):** **Partner** gains sex / gender / relationshipType (enums) + a
+  `photoMediaId` hook for M4 photos. **Custom Acts** added (new `acts` table mirroring `positions`;
+  practices now stored as **string IDs** — built-in `Practice` name or `custom:<uuid>` — gave/received,
+  managed in Settings). **Setting & Context** split into **Setting & Location** (places only) + a new
+  **Occasion** category; threesome/group/swinging moved to **Kink**. **Theming:** brand purple/green
+  Material 3 palette as default with a **Material You** toggle and **Light/Dark/System** mode,
+  persisted in `core/prefs/ThemePreferences` (plain SharedPreferences — non-sensitive). `MigrationTest`
+  v1→v5.
+- **D-21 (M3.2):** Trysts card badge switched from ambiguous emoji to **custom per-act vector
+  drawables** (`res/drawable/ic_act_*.xml`), chosen by a full intensity ranking
+  (`ui/common/PracticeVisuals`). Added a **calendar view** toggle (month grid; each day shows its
+  headline act icon). Icons are single tintable colour, so they can be **swapped for more realistic
+  artwork later** with no code change. `rankedActs()` already supports a future top-2 badge.
+- **D-22 (M3.3, schema v6):** **Per-partner orgasm counts** (`partnerOrgasms` column = partnerId→count,
+  one counter per selected partner labelled by name; legacy `orgasmCountPartner` kept) and
+  **per-orgasm ejaculation** (the `ejaculationLocations` column repurposed to orgasmIndex→location —
+  your self-orgasm count drives N single-select ejaculation rows). Added Blowjob, Ball-sucking,
+  Cunnilingus, Clit-sucking acts. `MigrationTest` v1→v6.
+- **D-23 (deferred):** Chunk 6 — extracting hardcoded UI strings to `strings.xml` and refactoring
+  `EncounterEditViewModel` to a single `UiState` — is **deferred to M8**. String extraction belongs
+  with the a11y/i18n pass; the per-field `mutableStateOf` VM pattern is already idiomatic, so the
+  UiState wrap is low-value churn pre-release.
+
 ## Open
 
 - **O-2 License & distribution:** GPLv3 vs MIT/Apache; F-Droid and/or Play. **Decide at M8.**
   Repo structured to keep options open.
 - **O-3 Charts library:** Vico vs alternatives — decide at M6.
-- **O-4 Multi-partner per encounter in UI:** data model supports M:N; confirm v1 UI scope.
+- **O-4 (resolved) Multi-partner per encounter:** **yes** — the editor supports selecting multiple
+  partners (M:N) with per-partner orgasm counts (D-22).
