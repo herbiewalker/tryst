@@ -37,6 +37,8 @@ object Format {
 
     fun dayOfMonth(epochMillis: Long): String = zoned(epochMillis).dayOfMonth.toString()
 
+    fun localDate(epochMillis: Long): LocalDate = zoned(epochMillis).toLocalDate()
+
     fun monthShort(epochMillis: Long): String =
         zoned(epochMillis).format(monthFormatter).uppercase(Locale.getDefault())
 
