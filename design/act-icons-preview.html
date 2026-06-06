@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tryst — custom act icons (draft v3, per-act)</title>
+<style>
+  :root { --purple:#6A4BAA; --purpleD:#CFBCFF; }
+  body { font-family: system-ui, Segoe UI, sans-serif; margin: 32px; background:#faf8ff; color:#1c1b1f; }
+  h1 { font-size: 20px; } p.note { color:#555; max-width:780px; }
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(235px,1fr)); gap:16px; margin-top:24px; }
+  .card { border:1px solid #e3dcef; border-radius:14px; padding:14px; background:#fff; }
+  .swatches { display:flex; gap:10px; margin-bottom:10px; align-items:center; }
+  .sw { width:60px; height:60px; border-radius:12px; display:flex; align-items:center; justify-content:center; }
+  .sw.light { background:#ECE4FF; color:var(--purple); }
+  .sw.dark  { background:#2a1f45; color:var(--purpleD); }
+  .sw.tiny  { width:22px; height:22px; border-radius:6px; }
+  .sw svg { width:36px; height:36px; }
+  .sw.tiny svg { width:14px; height:14px; }
+  .name { font-weight:600; font-size:15px; }
+  .acts { color:#666; font-size:12.5px; margin-top:3px; line-height:1.45; }
+  .big { display:flex; gap:8px; flex-wrap:wrap; margin:14px 0 4px; }
+  .big .sw { width:46px; height:46px; }
+  .cap { font-size:12px; color:#777; margin-bottom:4px; }
+</style>
+</head>
+<body>
+<h1>Tryst — custom act icons (draft v3 · per-act, stylized)</h1>
+<p class="note">Per-act now (~19), with the mouth redrawn, cum as a squirt/spurt, and a soft fill for an
+illustrated feel. Stylized vectors — not photoreal. Top rows show every icon big (light/dark) and at real
+14px badge size. Tell me which to keep / refine / redraw, then I convert the set into the app (card badge
++ calendar switch together). The headline icon per encounter is chosen by the intensity ranking.</p>
+
+<div class="cap">Light · big</div><div class="big" id="rowLight"></div>
+<div class="cap">Dark · big</div><div class="big" id="rowDark"></div>
+<div class="cap">Tiny · real badge size (the real legibility test)</div><div class="big" id="rowTiny"></div>
+
+<div class="grid" id="grid"></div>
+
+<script>
+const sf  = 'fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"';
+const sff = 'fill="currentColor" fill-opacity="0.14" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"';
+const sft = 'fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"';
+const f   = 'fill="currentColor"';
+const fl  = 'fill="currentColor" fill-opacity="0.55"';
+
+const P = {
+  kiss: `<path d="M4 11C6 8.6 10 9 12 10.8C14 9 18 8.6 20 11C17.5 11.6 14.5 11.4 12 12.2C9.5 11.4 6.5 11.6 4 11Z" ${f}/>`
+      + `<path d="M4 11C6.5 14.6 17.5 14.6 20 11C17.5 12 14.5 12.2 12 12.2C9.5 12.2 6.5 12 4 11Z" ${f}/>`,
+  oral: `<path d="M5 11C8 8 16 8 19 11C16 15 8 15 5 11Z" ${sff}/>`
+      + `<path d="M4.6 11C8 7.6 16 7.6 19.4 11" ${sf}/>`
+      + `<path d="M7 10.2C9.5 9.2 14.5 9.2 17 10.2" ${sft}/>`
+      + `<path d="M9.4 12.2C10.2 14.9 13.8 14.9 14.6 12.2C13 13.2 11 13.2 9.4 12.2Z" ${f}/>`,
+  sixtynine: `<circle cx="12" cy="12" r="8.6" ${sf}/>`
+      + `<path d="M12 3.4a4.3 4.3 0 0 1 0 8.6 4.3 4.3 0 0 0 0 8.6" ${sf}/>`
+      + `<circle cx="12" cy="7.7" r="1.1" ${f}/><circle cx="12" cy="16.3" r="1.1" ${f}/>`,
+  rimming: `<path d="M16.5 8.5C14 7.5 10.5 9 10.5 12.2C10.5 15.4 12.8 17.5 15 17.5C17 17.5 18.8 15.6 18.8 12.5C18.8 10.4 18 9 16.5 8.5Z" ${sff}/>`
+      + `<path d="M15 9C14.2 11 14.2 14 15 16.8" ${sft}/>`
+      + `<path d="M3.5 13C6.5 11.8 9 11.8 11 13C9 14.6 6.5 14.6 3.5 13Z" ${f}/>`,
+  vulva: `<path d="M12 3C9 7 9 17 12 21C15 17 15 7 12 3Z" ${sff}/>`
+      + `<path d="M12 7C10.9 10.5 10.9 13.5 12 17" ${sft}/>`
+      + `<circle cx="12" cy="6.2" r="0.9" ${f}/>`,
+  scissoring: `<path d="M4 5C8 9 10.5 11 12 12M4 19C8 15 10.5 13 12 12" ${sf}/>`
+      + `<path d="M20 5C16 9 13.5 11 12 12M20 19C16 15 13.5 13 12 12" ${sf}/>`
+      + `<circle cx="12" cy="12" r="1.5" ${f}/>`,
+  anal: `<path d="M12 6C9.4 4 5 5 5 10c0 5 3.4 10 7 10s7-5 7-10c0-5-4.4-6-7-4Z" ${sff}/>`
+      + `<path d="M12 6c-1 2 1 2 0 4" ${sft}/>`
+      + `<path d="M12 10.5c-.7 3-.7 6 0 8.5" ${sft}/>`,
+  a2m: `<path d="M3.5 13C3.5 10.5 5.5 9 7.5 9C9.5 9 11 10.5 11 13C11 15.5 9.5 17 7.5 17C5.5 17 3.5 15.5 3.5 13Z" ${sff}/>`
+      + `<path d="M7.5 9.4C6.8 11 6.8 15 7.5 16.6" ${sft}/>`
+      + `<path d="M12.5 13H17" ${sf}/><path d="M15.5 11.5L17 13L15.5 14.5" ${sf}/>`
+      + `<path d="M18.5 11C20 11.8 20 14.2 18.5 15" ${sf}/>`,
+  pegging: `<path d="M10.6 4C10.6 4 10.2 8 10.2 10.5L13.8 10.5C13.8 8 13.4 4 13.4 4Z" ${f}/>`
+      + `<path d="M5 13C9 11 15 11 19 13" ${sf}/>`
+      + `<path d="M5 13L4 17M19 13L20 17M9 13L8.5 18M15 13L15.5 18" ${sft}/>`,
+  dp: `<circle cx="12" cy="14.5" r="5" ${sff}/>`
+      + `<path d="M9 3V9M7 7L9 9L11 7" ${sf}/><path d="M15 3V9M13 7L15 9L17 7" ${sf}/>`,
+  fisting: `<path d="M6 12a1.5 1.5 0 0 1 3 0a1.5 1.5 0 0 1 3 0a1.5 1.5 0 0 1 3 0a1.5 1.5 0 0 1 3 0v3a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4Z" ${sff}/>`
+      + `<path d="M6 13.5C4.2 13.5 4.2 16.5 6 16.5" ${sf}/>`
+      + `<path d="M8 12.5V15M11 12.5V15M14 12.5V15" ${sft}/>`,
+  hand: `<path d="M8 11V6.5a1 1 0 0 1 2 0V11M10 11V5.5a1 1 0 0 1 2 0V11M12 11V6a1 1 0 0 1 2 0V12M14 12V8a1 1 0 0 1 2 0v5a5 5 0 0 1-5 5h-1a4 4 0 0 1-3.5-2L6 14.5" ${sf}/>`,
+  prostate: `<path d="M3.5 13H13a1.5 1.5 0 0 0 1.5-1.5V7a1 1 0 0 1 2 0v5a4 4 0 0 1-4 4H3.5Z" ${sff}/>`
+      + `<circle cx="19" cy="13" r="2.4" ${sf}/><circle cx="19" cy="13" r="0.8" ${f}/>`,
+  breasts: `<circle cx="8.5" cy="13" r="3.9" ${sff}/><circle cx="15.5" cy="13" r="3.9" ${sff}/>`
+      + `<circle cx="8.5" cy="13" r="1" ${f}/><circle cx="15.5" cy="13" r="1" ${f}/>`,
+  foot: `<path d="M9 4C7.6 4 7 5.8 7.4 7.8C7.7 9.2 7.5 10.4 6.2 11.6C4.4 13.3 5 17 8.4 17H13a3 3 0 0 0 3-3c0-1.6-1.1-2.5-3-3C10.2 10.3 9.8 9.4 9.8 7.2C9.8 5.2 10 4 9 4Z" ${sff}/>`
+      + `<circle cx="16.5" cy="9.5" r="0.7" ${f}/><circle cx="17.2" cy="11.3" r="0.7" ${f}/><circle cx="17.2" cy="13.1" r="0.7" ${f}/>`,
+  massage: `<path d="M3 17C7 13 17 13 21 17" ${sf}/>`
+      + `<path d="M7 13.5C7 12 8 11 9.3 11C9.3 12.6 9 13.4 8.4 14.2" ${sff}/>`
+      + `<path d="M17 13.5C17 12 16 11 14.7 11C14.7 12.6 15 13.4 15.6 14.2" ${sff}/>`,
+  squirt: `<path d="M4 18C8 13 13 10 20 8.5" ${sft} stroke-opacity="0.5"/>`
+      + `<path d="M3.5 19.5C5 18 6.5 17 8 16.3" ${sft} stroke-opacity="0.4"/>`
+      + `<path d="M19.5 6.5s-1.4 2-1.4 3.1a1.4 1.4 0 0 0 2.8 0C20.9 8.5 19.5 6.5 19.5 6.5Z" ${f}/>`
+      + `<path d="M14.5 9.5s-1 1.4-1 2.1a1 1 0 0 0 2 0C15.5 10.9 14.5 9.5 14.5 9.5Z" ${fl}/>`
+      + `<path d="M10 12.5s-.9 1.2-.9 1.8a.9 .9 0 0 0 1.8 0C10.9 13.7 10 12.5 10 12.5Z" ${fl}/>`,
+  embrace: `<circle cx="9" cy="8" r="2.4" ${f}/>`
+      + `<path d="M4.6 18C4.6 13.6 6.6 12 9 12C11.4 12 13.4 13.6 13.4 18Z" ${f}/>`
+      + `<circle cx="15.4" cy="9.5" r="2.4" ${sf}/>`
+      + `<path d="M11 18C11 14.2 12.9 12.6 15.4 12.6C17.9 12.6 19.8 14.2 19.8 18" ${sf}/>`,
+  custom: `<path d="M12 4l1.8 4.2L18 10l-4.2 1.8L12 16l-1.8-4.2L6 10l4.2-1.8Z" ${f}/>`,
+};
+const ITEMS = [
+  ['kiss','Kiss', 'Kissing, making out'],
+  ['oral','Oral', 'Oral, deep throat, face-fucking'],
+  ['sixtynine','69', 'Sixty-nine'],
+  ['rimming','Rimming', 'Rimming'],
+  ['vulva','Vulva — vaginal', 'Vaginal'],
+  ['scissoring','Scissoring', 'Scissoring'],
+  ['anal','Butt — anal', 'Anal, anal creampie'],
+  ['a2m','Ass to mouth', 'Ass to mouth'],
+  ['pegging','Pegging', 'Pegging'],
+  ['dp','Double penetration', 'Double penetration'],
+  ['fisting','Fisting', 'Fisting'],
+  ['hand','Hand', 'Manual/handjob, fingering, masturbation, mutual'],
+  ['prostate','Prostate / anal fingering', 'Anal fingering, prostate massage'],
+  ['breasts','Breasts', 'Breast play, nipple play, titjob'],
+  ['foot','Foot', 'Foot play'],
+  ['massage','Massage', 'Massage'],
+  ['squirt','Squirt / cum', 'Squirting, creampie, facial, spit play'],
+  ['embrace','Embrace', 'Cuddling, frottage, face-sitting'],
+  ['custom','Custom / other', 'Your custom acts + “Other”'],
+];
+const svg = (p) => `<svg viewBox="0 0 24 24">${p}</svg>`;
+document.getElementById('rowLight').innerHTML = ITEMS.map(([k]) => `<div class="sw light">${svg(P[k])}</div>`).join('');
+document.getElementById('rowDark').innerHTML  = ITEMS.map(([k]) => `<div class="sw dark">${svg(P[k])}</div>`).join('');
+document.getElementById('rowTiny').innerHTML  = ITEMS.map(([k]) => `<div class="sw light tiny">${svg(P[k])}</div>`).join('')
+  + '&nbsp;&nbsp;' + ITEMS.map(([k]) => `<div class="sw dark tiny">${svg(P[k])}</div>`).join('');
+document.getElementById('grid').innerHTML = ITEMS.map(([k,name,acts]) => `
+  <div class="card">
+    <div class="swatches"><div class="sw light">${svg(P[k])}</div><div class="sw dark">${svg(P[k])}</div></div>
+    <div class="name">${name}</div>
+    <div class="acts">${acts}</div>
+  </div>`).join('');
+</script>
+</body>
+</html>

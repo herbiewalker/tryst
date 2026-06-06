@@ -1,25 +1,17 @@
 package app.tryst.ui.common
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Air
-import androidx.compose.material.icons.filled.BackHand
-import androidx.compose.material.icons.filled.Bedtime
-import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Face
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Spa
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.TouchApp
-import androidx.compose.material.icons.filled.WaterDrop
-import androidx.compose.material.icons.filled.Whatshot
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.annotation.DrawableRes
+import app.tryst.R
 import app.tryst.data.db.entity.Practice
 
 /**
  * Picks the single "headline" act for an encounter — the most intense one (gave or received) by
- * [PRIORITY] — and maps acts to a curated icon for the card badge. Acts are string ids: a built-in
- * [Practice] name or "custom:<uuid>". Custom acts fall back to the generic badge.
+ * [PRIORITY] — and maps acts to a custom drawable for the card badge / calendar. Acts are string
+ * ids: a built-in [Practice] name or "custom:<uuid>". Custom acts fall back to the generic badge.
+ *
+ * Icons live in res/drawable/ic_act_*.xml (stylized vectors; see design/act-icons-preview.html).
+ * They're a single tintable colour, so swapping in more realistic artwork later is just replacing
+ * those files — no code change here.
  */
 object PracticeVisuals {
 
@@ -38,11 +30,11 @@ object PracticeVisuals {
     fun primaryPractice(gave: Set<String>?, received: Set<String>?): String? =
         rankedActs(gave, received).firstOrNull()
 
-    /** A curated, distinct icon for an act id. Custom/unknown acts get the generic badge. */
-    fun icon(actId: String?): ImageVector =
-        actId?.let { id -> runCatching { Practice.valueOf(id) }.getOrNull()?.let { ICONS[it] } } ?: FALLBACK_ICON
-
-    private val FALLBACK_ICON = Icons.Filled.Star
+    /** Custom drawable for an act id. Custom/unknown acts get the generic badge. */
+    @DrawableRes
+    fun icon(actId: String?): Int =
+        actId?.let { id -> runCatching { Practice.valueOf(id) }.getOrNull()?.let { ICONS[it] } }
+            ?: R.drawable.ic_act_custom
 
     /** Most "headline" first; the first match in an encounter's acts wins. Includes every value. */
     private val PRIORITY = listOf(
@@ -82,46 +74,40 @@ object PracticeVisuals {
         Practice.OTHER,
     )
 
-    private val ICONS: Map<Practice, ImageVector> = mapOf(
-        // Penetration / most intense
-        Practice.DOUBLE_PENETRATION to Icons.Filled.LocalFireDepartment,
-        Practice.FISTING to Icons.Filled.LocalFireDepartment,
-        Practice.ANAL to Icons.Filled.Whatshot,
-        Practice.ANAL_CREAMPIE to Icons.Filled.Whatshot,
-        Practice.ASS_TO_MOUTH to Icons.Filled.Whatshot,
-        Practice.PEGGING to Icons.Filled.Whatshot,
-        Practice.VAGINAL to Icons.Filled.Bolt,
-        Practice.SCISSORING to Icons.Filled.Bolt,
-        // Oral
-        Practice.ORAL to Icons.Filled.Face,
-        Practice.DEEP_THROAT to Icons.Filled.Face,
-        Practice.FACE_FUCKING to Icons.Filled.Face,
-        Practice.SIXTY_NINE to Icons.Filled.Face,
-        Practice.RIMMING to Icons.Filled.Face,
-        Practice.FACE_SITTING to Icons.Filled.Face,
-        // Manual
-        Practice.MANUAL to Icons.Filled.BackHand,
-        Practice.FINGERING to Icons.Filled.BackHand,
-        Practice.ANAL_FINGERING to Icons.Filled.BackHand,
-        Practice.PROSTATE_MASSAGE to Icons.Filled.BackHand,
-        Practice.MUTUAL_MASTURBATION to Icons.Filled.BackHand,
-        Practice.MASTURBATION to Icons.Filled.BackHand,
-        // Cum / fluids
-        Practice.CREAMPIE to Icons.Filled.WaterDrop,
-        Practice.FACIAL to Icons.Filled.WaterDrop,
-        Practice.SQUIRTING to Icons.Filled.WaterDrop,
-        Practice.SPIT_PLAY to Icons.Filled.WaterDrop,
-        // Body / contact
-        Practice.FROTTAGE to Icons.Filled.TouchApp,
-        Practice.TITJOB to Icons.Filled.TouchApp,
-        Practice.BREAST_PLAY to Icons.Filled.TouchApp,
-        Practice.NIPPLE_PLAY to Icons.Filled.TouchApp,
-        Practice.FOOT_PLAY to Icons.Filled.TouchApp,
-        Practice.MASSAGE to Icons.Filled.Spa,
-        // Affection
-        Practice.KISSING to Icons.Filled.Favorite,
-        Practice.MAKING_OUT to Icons.Filled.Favorite,
-        Practice.CUDDLING to Icons.Filled.Bedtime,
-        Practice.OTHER to Icons.Filled.Air,
+    private val ICONS: Map<Practice, Int> = mapOf(
+        Practice.KISSING to R.drawable.ic_act_kiss,
+        Practice.MAKING_OUT to R.drawable.ic_act_kiss,
+        Practice.ORAL to R.drawable.ic_act_oral,
+        Practice.DEEP_THROAT to R.drawable.ic_act_oral,
+        Practice.FACE_FUCKING to R.drawable.ic_act_oral,
+        Practice.SIXTY_NINE to R.drawable.ic_act_sixtynine,
+        Practice.RIMMING to R.drawable.ic_act_rimming,
+        Practice.VAGINAL to R.drawable.ic_act_vulva,
+        Practice.SCISSORING to R.drawable.ic_act_scissoring,
+        Practice.ANAL to R.drawable.ic_act_anal,
+        Practice.ANAL_CREAMPIE to R.drawable.ic_act_anal,
+        Practice.ASS_TO_MOUTH to R.drawable.ic_act_a2m,
+        Practice.PEGGING to R.drawable.ic_act_pegging,
+        Practice.DOUBLE_PENETRATION to R.drawable.ic_act_dp,
+        Practice.FISTING to R.drawable.ic_act_fisting,
+        Practice.MANUAL to R.drawable.ic_act_hand,
+        Practice.FINGERING to R.drawable.ic_act_hand,
+        Practice.MUTUAL_MASTURBATION to R.drawable.ic_act_hand,
+        Practice.MASTURBATION to R.drawable.ic_act_hand,
+        Practice.ANAL_FINGERING to R.drawable.ic_act_prostate,
+        Practice.PROSTATE_MASSAGE to R.drawable.ic_act_prostate,
+        Practice.NIPPLE_PLAY to R.drawable.ic_act_breasts,
+        Practice.BREAST_PLAY to R.drawable.ic_act_breasts,
+        Practice.TITJOB to R.drawable.ic_act_breasts,
+        Practice.FOOT_PLAY to R.drawable.ic_act_foot,
+        Practice.MASSAGE to R.drawable.ic_act_massage,
+        Practice.CREAMPIE to R.drawable.ic_act_squirt,
+        Practice.FACIAL to R.drawable.ic_act_squirt,
+        Practice.SQUIRTING to R.drawable.ic_act_squirt,
+        Practice.SPIT_PLAY to R.drawable.ic_act_squirt,
+        Practice.FROTTAGE to R.drawable.ic_act_embrace,
+        Practice.FACE_SITTING to R.drawable.ic_act_embrace,
+        Practice.CUDDLING to R.drawable.ic_act_embrace,
+        Practice.OTHER to R.drawable.ic_act_custom,
     )
 }
