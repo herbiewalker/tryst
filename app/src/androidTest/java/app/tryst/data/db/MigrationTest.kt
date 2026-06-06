@@ -26,7 +26,7 @@ class MigrationTest {
     )
 
     @Test
-    fun migrate1To5_preservesRowsAndAddsColumns() {
+    fun migrate1To6_preservesRowsAndAddsColumns() {
         helper.createDatabase(dbName, 1).use { db ->
             db.execSQL(
                 "INSERT INTO encounters (id, startAt, protectionUsed, createdAt, updatedAt) " +
@@ -38,19 +38,20 @@ class MigrationTest {
             )
         }
 
-        // Applies the full migration chain and validates the schema equals the exported v5 schema.
+        // Applies the full migration chain and validates the schema equals the exported v6 schema.
         helper.runMigrationsAndValidate(
-            dbName, 5, true,
-            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
+            dbName, 6, true,
+            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6,
         ).use { db ->
             db.query(
-                "SELECT id, positions, kinks, occasions FROM encounters WHERE id = 'e1'",
+                "SELECT id, positions, kinks, occasions, partnerOrgasms FROM encounters WHERE id = 'e1'",
             ).use { cursor ->
                 assertTrue(cursor.moveToFirst())
                 assertEquals("e1", cursor.getString(0))
                 assertTrue("positions column should be NULL for migrated row", cursor.isNull(1))
                 assertTrue("kinks column should be NULL for migrated row", cursor.isNull(2))
                 assertTrue("occasions column should be NULL for migrated row", cursor.isNull(3))
+                assertTrue("partnerOrgasms column should be NULL for migrated row", cursor.isNull(4))
             }
             db.query("SELECT id, displayName, sex, relationshipType FROM partners WHERE id = 'p1'").use { cursor ->
                 assertTrue(cursor.moveToFirst())

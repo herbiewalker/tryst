@@ -33,9 +33,10 @@ data class EncounterEntity(
     // --- added in schema v2 ---
     /** Number of orgasms the user had this session. */
     val orgasmCountSelf: Int? = null,
-    /** Number of orgasms the partner(s) had this session. */
+    /** Legacy single partner-orgasm count (M3); superseded by [partnerOrgasms]. Kept for migration. */
     val orgasmCountPartner: Int? = null,
-    val ejaculationLocations: Set<EjaculationLocation>? = null,
+    /** Per-orgasm ejaculation: orgasm index (0-based) -> location. */
+    val ejaculationLocations: Map<Int, EjaculationLocation>? = null,
     /** Act IDs gave/received: a built-in [Practice] name, or "custom:<uuid>" for user-defined. */
     val practicesPerformed: Set<String>? = null,
     val practicesReceived: Set<String>? = null,
@@ -49,6 +50,9 @@ data class EncounterEntity(
     val toys: Set<ToyType>? = null,
     // --- added in schema v5 ---
     val occasions: Set<Occasion>? = null,
+    // --- added in schema v6 ---
+    /** Per-partner orgasm counts: partnerId -> count. */
+    val partnerOrgasms: Map<String, Int>? = null,
     // ---------------------------
     val locationId: String? = null,
     val createdAt: Long,
