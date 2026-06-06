@@ -242,6 +242,14 @@ private fun CalendarView(
     onOpenEncounter: (String) -> Unit,
 ) {
     val byDay = remember(items) { items.groupBy { Format.localDate(it.encounter.startAt) } }
+    // Headline act icon per day (most intense across all of that day's encounters).
+    val dayIcons = remember(byDay) {
+        byDay.mapValues { (_, list) ->
+            val gave = list.flatMapTo(mutableSetOf()) { it.encounter.practicesPerformed ?: emptySet() }
+            val received = list.flatMapTo(mutableSetOf()) { it.encounter.practicesReceived ?: emptySet() }
+            PracticeVisuals.icon(PracticeVisuals.primaryPractice(gave, received))
+        }
+    }
     var month by remember { mutableStateOf(YearMonth.now()) }
     var selectedDay by remember { mutableStateOf<LocalDate?>(null) }
     val dayItems = selectedDay?.let { byDay[it] }.orEmpty()
@@ -262,7 +270,7 @@ private fun CalendarView(
         item(key = "month-grid") {
             MonthGrid(
                 month = month,
-                byDay = byDay,
+                dayIcons = dayIcons,
                 selected = selectedDay,
                 onSelect = { selectedDay = if (it == selectedDay) null else it },
             )
@@ -332,7 +340,7 @@ private fun WeekdayLabels() {
 @Composable
 private fun MonthGrid(
     month: YearMonth,
-    byDay: Map<LocalDate, List<EncounterWithDetails>>,
+    dayIcons: Map<LocalDate, ImageVector>,
     selected: LocalDate?,
     onSelect: (LocalDate) -> Unit,
 ) {
@@ -353,7 +361,7 @@ private fun MonthGrid(
                         if (date != null) {
                             DayCell(
                                 date = date,
-                                count = byDay[date]?.size ?: 0,
+                                icon = dayIcons[date],
                                 selected = date == selected,
                                 isToday = date == today,
                                 onClick = { onSelect(date) },
@@ -370,27 +378,20 @@ private fun MonthGrid(
 @Composable
 private fun DayCell(
     date: LocalDate,
-    count: Int,
+    icon: ImageVector?,
     selected: Boolean,
     isToday: Boolean,
     onClick: () -> Unit,
 ) {
-    val hasItems = count > 0
-    val container = when {
-        selected -> MaterialTheme.colorScheme.primary
-        hasItems -> MaterialTheme.colorScheme.primaryContainer
-        else -> Color.Transparent
-    }
     val content = when {
         selected -> MaterialTheme.colorScheme.onPrimary
-        hasItems -> MaterialTheme.colorScheme.onPrimaryContainer
         isToday -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.onSurface
     }
     Surface(
         onClick = onClick,
         shape = CircleShape,
-        color = container,
+        color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
         contentColor = content,
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -401,15 +402,16 @@ private fun DayCell(
         ) {
             Text(
                 date.dayOfMonth.toString(),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.labelMedium,
                 fontWeight = if (isToday || selected) FontWeight.Bold else FontWeight.Normal,
             )
-            if (hasItems) {
-                Surface(
-                    shape = CircleShape,
-                    color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(5.dp),
-                ) {}
+            if (icon != null) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(14.dp),
+                )
             }
         }
     }
