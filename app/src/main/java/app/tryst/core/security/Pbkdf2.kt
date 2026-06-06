@@ -9,7 +9,10 @@ import javax.crypto.spec.PBEKeySpec
  * docs/SECURITY_DESIGN.md §1.
  */
 object Pbkdf2 {
-    const val DEFAULT_ITERATIONS = 200_000
+    // OWASP-recommended minimum for PBKDF2-HMAC-SHA256 (2023+). The count is stored per-vault
+    // (the `iter` field), so raising it only affects vaults created/re-keyed after the bump;
+    // existing vaults keep unlocking with their original count.
+    const val DEFAULT_ITERATIONS = 600_000
     private const val KEY_BITS = 256
     private const val ALGORITHM = "PBKDF2WithHmacSHA256"
 

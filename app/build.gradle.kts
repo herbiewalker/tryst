@@ -37,17 +37,18 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    // Deprecated DSL but works across AGP 8.x; uses whatever JDK (17+) runs Gradle.
-    kotlinOptions {
-        jvmTarget = "17"
-    }
-
     buildFeatures {
         compose = true
     }
 
     // Make the exported Room schemas available to migration tests as assets.
     sourceSets.getByName("androidTest").assets.srcDir("$projectDir/schemas")
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
 }
 
 ksp {
