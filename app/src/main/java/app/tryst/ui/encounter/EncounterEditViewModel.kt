@@ -10,6 +10,7 @@ import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.PartnerEntity
+import app.tryst.data.db.entity.Position
 import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.repository.EncounterRepository
@@ -45,6 +46,7 @@ class EncounterEditViewModel @Inject constructor(
     var ejaculationLocations by mutableStateOf<Set<EjaculationLocation>>(emptySet())
     var practicesPerformed by mutableStateOf<Set<Practice>>(emptySet())
     var practicesReceived by mutableStateOf<Set<Practice>>(emptySet())
+    var positions by mutableStateOf<Set<Position>>(emptySet())
     var note by mutableStateOf("")
     var selectedPartnerIds by mutableStateOf<Set<String>>(emptySet())
 
@@ -73,6 +75,7 @@ class EncounterEditViewModel @Inject constructor(
             ejaculationLocations = e.ejaculationLocations ?: emptySet()
             practicesPerformed = e.practicesPerformed ?: emptySet()
             practicesReceived = e.practicesReceived ?: emptySet()
+            positions = e.positions ?: emptySet()
             note = e.note ?: ""
             selectedPartnerIds = details.partners.map { it.id }.toSet()
         }
@@ -101,6 +104,10 @@ class EncounterEditViewModel @Inject constructor(
             if (value in practicesReceived) practicesReceived - value else practicesReceived + value
     }
 
+    fun togglePosition(value: Position) {
+        positions = if (value in positions) positions - value else positions + value
+    }
+
     fun save(onDone: () -> Unit) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
@@ -120,6 +127,7 @@ class EncounterEditViewModel @Inject constructor(
                 ejaculationLocations = ejaculationLocations,
                 practicesPerformed = practicesPerformed,
                 practicesReceived = practicesReceived,
+                positions = positions,
                 locationId = null,
                 createdAt = if (isEditing) createdAt else now,
                 updatedAt = now,

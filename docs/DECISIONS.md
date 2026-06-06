@@ -41,6 +41,12 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   additive nullable columns), validated by an instrumented `MigrationTest` against the exported
   schemas. New set columns are nullable to keep the migration default-free (avoids Room's
   NOT-NULL-default schema-validation mismatch).
+- **D-17 (M3+) Positions + pop-out selectors (schema v3):** added a `Position` enum + nullable
+  `positions` column (migration v2→v3, `MIGRATION_2_3`). Editor category selectors now use
+  `MultiSelectField`/`SingleSelectField` (ui/common): a curated **common subset inline** + a
+  **"More…" dialog** listing the full set **alphabetically** by label — keeps the form uncluttered
+  as option sets grew large. The legacy `PositionEntity` table + cross-ref (M1) stay unused (the
+  form uses the enum column); kept for migration safety. `MigrationTest` now validates v1→v3.
 
 ## Open
 

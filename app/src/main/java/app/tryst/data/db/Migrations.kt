@@ -17,5 +17,12 @@ val MIGRATION_1_2 = object : Migration(1, 2) {
     }
 }
 
+/** v2 → v3: adds the positions column to `encounters` (additive, nullable). */
+val MIGRATION_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE encounters ADD COLUMN positions TEXT")
+    }
+}
+
 /** All migrations, in order. */
-val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2)
+val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3)
