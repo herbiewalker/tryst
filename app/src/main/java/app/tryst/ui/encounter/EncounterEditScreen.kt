@@ -1,8 +1,5 @@
 package app.tryst.ui.encounter
 
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -69,6 +66,7 @@ import app.tryst.ui.common.MultiSelectField
 import app.tryst.ui.common.PositionOptions
 import app.tryst.ui.common.SingleSelectChips
 import app.tryst.ui.common.SingleSelectField
+import app.tryst.ui.common.rememberImagePicker
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -89,9 +87,7 @@ fun EncounterEditScreen(
     var showTimePicker by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var viewer by remember { mutableStateOf<PhotoView?>(null) }
-    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        uri?.let { viewModel.addPhoto(it) }
-    }
+    val pickImage = rememberImagePicker { viewModel.addPhoto(it) }
 
     Scaffold(
         topBar = {
@@ -313,11 +309,7 @@ fun EncounterEditScreen(
                             onRemove = { viewModel.removePending(photo) },
                         )
                     }
-                    AddPhotoTile {
-                        photoPicker.launch(
-                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly),
-                        )
-                    }
+                    AddPhotoTile(onClick = { pickImage() })
                 }
             }
 
