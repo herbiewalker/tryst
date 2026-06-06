@@ -38,7 +38,11 @@ fun <T> MultiSelectField(
     onToggle: (T) -> Unit,
 ) {
     var showAll by remember { mutableStateOf(false) }
-    val inline = (common + selected).distinct().sortedBy { labelOf(it).lowercase() }
+    // Before anything is chosen, show the curated common set to pick from. Once there are
+    // selections, show only those (add/remove more via "More…").
+    val inline = (if (selected.isEmpty()) common else selected.toList())
+        .distinct()
+        .sortedBy { labelOf(it).lowercase() }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(label, style = MaterialTheme.typography.labelLarge)
@@ -92,7 +96,10 @@ fun <T> SingleSelectField(
     onSelect: (T) -> Unit,
 ) {
     var showAll by remember { mutableStateOf(false) }
-    val inline = (common + listOfNotNull(selected)).distinct().sortedBy { labelOf(it).lowercase() }
+    // Show only the current choice once made; otherwise the curated common set.
+    val inline = (if (selected == null) common else listOf(selected))
+        .distinct()
+        .sortedBy { labelOf(it).lowercase() }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(label, style = MaterialTheme.typography.labelLarge)

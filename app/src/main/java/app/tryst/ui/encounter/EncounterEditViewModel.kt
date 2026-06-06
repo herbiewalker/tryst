@@ -10,11 +10,12 @@ import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.PartnerEntity
-import app.tryst.data.db.entity.Position
+import app.tryst.data.db.entity.PositionEntity
 import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.PartnerRepository
+import app.tryst.data.repository.PositionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -28,10 +29,16 @@ import javax.inject.Inject
 class EncounterEditViewModel @Inject constructor(
     private val encounters: EncounterRepository,
     partners: PartnerRepository,
+    positions: PositionRepository,
 ) : ViewModel() {
 
     val availablePartners: StateFlow<List<PartnerEntity>> =
         partners.observeActive()
+            .catch { emit(emptyList()) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val customPositions: StateFlow<List<PositionEntity>> =
+        positions.observeCustom()
             .catch { emit(emptyList()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -46,7 +53,7 @@ class EncounterEditViewModel @Inject constructor(
     var ejaculationLocations by mutableStateOf<Set<EjaculationLocation>>(emptySet())
     var practicesPerformed by mutableStateOf<Set<Practice>>(emptySet())
     var practicesReceived by mutableStateOf<Set<Practice>>(emptySet())
-    var positions by mutableStateOf<Set<Position>>(emptySet())
+    var selectedPositionIds by mutableStateOf<Set<String>>(emptySet())
     var note by mutableStateOf("")
     var selectedPartnerIds by mutableStateOf<Set<String>>(emptySet())
 
@@ -75,7 +82,7 @@ class EncounterEditViewModel @Inject constructor(
             ejaculationLocations = e.ejaculationLocations ?: emptySet()
             practicesPerformed = e.practicesPerformed ?: emptySet()
             practicesReceived = e.practicesReceived ?: emptySet()
-            positions = e.positions ?: emptySet()
+            selectedPositionIds = e.positions ?: emptySet()
             note = e.note ?: ""
             selectedPartnerIds = details.partners.map { it.id }.toSet()
         }
@@ -104,8 +111,9 @@ class EncounterEditViewModel @Inject constructor(
             if (value in practicesReceived) practicesReceived - value else practicesReceived + value
     }
 
-    fun togglePosition(value: Position) {
-        positions = if (value in positions) positions - value else positions + value
+    fun togglePosition(id: String) {
+        selectedPositionIds =
+            if (id in selectedPositionIds) selectedPositionIds - id else selectedPositionIds + id
     }
 
     fun save(onDone: () -> Unit) {
@@ -127,7 +135,7 @@ class EncounterEditViewModel @Inject constructor(
                 ejaculationLocations = ejaculationLocations,
                 practicesPerformed = practicesPerformed,
                 practicesReceived = practicesReceived,
-                positions = positions,
+                positions = selectedPositionIds,
                 locationId = null,
                 createdAt = if (isEditing) createdAt else now,
                 updatedAt = now,

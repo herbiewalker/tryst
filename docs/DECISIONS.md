@@ -41,12 +41,15 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   additive nullable columns), validated by an instrumented `MigrationTest` against the exported
   schemas. New set columns are nullable to keep the migration default-free (avoids Room's
   NOT-NULL-default schema-validation mismatch).
-- **D-17 (M3+) Positions + pop-out selectors (schema v3):** added a `Position` enum + nullable
-  `positions` column (migration v2→v3, `MIGRATION_2_3`). Editor category selectors now use
-  `MultiSelectField`/`SingleSelectField` (ui/common): a curated **common subset inline** + a
-  **"More…" dialog** listing the full set **alphabetically** by label — keeps the form uncluttered
-  as option sets grew large. The legacy `PositionEntity` table + cross-ref (M1) stay unused (the
-  form uses the enum column); kept for migration safety. `MigrationTest` now validates v1→v3.
+- **D-17 (M3+) Positions + pop-out selectors (schema v3):** `positions` column (migration v2→v3,
+  `MIGRATION_2_3`) stores **string IDs** — a built-in `Position` enum name or `custom:<uuid>` — so
+  custom positions can be mixed in. Custom positions are user-managed `PositionEntity` rows
+  (`isBuiltIn=false`) via `PositionRepository`, added/removed in **Settings → Manage custom
+  positions**, and merged with built-ins in the editor's Positions picker. Editor category
+  selectors use `MultiSelectField`/`SingleSelectField` (ui/common): **inline shows the curated
+  common set until something is selected, then only the selections** (+ "More…" dialog with the
+  full set **alphabetical** by label). `MigrationTest` validates v1→v3. (The M1 position cross-ref
+  relation is unused; kept for migration safety.)
 
 ## Open
 
