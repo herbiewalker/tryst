@@ -41,8 +41,10 @@ Progress against the [roadmap](docs/ROADMAP.md):
   big category expansion; **Setting & Location** split out from **Occasion**; per-partner orgasm
   counts + per-orgasm ejaculation; **theming** (purple/green palette, Light/Dark/System, optional
   Material You); a **calendar** view on the Trysts screen with custom per-act icons. Schema at **v6**.
-- ⬜ **M4** media attachments UI (encrypted photos on encounters & partners) · M5 encrypted backup ·
-  M6 insights · M7 achievements · M8 release (incl. string/i18n + a11y pass).
+- ✅ **M4** — encrypted photo attachments UI: pick via the Android Photo Picker (no permission),
+  encrypted to app-internal storage, decrypted in-memory only; on encounters (editor + viewer +
+  history/calendar thumbnail) and partners (avatar).
+- ⬜ M5 encrypted backup · M6 insights · M7 achievements · M8 release (incl. string/i18n + a11y pass).
 
 New here? See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for scope and
 [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) to build it.

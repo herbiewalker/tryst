@@ -1,8 +1,11 @@
 package app.tryst.ui.encounter
 
+import android.content.Context
+import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tryst.data.db.entity.ActEntity
@@ -10,6 +13,7 @@ import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Kink
+import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.PartnerEntity
@@ -21,17 +25,25 @@ import app.tryst.data.repository.ActRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.data.repository.PositionRepository
+import app.tryst.ui.common.MediaImages
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 import javax.inject.Inject
 
+/** A photo picked but not yet attached (attached on Save). */
+data class PendingPhoto(val uri: Uri, val mimeType: String)
+
 @HiltViewModel
 class EncounterEditViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val encounters: EncounterRepository,
     partners: PartnerRepository,
     positions: PositionRepository,
@@ -77,6 +89,14 @@ class EncounterEditViewModel @Inject constructor(
     var note by mutableStateOf("")
     var selectedPartnerIds by mutableStateOf<Set<String>>(emptySet())
 
+    /** Photos already saved on this encounter (minus any the user removed this session). */
+    var existingPhotos by mutableStateOf<List<MediaEntity>>(emptyList())
+        private set
+    /** Photos picked this session, attached (encrypted) on Save. */
+    var pendingPhotos by mutableStateOf<List<PendingPhoto>>(emptyList())
+        private set
+    private val removedExisting = mutableListOf<MediaEntity>()
+
     var isEditing by mutableStateOf(false)
         private set
 
@@ -109,8 +129,29 @@ class EncounterEditViewModel @Inject constructor(
             toys = e.toys ?: emptySet()
             note = e.note ?: ""
             selectedPartnerIds = details.partners.map { it.id }.toSet()
+            existingPhotos = details.media
         }
     }
+
+    fun addPhoto(uri: Uri) {
+        val mime = context.contentResolver.getType(uri) ?: "image/*"
+        pendingPhotos = pendingPhotos + PendingPhoto(uri, mime)
+    }
+
+    fun removePending(photo: PendingPhoto) {
+        pendingPhotos = pendingPhotos - photo
+    }
+
+    fun removeExisting(media: MediaEntity) {
+        existingPhotos = existingPhotos - media
+        removedExisting += media
+    }
+
+    suspend fun decodeExisting(media: MediaEntity, reqPx: Int): ImageBitmap? =
+        MediaImages.decodeSampled(reqPx) { runCatching { encounters.openMedia(media) }.getOrNull() }
+
+    suspend fun decodePending(uri: Uri, reqPx: Int): ImageBitmap? =
+        MediaImages.decodeSampled(reqPx) { context.contentResolver.openInputStream(uri) }
 
     fun togglePartner(id: String) {
         selectedPartnerIds = if (id in selectedPartnerIds) {
@@ -202,6 +243,16 @@ class EncounterEditViewModel @Inject constructor(
                 updatedAt = now,
             )
             encounters.save(entity, partnerIds = selectedPartnerIds.toList())
+            // Encrypt + attach newly-picked photos and remove any the user dropped (after the
+            // encounter row exists, so the media FK is satisfied).
+            withContext(Dispatchers.IO) {
+                pendingPhotos.forEach { photo ->
+                    context.contentResolver.openInputStream(photo.uri)?.use {
+                        encounters.attachMedia(id, photo.mimeType, it, now)
+                    }
+                }
+                removedExisting.forEach { encounters.deleteMedia(it) }
+            }
             onDone()
         }
     }

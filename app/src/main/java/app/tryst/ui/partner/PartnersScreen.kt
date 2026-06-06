@@ -1,5 +1,10 @@
 package app.tryst.ui.partner
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.compose.foundation.background
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,9 +16,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -34,7 +41,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -43,7 +55,9 @@ import app.tryst.data.db.entity.Gender
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.RelationshipType
 import app.tryst.data.db.entity.Sex
+import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
+import app.tryst.ui.common.MediaImages
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,6 +90,7 @@ fun PartnersScreen(viewModel: PartnersViewModel = hiltViewModel()) {
                 items(partners, key = { it.id }) { partner ->
                     PartnerRow(
                         partner = partner,
+                        onLoadPhoto = { viewModel.decodePhoto(it, AVATAR_PX) },
                         onEdit = { dialogTarget = DialogTarget(partner) },
                         onArchive = { viewModel.archive(partner.id) },
                     )
@@ -87,9 +102,10 @@ fun PartnersScreen(viewModel: PartnersViewModel = hiltViewModel()) {
     dialogTarget?.let { target ->
         PartnerDialog(
             initial = target.partner,
+            onLoadPhoto = { viewModel.decodePhoto(it, AVATAR_PX) },
             onDismiss = { dialogTarget = null },
-            onSave = { name, anonymous, note, sex, gender, rel ->
-                viewModel.save(target.partner?.id, name, anonymous, note, sex, gender, rel)
+            onSave = { name, anonymous, note, sex, gender, rel, photoUri, removePhoto ->
+                viewModel.save(target.partner?.id, name, anonymous, note, sex, gender, rel, photoUri, removePhoto)
                 dialogTarget = null
             },
         )
@@ -98,15 +114,22 @@ fun PartnersScreen(viewModel: PartnersViewModel = hiltViewModel()) {
 
 private data class DialogTarget(val partner: PartnerEntity?)
 
+private const val AVATAR_PX = 200
+
 @Composable
-private fun PartnerRow(partner: PartnerEntity, onEdit: () -> Unit, onArchive: () -> Unit) {
+private fun PartnerRow(
+    partner: PartnerEntity,
+    onLoadPhoto: suspend (String) -> ImageBitmap?,
+    onEdit: () -> Unit,
+    onArchive: () -> Unit,
+) {
     Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onEdit)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(Modifier.weight(1f)) {
+            PartnerAvatar(partner.photoMediaId, Format.partnerName(partner), 48.dp, onLoadPhoto)
+            Column(Modifier.weight(1f).padding(start = 14.dp)) {
                 Text(Format.partnerName(partner), style = MaterialTheme.typography.titleMedium)
                 val descriptor = listOfNotNull(
                     partner.relationshipType?.label,
@@ -125,26 +148,93 @@ private fun PartnerRow(partner: PartnerEntity, onEdit: () -> Unit, onArchive: ()
 }
 
 @Composable
+private fun PartnerAvatar(
+    photoId: String?,
+    fallbackLabel: String,
+    size: Dp,
+    onLoadPhoto: suspend (String) -> ImageBitmap?,
+) {
+    if (photoId != null) {
+        DecodedImage(
+            model = photoId,
+            contentDescription = "Partner photo",
+            modifier = Modifier.size(size).clip(CircleShape),
+            contentScale = ContentScale.Crop,
+            load = { onLoadPhoto(photoId) },
+        )
+    } else {
+        Box(
+            modifier = Modifier.size(size).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                fallbackLabel.trim().firstOrNull()?.uppercase() ?: "?",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSecondaryContainer,
+            )
+        }
+    }
+}
+
+@Composable
 private fun PartnerDialog(
     initial: PartnerEntity?,
+    onLoadPhoto: suspend (String) -> ImageBitmap?,
     onDismiss: () -> Unit,
-    onSave: (name: String, anonymous: Boolean, note: String, sex: Sex?, gender: Gender?, rel: RelationshipType?) -> Unit,
+    onSave: (
+        name: String, anonymous: Boolean, note: String,
+        sex: Sex?, gender: Gender?, rel: RelationshipType?,
+        photoUri: Uri?, removePhoto: Boolean,
+    ) -> Unit,
 ) {
+    val context = LocalContext.current
     var name by remember { mutableStateOf(initial?.displayName ?: "") }
     var anonymous by remember { mutableStateOf(initial?.isAnonymous ?: false) }
     var note by remember { mutableStateOf(initial?.note ?: "") }
     var sex by remember { mutableStateOf(initial?.sex) }
     var gender by remember { mutableStateOf(initial?.gender) }
     var relationship by remember { mutableStateOf(initial?.relationshipType) }
+    var photoUri by remember { mutableStateOf<Uri?>(null) }
+    var photoRemoved by remember { mutableStateOf(false) }
+    val existingPhotoId = initial?.photoMediaId?.takeIf { !photoRemoved }
+    val hasPhoto = photoUri != null || existingPhotoId != null
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) { photoUri = uri; photoRemoved = false }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (initial == null) "Add partner" else "Edit partner") },
         text = {
             Column(
-                modifier = Modifier.heightIn(max = 440.dp).verticalScroll(rememberScrollState()),
+                modifier = Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    if (photoUri != null) {
+                        val uri = photoUri!!
+                        DecodedImage(
+                            model = uri,
+                            contentDescription = "Partner photo",
+                            modifier = Modifier.size(72.dp).clip(CircleShape),
+                            contentScale = ContentScale.Crop,
+                            load = { MediaImages.decodeSampled(AVATAR_PX) { context.contentResolver.openInputStream(uri) } },
+                        )
+                    } else {
+                        PartnerAvatar(existingPhotoId, name, 72.dp, onLoadPhoto)
+                    }
+                    Column {
+                        TextButton(onClick = {
+                            picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                        }) { Text(if (hasPhoto) "Change photo" else "Add photo") }
+                        if (hasPhoto) {
+                            TextButton(onClick = { photoUri = null; photoRemoved = true }) { Text("Remove") }
+                        }
+                    }
+                }
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
@@ -170,7 +260,7 @@ private fun PartnerDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { onSave(name, anonymous, note, sex, gender, relationship) },
+                onClick = { onSave(name, anonymous, note, sex, gender, relationship, photoUri, photoRemoved) },
                 enabled = anonymous || name.isNotBlank(),
             ) { Text("Save") }
         },

@@ -1,9 +1,12 @@
 package app.tryst.ui.history
 
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.relation.EncounterWithDetails
 import app.tryst.data.repository.EncounterRepository
+import app.tryst.ui.common.MediaImages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +16,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
-    repository: EncounterRepository,
+    private val repository: EncounterRepository,
 ) : ViewModel() {
 
     val encounters: StateFlow<List<EncounterWithDetails>> =
@@ -21,4 +24,7 @@ class HistoryViewModel @Inject constructor(
             // The DB closes on lock; swallow the resulting error so we don't crash mid-teardown.
             .catch { emit(emptyList()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    suspend fun decode(media: MediaEntity, reqPx: Int): ImageBitmap? =
+        MediaImages.decodeSampled(reqPx) { runCatching { repository.openMedia(media) }.getOrNull() }
 }
