@@ -21,6 +21,7 @@ import app.tryst.data.db.entity.PositionEntity
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.db.entity.Setting
 import app.tryst.data.db.entity.ToyType
+import app.tryst.core.session.SessionManager
 import app.tryst.data.repository.ActRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.PartnerRepository
@@ -48,11 +49,15 @@ data class PendingPhoto(val uri: Uri, val mimeType: String, val tempFile: File? 
 @HiltViewModel
 class EncounterEditViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val session: SessionManager,
     private val encounters: EncounterRepository,
     partners: PartnerRepository,
     positions: PositionRepository,
     acts: ActRepository,
 ) : ViewModel() {
+
+    /** Keep the app unlocked across the photo-picker/camera handoff. */
+    fun suppressAutoLock() = session.suppressNextAutoLock()
 
     val availablePartners: StateFlow<List<PartnerEntity>> =
         partners.observeActive()

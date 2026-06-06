@@ -20,15 +20,16 @@ import java.util.UUID
  * ACTION_GET_CONTENT (handled by the system Files/Documents UI) instead of crashing.
  */
 @Composable
-fun rememberImagePicker(onPicked: (Uri) -> Unit): () -> Unit {
+fun rememberImagePicker(onLaunch: () -> Unit = {}, onPicked: (Uri) -> Unit): () -> Unit {
     val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         uri?.let(onPicked)
     }
     val getContent = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let(onPicked)
     }
-    return remember(photoPicker, getContent) {
+    return remember(photoPicker, getContent, onLaunch) {
         {
+            onLaunch() // e.g. suppress the auto-lock that the picker handoff would otherwise trigger
             val launched = runCatching {
                 photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
             }.isSuccess
@@ -44,7 +45,7 @@ fun rememberImagePicker(onPicked: (Uri) -> Unit): () -> Unit {
  * [File] — the caller must encrypt it and then delete the temp. On cancel/failure the temp is removed.
  */
 @Composable
-fun rememberCameraCapture(onCaptured: (Uri, File) -> Unit): () -> Unit {
+fun rememberCameraCapture(onLaunch: () -> Unit = {}, onCaptured: (Uri, File) -> Unit): () -> Unit {
     val context = LocalContext.current
     var pending by remember { mutableStateOf<Pair<Uri, File>?>(null) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
@@ -52,12 +53,13 @@ fun rememberCameraCapture(onCaptured: (Uri, File) -> Unit): () -> Unit {
         pending = null
         if (success && captured != null) onCaptured(captured.first, captured.second) else captured?.second?.delete()
     }
-    return remember(context, launcher) {
+    return remember(context, launcher, onLaunch) {
         {
             val dir = File(context.cacheDir, "captures").apply { mkdirs() }
             val file = File(dir, "cap_${UUID.randomUUID()}.jpg")
             val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
             pending = uri to file
+            onLaunch() // suppress the auto-lock that the camera handoff would otherwise trigger
             runCatching { launcher.launch(uri) }.onFailure { pending = null; file.delete() }
         }
     }

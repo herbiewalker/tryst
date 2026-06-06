@@ -92,6 +92,10 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   backup. No CAMERA permission (ACTION_IMAGE_CAPTURE delegates to the camera app), so the zero-permission
   / no-network guarantee holds (anti-leak guard still green). Encounter photos stage on pick and commit
   on Save; partner photo is a single avatar; both clean up camera temps on save/cancel.
+  **Auto-lock vs. handoff:** launching the picker/camera backgrounds the app, which would trip the
+  immediate auto-lock and drop the result + in-progress screen. Fixed via
+  `SessionManager.suppressNextAutoLock()` (a ~2-min one-shot window, consumed on the next background)
+  called right before launch; `ON_STOP` now routes through `onAppBackgrounded()` which honours it.
 - **D-23 (deferred):** Chunk 6 — extracting hardcoded UI strings to `strings.xml` and refactoring
   `EncounterEditViewModel` to a single `UiState` — is **deferred to M8**. String extraction belongs
   with the a11y/i18n pass; the per-field `mutableStateOf` VM pattern is already idiomatic, so the

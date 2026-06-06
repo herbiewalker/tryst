@@ -90,8 +90,10 @@ fun EncounterEditScreen(
     var showTimePicker by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var viewer by remember { mutableStateOf<PhotoView?>(null) }
-    val pickImage = rememberImagePicker { viewModel.addPhoto(it) }
-    val captureImage = rememberCameraCapture { uri, file -> viewModel.addCapturedPhoto(uri, file) }
+    val pickImage = rememberImagePicker(onLaunch = { viewModel.suppressAutoLock() }) { viewModel.addPhoto(it) }
+    val captureImage = rememberCameraCapture(onLaunch = { viewModel.suppressAutoLock() }) { uri, file ->
+        viewModel.addCapturedPhoto(uri, file)
+    }
 
     Scaffold(
         topBar = {

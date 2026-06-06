@@ -105,6 +105,7 @@ fun PartnersScreen(viewModel: PartnersViewModel = hiltViewModel()) {
         PartnerDialog(
             initial = target.partner,
             onLoadPhoto = { viewModel.decodePhoto(it, AVATAR_PX) },
+            onSuppressAutoLock = { viewModel.suppressAutoLock() },
             onDismiss = { dialogTarget = null },
             onSave = { name, anonymous, note, sex, gender, rel, photoUri, removePhoto, tempFile ->
                 viewModel.save(target.partner?.id, name, anonymous, note, sex, gender, rel, photoUri, removePhoto, tempFile)
@@ -182,6 +183,7 @@ private fun PartnerAvatar(
 private fun PartnerDialog(
     initial: PartnerEntity?,
     onLoadPhoto: suspend (String) -> ImageBitmap?,
+    onSuppressAutoLock: () -> Unit,
     onDismiss: () -> Unit,
     onSave: (
         name: String, anonymous: Boolean, note: String,
@@ -202,8 +204,10 @@ private fun PartnerDialog(
     var photoMenu by remember { mutableStateOf(false) }
     val existingPhotoId = initial?.photoMediaId?.takeIf { !photoRemoved }
     val hasPhoto = photoUri != null || existingPhotoId != null
-    val pickImage = rememberImagePicker { captureTempFile?.delete(); captureTempFile = null; photoUri = it; photoRemoved = false }
-    val captureImage = rememberCameraCapture { uri, file ->
+    val pickImage = rememberImagePicker(onLaunch = onSuppressAutoLock) {
+        captureTempFile?.delete(); captureTempFile = null; photoUri = it; photoRemoved = false
+    }
+    val captureImage = rememberCameraCapture(onLaunch = onSuppressAutoLock) { uri, file ->
         captureTempFile?.delete(); photoUri = uri; photoRemoved = false; captureTempFile = file
     }
     // On cancel, drop any unsaved camera temp (on Save the ViewModel deletes it after encrypting).
