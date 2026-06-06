@@ -1,10 +1,7 @@
 package app.tryst.ui.partner
 
 import android.net.Uri
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
-import androidx.activity.result.PickVisualMediaRequest
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,6 +55,7 @@ import app.tryst.data.db.entity.Sex
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
 import app.tryst.ui.common.MediaImages
+import app.tryst.ui.common.rememberImagePicker
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -198,9 +196,7 @@ private fun PartnerDialog(
     var photoRemoved by remember { mutableStateOf(false) }
     val existingPhotoId = initial?.photoMediaId?.takeIf { !photoRemoved }
     val hasPhoto = photoUri != null || existingPhotoId != null
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) { photoUri = uri; photoRemoved = false }
-    }
+    val pickImage = rememberImagePicker { photoUri = it; photoRemoved = false }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -227,9 +223,7 @@ private fun PartnerDialog(
                         PartnerAvatar(existingPhotoId, name, 72.dp, onLoadPhoto)
                     }
                     Column {
-                        TextButton(onClick = {
-                            picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        }) { Text(if (hasPhoto) "Change photo" else "Add photo") }
+                        TextButton(onClick = { pickImage() }) { Text(if (hasPhoto) "Change photo" else "Add photo") }
                         if (hasPhoto) {
                             TextButton(onClick = { photoUri = null; photoRemoved = true }) { Text("Remove") }
                         }
