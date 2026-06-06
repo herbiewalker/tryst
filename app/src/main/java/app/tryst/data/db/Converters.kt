@@ -52,12 +52,35 @@ class Converters {
         value.split(SEP).mapNotNull { runCatching { Protection.valueOf(it) }.getOrNull() }.toSet()
 
     @TypeConverter
-    fun ejaculationSetToString(value: Set<EjaculationLocation>?): String? =
-        value?.joinToString(SEP) { it.name }
+    fun ejaculationMapToString(value: Map<Int, EjaculationLocation>?): String? =
+        value?.entries?.joinToString(SEP) { "${it.key}=${it.value.name}" }
 
     @TypeConverter
-    fun stringToEjaculationSet(value: String?): Set<EjaculationLocation>? =
-        value?.toEnumSet { EjaculationLocation.valueOf(it) }
+    fun stringToEjaculationMap(value: String?): Map<Int, EjaculationLocation>? =
+        value?.takeIf { it.isNotBlank() }
+            ?.split(SEP)
+            ?.mapNotNull { token ->
+                val parts = token.split("=")
+                val idx = parts.getOrNull(0)?.toIntOrNull() ?: return@mapNotNull null
+                val loc = parts.getOrNull(1)
+                    ?.let { runCatching { EjaculationLocation.valueOf(it) }.getOrNull() }
+                    ?: return@mapNotNull null
+                idx to loc
+            }?.toMap()
+
+    @TypeConverter
+    fun partnerOrgasmsToString(value: Map<String, Int>?): String? =
+        value?.entries?.joinToString(SEP) { "${it.key}=${it.value}" }
+
+    @TypeConverter
+    fun stringToPartnerOrgasms(value: String?): Map<String, Int>? =
+        value?.takeIf { it.isNotBlank() }
+            ?.split(SEP)
+            ?.mapNotNull { token ->
+                val parts = token.split("=")
+                val count = parts.getOrNull(1)?.toIntOrNull() ?: return@mapNotNull null
+                (parts.getOrNull(0) ?: return@mapNotNull null) to count
+            }?.toMap()
 
     @TypeConverter
     fun kinkSetToString(value: Set<Kink>?): String? = value?.joinToString(SEP) { it.name }

@@ -164,7 +164,9 @@ private fun EncounterCard(item: EncounterWithDetails, onClick: () -> Unit) {
                     e.satisfactionRating?.let { add("★ $it") }
                     e.durationMin?.let { add("$it min") }
                     e.mood?.let { add(it.label) }
-                    val orgasms = (e.orgasmCountSelf ?: 0) + (e.orgasmCountPartner ?: 0)
+                    val orgasms = (e.orgasmCountSelf ?: 0) +
+                        (e.partnerOrgasms?.values?.sum() ?: 0) +
+                        (e.orgasmCountPartner ?: 0)
                     if (orgasms > 0) add("✨ $orgasms")
                 }
                 if (pills.isNotEmpty()) {

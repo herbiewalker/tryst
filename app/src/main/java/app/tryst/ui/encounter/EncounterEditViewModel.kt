@@ -60,8 +60,13 @@ class EncounterEditViewModel @Inject constructor(
     var initiator by mutableStateOf<Initiator?>(null)
     var protection by mutableStateOf<Set<Protection>>(emptySet())
     var orgasmCountSelf by mutableStateOf(0)
-    var orgasmCountPartner by mutableStateOf(0)
-    var ejaculationLocations by mutableStateOf<Set<EjaculationLocation>>(emptySet())
+        private set
+    /** Per-orgasm ejaculation location: orgasm index (0-based) -> location. */
+    var ejaculations by mutableStateOf<Map<Int, EjaculationLocation>>(emptyMap())
+        private set
+    /** Per-partner orgasm counts: partnerId -> count. */
+    var partnerOrgasms by mutableStateOf<Map<String, Int>>(emptyMap())
+        private set
     var practicesPerformed by mutableStateOf<Set<String>>(emptySet())
     var practicesReceived by mutableStateOf<Set<String>>(emptySet())
     var selectedPositionIds by mutableStateOf<Set<String>>(emptySet())
@@ -93,8 +98,8 @@ class EncounterEditViewModel @Inject constructor(
             initiator = e.initiator
             protection = e.protectionUsed
             orgasmCountSelf = e.orgasmCountSelf ?: 0
-            orgasmCountPartner = e.orgasmCountPartner ?: 0
-            ejaculationLocations = e.ejaculationLocations ?: emptySet()
+            ejaculations = e.ejaculationLocations ?: emptyMap()
+            partnerOrgasms = e.partnerOrgasms ?: emptyMap()
             practicesPerformed = e.practicesPerformed ?: emptySet()
             practicesReceived = e.practicesReceived ?: emptySet()
             selectedPositionIds = e.positions ?: emptySet()
@@ -108,16 +113,32 @@ class EncounterEditViewModel @Inject constructor(
     }
 
     fun togglePartner(id: String) {
-        selectedPartnerIds = if (id in selectedPartnerIds) selectedPartnerIds - id else selectedPartnerIds + id
+        selectedPartnerIds = if (id in selectedPartnerIds) {
+            partnerOrgasms = partnerOrgasms - id // drop orgasm count for a de-selected partner
+            selectedPartnerIds - id
+        } else {
+            selectedPartnerIds + id
+        }
+    }
+
+    /** Sets how many times the user came; trims ejaculation rows beyond the new count. */
+    fun setSelfOrgasms(count: Int) {
+        orgasmCountSelf = count
+        if (ejaculations.keys.any { it >= count }) {
+            ejaculations = ejaculations.filterKeys { it < count }
+        }
+    }
+
+    fun setEjaculation(index: Int, value: EjaculationLocation) {
+        ejaculations = ejaculations + (index to value)
+    }
+
+    fun setPartnerOrgasms(id: String, count: Int) {
+        partnerOrgasms = if (count <= 0) partnerOrgasms - id else partnerOrgasms + (id to count)
     }
 
     fun toggleProtection(value: Protection) {
         protection = if (value in protection) protection - value else protection + value
-    }
-
-    fun toggleEjaculation(value: EjaculationLocation) {
-        ejaculationLocations =
-            if (value in ejaculationLocations) ejaculationLocations - value else ejaculationLocations + value
     }
 
     fun togglePerformed(id: String) {
@@ -166,14 +187,15 @@ class EncounterEditViewModel @Inject constructor(
                 initiator = initiator,
                 protectionUsed = protection,
                 orgasmCountSelf = orgasmCountSelf,
-                orgasmCountPartner = orgasmCountPartner,
-                ejaculationLocations = ejaculationLocations,
+                orgasmCountPartner = null,
+                ejaculationLocations = ejaculations.ifEmpty { null },
                 practicesPerformed = practicesPerformed,
                 practicesReceived = practicesReceived,
                 positions = selectedPositionIds,
                 kinks = kinks,
                 contexts = contexts,
                 occasions = occasions,
+                partnerOrgasms = partnerOrgasms.ifEmpty { null },
                 toys = toys,
                 locationId = null,
                 createdAt = if (isEditing) createdAt else now,

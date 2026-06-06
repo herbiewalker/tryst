@@ -54,5 +54,16 @@ val MIGRATION_4_5 = object : Migration(4, 5) {
     }
 }
 
+/**
+ * v5 → v6: per-partner orgasm counts on encounters (additive). The ejaculationLocations column
+ * is unchanged (still TEXT) — only its app-side encoding moved from a Set to an orgasm-index→
+ * location map, which the same TEXT storage holds.
+ */
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE encounters ADD COLUMN partnerOrgasms TEXT")
+    }
+}
+
 /** All migrations, in order. */
-val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
