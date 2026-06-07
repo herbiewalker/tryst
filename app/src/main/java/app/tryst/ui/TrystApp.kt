@@ -15,11 +15,13 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import app.tryst.ui.encounter.EncounterEditScreen
 import app.tryst.ui.history.HistoryScreen
+import app.tryst.ui.insights.InsightsScreen
 import app.tryst.ui.partner.PartnersScreen
 import app.tryst.ui.settings.SettingsScreen
 
 private object Routes {
     const val HISTORY = "history"
+    const val INSIGHTS = "insights"
     const val PARTNERS = "partners"
     const val SETTINGS = "settings"
     const val ENCOUNTER_NEW = "encounter/new"
@@ -31,6 +33,7 @@ private data class TopDestination(val route: String, val icon: String, val label
 
 private val topDestinations = listOf(
     TopDestination(Routes.HISTORY, "📖", "Trysts"),
+    TopDestination(Routes.INSIGHTS, "📊", "Insights"),
     TopDestination(Routes.PARTNERS, "👤", "Partners"),
     TopDestination(Routes.SETTINGS, "⚙️", "Settings"),
 )
@@ -76,6 +79,7 @@ fun TrystApp() {
                     onOpenEncounter = { id -> navController.navigate(Routes.encounterEdit(id)) },
                 )
             }
+            composable(Routes.INSIGHTS) { InsightsScreen() }
             composable(Routes.PARTNERS) { PartnersScreen() }
             composable(Routes.SETTINGS) { SettingsScreen() }
             composable(Routes.ENCOUNTER_NEW) {

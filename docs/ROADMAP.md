@@ -102,8 +102,19 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
       `CsvParseTest` (JVM) green.
 - [ ] Optional: VACUUM on delete-all for secure-delete hardening.
 
-## M6 — Insights
-- Stats engine, charts, streaks/trends, per-partner & per-attribute breakdowns.
+## M6 — Insights  ✅ done (build + unit tests green; visual check pending user unlock)
+- [x] **Stats engine** (`data/stats/InsightsEngine.kt`): pure-Kotlin `compute(encounters, …) → Insights`,
+      JVM-unit-testable (`InsightsEngineTest`, 10 cases). Totals (all-time / month / year), days-since-last,
+      avg-per-month, **week streaks** (current + longest, ISO weeks w/ mid-week grace), rating histogram +
+      average, duration totals/avg, self & partner orgasm totals/avg, trailing-12-month + day-of-week buckets,
+      and ranked breakdowns (partners, acts, positions, moods, kinks, places, occasions, toys, protection,
+      finish location). Acts/positions resolve built-in enum names **and** `custom:<uuid>` via passed label maps.
+- [x] **Charts** drawn with plain Compose layout — **no chart dependency** (Vico candidate dropped; keeps the
+      project dependency-light/FOSS, consistent with the hand-rolled icons & manual bitmap decode). `VerticalBarChart`
+      (months / weekdays / ratings) + `RankedBars` (horizontal top-N) in `ui/insights/InsightsCharts.kt`.
+- [x] **Insights tab** added to the bottom nav (📊, between Trysts and Partners): summary stat-card grid +
+      chart/breakdown sections, empty state until there's data. `InsightsViewModel` combines the encounter log
+      with custom act/position rows and computes off the main thread; survives the DB closing on auto-lock.
 
 ## M7 — Achievements
 - Local achievement rules, progress tracking, unlock UI.

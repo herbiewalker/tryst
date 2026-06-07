@@ -54,7 +54,7 @@ for later), social/sharing features. See [docs/REQUIREMENTS.md](docs/REQUIREMENT
   Android Keystore key (StrongBox when available) double-wraps the DEK; biometric via a second
   auth-gated Keystore key. (Argon2id reserved for the M5 export passphrase.)
 - **DI:** Hilt · **Async:** Coroutines + Flow
-- **Charts:** Vico (Compose) — candidate, TBD
+- **Charts:** none — hand-drawn in Compose layout (M6, D-25); no chart dependency
 - **Build:** Gradle Kotlin DSL + version catalog (`gradle/libs.versions.toml`)
 - **Test:** JUnit, Turbine, Robolectric, Compose UI tests, Room migration tests
 

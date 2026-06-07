@@ -93,6 +93,15 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   no-unprotected-data promise. Files via SAF; auto-lock suppressed across the handoff. Format in
   `docs/EXPORT_FORMAT.md`. **Importing other apps' data (Intimacy/LoveLust/etc.) = M5b**, a separate
   generic **CSV importer with column mapping** (no shared standard between trackers).
+- **D-25 (M6):** **No chart library** (resolves O-3). Insights charts are drawn with plain Compose
+  layout (`VerticalBarChart`, `RankedBars`) instead of Vico/MPAndroidChart. Rationale: the app already
+  hand-rolls its visuals (per-act vector icons, manual `BitmapFactory` downsampling, no third-party
+  image loader); bar/ranked charts are simple enough that a dependency isn't worth the FOSS-audit /
+  size / lock-in cost, and fewer deps = smaller attack surface. The **stats engine**
+  (`data/stats/InsightsEngine.kt`) is a pure-Kotlin, Android-free `compute()` so it's JVM-unit-tested
+  directly (`InsightsEngineTest`) with no Robolectric. Streaks are **ISO weeks** (Mon-anchored) with a
+  mid-week grace (current week stays "alive" if last week had activity). Acts/positions tally by their
+  stored id and resolve labels via the custom `uuid→label` maps the VM passes in.
 - **D-24 (M4):** Photo input = Android **Photo Picker** with an **ACTION_GET_CONTENT fallback**
   (some devices/emulators advertise the picker without providing the activity → `ActivityNotFoundException`).
   Plus **in-app camera capture** via a `FileProvider` into a private cache file, encrypted into the media
@@ -113,6 +122,6 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
 
 - **O-2 License & distribution:** GPLv3 vs MIT/Apache; F-Droid and/or Play. **Decide at M8.**
   Repo structured to keep options open.
-- **O-3 Charts library:** Vico vs alternatives — decide at M6.
+- **O-3 (resolved) Charts library:** **none** — Insights charts are hand-drawn in Compose (D-25).
 - **O-4 (resolved) Multi-partner per encounter:** **yes** — the editor supports selecting multiple
   partners (M:N) with per-partner orgasm counts (D-22).
