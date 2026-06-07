@@ -116,6 +116,25 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
       chart/breakdown sections, empty state until there's data. `InsightsViewModel` combines the encounter log
       with custom act/position rows and computes off the main thread; survives the DB closing on auto-lock.
 
+## M6.1 — Insights UX lift + global "dark & moody" polish  ✅ done (build + unit tests green; visual check pending user unlock)
+- [x] **Switchable chart styles** (`ChartStyle` = Bars / Line / Donut), chosen from a chip selector on
+      Insights and persisted. One picker drives every chart via `TrendChart`/`BreakdownChart` dispatchers
+      with graceful fallback (donut→bars for ordered time series; line→bars for categories). New
+      `LineAreaChart` + `DonutChart` (with legend + "Other" tail) join the refined bar/ranked charts —
+      still hand-drawn Compose, no chart dependency.
+- [x] **Customizable Overview stat boxes:** in-place **edit mode** (Tune icon → Done) where tiles are a
+      drag-to-reorder list (`ReorderableColumn`, long-press) each with a show/hide eye toggle + "Reset to
+      default layout"; view mode shows visible tiles in saved order as a 2-col grid. Stable tile catalog
+      `ui/insights/StatTiles.kt`; order + hidden set + chart style persisted in
+      `core/prefs/InsightsPreferences.kt` (SharedPreferences, mirrors `ThemePreferences`).
+      Settings → **Customize Insights** deep-links into edit mode (`insights?edit=true` nav arg).
+- [x] **Clearer labels & grouping:** sections — Activity, Satisfaction, People, What you did, Vibe &
+      context, Details (with sub-labels); "Finish / ejaculation" relabel; "Trysts / month".
+- [x] **Global polish (reskins every screen via shared tokens):** enriched dark scheme (deep
+      near-black-purple background/surface + layered `surfaceContainer*` tones), larger rounded `Shapes`,
+      refined `Typography`, and Material vector nav icons replacing the emoji tabs.
+- [x] Tests: `StatTilesTest` (JVM) green; `InsightsEngineTest` still green; assembleDebug + anti-leak OK.
+
 ## M7 — Achievements
 - Local achievement rules, progress tracking, unlock UI.
 

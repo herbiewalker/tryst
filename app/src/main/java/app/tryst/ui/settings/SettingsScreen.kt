@@ -52,7 +52,10 @@ import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(viewModel: LockViewModel = hiltViewModel()) {
+fun SettingsScreen(
+    onCustomizeInsights: () -> Unit = {},
+    viewModel: LockViewModel = hiltViewModel(),
+) {
     val context = LocalContext.current
     val activity = remember(context) { context.findFragmentActivity() }
     val biometricAvailable = remember { viewModel.canUseBiometrics() }
@@ -165,6 +168,18 @@ fun SettingsScreen(viewModel: LockViewModel = hiltViewModel()) {
             }
             Text(
                 "Off uses Tryst's purple & green palette; on follows your phone's wallpaper colors.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
+            Text("Insights", style = MaterialTheme.typography.titleMedium)
+            OutlinedButton(onClick = onCustomizeInsights, modifier = Modifier.fillMaxWidth()) {
+                Text("Customize Insights")
+            }
+            Text(
+                "Reorder or hide the stat boxes and pick a chart style on the Insights tab.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
