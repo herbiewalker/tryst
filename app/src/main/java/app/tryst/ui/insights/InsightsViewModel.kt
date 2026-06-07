@@ -51,15 +51,23 @@ class InsightsViewModel @Inject constructor(
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Insights.EMPTY)
 
     // --- Customization (persisted via InsightsPreferences) ---
-    val chartStyle: StateFlow<ChartStyle> = prefs.chartStyle
     val statOrder: StateFlow<List<String>> = prefs.statOrder
     val hiddenStats: StateFlow<Set<String>> = prefs.hiddenStats
+    val sectionOrder: StateFlow<List<String>> = prefs.sectionOrder
+    val hiddenSections: StateFlow<Set<String>> = prefs.hiddenSections
+    val sectionStyles: StateFlow<Map<String, ChartStyle>> = prefs.sectionStyles
 
-    fun setChartStyle(style: ChartStyle) = prefs.setChartStyle(style)
+    fun styleFor(id: String): ChartStyle = prefs.styleFor(id)
+
+    fun setSectionStyle(id: String, style: ChartStyle) = prefs.setSectionStyle(id, style)
 
     fun moveStat(order: List<String>, from: Int, to: Int) = prefs.moveStat(order, from, to)
 
     fun setStatHidden(id: String, hidden: Boolean) = prefs.setStatHidden(id, hidden)
+
+    fun moveSection(order: List<String>, from: Int, to: Int) = prefs.moveSection(order, from, to)
+
+    fun setSectionHidden(id: String, hidden: Boolean) = prefs.setSectionHidden(id, hidden)
 
     fun resetLayout() = prefs.resetLayout()
 }

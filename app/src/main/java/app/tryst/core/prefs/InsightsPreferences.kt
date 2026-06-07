@@ -8,14 +8,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Selectable chart look on the Insights screen. */
+/** Selectable chart look, chosen per Insights card. */
 enum class ChartStyle { BARS, LINE, DONUT }
 
 /**
- * Persisted Insights layout/appearance: chart style, the order of the Overview stat tiles, and
- * which tiles are hidden. Not sensitive (no encounter data), so plain SharedPreferences is fine —
- * and like the theme prefs it's excluded from backup/transfer. Exposed as StateFlows so the
- * screen recomposes live as the user customizes.
+ * Persisted Insights layout/appearance: per-card chart style, plus the order and hidden set for both
+ * the Overview stat tiles and the section cards. Not sensitive (no encounter data), so plain
+ * SharedPreferences is fine — and like the theme prefs it's excluded from backup/transfer. Exposed as
+ * StateFlows so the screen recomposes live as the user customizes.
  */
 @Singleton
 class InsightsPreferences @Inject constructor(
@@ -23,64 +23,99 @@ class InsightsPreferences @Inject constructor(
 ) {
     private val prefs = context.getSharedPreferences("tryst_insights", Context.MODE_PRIVATE)
 
-    private val _chartStyle = MutableStateFlow(loadChartStyle())
-    val chartStyle: StateFlow<ChartStyle> = _chartStyle.asStateFlow()
-
-    private val _statOrder = MutableStateFlow(loadOrder())
+    // --- Overview stat tiles ---
+    private val _statOrder = MutableStateFlow(loadList(KEY_STAT_ORDER))
     /** Ordered tile ids. May omit newly-added tiles; the screen appends unknown ids in catalog order. */
     val statOrder: StateFlow<List<String>> = _statOrder.asStateFlow()
 
-    private val _hiddenStats = MutableStateFlow(loadHidden())
+    private val _hiddenStats = MutableStateFlow(loadSet(KEY_STAT_HIDDEN))
     val hiddenStats: StateFlow<Set<String>> = _hiddenStats.asStateFlow()
 
-    fun setChartStyle(style: ChartStyle) {
-        prefs.edit().putString(KEY_CHART, style.name).apply()
-        _chartStyle.value = style
-    }
+    // --- Section cards ---
+    private val _sectionOrder = MutableStateFlow(loadList(KEY_SECTION_ORDER))
+    val sectionOrder: StateFlow<List<String>> = _sectionOrder.asStateFlow()
 
-    fun setOrder(order: List<String>) {
-        prefs.edit().putString(KEY_ORDER, order.joinToString(DELIM)).apply()
-        _statOrder.value = order
-    }
+    private val _hiddenSections = MutableStateFlow(loadSet(KEY_SECTION_HIDDEN))
+    val hiddenSections: StateFlow<Set<String>> = _hiddenSections.asStateFlow()
 
-    /** Moves the tile at [from] to [to] within the current order and persists. */
-    fun moveStat(order: List<String>, from: Int, to: Int) {
-        if (from !in order.indices || to !in order.indices || from == to) return
-        val mutable = order.toMutableList()
-        mutable.add(to, mutable.removeAt(from))
-        setOrder(mutable)
-    }
+    private val _sectionStyles = MutableStateFlow(loadStyles())
+    /** sectionId -> chosen [ChartStyle]; sections absent here use [DEFAULT_STYLE]. */
+    val sectionStyles: StateFlow<Map<String, ChartStyle>> = _sectionStyles.asStateFlow()
 
-    fun setStatHidden(id: String, hidden: Boolean) {
-        val next = _hiddenStats.value.toMutableSet().apply { if (hidden) add(id) else remove(id) }
-        prefs.edit().putStringSet(KEY_HIDDEN, next).apply()
-        _hiddenStats.value = next
+    fun setStatOrder(order: List<String>) = saveList(KEY_STAT_ORDER, order, _statOrder)
+
+    fun moveStat(order: List<String>, from: Int, to: Int) = move(order, from, to)?.let { setStatOrder(it) }
+
+    fun setStatHidden(id: String, hidden: Boolean) = saveHidden(KEY_STAT_HIDDEN, _hiddenStats, id, hidden)
+
+    fun setSectionOrder(order: List<String>) = saveList(KEY_SECTION_ORDER, order, _sectionOrder)
+
+    fun moveSection(order: List<String>, from: Int, to: Int) = move(order, from, to)?.let { setSectionOrder(it) }
+
+    fun setSectionHidden(id: String, hidden: Boolean) = saveHidden(KEY_SECTION_HIDDEN, _hiddenSections, id, hidden)
+
+    fun styleFor(id: String): ChartStyle = _sectionStyles.value[id] ?: DEFAULT_STYLE
+
+    fun setSectionStyle(id: String, style: ChartStyle) {
+        val next = _sectionStyles.value.toMutableMap().apply { put(id, style) }
+        prefs.edit().putString(KEY_SECTION_STYLES, next.entries.joinToString(DELIM) { "${it.key}$KV${it.value.name}" }).apply()
+        _sectionStyles.value = next
     }
 
     fun resetLayout() {
-        prefs.edit().remove(KEY_ORDER).remove(KEY_HIDDEN).apply()
+        prefs.edit()
+            .remove(KEY_STAT_ORDER).remove(KEY_STAT_HIDDEN)
+            .remove(KEY_SECTION_ORDER).remove(KEY_SECTION_HIDDEN).remove(KEY_SECTION_STYLES)
+            .apply()
         _statOrder.value = emptyList()
         _hiddenStats.value = emptySet()
+        _sectionOrder.value = emptyList()
+        _hiddenSections.value = emptySet()
+        _sectionStyles.value = emptyMap()
     }
 
-    private fun loadChartStyle(): ChartStyle =
-        prefs.getString(KEY_CHART, null)
-            ?.let { runCatching { ChartStyle.valueOf(it) }.getOrNull() }
-            ?: ChartStyle.BARS
+    // --- helpers ---
 
-    private fun loadOrder(): List<String> =
-        prefs.getString(KEY_ORDER, null)
+    private fun move(order: List<String>, from: Int, to: Int): List<String>? {
+        if (from !in order.indices || to !in order.indices || from == to) return null
+        return order.toMutableList().apply { add(to, removeAt(from)) }
+    }
+
+    private fun saveList(key: String, order: List<String>, flow: MutableStateFlow<List<String>>) {
+        prefs.edit().putString(key, order.joinToString(DELIM)).apply()
+        flow.value = order
+    }
+
+    private fun saveHidden(key: String, flow: MutableStateFlow<Set<String>>, id: String, hidden: Boolean) {
+        val next = flow.value.toMutableSet().apply { if (hidden) add(id) else remove(id) }
+        prefs.edit().putStringSet(key, next).apply()
+        flow.value = next
+    }
+
+    private fun loadList(key: String): List<String> =
+        prefs.getString(key, null)?.split(DELIM)?.filter { it.isNotBlank() } ?: emptyList()
+
+    private fun loadSet(key: String): Set<String> =
+        prefs.getStringSet(key, emptySet())?.toSet() ?: emptySet()
+
+    private fun loadStyles(): Map<String, ChartStyle> =
+        prefs.getString(KEY_SECTION_STYLES, null)
             ?.split(DELIM)
-            ?.filter { it.isNotBlank() }
-            ?: emptyList()
-
-    private fun loadHidden(): Set<String> =
-        prefs.getStringSet(KEY_HIDDEN, emptySet())?.toSet() ?: emptySet()
+            ?.mapNotNull { entry ->
+                val (id, name) = entry.split(KV).takeIf { it.size == 2 } ?: return@mapNotNull null
+                runCatching { id to ChartStyle.valueOf(name) }.getOrNull()
+            }
+            ?.toMap()
+            ?: emptyMap()
 
     private companion object {
-        const val KEY_CHART = "chart_style"
-        const val KEY_ORDER = "stat_order"
-        const val KEY_HIDDEN = "stat_hidden"
+        val DEFAULT_STYLE = ChartStyle.BARS
+        const val KEY_STAT_ORDER = "stat_order"
+        const val KEY_STAT_HIDDEN = "stat_hidden"
+        const val KEY_SECTION_ORDER = "section_order"
+        const val KEY_SECTION_HIDDEN = "section_hidden"
+        const val KEY_SECTION_STYLES = "section_styles"
         const val DELIM = ","
+        const val KV = ":"
     }
 }
