@@ -3,8 +3,6 @@ package app.tryst.ui.insights
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DragHandle
 import androidx.compose.material.icons.filled.Tune
@@ -23,6 +22,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -52,6 +53,9 @@ import app.tryst.data.stats.Tally
 @Composable
 fun InsightsScreen(
     startInEditMode: Boolean = false,
+    // Non-null when opened as a sub-screen (Settings → Customize Insights): shows a back arrow
+    // and makes "Done" return instead of toggling edit mode in place.
+    onBack: (() -> Unit)? = null,
     viewModel: InsightsViewModel = hiltViewModel(),
 ) {
     val insights by viewModel.insights.collectAsStateWithLifecycle()
@@ -63,9 +67,16 @@ fun InsightsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (editMode) "Customize" else "Insights") },
+                title = { Text(if (editMode) "Customize Insights" else "Insights") },
+                navigationIcon = {
+                    if (onBack != null) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to Settings")
+                        }
+                    }
+                },
                 actions = {
-                    IconButton(onClick = { editMode = !editMode }) {
+                    IconButton(onClick = { if (onBack != null) onBack() else editMode = !editMode }) {
                         if (editMode) {
                             Icon(Icons.Filled.Check, contentDescription = "Done")
                         } else {
@@ -166,20 +177,28 @@ private fun ChartStyleSelector(selected: ChartStyle, onSelect: (ChartStyle) -> U
 // Overview (view mode): 2-column grid of visible tiles in saved order
 // ---------------------------------------------------------------------------------------
 
-@OptIn(ExperimentalLayoutApi::class)
+private const val STAT_COLUMNS = 3
+
+/** A uniform, evenly-sized grid (fixed columns, equal-height cells) so the tiles line up cleanly. */
 @Composable
 private fun OverviewGrid(insights: Insights, order: List<String>, hidden: Set<String>) {
     val tiles = StatTiles.ordered(order)
         .filter { it.id !in hidden }
         .mapNotNull { tile -> tile.value(insights)?.let { tile to it } }
     if (tiles.isEmpty()) return
-    FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
-        tiles.forEach { (tile, value) -> StatCard(tile.label, value, Modifier.weight(1f)) }
-        if (tiles.size % 2 == 1) Box(Modifier.weight(1f))
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        tiles.chunked(STAT_COLUMNS).forEach { rowTiles ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                rowTiles.forEach { (tile, value) ->
+                    StatCard(tile.label, value, Modifier.weight(1f))
+                }
+                // Pad the final short row so cells keep a consistent width.
+                repeat(STAT_COLUMNS - rowTiles.size) { Box(Modifier.weight(1f)) }
+            }
+        }
     }
 }
 
@@ -189,11 +208,24 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
         color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         shape = MaterialTheme.shapes.large,
-        modifier = modifier,
+        modifier = modifier.height(92.dp),
     ) {
-        Column(Modifier.padding(16.dp)) {
-            Text(value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Text(label, style = MaterialTheme.typography.labelMedium)
+        Column(
+            Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                value,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+            )
+            Text(
+                label,
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
@@ -309,12 +341,16 @@ private fun androidx.compose.foundation.lazy.LazyListScope.breakdownGroup(
     item(key = "group-$title") {
         SectionCard(title) {
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                nonEmpty.forEach { (label, items) ->
+                nonEmpty.forEachIndexed { index, (label, items) ->
+                    if (index > 0) {
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    }
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
                             label,
                             style = MaterialTheme.typography.titleSmall,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.secondary,
                         )
                         BreakdownChart(style, items)
                     }
