@@ -2,6 +2,8 @@ package app.tryst.ui.insights
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tryst.core.prefs.ChartStyle
+import app.tryst.core.prefs.InsightsPreferences
 import app.tryst.data.repository.ActRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.PositionRepository
@@ -23,6 +25,7 @@ class InsightsViewModel @Inject constructor(
     encounterRepository: EncounterRepository,
     actRepository: ActRepository,
     positionRepository: PositionRepository,
+    private val prefs: InsightsPreferences,
 ) : ViewModel() {
 
     val insights: StateFlow<Insights> =
@@ -46,4 +49,17 @@ class InsightsViewModel @Inject constructor(
             // The DB closes on lock; swallow the resulting error so we don't crash mid-teardown.
             .catch { emit(Insights.EMPTY) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Insights.EMPTY)
+
+    // --- Customization (persisted via InsightsPreferences) ---
+    val chartStyle: StateFlow<ChartStyle> = prefs.chartStyle
+    val statOrder: StateFlow<List<String>> = prefs.statOrder
+    val hiddenStats: StateFlow<Set<String>> = prefs.hiddenStats
+
+    fun setChartStyle(style: ChartStyle) = prefs.setChartStyle(style)
+
+    fun moveStat(order: List<String>, from: Int, to: Int) = prefs.moveStat(order, from, to)
+
+    fun setStatHidden(id: String, hidden: Boolean) = prefs.setStatHidden(id, hidden)
+
+    fun resetLayout() = prefs.resetLayout()
 }
