@@ -1,5 +1,8 @@
 package app.tryst.ui.settings
 
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -41,6 +45,7 @@ import app.tryst.ui.common.SingleSelectChips
 import app.tryst.ui.lock.BiometricPromptHelper
 import app.tryst.ui.lock.LockViewModel
 import app.tryst.ui.lock.findFragmentActivity
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,6 +62,23 @@ fun SettingsScreen(viewModel: LockViewModel = hiltViewModel()) {
     val appearanceViewModel: AppearanceViewModel = hiltViewModel()
     val themeMode by appearanceViewModel.themeMode.collectAsStateWithLifecycle()
     val dynamicColor by appearanceViewModel.dynamicColor.collectAsStateWithLifecycle()
+    val backupViewModel: BackupViewModel = hiltViewModel()
+    var showExportPw by remember { mutableStateOf(false) }
+    var showImportPw by remember { mutableStateOf(false) }
+    var pendingExportPassword by remember { mutableStateOf("") }
+    var pendingImportUri by remember { mutableStateOf<Uri?>(null) }
+    val createBackup = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/octet-stream"),
+    ) { uri ->
+        uri?.let { backupViewModel.export(it, pendingExportPassword) }
+        pendingExportPassword = ""
+    }
+    val openBackup = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            pendingImportUri = uri
+            showImportPw = true
+        }
+    }
 
     Scaffold(topBar = { TopAppBar(title = { Text("Settings") }) }) { padding ->
         Column(
@@ -151,6 +173,28 @@ fun SettingsScreen(viewModel: LockViewModel = hiltViewModel()) {
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
+            Text("Backup & restore", style = MaterialTheme.typography.titleMedium)
+            OutlinedButton(
+                onClick = { showExportPw = true },
+                enabled = !backupViewModel.busy,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Export encrypted backup") }
+            OutlinedButton(
+                onClick = { backupViewModel.suppressAutoLock(); openBackup.launch(arrayOf("*/*")) },
+                enabled = !backupViewModel.busy,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Import / restore backup") }
+            Text(
+                "Backups are password-encrypted and include everything (photos too). Keep the password safe — there's no recovery if you lose it.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            backupViewModel.status?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+            }
+
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
             Text("Danger zone", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
             Button(
                 onClick = { showDeleteAll = true },
@@ -187,6 +231,82 @@ fun SettingsScreen(viewModel: LockViewModel = hiltViewModel()) {
     if (showActs) {
         CustomActsDialog(viewModel = actsViewModel, onDismiss = { showActs = false })
     }
+
+    if (showExportPw) {
+        BackupPasswordDialog(
+            title = "Set a backup password",
+            requireConfirm = true,
+            onConfirm = { pw ->
+                showExportPw = false
+                pendingExportPassword = pw
+                backupViewModel.suppressAutoLock()
+                createBackup.launch("tryst-backup-${LocalDate.now()}.tryst")
+            },
+            onDismiss = { showExportPw = false },
+        )
+    }
+
+    if (showImportPw) {
+        BackupPasswordDialog(
+            title = "Enter backup password",
+            requireConfirm = false,
+            onConfirm = { pw ->
+                showImportPw = false
+                pendingImportUri?.let { backupViewModel.import(it, pw) }
+                pendingImportUri = null
+            },
+            onDismiss = { showImportPw = false; pendingImportUri = null },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BackupPasswordDialog(
+    title: String,
+    requireConfirm: Boolean,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var password by remember { mutableStateOf("") }
+    var confirm by remember { mutableStateOf("") }
+    val mismatch = requireConfirm && confirm.isNotEmpty() && password != confirm
+    val valid = password.length >= 6 && (!requireConfirm || password == confirm)
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Password") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                if (requireConfirm) {
+                    OutlinedTextField(
+                        value = confirm,
+                        onValueChange = { confirm = it },
+                        label = { Text("Confirm password") },
+                        singleLine = true,
+                        isError = mismatch,
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Text(
+                        if (mismatch) "Passwords don't match." else "At least 6 characters. There is no recovery if you forget it.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (mismatch) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = { onConfirm(password) }, enabled = valid) { Text("OK") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
