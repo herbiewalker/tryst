@@ -28,9 +28,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import app.tryst.core.prefs.ChartStyle
 import app.tryst.data.stats.Bucket
 import app.tryst.data.stats.Tally
@@ -183,7 +188,7 @@ fun RankedBars(
 // Line / area
 // ---------------------------------------------------------------------------------------
 
-/** Smooth filled-area line for a trend series. */
+/** Smooth filled-area line for a trend series, with the count labelled above each point. */
 @Composable
 fun LineAreaChart(
     data: List<Bucket>,
@@ -194,18 +199,27 @@ fun LineAreaChart(
     val max = (data.maxOf { it.count }).coerceAtLeast(1)
     val fill = Brush.verticalGradient(listOf(lineColor.copy(alpha = 0.35f), lineColor.copy(alpha = 0f)))
     val dot = lineColor
+    val measurer = rememberTextMeasurer()
+    val labelStyle = TextStyle(
+        color = MaterialTheme.colorScheme.onSurface,
+        fontSize = 10.sp,
+        fontWeight = FontWeight.SemiBold,
+    )
     Column(modifier.fillMaxWidth()) {
-        Canvas(Modifier.fillMaxWidth().height(120.dp)) {
+        Canvas(Modifier.fillMaxWidth().height(132.dp)) {
             val w = size.width
             val h = size.height
             val n = data.size
             if (n == 0) return@Canvas
-            val stepX = if (n == 1) 0f else w / (n - 1)
-            val pad = 6f
+            // Inset so the line and its value labels stay inside the canvas.
+            val padTop = 22f
+            val padBottom = 8f
+            val padX = 10f
+            val stepX = if (n == 1) 0f else (w - padX * 2) / (n - 1)
             fun pt(i: Int): Offset {
-                val x = if (n == 1) w / 2 else i * stepX
+                val x = if (n == 1) w / 2 else padX + i * stepX
                 val frac = data[i].count.toFloat() / max
-                val y = pad + (1f - frac) * (h - pad * 2)
+                val y = padTop + (1f - frac) * (h - padTop - padBottom)
                 return Offset(x, y)
             }
             val pts = (0 until n).map(::pt)
@@ -229,7 +243,17 @@ fun LineAreaChart(
             }
             drawPath(area, brush = fill)
             drawPath(line, color = lineColor, style = Stroke(width = 6f, cap = StrokeCap.Round))
-            pts.forEach { drawCircle(dot, radius = 7f, center = it) }
+            pts.forEachIndexed { i, p ->
+                drawCircle(dot, radius = 7f, center = p)
+                val layout = measurer.measure(data[i].count.toString(), labelStyle)
+                drawText(
+                    layout,
+                    topLeft = Offset(
+                        (p.x - layout.size.width / 2f).coerceIn(0f, w - layout.size.width),
+                        (p.y - layout.size.height - 6f).coerceAtLeast(0f),
+                    ),
+                )
+            }
         }
         Spacer(Modifier.height(6.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
