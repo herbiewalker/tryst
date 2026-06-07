@@ -55,6 +55,11 @@ data class Insights(
     val topOccasions: List<Tally>,
     val topProtection: List<Tally>,
     val topEjaculation: List<Tally>,
+    val topInitiators: List<Tally>,
+    /** Partners' orgasm counts summed per partner, named, ranked. */
+    val orgasmsPerPartner: List<Tally>,
+    /** Total orgasms (yours + partners') per month, trailing 12 months. */
+    val orgasmsMonthly: List<Bucket>,
 ) {
     val isEmpty: Boolean get() = totalCount == 0
 
@@ -86,6 +91,9 @@ data class Insights(
             topOccasions = emptyList(),
             topProtection = emptyList(),
             topEjaculation = emptyList(),
+            topInitiators = emptyList(),
+            orgasmsPerPartner = emptyList(),
+            orgasmsMonthly = emptyList(),
         )
     }
 }
@@ -192,6 +200,27 @@ object InsightsEngine {
         val topEjaculation = tallyLabels(
             encounters.flatMap { e -> (e.encounter.ejaculationLocations?.values ?: emptyList()).map { it.label } },
         )
+        val topInitiators = tallyLabels(encounters.mapNotNull { it.encounter.initiator?.label })
+
+        // --- per-partner orgasms (resolve partner ids -> names from the embedded partner rows) ---
+        val partnerNames = encounters.flatMap { it.partners }.associate { it.id to partnerName(it.displayName) }
+        val orgasmsPerPartner = encounters
+            .flatMap { e -> (e.encounter.partnerOrgasms ?: emptyMap()).entries }
+            .groupBy({ it.key }, { it.value })
+            .map { (partnerId, counts) -> Tally(partnerNames[partnerId] ?: "Unknown", counts.sum()) }
+            .filter { it.count > 0 }
+            .sortedWith(compareByDescending<Tally> { it.count }.thenBy { it.label })
+
+        // --- total orgasms (yours + partners') per month, trailing 12 ---
+        val orgasmsMonthly = (11 downTo 0).map { back ->
+            val ym = thisMonth.minusMonths(back.toLong())
+            val count = encounters.filter { YearMonth.from(dateOf(it)) == ym }.sumOf { e ->
+                (e.encounter.orgasmCountSelf ?: 0) +
+                    (e.encounter.partnerOrgasms?.values?.sum() ?: 0) +
+                    (e.encounter.orgasmCountPartner ?: 0)
+            }
+            Bucket(ym.month.getDisplayName(TextStyle.SHORT, Locale.getDefault()), count)
+        }
 
         return Insights(
             totalCount = encounters.size,
@@ -220,6 +249,9 @@ object InsightsEngine {
             topOccasions = topOccasions,
             topProtection = topProtection,
             topEjaculation = topEjaculation,
+            topInitiators = topInitiators,
+            orgasmsPerPartner = orgasmsPerPartner,
+            orgasmsMonthly = orgasmsMonthly,
         )
     }
 
