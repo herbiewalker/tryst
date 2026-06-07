@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
@@ -59,9 +60,11 @@ fun InsightsScreen(
     viewModel: InsightsViewModel = hiltViewModel(),
 ) {
     val insights by viewModel.insights.collectAsStateWithLifecycle()
-    val chartStyle by viewModel.chartStyle.collectAsStateWithLifecycle()
     val statOrder by viewModel.statOrder.collectAsStateWithLifecycle()
-    val hidden by viewModel.hiddenStats.collectAsStateWithLifecycle()
+    val hiddenStats by viewModel.hiddenStats.collectAsStateWithLifecycle()
+    val sectionOrder by viewModel.sectionOrder.collectAsStateWithLifecycle()
+    val hiddenSections by viewModel.hiddenSections.collectAsStateWithLifecycle()
+    val sectionStyles by viewModel.sectionStyles.collectAsStateWithLifecycle()
     var editMode by remember { mutableStateOf(startInEditMode) }
 
     Scaffold(
@@ -96,59 +99,42 @@ fun InsightsScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            item(key = "chart-style") {
-                ChartStyleSelector(chartStyle, onSelect = viewModel::setChartStyle)
-            }
-
             if (editMode) {
-                item(key = "editor") {
+                item(key = "sections-editor") {
+                    SectionsEditor(
+                        order = InsightSections.ordered(sectionOrder).map { it.id },
+                        hidden = hiddenSections,
+                        styles = sectionStyles,
+                        onMove = viewModel::moveSection,
+                        onToggleHidden = viewModel::setSectionHidden,
+                        onSetStyle = viewModel::setSectionStyle,
+                    )
+                }
+                item(key = "stats-editor") {
                     StatEditor(
                         insights = insights,
                         order = StatTiles.ordered(statOrder).map { it.id },
-                        hidden = hidden,
+                        hidden = hiddenStats,
                         onMove = viewModel::moveStat,
                         onToggleHidden = viewModel::setStatHidden,
-                        onReset = viewModel::resetLayout,
                     )
                 }
-            } else {
-                item(key = "overview") { OverviewGrid(insights, statOrder, hidden) }
-
-                section("Activity") {
-                    Caption("Trysts per month and by day of week")
-                    TrendChart(chartStyle, insights.monthly)
-                    Box(Modifier.height(8.dp))
-                    TrendChart(chartStyle, insights.byWeekday)
-                }
-                if (insights.ratingHistogram.any { it > 0 }) {
-                    section("Satisfaction") {
-                        TrendChart(
-                            chartStyle,
-                            insights.ratingHistogram.mapIndexed { i, c -> Bucket("${i + 1}★", c) },
-                        )
+                item(key = "reset") {
+                    Column {
+                        TextButton(onClick = viewModel::resetLayout) { Text("Reset to default layout") }
+                        Box(Modifier.height(48.dp))
                     }
                 }
-                breakdownSection(chartStyle, "People", insights.topPartners)
-                breakdownGroup(chartStyle, "What you did", listOf("Acts" to insights.topActs, "Positions" to insights.topPositions))
-                breakdownGroup(
-                    chartStyle,
-                    "Vibe & context",
-                    listOf(
-                        "Moods" to insights.topMoods,
-                        "Kinks" to insights.topKinks,
-                        "Places" to insights.topSettings,
-                        "Occasions" to insights.topOccasions,
-                    ),
-                )
-                breakdownGroup(
-                    chartStyle,
-                    "Details",
-                    listOf(
-                        "Toys" to insights.topToys,
-                        "Protection" to insights.topProtection,
-                        "Finish / ejaculation" to insights.topEjaculation,
-                    ),
-                )
+            } else {
+                item(key = "overview") { OverviewGrid(insights, statOrder, hiddenStats) }
+
+                val sections = InsightSections.ordered(sectionOrder)
+                    .filter { it.id !in hiddenSections && it.hasData(insights) }
+                items(sections, key = { it.id }) { section ->
+                    SectionCard(section.title) {
+                        SectionContent(section.id, insights, sectionStyles[section.id] ?: ChartStyle.BARS)
+                    }
+                }
                 item(key = "footer-space") { Box(Modifier.height(64.dp)) }
             }
         }
@@ -156,25 +142,7 @@ fun InsightsScreen(
 }
 
 // ---------------------------------------------------------------------------------------
-// Chart style selector
-// ---------------------------------------------------------------------------------------
-
-@Composable
-private fun ChartStyleSelector(selected: ChartStyle, onSelect: (ChartStyle) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        val labels = listOf(ChartStyle.BARS to "Bars", ChartStyle.LINE to "Line", ChartStyle.DONUT to "Donut")
-        labels.forEach { (style, label) ->
-            FilterChip(
-                selected = selected == style,
-                onClick = { onSelect(style) },
-                label = { Text(label) },
-            )
-        }
-    }
-}
-
-// ---------------------------------------------------------------------------------------
-// Overview (view mode): 2-column grid of visible tiles in saved order
+// View mode: overview grid + section content
 // ---------------------------------------------------------------------------------------
 
 private const val STAT_COLUMNS = 3
@@ -192,10 +160,7 @@ private fun OverviewGrid(insights: Insights, order: List<String>, hidden: Set<St
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                rowTiles.forEach { (tile, value) ->
-                    StatCard(tile.label, value, Modifier.weight(1f))
-                }
-                // Pad the final short row so cells keep a consistent width.
+                rowTiles.forEach { (tile, value) -> StatCard(tile.label, value, Modifier.weight(1f)) }
                 repeat(STAT_COLUMNS - rowTiles.size) { Box(Modifier.weight(1f)) }
             }
         }
@@ -214,25 +179,200 @@ private fun StatCard(label: String, value: String, modifier: Modifier = Modifier
             Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.SpaceBetween,
         ) {
-            Text(
-                value,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
+            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, maxLines = 1)
+            Text(label, style = MaterialTheme.typography.labelMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+    }
+}
+
+/** A chart in a section: either an ordered trend (bars/line) or a categorical breakdown (bars/donut). */
+private sealed interface Sub {
+    val label: String
+}
+private data class TrendSub(override val label: String, val data: List<Bucket>) : Sub
+private data class BreakSub(override val label: String, val data: List<Tally>) : Sub
+
+@Composable
+private fun SectionContent(id: String, insights: Insights, style: ChartStyle) {
+    when (id) {
+        InsightSections.ACTIVITY -> GroupedSubCharts(
+            style,
+            listOf(
+                TrendSub("Per month", insights.monthly),
+                TrendSub("By day of week", insights.byWeekday),
+            ),
+        )
+        InsightSections.SATISFACTION -> GroupedSubCharts(
+            style,
+            listOf(TrendSub("", insights.ratingHistogram.mapIndexed { i, c -> Bucket("${i + 1}★", c) })),
+        )
+        InsightSections.PEOPLE -> GroupedSubCharts(style, listOf(BreakSub("", insights.topPartners)))
+        InsightSections.ACTS_POSITIONS -> GroupedSubCharts(
+            style,
+            listOf(
+                BreakSub("Acts", insights.topActs),
+                BreakSub("Positions", insights.topPositions),
+            ),
+        )
+        InsightSections.VIBE -> GroupedSubCharts(
+            style,
+            listOf(
+                BreakSub("Moods", insights.topMoods),
+                BreakSub("Kinks", insights.topKinks),
+                BreakSub("Places", insights.topSettings),
+                BreakSub("Occasions", insights.topOccasions),
+            ),
+        )
+        InsightSections.INITIATOR -> GroupedSubCharts(style, listOf(BreakSub("", insights.topInitiators)))
+        InsightSections.ORGASMS -> {
+            val yourVsPartner = buildList {
+                if (insights.totalSelfOrgasms > 0) add(Tally("You", insights.totalSelfOrgasms))
+                if (insights.totalPartnerOrgasms > 0) add(Tally("Partners", insights.totalPartnerOrgasms))
+            }
+            GroupedSubCharts(
+                style,
+                listOf(
+                    BreakSub("You vs partners", yourVsPartner),
+                    BreakSub("Orgasms per partner", insights.orgasmsPerPartner),
+                    TrendSub("Over time", insights.orgasmsMonthly),
+                    BreakSub("Finish / ejaculation", insights.topEjaculation),
+                ),
             )
-            Text(
-                label,
-                style = MaterialTheme.typography.labelMedium,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+        }
+        InsightSections.DETAILS -> GroupedSubCharts(
+            style,
+            listOf(
+                BreakSub("Toys", insights.topToys),
+                BreakSub("Protection", insights.topProtection),
+            ),
+        )
+    }
+}
+
+/** Renders each non-empty sub-chart, separated by a divider + accent sub-label. */
+@Composable
+private fun GroupedSubCharts(style: ChartStyle, subs: List<Sub>) {
+    val shown = subs.filter {
+        when (it) {
+            is TrendSub -> it.data.any { b -> b.count > 0 }
+            is BreakSub -> it.data.isNotEmpty()
+        }
+    }
+    if (shown.isEmpty()) return
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        shown.forEachIndexed { index, sub ->
+            if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (sub.label.isNotEmpty()) {
+                    Text(
+                        sub.label,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.secondary,
+                    )
+                }
+                when (sub) {
+                    is TrendSub -> TrendChart(style, sub.data)
+                    is BreakSub -> BreakdownChart(style, sub.data)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionCard(title: String, content: @Composable () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            content()
         }
     }
 }
 
 // ---------------------------------------------------------------------------------------
-// Editor (edit mode): reorderable + show/hide tile list
+// Edit mode: section editor (reorder / hide / per-card style) + stat-tile editor
 // ---------------------------------------------------------------------------------------
+
+@Composable
+private fun SectionsEditor(
+    order: List<String>,
+    hidden: Set<String>,
+    styles: Map<String, ChartStyle>,
+    onMove: (order: List<String>, from: Int, to: Int) -> Unit,
+    onToggleHidden: (id: String, hidden: Boolean) -> Unit,
+    onSetStyle: (id: String, style: ChartStyle) -> Unit,
+) {
+    val sections = remember(order) { InsightSections.ordered(order) }
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text("Sections", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        Text(
+            "Drag to reorder. Tap the eye to show or hide a section, and pick its chart style.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        ReorderableColumn(
+            items = sections,
+            key = { it.id },
+            itemHeight = 112.dp,
+            spacing = 10.dp,
+            onMove = { from, to -> onMove(order, from, to) },
+        ) { section, dragging, handle ->
+            val isHidden = section.id in hidden
+            val style = styles[section.id] ?: ChartStyle.BARS
+            Card(
+                modifier = Modifier.fillMaxWidth().height(112.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = if (dragging) {
+                        MaterialTheme.colorScheme.surfaceContainerHighest
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainer
+                    },
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = if (dragging) 8.dp else 0.dp),
+            ) {
+                Column(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            Icons.Filled.DragHandle,
+                            contentDescription = "Drag to reorder",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = handle.size(28.dp),
+                        )
+                        Text(
+                            section.title,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.weight(1f).padding(start = 12.dp),
+                            color = if (isHidden) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                        )
+                        IconButton(onClick = { onToggleHidden(section.id, !isHidden) }) {
+                            Icon(
+                                if (isHidden) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                                contentDescription = if (isHidden) "Show" else "Hide",
+                                tint = if (isHidden) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    }
+                    Row(
+                        modifier = Modifier.padding(start = 40.dp, top = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        ChartStyle.entries.forEach { s ->
+                            FilterChip(
+                                selected = style == s,
+                                onClick = { onSetStyle(section.id, s) },
+                                label = { Text(styleLabel(s)) },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun StatEditor(
@@ -241,12 +381,12 @@ private fun StatEditor(
     hidden: Set<String>,
     onMove: (order: List<String>, from: Int, to: Int) -> Unit,
     onToggleHidden: (id: String, hidden: Boolean) -> Unit,
-    onReset: () -> Unit,
 ) {
     val tiles = remember(order) { StatTiles.ordered(order) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text("Overview stats", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         Text(
-            "Drag to reorder. Tap the eye to show or hide a stat on the Insights overview.",
+            "Drag to reorder. Tap the eye to show or hide a stat on the overview.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -301,89 +441,13 @@ private fun StatEditor(
                 }
             }
         }
-        TextButton(onClick = onReset) { Text("Reset to default layout") }
     }
 }
 
-// ---------------------------------------------------------------------------------------
-// Section scaffolding
-// ---------------------------------------------------------------------------------------
-
-private fun androidx.compose.foundation.lazy.LazyListScope.section(
-    title: String,
-    content: @Composable () -> Unit,
-) {
-    item(key = "section-$title") {
-        SectionCard(title) { content() }
-    }
-}
-
-/** A breakdown section with a single chart, only rendered when there's data. */
-private fun androidx.compose.foundation.lazy.LazyListScope.breakdownSection(
-    style: ChartStyle,
-    title: String,
-    items: List<Tally>,
-) {
-    if (items.isEmpty()) return
-    item(key = "breakdown-$title") {
-        SectionCard(title) { BreakdownChart(style, items) }
-    }
-}
-
-/** A section grouping several labelled breakdowns under one header (skips empty ones). */
-private fun androidx.compose.foundation.lazy.LazyListScope.breakdownGroup(
-    style: ChartStyle,
-    title: String,
-    groups: List<Pair<String, List<Tally>>>,
-) {
-    val nonEmpty = groups.filter { it.second.isNotEmpty() }
-    if (nonEmpty.isEmpty()) return
-    item(key = "group-$title") {
-        SectionCard(title) {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                nonEmpty.forEachIndexed { index, (label, items) ->
-                    if (index > 0) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    }
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(
-                            label,
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.secondary,
-                        )
-                        BreakdownChart(style, items)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun SectionCard(title: String, content: @Composable () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-    ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(
-                title,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            content()
-        }
-    }
-}
-
-@Composable
-private fun Caption(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+private fun styleLabel(style: ChartStyle): String = when (style) {
+    ChartStyle.BARS -> "Bars"
+    ChartStyle.LINE -> "Line"
+    ChartStyle.DONUT -> "Donut"
 }
 
 @Composable

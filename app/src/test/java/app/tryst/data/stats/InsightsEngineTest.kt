@@ -2,6 +2,7 @@ package app.tryst.data.stats
 
 import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.EncounterEntity
+import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.Practice
@@ -32,6 +33,7 @@ class InsightsEngineTest {
         acts: Set<String>? = null,
         protection: Set<Protection> = emptySet(),
         ejaculation: Map<Int, EjaculationLocation>? = null,
+        initiator: Initiator? = null,
         partners: List<PartnerEntity> = emptyList(),
     ) = EncounterWithDetails(
         encounter = EncounterEntity(
@@ -40,6 +42,7 @@ class InsightsEngineTest {
             durationMin = durationMin,
             satisfactionRating = rating,
             mood = mood,
+            initiator = initiator,
             protectionUsed = protection,
             orgasmCountSelf = orgasmCountSelf,
             partnerOrgasms = partnerOrgasms,
@@ -119,6 +122,42 @@ class InsightsEngineTest {
         )
         val r = InsightsEngine.compute(log, zone = zone, today = today)
         assertEquals(3, r.totalPartnerOrgasms)
+    }
+
+    @Test
+    fun initiatorTally() {
+        val log = listOf(
+            encounter("a", today, initiator = Initiator.ME),
+            encounter("b", today.minusDays(1), initiator = Initiator.ME),
+            encounter("c", today.minusDays(2), initiator = Initiator.PARTNER),
+        )
+        val r = InsightsEngine.compute(log, zone = zone, today = today)
+        assertEquals(Tally("Me", 2), r.topInitiators.first())
+        assertTrue(r.topInitiators.any { it.label == "Partner" && it.count == 1 })
+    }
+
+    @Test
+    fun orgasmsPerPartnerResolvesNamesAndSums() {
+        val sam = partner("p1", "Sam")
+        val anon = partner("p2", null)
+        val log = listOf(
+            encounter("a", today, partnerOrgasms = mapOf("p1" to 2), partners = listOf(sam)),
+            encounter("b", today.minusDays(1), partnerOrgasms = mapOf("p1" to 1, "p2" to 3), partners = listOf(sam, anon)),
+        )
+        val r = InsightsEngine.compute(log, zone = zone, today = today)
+        // Anonymous (3) outranks Sam (2+1=3 tie) -> tie broken by label; both present with right counts.
+        assertEquals(3, r.orgasmsPerPartner.first { it.label == "Sam" }.count)
+        assertEquals(3, r.orgasmsPerPartner.first { it.label == "Anonymous" }.count)
+    }
+
+    @Test
+    fun orgasmsMonthlyHasTwelveBucketsSummingSelfAndPartner() {
+        val log = listOf(
+            encounter("a", today, orgasmCountSelf = 2, partnerOrgasms = mapOf("p1" to 1)),
+        )
+        val r = InsightsEngine.compute(log, zone = zone, today = today)
+        assertEquals(12, r.orgasmsMonthly.size)
+        assertEquals(3, r.orgasmsMonthly.last().count)
     }
 
     @Test

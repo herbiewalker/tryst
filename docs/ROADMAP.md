@@ -135,6 +135,20 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
       refined `Typography`, and Material vector nav icons replacing the emoji tabs.
 - [x] Tests: `StatTilesTest` (JVM) green; `InsightsEngineTest` still green; assembleDebug + anti-leak OK.
 
+## M6.2 — Insights customization deepening  ✅ done (build + unit tests green; visual check + color-coding pending)
+- [x] **Per-card chart style** (top global Bars/Line/Donut buttons removed): each section card's style is
+      chosen in the Customize screen and persisted per section id (`InsightsPreferences.sectionStyles`).
+- [x] **Reorder / hide whole section cards** (Activity, Satisfaction, People, What you did, Vibe & context,
+      Initiator, Orgasms, Details) in the Customize screen, mirroring the stat-tile editor. Stable section
+      catalog `ui/insights/InsightSections.kt`; order + hidden set persisted.
+- [x] **New Initiator section** (who started it) and **Orgasms section** — your-vs-partner totals, **orgasms
+      per partner** (named), total orgasms **over time**, and finish/ejaculation (moved here from Details).
+      New engine fields: `topInitiators`, `orgasmsPerPartner`, `orgasmsMonthly`.
+- [x] Tests: `InsightSectionsTest` + new `InsightsEngineTest` cases (initiator, per-partner orgasms, orgasm
+      trend) green; assembleDebug + anti-leak OK.
+- [ ] **Pending: color-code charts by type** — consistent, dynamically-expanding per-value colors across all
+      cards (awaiting the user's reference screenshot for the exact scheme).
+
 ## M7 — Achievements
 - Local achievement rules, progress tracking, unlock UI.
 
