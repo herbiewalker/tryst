@@ -85,6 +85,14 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   **per-orgasm ejaculation** (the `ejaculationLocations` column repurposed to orgasmIndex→location —
   your self-orgasm count drives N single-select ejaculation rows). Added Blowjob, Ball-sucking,
   Cunnilingus, Clit-sucking acts. `MigrationTest` v1→v6.
+- **D-25 (M5):** **Encrypted backup** = a password-derived key (PBKDF2-HMAC-SHA256, 600k; header
+  carries salt+iters so Argon2id can come later) over a **Tink-streamed ZIP** of `data.json` (every
+  table, generic column dump) + decrypted media. Re-encrypt model (not raw-DB copy) because the live
+  DEK is device-bound. Restore re-encrypts media under the new device's key, repoints `encFilePath`,
+  `INSERT OR REPLACE` with deferred FKs. **Export is encrypted-only** (no plaintext export) to keep the
+  no-unprotected-data promise. Files via SAF; auto-lock suppressed across the handoff. Format in
+  `docs/EXPORT_FORMAT.md`. **Importing other apps' data (Intimacy/LoveLust/etc.) = M5b**, a separate
+  generic **CSV importer with column mapping** (no shared standard between trackers).
 - **D-24 (M4):** Photo input = Android **Photo Picker** with an **ACTION_GET_CONTENT fallback**
   (some devices/emulators advertise the picker without providing the activity → `ActivityNotFoundException`).
   Plus **in-app camera capture** via a `FileProvider` into a private cache file, encrypted into the media
