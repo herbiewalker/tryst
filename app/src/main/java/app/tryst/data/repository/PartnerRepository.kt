@@ -24,6 +24,8 @@ class PartnerRepository @Inject constructor(
 
     suspend fun getById(id: String): PartnerEntity? = dao.getById(id)
 
+    suspend fun getAll(): List<PartnerEntity> = dao.getAll()
+
     suspend fun archive(id: String, now: Long = System.currentTimeMillis()) = dao.archive(id, now)
 
     // --- Partner photo (encrypted blob in app-internal storage; id stored as Partner.photoMediaId) ---

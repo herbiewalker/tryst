@@ -22,6 +22,9 @@ interface PartnerDao {
     @Query("SELECT * FROM partners WHERE id = :id")
     suspend fun getById(id: String): PartnerEntity?
 
+    @Query("SELECT * FROM partners")
+    suspend fun getAll(): List<PartnerEntity>
+
     @Query("UPDATE partners SET archivedAt = :timestamp, updatedAt = :timestamp WHERE id = :id")
     suspend fun archive(id: String, timestamp: Long)
 

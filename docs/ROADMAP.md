@@ -96,8 +96,10 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
       under the device key on restore. SAF file picker; auto-lock suppressed across the handoff.
       `docs/EXPORT_FORMAT.md` written. `BackupRoundTripTest` green (15/15).
 - [x] Full wipe = `SessionManager.deleteAllData` (keys + DB + media), from M3.
-- [ ] **M5b — import other apps' data:** generic CSV importer with column mapping (for Intimacy /
-      LoveLust history etc.). Deferred until the user is ready to migrate that data.
+- [x] **M5b — import other apps' data:** generic CSV importer with column mapping
+      (Settings → Import from CSV). Auto-detects common columns; flexible date parsing; find-or-create
+      partners by name. Covers Intimacy / LoveLust / spreadsheets once you have their CSV export.
+      `CsvParseTest` (JVM) green.
 - [ ] Optional: VACUUM on delete-all for secure-delete hardening.
 
 ## M6 — Insights
