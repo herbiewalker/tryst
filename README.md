@@ -44,8 +44,9 @@ Progress against the [roadmap](docs/ROADMAP.md):
 - ✅ **M4** — encrypted photo attachments UI: pick via the Android Photo Picker (no permission),
   encrypted to app-internal storage, decrypted in-memory only; on encounters (editor + viewer +
   history/calendar thumbnail) and partners (avatar).
-- ✅ **M5 (core)** — password-encrypted backup export + restore (full fidelity incl. photos); see
-  [EXPORT_FORMAT.md](docs/EXPORT_FORMAT.md). Remaining: import from other apps (CSV) = M5b.
+- ✅ **M5** — password-encrypted backup export + restore (full fidelity incl. photos; see
+  [EXPORT_FORMAT.md](docs/EXPORT_FORMAT.md)), plus **CSV import** from other apps/spreadsheets
+  with column mapping.
 - ⬜ M6 insights · M7 achievements · M8 release (incl. string/i18n + a11y pass).
 
 New here? See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for scope and

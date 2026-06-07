@@ -4,6 +4,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,6 +16,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -78,6 +81,10 @@ fun SettingsScreen(viewModel: LockViewModel = hiltViewModel()) {
             pendingImportUri = uri
             showImportPw = true
         }
+    }
+    val csvViewModel: CsvImportViewModel = hiltViewModel()
+    val openCsv = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) csvViewModel.parse(uri)
     }
 
     Scaffold(topBar = { TopAppBar(title = { Text("Settings") }) }) { padding ->
@@ -193,6 +200,19 @@ fun SettingsScreen(viewModel: LockViewModel = hiltViewModel()) {
             backupViewModel.status?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
             }
+            OutlinedButton(
+                onClick = { csvViewModel.suppressAutoLock(); openCsv.launch(arrayOf("*/*")) },
+                enabled = !csvViewModel.busy,
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("Import from CSV (other apps)") }
+            Text(
+                "Bring in encounter history from other apps/spreadsheets via CSV — you map the columns to Tryst fields.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            csvViewModel.status?.let {
+                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+            }
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
@@ -258,6 +278,83 @@ fun SettingsScreen(viewModel: LockViewModel = hiltViewModel()) {
             },
             onDismiss = { showImportPw = false; pendingImportUri = null },
         )
+    }
+
+    if (csvViewModel.showMapping) {
+        CsvMappingDialog(
+            headers = csvViewModel.headers,
+            rowCount = csvViewModel.rowCount,
+            mapping = csvViewModel.mapping,
+            busy = csvViewModel.busy,
+            onSet = { field, col -> csvViewModel.setMapping(field, col) },
+            onImport = { csvViewModel.import() },
+            onDismiss = { csvViewModel.cancel() },
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CsvMappingDialog(
+    headers: List<String>,
+    rowCount: Int,
+    mapping: Map<CsvField, Int?>,
+    busy: Boolean,
+    onSet: (CsvField, Int?) -> Unit,
+    onImport: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Map CSV columns") },
+        text = {
+            Column(
+                modifier = Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text(
+                    "$rowCount row(s) found. Choose which column maps to each field — Date is required.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                CsvField.entries.forEach { field ->
+                    CsvFieldRow(field, headers, mapping[field]) { onSet(field, it) }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onImport, enabled = !busy && mapping[CsvField.DATE] != null) { Text("Import") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
+}
+
+@Composable
+private fun CsvFieldRow(field: CsvField, headers: List<String>, selected: Int?, onSet: (Int?) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            field.label + if (field.required) " *" else "",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Box {
+            OutlinedButton(onClick = { open = true }) {
+                Text(selected?.let { idx -> headers.getOrNull(idx)?.ifBlank { "Column ${idx + 1}" } } ?: "—")
+            }
+            DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+                DropdownMenuItem(text = { Text("— (none)") }, onClick = { onSet(null); open = false })
+                headers.forEachIndexed { i, h ->
+                    DropdownMenuItem(
+                        text = { Text(h.ifBlank { "Column ${i + 1}" }) },
+                        onClick = { onSet(i); open = false },
+                    )
+                }
+            }
+        }
     }
 }
 
