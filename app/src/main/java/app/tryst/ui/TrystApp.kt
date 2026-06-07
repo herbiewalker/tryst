@@ -16,12 +16,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavGraph.Companion.findStartDestination
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import app.tryst.ui.encounter.EncounterEditScreen
 import app.tryst.ui.history.HistoryScreen
 import app.tryst.ui.insights.InsightsScreen
@@ -31,13 +29,12 @@ import app.tryst.ui.settings.SettingsScreen
 private object Routes {
     const val HISTORY = "history"
     const val INSIGHTS = "insights"
-    const val INSIGHTS_PATTERN = "insights?edit={edit}"
+    const val INSIGHTS_CUSTOMIZE = "insights/customize"
     const val PARTNERS = "partners"
     const val SETTINGS = "settings"
     const val ENCOUNTER_NEW = "encounter/new"
     const val ENCOUNTER_EDIT = "encounter/{encounterId}"
     fun encounterEdit(id: String) = "encounter/$id"
-    fun insightsEdit() = "insights?edit=true"
 }
 
 private data class TopDestination(
@@ -58,8 +55,7 @@ private val topDestinations = listOf(
 fun TrystApp() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
-    // Strip any query args (e.g. insights?edit=...) so tab matching works on the base route.
-    val currentRoute = backStackEntry?.destination?.route?.substringBefore("?")
+    val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = currentRoute in topDestinations.map { it.route }
 
     Scaffold(
@@ -96,15 +92,16 @@ fun TrystApp() {
                     onOpenEncounter = { id -> navController.navigate(Routes.encounterEdit(id)) },
                 )
             }
-            composable(
-                Routes.INSIGHTS_PATTERN,
-                arguments = listOf(navArgument("edit") { type = NavType.BoolType; defaultValue = false }),
-            ) { entry ->
-                InsightsScreen(startInEditMode = entry.arguments?.getBoolean("edit") ?: false)
+            composable(Routes.INSIGHTS) { InsightsScreen() }
+            composable(Routes.INSIGHTS_CUSTOMIZE) {
+                InsightsScreen(
+                    startInEditMode = true,
+                    onBack = { navController.popBackStack() },
+                )
             }
             composable(Routes.PARTNERS) { PartnersScreen() }
             composable(Routes.SETTINGS) {
-                SettingsScreen(onCustomizeInsights = { navController.navigate(Routes.insightsEdit()) })
+                SettingsScreen(onCustomizeInsights = { navController.navigate(Routes.INSIGHTS_CUSTOMIZE) })
             }
             composable(Routes.ENCOUNTER_NEW) {
                 EncounterEditScreen(encounterId = null, onClose = { navController.popBackStack() })
