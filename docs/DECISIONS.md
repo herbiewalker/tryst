@@ -93,6 +93,18 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   no-unprotected-data promise. Files via SAF; auto-lock suppressed across the handoff. Format in
   `docs/EXPORT_FORMAT.md`. **Importing other apps' data (Intimacy/LoveLust/etc.) = M5b**, a separate
   generic **CSV importer with column mapping** (no shared standard between trackers).
+- **D-26 (M6.1):** **Insights UX lift + global "dark & moody" polish.** (1) One global `ChartStyle`
+  (Bars/Line/Donut) drives every chart with per-chart graceful fallback (donut is meaningless for an
+  ordered time series, line for categories) — simplest "pick a look" mental model; charts stay
+  hand-drawn (extends D-25). (2) Overview stat boxes are customizable via an **in-place edit mode**
+  (not a separate screen) with long-press drag-reorder + per-tile show/hide; a Settings row deep-links
+  in (`insights?edit=true`). Layout (order + hidden) and chart style persist in `InsightsPreferences`
+  (SharedPreferences, mirrors `ThemePreferences` — non-sensitive, excluded from backup). Tiles have
+  **stable ids** (`StatTiles` catalog) so saved layouts survive adding/reordering tiles in future
+  versions. (3) Global polish is done by **refining the design tokens** (`Color`/`Type`/`Shape` +
+  Material nav icons) rather than editing each screen — every screen inherits the new look through
+  `MaterialTheme`. Theme default stays SYSTEM; the dark scheme is the headline look. Reorder is a
+  reliable single-column drag list (full free-form grid drag deferred).
 - **D-25 (M6):** **No chart library** (resolves O-3). Insights charts are drawn with plain Compose
   layout (`VerticalBarChart`, `RankedBars`) instead of Vico/MPAndroidChart. Rationale: the app already
   hand-rolls its visuals (per-act vector icons, manual `BitmapFactory` downsampling, no third-party
