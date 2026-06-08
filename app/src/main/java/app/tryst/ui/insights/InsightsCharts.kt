@@ -131,30 +131,30 @@ fun VerticalBarChart(
     }
 }
 
-/** Ranked horizontal bars (label · bar · count), longest first. */
+/** Ranked horizontal bars (color dot · label · bar · count), longest first, colored by type. */
 @Composable
 fun RankedBars(
     items: List<Tally>,
     modifier: Modifier = Modifier,
     max: Int = 8,
-    barColor: Color = MaterialTheme.colorScheme.primary,
 ) {
     if (items.isEmpty()) return
     val shown = items.take(max)
     val top = (shown.maxOf { it.count }).coerceAtLeast(1)
-    val barBrush = Brush.horizontalGradient(listOf(barColor.copy(alpha = 0.75f), barColor))
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         shown.forEach { item ->
+            val color = TypeColors.colorFor(item.label)
             Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(10.dp).clip(CircleShape).background(color))
                 Text(
                     item.label,
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.width(120.dp),
+                    modifier = Modifier.padding(start = 8.dp).width(112.dp),
                 )
                 Box(
                     modifier = Modifier
@@ -169,7 +169,7 @@ fun RankedBars(
                             .fillMaxHeight()
                             .fillMaxWidth((item.count.toFloat() / top).coerceIn(0.04f, 1f))
                             .clip(RoundedCornerShape(50))
-                            .background(barBrush),
+                            .background(Brush.horizontalGradient(listOf(color.copy(alpha = 0.75f), color))),
                     )
                 }
                 Text(
@@ -283,7 +283,6 @@ fun DonutChart(
     max: Int = 6,
 ) {
     if (items.isEmpty()) return
-    val palette = sliceColors()
     // Collapse the long tail into "Other" so the donut stays readable.
     val head = items.take(max)
     val tail = items.drop(max).sumOf { it.count }
@@ -291,6 +290,7 @@ fun DonutChart(
         addAll(head)
         if (tail > 0) add(Tally("Other", tail))
     }
+    val colors = slices.map { TypeColors.colorFor(it.label) }
     val total = slices.sumOf { it.count }.coerceAtLeast(1)
 
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -303,7 +303,7 @@ fun DonutChart(
                 slices.forEachIndexed { i, slice ->
                     val sweep = 360f * slice.count / total
                     drawArc(
-                        color = palette[i % palette.size],
+                        color = colors[i],
                         startAngle = start,
                         sweepAngle = sweep - 1.5f, // tiny gap between slices
                         useCenter = false,
@@ -326,9 +326,7 @@ fun DonutChart(
         ) {
             slices.forEachIndexed { i, slice ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        Modifier.size(10.dp).clip(CircleShape).background(palette[i % palette.size]),
-                    )
+                    Box(Modifier.size(10.dp).clip(CircleShape).background(colors[i]))
                     Text(
                         slice.label,
                         style = MaterialTheme.typography.bodyMedium,
@@ -345,9 +343,4 @@ fun DonutChart(
             }
         }
     }
-}
-
-@Composable
-private fun sliceColors(): List<Color> = with(MaterialTheme.colorScheme) {
-    listOf(primary, tertiary, secondary, primary.copy(alpha = 0.6f), tertiary.copy(alpha = 0.6f), secondary.copy(alpha = 0.6f), outline)
 }
