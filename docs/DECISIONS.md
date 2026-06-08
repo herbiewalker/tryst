@@ -105,6 +105,15 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   Material nav icons) rather than editing each screen — every screen inherits the new look through
   `MaterialTheme`. Theme default stays SYSTEM; the dark scheme is the headline look. Reorder is a
   reliable single-column drag list (full free-form grid drag deferred).
+- **D-27 (M6.2):** **Per-type chart colors = deterministic `colorFor(label)`** (`ui/insights/TypeColors.kt`),
+  not rank-based. Color is a pure function of the value's label (`String.hashCode` → curated vivid
+  dark-bg palette, seeded with the reference app's pink/blue/violet, bit-mixed, cycling). Rationale:
+  the requirement is that a type reads as the **same color across every card** (rank-based would change
+  a label's color per chart) and **expands automatically** as new acts/partners/etc. appear (no manual
+  registry). Trade-off: with an unbounded category set the palette cycles, so two labels can collide on
+  a hue — acceptable. Applied to ranked bars + donut (breakdowns); trend charts (time axis) stay
+  single-accent. A stacked monthly-by-category chart (per the reference) is deferred — it needs an
+  act→high-level-category taxonomy Tryst doesn't have.
 - **D-25 (M6):** **No chart library** (resolves O-3). Insights charts are drawn with plain Compose
   layout (`VerticalBarChart`, `RankedBars`) instead of Vico/MPAndroidChart. Rationale: the app already
   hand-rolls its visuals (per-act vector icons, manual `BitmapFactory` downsampling, no third-party

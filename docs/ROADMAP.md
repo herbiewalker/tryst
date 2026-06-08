@@ -146,8 +146,12 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
       New engine fields: `topInitiators`, `orgasmsPerPartner`, `orgasmsMonthly`.
 - [x] Tests: `InsightSectionsTest` + new `InsightsEngineTest` cases (initiator, per-partner orgasms, orgasm
       trend) green; assembleDebug + anti-leak OK.
-- [ ] **Pending: color-code charts by type** — consistent, dynamically-expanding per-value colors across all
-      cards (awaiting the user's reference screenshot for the exact scheme).
+- [x] **Color-code charts by type** — `ui/insights/TypeColors.kt` maps a value's label to a stable vivid
+      color (pure fn of `String.hashCode` into a curated dark-bg palette seeded with the reference
+      pink/blue/violet, cycling for new values). Applied to ranked bars (color dot + bar) and donut
+      slices/legend, so the same type reads the same color across every card. Trend charts stay
+      single-accent (their axis is time, not type). Future option: stacked monthly-by-category bars
+      (needs an act→category taxonomy).
 
 ## M7 — Achievements
 - Local achievement rules, progress tracking, unlock UI.
