@@ -10,13 +10,16 @@ import app.tryst.data.stats.Insights
 data class InsightSection(
     val id: String,
     val title: String,
-    /** False for the achievements summary card — it has no chart, so no per-card style picker. */
+    /** False for non-chart cards (Overview tiles, Achievements) — they have no per-card style picker. */
     val hasChart: Boolean = true,
+    /** Caption shown in the customizer for a non-chart card (in place of the style chips). */
+    val editorNote: String? = null,
     val hasData: (Insights) -> Boolean,
 )
 
 object InsightSections {
 
+    const val OVERVIEW = "overview"
     const val ACHIEVEMENTS = "achievements"
     const val ACTIVITY = "activity"
     const val SATISFACTION = "satisfaction"
@@ -29,7 +32,8 @@ object InsightSections {
 
     /** Catalog order = the default layout for a fresh install. */
     val catalog: List<InsightSection> = listOf(
-        InsightSection(ACHIEVEMENTS, "Achievements", hasChart = false) { it.totalCount > 0 },
+        InsightSection(OVERVIEW, "Overview", hasChart = false, editorNote = "Drag the stat tiles below to arrange them.") { it.totalCount > 0 },
+        InsightSection(ACHIEVEMENTS, "Achievements", hasChart = false, editorNote = "Opens the Achievements screen.") { it.totalCount > 0 },
         InsightSection(ACTIVITY, "Activity") { it.totalCount > 0 },
         InsightSection(SATISFACTION, "Satisfaction") { i -> i.ratingHistogram.any { it > 0 } },
         InsightSection(PEOPLE, "People") { it.topPartners.isNotEmpty() },
