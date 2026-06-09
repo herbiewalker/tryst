@@ -43,7 +43,9 @@ associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, i
 - **Schema version** is recorded; restores assume forward-only, additive-nullable migrations (a newer
   backup into an older app isn't supported).
 
-## Importing data from *other* apps (planned, M5b)
-Separate path from this backup format. Because intimacy/period trackers share no standard, the plan is
-a **generic CSV importer with column mapping** (date, partner, duration, rating, note…), which covers
-most apps and spreadsheets — including exporting history out of apps like Intimacy / LoveLust.
+## Importing data from *other* apps (implemented, M5b)
+Separate path from this backup format. Because intimacy/period trackers share no standard, this is a
+**generic CSV importer with column mapping** (Settings → Import from CSV): date, partner, duration,
+rating, note… It auto-detects common columns, parses flexible date formats, and finds-or-creates
+partners by name — covering most apps and spreadsheets (e.g. exporting history out of Intimacy /
+LoveLust). Parser: `data/backup/Csv.kt`; UI: `ui/settings/CsvImportViewModel.kt`.

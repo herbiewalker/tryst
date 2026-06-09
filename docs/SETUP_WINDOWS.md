@@ -18,14 +18,13 @@ on an emulator or phone. Do these roughly in order; check each box as you go.
 
 ## 3. Open the project
 - [ ] **File → Open** and select `E:\ClaudeFolder\Git\CodingProjects\tryst`.
-- [ ] On first open, Android Studio will **generate the Gradle wrapper**
-      (`gradlew`, `gradlew.bat`, `gradle/wrapper/gradle-wrapper.jar`) and run **Gradle Sync**.
-      Accept any prompts to download the Gradle distribution and missing SDK packages.
-- [ ] If Studio's **AGP Upgrade Assistant** or version suggestions pop up, it's fine to accept
-      compatible updates — see the note in `gradle/libs.versions.toml`. If a sync error mentions
-      an AGP/Gradle/Kotlin version mismatch, let Studio update to its recommended versions.
-- [ ] After a clean sync, **commit the generated wrapper files** so CI can use them:
-      `git add gradlew gradlew.bat gradle/wrapper/gradle-wrapper.jar && git commit -m "Add Gradle wrapper"`
+- [ ] The **Gradle wrapper is already committed** (`gradlew`, `gradlew.bat`,
+      `gradle/wrapper/gradle-wrapper.jar`), so a fresh clone builds without regenerating it. On open,
+      Android Studio runs **Gradle Sync** — accept any prompts to download the Gradle distribution and
+      missing SDK packages.
+- [ ] The toolchain is pinned in `gradle/libs.versions.toml` (AGP 9.2.1 / Kotlin 2.2.10 / KSP 2.3.2 /
+      Gradle 9.5). Let Studio drive any upgrades and keep those four mutually compatible; **do not** bump
+      Room past the pinned 2.7.1 without also moving the Kotlin toolchain (see the note in that file).
 
 ## 4. Create a device
 - [ ] **Device Manager** (right toolbar) → **Create Device** → pick a phone → system image
@@ -36,8 +35,9 @@ on an emulator or phone. Do these roughly in order; check each box as you go.
 ## 5. Build & run
 - [ ] **Build → Make Project** (or run `.\gradlew assembleDebug` in the Studio terminal).
 - [ ] Press **Run ▶** to install and launch on the emulator/phone.
-- [ ] You should see a screen reading **"Tryst — M0 scaffold"**. Note that screenshots are
-      blocked (FLAG_SECURE) — that's intentional.
+- [ ] On first run you'll see the **PIN setup screen** (the app's first-run lock setup); after that,
+      the lock screen. Note that screenshots are blocked (FLAG_SECURE) and the app-switcher preview is
+      redacted — that's intentional, so screen captures of the running app appear black.
 
 ## 6. Sanity checks (optional but recommended)
 - [ ] `.\gradlew testDebugUnitTest` → the placeholder unit test passes.
@@ -48,6 +48,6 @@ on an emulator or phone. Do these roughly in order; check each box as you go.
 ## Notes / gotchas
 - **Don't add a network permission.** The anti-leak guard (and CI) will fail the build by design.
 - First Gradle sync downloads a lot (Gradle dist, AGP, SDK bits) — give it time on first run.
-- The launcher icon is a placeholder flame; we'll design a real one at M8.
-- This scaffold was authored without a local build, so the **first sync may request a version
-  bump or two** — that's expected; accept Studio's compatible recommendations.
+- The launcher icon is a placeholder flame; a real one is planned for M8.
+- Running from a plain terminal (no Studio env): set `JAVA_HOME` to the bundled JBR first, e.g.
+  `$env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"`, then `.\gradlew.bat assembleDebug`.

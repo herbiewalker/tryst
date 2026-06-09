@@ -86,5 +86,6 @@ See [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) for toolchain details.
 - [docs/SECURITY_DESIGN.md](docs/SECURITY_DESIGN.md) — encryption & key-management design
 - [docs/DATA_MODEL.md](docs/DATA_MODEL.md) — entities & fields
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — stack & module layout
+- [docs/FLOWCHARTS.md](docs/FLOWCHARTS.md) — visual maps of the core logic flows
 - [docs/ROADMAP.md](docs/ROADMAP.md) — milestones
 - [docs/DECISIONS.md](docs/DECISIONS.md) — decision log + open questions
