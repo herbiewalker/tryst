@@ -158,10 +158,12 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
       replays the encounter log to compute, per achievement, `current`, `unlocked`, and a derived
       `unlockedAt` date. Rule kinds: `Count` / `Sum` / `Distinct` / `Streak`. **No schema change, nothing
       persisted** — progress is recomputed reactively like the stats engine.
-- [x] **Curated catalog** (`data/achievements/Achievements.kt`, ~35): milestones (1→500 trysts), week
-      streaks (2/4/8/12), variety (acts/positions/partners/places/kinks/toys, all weekdays, all months),
-      pleasure (own/partner orgasm totals, 5-star nights), and occasion/misc one-offs (morning sex, makeup
-      sex, quickie, special occasion, first photo, 60-min marathon). Emoji badges (swappable for art later).
+- [x] **Curated catalog** (`data/achievements/Achievements.kt`, ~67): milestones (1→1,000 trysts), week
+      streaks (2→52), variety (acts/positions/partners/places/kinks/toys, moods, protection & finish types,
+      all weekdays, all months), pleasure (own/partner orgasm totals, multi-orgasm sessions, 5-star nights),
+      occasions & places (morning, makeup, quickie, date night, special, vacation, public, outdoors, car),
+      and odds & ends (photos, marathon, solo sessions, notes/journaling, safe sex, initiator). Emoji badges
+      (swappable for art later).
 - [x] **Unlock UI:** a dedicated **Achievements screen** (grouped by category; progress bars + unlock
       dates; a "New" ribbon for unlocks within ~14 days), opened by a **trophy icon** in the Insights top
       bar; plus a compact **teaser card** in the Insights scroll (unlocked count, recent unlocks, nearest
