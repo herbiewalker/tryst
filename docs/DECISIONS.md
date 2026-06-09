@@ -114,6 +114,14 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   a hue — acceptable. Applied to ranked bars + donut (breakdowns); trend charts (time axis) stay
   single-accent. A stacked monthly-by-category chart (per the reference) is deferred — it needs an
   act→high-level-category taxonomy Tryst doesn't have.
+- **D-28 (M7):** **Achievements are fully derived, not persisted.** `AchievementEngine` replays the
+  encounter log to compute each achievement's progress and a derived `unlockedAt` (the date the metric
+  first crossed the target), exactly like `InsightsEngine`. Rationale: no Room migration, privacy-clean
+  (no plaintext "unlocked X" markers), and it can never drift from the data. Trade-off: no persistent
+  "acknowledged" state, so there's **no one-time "just unlocked!" celebration** in v1 — instead a derived
+  "New" ribbon flags unlocks within ~14 days. A real celebration would store acknowledged ids in the
+  encrypted DB (future). **Placement:** a dedicated Achievements screen (trophy icon in the Insights top
+  bar) + a teaser card in the Insights scroll — chosen over a 5th nav tab to keep the bottom nav at four.
 - **D-25 (M6):** **No chart library** (resolves O-3). Insights charts are drawn with plain Compose
   layout (`VerticalBarChart`, `RankedBars`) instead of Vico/MPAndroidChart. Rationale: the app already
   hand-rolls its visuals (per-act vector icons, manual `BitmapFactory` downsampling, no third-party
