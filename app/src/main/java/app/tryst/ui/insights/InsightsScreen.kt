@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DragHandle
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -46,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.core.prefs.ChartStyle
+import app.tryst.ui.achievements.AchievementsTeaser
 import app.tryst.data.stats.Bucket
 import app.tryst.data.stats.Insights
 import app.tryst.data.stats.Tally
@@ -57,6 +59,7 @@ fun InsightsScreen(
     // Non-null when opened as a sub-screen (Settings → Customize Insights): shows a back arrow
     // and makes "Done" return instead of toggling edit mode in place.
     onBack: (() -> Unit)? = null,
+    onOpenAchievements: () -> Unit = {},
     viewModel: InsightsViewModel = hiltViewModel(),
 ) {
     val insights by viewModel.insights.collectAsStateWithLifecycle()
@@ -79,6 +82,11 @@ fun InsightsScreen(
                     }
                 },
                 actions = {
+                    if (onBack == null && !editMode) {
+                        IconButton(onClick = onOpenAchievements) {
+                            Icon(Icons.Filled.EmojiEvents, contentDescription = "Achievements")
+                        }
+                    }
                     IconButton(onClick = { if (onBack != null) onBack() else editMode = !editMode }) {
                         if (editMode) {
                             Icon(Icons.Filled.Check, contentDescription = "Done")
@@ -127,6 +135,7 @@ fun InsightsScreen(
                 }
             } else {
                 item(key = "overview") { OverviewGrid(insights, statOrder, hiddenStats) }
+                item(key = "achievements-teaser") { AchievementsTeaser(onSeeAll = onOpenAchievements) }
 
                 val sections = InsightSections.ordered(sectionOrder)
                     .filter { it.id !in hiddenSections && it.hasData(insights) }

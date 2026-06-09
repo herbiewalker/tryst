@@ -8,7 +8,7 @@ Contents: [Lock lifecycle](#1-app-lock-lifecycle-state-machine) ·
 [Key model](#2-key-model-dek-double-wrap) · [Unlock sequence](#3-unlock-sequence) ·
 [Layered data flow](#4-layered-architecture--data-flow) · [Encounter save](#5-encounter-save-flow) ·
 [Insights pipeline](#6-insights-pipeline) · [Backup export/import](#7-backup-export--import) ·
-[Auto-lock handoff](#8-auto-lock--picker-handoff).
+[Auto-lock handoff](#8-auto-lock--picker-handoff) · [Achievements](#9-achievements-derivation).
 
 ---
 
@@ -192,3 +192,21 @@ flowchart TD
     Q -->|"yes — picker/camera handoff"| R["consume grace · stay unlocked"]
     Q -->|"no"| L["lock(): close DB · zero DEK · state = Locked"]
 ```
+
+## 9. Achievements (derivation)
+
+Like insights, achievements hold **no state** — `AchievementEngine` replays the chronologically-sorted
+log against each static `AchievementDef` to derive progress and the date it unlocked. The Insights
+screen shows a teaser; the trophy icon opens the full screen.
+
+```mermaid
+flowchart LR
+    LOG["EncounterRepository.observeAll()"] -->|"map on Dispatchers.Default"| EV["AchievementEngine.evaluate()<br/>(sort by date, replay)"]
+    CAT["Achievements.catalog (~35 static defs)"] --> EV
+    EV -->|"per def, by Rule"| RULES["Count / Sum / Distinct / Streak"]
+    RULES --> ST["AchievementStatus<br/>(current · unlocked · unlockedAt)"]
+    ST --> SUM["summarize() → teaser rollup"]
+    ST --> SCREEN["AchievementsScreen (grouped, progress bars)"]
+    SUM --> TEASER["Insights teaser card → 'See all'"]
+```
+

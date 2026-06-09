@@ -53,7 +53,10 @@ Progress against the [roadmap](docs/ROADMAP.md):
   initiator, and an orgasm drill-down). Fully **customizable**: reorder/hide the stat tiles and section
   cards, pick a chart style **per card** (bars / line / donut), and consistent **per-type colors**
   across every chart. Hand-drawn charts (no chart dependency).
-- ⬜ M7 achievements · M8 release (incl. string/i18n + a11y pass).
+- ✅ **M7** — **Achievements**: ~35 derived achievements (milestones, week streaks, variety, pleasure,
+  occasions) with progress bars and unlock dates, on a dedicated screen (trophy icon in Insights) plus an
+  Insights teaser card. Computed from the log — no extra storage.
+- ⬜ M8 release (incl. string/i18n + a11y pass).
 
 New here? See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for scope and
 [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) to build it.

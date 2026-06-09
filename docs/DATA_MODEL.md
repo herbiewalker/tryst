@@ -83,9 +83,12 @@ All implement `DisplayLabel` (human-written `label` shown in the UI): `Initiator
 `Occasion`, `ToyType`, `Position`, plus partner enums `Sex`, `Gender`, `RelationshipType`.
 `Orgasm` is a legacy enum kept for migration.
 
-## Achievements (M7 — not yet built)
-- Achievement: id, key, title, description, rule metadata (local/static).
-- AchievementProgress: achievementId, unlockedAt?, progress counters.
+## Achievements (M7 — derived, **no tables**)
+Achievements are **not persisted**. The catalog is static code (`data/achievements/Achievements.kt`)
+and `AchievementEngine` derives progress + a derived `unlockedAt` date by replaying the encounter log
+on demand — the same stateless pattern as the stats engine. No schema/migration was needed. (A future
+persistent "acknowledged/seen" state, for a one-time unlock celebration, would add the only achievement
+storage — likely a small row in the encrypted DB.)
 
 ## Schema / migration rules
 - Versioned Room migrations; **never destructive**. Bump `TrystDatabase.version`, add a
