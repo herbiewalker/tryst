@@ -45,7 +45,9 @@ with deeply personal data. Inspired by the iOS app *Nice*.
 - **FR-11** App lock via **biometric and/or PIN**; required on launch.
 - **FR-12** **Auto-lock** when app is backgrounded or after a configurable timeout.
 - **FR-13** Redacted preview in the app switcher; screenshots blocked (`FLAG_SECURE`).
-- **FR-14** First-run setup of the lock + (per security design) encryption passphrase.
+- **FR-14** First-run setup of the app lock — a distinct 6-digit **PIN** (biometric optional). The PIN
+  protects the data-encryption key; there is no recovery if it's forgotten (see
+  [SECURITY_DESIGN.md](SECURITY_DESIGN.md)). *Implemented as a PIN, not a passphrase (see DECISIONS D-12).*
 
 ### 4.5 Backup & portability
 - **FR-15** **Manual encrypted export** to a user-chosen file (password-protected).

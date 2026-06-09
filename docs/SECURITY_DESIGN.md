@@ -81,17 +81,27 @@ guarantee against forensic seizure in exchange for not having to remember a pass
 
 ## 3. App lock & UI hardening
 
-- App lock on cold start and on return from background (after configurable timeout).
+- App lock on cold start and **immediately on background** (`ProcessLifecycle ON_STOP` →
+  `SessionManager.onAppBackgrounded()`). A user-configurable *timeout* is a deferred enhancement; the
+  current default is immediate. The one exception is a one-shot ~2-minute grace while handing off to the
+  OS photo picker / camera (`suppressNextAutoLock`), which otherwise would background us and drop the
+  result — see [FLOWCHARTS.md](FLOWCHARTS.md) §8.
 - `FLAG_SECURE` on all windows (no screenshots, redacted recents preview).
-- DEK released into memory only while unlocked; cleared on lock/background.
-- Optional re-auth before sensitive actions (export, wipe).
+- DEK released into memory only while unlocked; cleared (zeroed) on lock/background.
+- Re-auth before sensitive actions is **not** currently required beyond the app lock (a possible
+  hardening: re-prompt before export/wipe).
 
-## 4. Encrypted export / import
+## 4. Encrypted export / import (implemented, M5)
 
-- User-initiated. Output = a single **password-encrypted** file (independent password; derive
-  with Argon2id; authenticated encryption, e.g., AES-256-GCM, with versioned header).
-- Includes DB contents + media. Import validates the header/version and round-trips losslessly.
-- Document the format in `docs/EXPORT_FORMAT.md` (to be written at M5) so it's auditable.
+- User-initiated. Output = a single **password-encrypted** file (independent backup password) with a
+  versioned cleartext header (magic, version, salt, iter) followed by a Tink **AES-256-GCM-HKDF**
+  stream. The container key is **PBKDF2-HMAC-SHA256** over the password (same `Pbkdf2` as the PIN, 600k;
+  iteration count is in the header so it can rise — a future format version may switch to Argon2id, the
+  strongest case for a memory-hard KDF being the offline-attackable backup).
+- Includes all tables (`data.json`) + decrypted media, re-encrypted under the device key on restore.
+  Wrong password fails AEAD auth on first read. Round-trips losslessly.
+- The format is documented and auditable in [EXPORT_FORMAT.md](EXPORT_FORMAT.md). Importing *other
+  apps'* data is a separate generic **CSV importer** (M5b).
 
 ## 5. Anti-leak invariants (enforced in code & CI where possible)
 

@@ -1,6 +1,7 @@
 # Tryst — Threat Model
 
-Status: **Draft v0.1**
+Status: **v1 (2026-06-08)** — aligned with the *implemented* security model (Keystore-only + distinct
+app PIN; see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §1, Option B).
 
 ## Assets to protect
 
@@ -33,7 +34,7 @@ Status: **Draft v0.1**
 | T1 sees content in app switcher / screenshots | `FLAG_SECURE` on all windows → redacted preview, screenshots blocked |
 | T1 finds photos in the gallery | Media never written to MediaStore/shared storage; encrypted in app-internal storage only |
 | T2 images the disk | SQLCipher-encrypted DB + AES-GCM-encrypted media; no plaintext at rest |
-| T2 extracts the key | Key derived from user passphrase (Argon2id) and never persisted in plaintext; Keystore only holds a biometric-gated wrapper — see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) |
+| T2 extracts the key | DEK is **double-wrapped** and never persisted in plaintext: an outer layer from a non-exportable, hardware-backed **Android Keystore** key (StrongBox when available) and an inner layer from the **app PIN** (PBKDF2, 600k). A *disk image alone* can't open it — the Keystore key can't be extracted. Residual: a rooted, live device could attempt an on-device PIN brute force; the slow KDF + 10-attempt self-wipe raise the cost (see R-PIN). See [SECURITY_DESIGN.md](SECURITY_DESIGN.md) |
 | T2 recovers data from OS cloud backup | `allowBackup=false`; excluded from auto-backup |
 | T3 intercepts traffic | **No `INTERNET` permission** — the app cannot open a socket; nothing to intercept |
 | T3 via bundled SDK | No analytics/ads/crash/third-party SDKs |
@@ -41,11 +42,15 @@ Status: **Draft v0.1**
 
 ## Residual risks (document, don't pretend away)
 
-- **R1** If the user forgets the passphrase (in passphrase-root model), data is unrecoverable
-  by design. UX must make this consequence explicit at setup.
-- **R2** While the app is unlocked and in the foreground, decrypted content is in memory and
-  on screen — vulnerable to live observation or a compromised OS.
-- **R3** Biometric convenience unlock is only as strong as the device's biometric + Keystore;
-  the passphrase remains the true root of trust.
-- **R4** Forensic tools may detect the app's *presence* even if content is encrypted (no
-  deniability until/unless decoy mode is built).
+- **R1** **No recovery.** If the user forgets the app **PIN** and has no biometric enrolled, the data
+  is unrecoverable by design; likewise a forgotten **backup password**. UX must make this explicit at
+  setup. (An optional passphrase-root mode could be added later behind the same key seam.)
+- **R2** While the app is unlocked and in the foreground, decrypted content is in memory and on screen
+  — vulnerable to live observation or a compromised OS.
+- **R3** Biometric convenience unlock is only as strong as the device's biometric + Keystore; the app
+  **PIN** is the fallback and root of trust.
+- **R-PIN** A 6-digit PIN is brute-forceable in principle. The hardware-bound outer wrap means a disk
+  image alone can't crack it, but a rooted live device could try on-device; mitigated (not eliminated)
+  by the slow KDF and the 10-attempt self-wipe. A user passphrase would be strictly stronger.
+- **R4** Forensic tools may detect the app's *presence* even if content is encrypted (no deniability
+  until/unless decoy mode is built).

@@ -18,12 +18,13 @@ device or be trusted to anyone.
 
 - Log encounters with rich details and optional (encrypted) photos.
 - Track named or anonymous partners, with per-partner stats.
-- See insights: stats, charts, streaks, and achievements.
+- See insights: customizable stats, charts (bars/line/donut), streaks, and per-type breakdowns.
 - Lock the app behind biometric/PIN; auto-lock when backgrounded.
 
 ## Status
 
 🚧 **In development.** Kotlin + Jetpack Compose, `minSdk 31` / `targetSdk 36`. Builds and runs.
+See [docs/FLOWCHARTS.md](docs/FLOWCHARTS.md) for how the core logic fits together.
 
 Progress against the [roadmap](docs/ROADMAP.md):
 
@@ -47,7 +48,12 @@ Progress against the [roadmap](docs/ROADMAP.md):
 - ✅ **M5** — password-encrypted backup export + restore (full fidelity incl. photos; see
   [EXPORT_FORMAT.md](docs/EXPORT_FORMAT.md)), plus **CSV import** from other apps/spreadsheets
   with column mapping.
-- ⬜ M6 insights · M7 achievements · M8 release (incl. string/i18n + a11y pass).
+- ✅ **M6** — **Insights**: a pure-Kotlin stats engine (totals, week streaks, averages, monthly &
+  weekday trends, ratings, and per-attribute breakdowns incl. partners, acts, positions, moods, kinks,
+  initiator, and an orgasm drill-down). Fully **customizable**: reorder/hide the stat tiles and section
+  cards, pick a chart style **per card** (bars / line / donut), and consistent **per-type colors**
+  across every chart. Hand-drawn charts (no chart dependency).
+- ⬜ M7 achievements · M8 release (incl. string/i18n + a11y pass).
 
 New here? See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for scope and
 [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) to build it.
@@ -61,6 +67,7 @@ New here? See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for scope and
 | [SECURITY_DESIGN.md](docs/SECURITY_DESIGN.md) | Encryption & key management |
 | [DATA_MODEL.md](docs/DATA_MODEL.md) | Entities & fields |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack & module layout |
+| [FLOWCHARTS.md](docs/FLOWCHARTS.md) | Visual maps of the core logic flows |
 | [ROADMAP.md](docs/ROADMAP.md) | Milestones |
 | [DECISIONS.md](docs/DECISIONS.md) | Decision log & open questions |
 | [SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) | Build & run on Windows |
