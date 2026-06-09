@@ -134,16 +134,14 @@ fun InsightsScreen(
                     }
                 }
             } else {
-                item(key = "overview") { OverviewGrid(insights, statOrder, hiddenStats) }
-
                 val sections = InsightSections.ordered(sectionOrder)
                     .filter { it.id !in hiddenSections && it.hasData(insights) }
                 items(sections, key = { it.id }) { section ->
-                    if (section.id == InsightSections.ACHIEVEMENTS) {
+                    when (section.id) {
+                        InsightSections.OVERVIEW -> OverviewGrid(insights, statOrder, hiddenStats)
                         // Self-contained summary card (its own header + ViewModel), not a chart section.
-                        AchievementsTeaser(onSeeAll = onOpenAchievements)
-                    } else {
-                        SectionCard(section.title) {
+                        InsightSections.ACHIEVEMENTS -> AchievementsTeaser(onSeeAll = onOpenAchievements)
+                        else -> SectionCard(section.title) {
                             SectionContent(section.id, insights, sectionStyles[section.id] ?: ChartStyle.BARS)
                         }
                     }
@@ -382,9 +380,9 @@ private fun SectionsEditor(
                                 )
                             }
                         }
-                    } else {
+                    } else if (section.editorNote != null) {
                         Text(
-                            "Summary card — opens the Achievements screen.",
+                            section.editorNote,
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(start = 40.dp, top = 8.dp),
