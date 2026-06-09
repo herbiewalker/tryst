@@ -135,13 +135,17 @@ fun InsightsScreen(
                 }
             } else {
                 item(key = "overview") { OverviewGrid(insights, statOrder, hiddenStats) }
-                item(key = "achievements-teaser") { AchievementsTeaser(onSeeAll = onOpenAchievements) }
 
                 val sections = InsightSections.ordered(sectionOrder)
                     .filter { it.id !in hiddenSections && it.hasData(insights) }
                 items(sections, key = { it.id }) { section ->
-                    SectionCard(section.title) {
-                        SectionContent(section.id, insights, sectionStyles[section.id] ?: ChartStyle.BARS)
+                    if (section.id == InsightSections.ACHIEVEMENTS) {
+                        // Self-contained summary card (its own header + ViewModel), not a chart section.
+                        AchievementsTeaser(onSeeAll = onOpenAchievements)
+                    } else {
+                        SectionCard(section.title) {
+                            SectionContent(section.id, insights, sectionStyles[section.id] ?: ChartStyle.BARS)
+                        }
                     }
                 }
                 item(key = "footer-space") { Box(Modifier.height(64.dp)) }
@@ -365,17 +369,26 @@ private fun SectionsEditor(
                             )
                         }
                     }
-                    Row(
-                        modifier = Modifier.padding(start = 40.dp, top = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        ChartStyle.entries.forEach { s ->
-                            FilterChip(
-                                selected = style == s,
-                                onClick = { onSetStyle(section.id, s) },
-                                label = { Text(styleLabel(s)) },
-                            )
+                    if (section.hasChart) {
+                        Row(
+                            modifier = Modifier.padding(start = 40.dp, top = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            ChartStyle.entries.forEach { s ->
+                                FilterChip(
+                                    selected = style == s,
+                                    onClick = { onSetStyle(section.id, s) },
+                                    label = { Text(styleLabel(s)) },
+                                )
+                            }
                         }
+                    } else {
+                        Text(
+                            "Summary card — opens the Achievements screen.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(start = 40.dp, top = 8.dp),
+                        )
                     }
                 }
             }
