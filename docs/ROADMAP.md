@@ -153,8 +153,20 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
       single-accent (their axis is time, not type). Future option: stacked monthly-by-category bars
       (needs an act→category taxonomy).
 
-## M7 — Achievements
-- Local achievement rules, progress tracking, unlock UI.
+## M7 — Achievements  ✅ done (build + unit tests green; visual check pending user unlock)
+- [x] **Derived achievement engine** (`data/achievements/AchievementEngine.kt`, pure Kotlin, JVM-tested):
+      replays the encounter log to compute, per achievement, `current`, `unlocked`, and a derived
+      `unlockedAt` date. Rule kinds: `Count` / `Sum` / `Distinct` / `Streak`. **No schema change, nothing
+      persisted** — progress is recomputed reactively like the stats engine.
+- [x] **Curated catalog** (`data/achievements/Achievements.kt`, ~35): milestones (1→500 trysts), week
+      streaks (2/4/8/12), variety (acts/positions/partners/places/kinks/toys, all weekdays, all months),
+      pleasure (own/partner orgasm totals, 5-star nights), and occasion/misc one-offs (morning sex, makeup
+      sex, quickie, special occasion, first photo, 60-min marathon). Emoji badges (swappable for art later).
+- [x] **Unlock UI:** a dedicated **Achievements screen** (grouped by category; progress bars + unlock
+      dates; a "New" ribbon for unlocks within ~14 days), opened by a **trophy icon** in the Insights top
+      bar; plus a compact **teaser card** in the Insights scroll (unlocked count, recent unlocks, nearest
+      in-progress) with "See all". `AchievementEngineTest` (JVM) green.
+- [ ] Deferred: a persistent "just unlocked!" celebration (needs acknowledged-ids in encrypted storage).
 
 ## M8 — Polish & release prep
 - A11y pass + **i18n: extract all hardcoded UI strings to `strings.xml`** (deferred "chunk 6").
