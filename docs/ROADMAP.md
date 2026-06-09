@@ -165,7 +165,8 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 - [x] **Unlock UI:** a dedicated **Achievements screen** (grouped by category; progress bars + unlock
       dates; a "New" ribbon for unlocks within ~14 days), opened by a **trophy icon** in the Insights top
       bar; plus a compact **teaser card** in the Insights scroll (unlocked count, recent unlocks, nearest
-      in-progress) with "See all". `AchievementEngineTest` (JVM) green.
+      in-progress) with "See all" — itself a **reorderable/hideable Insights section** like the charts (no
+      per-card chart style, since it's a summary). `AchievementEngineTest` (JVM) green.
 - [ ] Deferred: a persistent "just unlocked!" celebration (needs acknowledged-ids in encrypted storage).
 
 ## M8 — Polish & release prep
