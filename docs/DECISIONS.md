@@ -146,3 +146,18 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
 - **O-3 (resolved) Charts library:** **none** — Insights charts are hand-drawn in Compose (D-25).
 - **O-4 (resolved) Multi-partner per encounter:** **yes** — the editor supports selecting multiple
   partners (M:N) with per-partner orgasm counts (D-22).
+- **O-5 CI quality gates:** CI currently runs only the anti-leak guard (+ build/tests). Add
+  **Detekt/ktlint**, **Android Lint**, and a **FOSS-license check** before release (M8). Low risk, high
+  signal; the code is already clean (0 TODO/FIXME).
+- **O-6 Insights/chart accessibility:** the hand-drawn Canvas charts expose **no semantics** to
+  TalkBack. As part of the M8 a11y pass, give each chart a text summary / `contentDescription` (e.g.
+  "Top acts: Vaginal 12, Oral 8, …") so the screen is usable non-visually. Tie in with D-23 (string
+  extraction) and NFR-6.
+- **O-7 Stacked activity-by-category chart** (the layered monthly bars in the reference app) needs an
+  **act → high-level-category taxonomy** (e.g. Intercourse / Oral / Manual / Solo) that Tryst doesn't
+  have. Deferred pending the user's grouping. Until then, monthly/weekday trends stay single-series.
+
+> Still tracked elsewhere (not re-listed): user-configurable **auto-lock timeout** & **change-PIN UI**
+> and **history filters/search** (deferred features, ROADMAP M3); **VACUUM on delete-all** for
+> secure-delete hardening (ROADMAP M5, SECURITY_DESIGN §6); **Keystore-backed monotonic attempt
+> counter** (SECURITY_DESIGN §6); **Argon2id** upgrade for the PIN/backup KDF (SECURITY_DESIGN §6).

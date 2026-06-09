@@ -1,47 +1,75 @@
 # Tryst — Architecture
 
-Status: **Draft v0.1**
+Status: **Live (v1, 2026-06-08)** — reflects the actual code. See [FLOWCHARTS.md](FLOWCHARTS.md) for
+visual flows and [CLAUDE.md](../CLAUDE.md) for the stack rationale and hard constraints.
 
-## Stack (see [CLAUDE.md](../CLAUDE.md))
-Kotlin (JDK 17) · Jetpack Compose + Material 3 · Room+SQLCipher · Hilt · Coroutines/Flow ·
-Tink (media crypto) · PBKDF2-HMAC-SHA256 (PIN KDF; Argon2id reserved for the M5 export passphrase) ·
-AndroidX Biometric · Gradle KTS + version catalog.
+## Stack
+Kotlin (JDK 17) · Jetpack Compose + Material 3 · Room + **SQLCipher** · Hilt · Coroutines/Flow ·
+**Tink** (media + backup AEAD) · PBKDF2-HMAC-SHA256 (PIN & backup KDF; Argon2id reserved for a future
+backup-format version) · AndroidX Biometric · Gradle KTS + version catalog.
 
-`minSdk 31` · `compileSdk`/`targetSdk 36`. Toolchain: AGP 9.2.1 / Kotlin 2.2.10 / Gradle 9.5.
+`minSdk 31` · `compileSdk`/`targetSdk 36`. Toolchain: AGP 9.2.1 / Kotlin 2.2.10 / KSP 2.3.2 / Gradle 9.5.
+Single `:app` module, **package-by-feature**.
 
 ## Pattern
-- **MVVM + Repository**, unidirectional data flow.
-- UI (Compose screens) → ViewModel (state + events) → Repository → DAO/crypto/file sources.
-- Domain logic (stats, achievements, validation) kept off the UI thread and unit-testable.
-- State via immutable UI-state data classes exposed as `StateFlow`.
+- **MVVM + Repository**, unidirectional data flow: Compose screen → ViewModel → Repository → DAO /
+  crypto / file source.
+- **State exposure:** list/derived screens (History, Insights, Partners) expose `StateFlow` via
+  `stateIn(...).catch { }` so they survive the DB closing on auto-lock. The encounter editor VM uses
+  per-field `mutableStateOf` (idiomatic for a large form; a single immutable `UiState` refactor is the
+  deferred "chunk 6", M8).
+- **Domain logic is pure Kotlin and unit-tested** off the UI thread — notably the stats engine
+  (`data/stats/InsightsEngine`) and the CSV parser, both JVM-tested without Robolectric.
 
-## Layering
+## Package layout (`app.tryst`)
 ```
-presentation/  Compose screens, ViewModels, navigation, theming
-domain/        use-cases, stats engine, achievement rules (pure Kotlin, testable)
-data/          repositories, Room DAOs/entities, SQLCipher setup, media crypto, export/import
-core/          crypto primitives (KDF, AEAD, keystore), app-lock, security utils, common
+core/
+  security/   Vault (DEK double-wrap), SecureKeyStore, BiometricVault, Pbkdf2, SessionKeys
+  session/    SessionManager (lock lifecycle, opens/closes the DB), LockState
+  crypto/     MediaCrypto (Tink streaming), BackupCrypto (password KDF + AEAD container)
+  prefs/      ThemePreferences, InsightsPreferences  (SharedPreferences, non-sensitive)
+data/
+  db/         TrystDatabase, TrystDatabaseFactory, entities, DAOs, Converters, Migrations, SqlCipherLibrary
+  repository/ Encounter / Partner / Position / Act repositories (read DAOs from the unlocked session)
+  media/      EncryptedMediaStore (encrypted blobs in app-internal storage)
+  backup/     BackupManager (export/restore), Csv (importer)
+  stats/      InsightsEngine + Insights model (pure Kotlin)
+di/           Hilt wiring (most types use @Inject constructors; module is minimal)
+ui/
+  common/     SelectionField/Chips, MediaImages, ImagePicker, Format, Position/Act options, PracticeVisuals
+  lock/        SetupScreen, LockScreen, LockViewModel, BiometricPromptHelper
+  history/     HistoryScreen (list + calendar), HistoryViewModel
+  encounter/   EncounterEditScreen + ViewModel
+  partner/     PartnersScreen + ViewModel
+  insights/    InsightsScreen, charts, StatTiles/InsightSections catalogs, TypeColors, ViewModel
+  settings/    SettingsScreen + Appearance/Backup/CsvImport/CustomActs/CustomPositions VMs
+  theme/       Color, Theme, Type, Shape (brand purple/green; sleek-dark default)
+MainActivity   FragmentActivity; FLAG_SECURE; renders by LockState (Setup / Lock / Unlocked → TrystApp)
 ```
-
-## Modules
-Start single-module `:app` (package-by-feature). Split into `:core`, `:data`, `:feature-*`
-later only if build time or boundaries demand it. Don't over-modularize early.
 
 ## Security touchpoints (cross-cutting — see [SECURITY_DESIGN.md](SECURITY_DESIGN.md))
-- DB factory injects the DEK into SQLCipher; key lifecycle tied to lock state.
-- An `AppLockManager` owns lock/unlock, auto-lock timer, and key zeroization.
-- All `Activity`/windows set `FLAG_SECURE`.
-- A single audited crypto module; feature code never rolls its own crypto.
+- **`SessionManager`** owns the unlock lifecycle: it builds the SQLCipher DB from the vault DEK on
+  unlock, closes it and zeroes the DEK on lock, and gates auto-lock (with a one-shot grace for the
+  photo-picker/camera handoff). Repositories and the media store read from it — there is no DB or key
+  in memory while locked.
+- The **`Vault`** double-wraps the DEK (Keystore key + PIN via PBKDF2) and self-wipes after 10 fails.
+- A single audited crypto layer (`core/crypto`, Tink); feature code never rolls its own crypto.
+- `MainActivity` is the only `Activity` and sets `FLAG_SECURE`.
 
 ## Navigation
-Compose Navigation. Top destinations (tentative): History, Add/Edit Encounter, Partners,
-Insights, Settings. A lock screen gates the whole graph.
+Compose Navigation. Bottom-nav top destinations: **Trysts** (history/calendar), **Insights**,
+**Partners**, **Settings**. Plus the encounter editor (`encounter/new`, `encounter/{id}`) and the
+Insights customizer sub-screen (`insights/customize`, reached from Settings, with a back arrow). The
+whole graph is gated by the lock screen in `MainActivity`.
 
 ## Testing strategy
-- Unit: domain (stats/achievements), repositories (with in-memory/encrypted test DB), crypto.
-- DB: Room migration tests.
-- UI: Compose tests for key flows (add encounter, unlock).
-- CI guard: assert merged manifest has **no `INTERNET` permission** and no banned SDKs.
+- **JVM unit:** stats engine (`InsightsEngineTest`), Insights catalogs (`StatTilesTest`,
+  `InsightSectionsTest`), CSV parser (`CsvParseTest`).
+- **Instrumented (emulator, real Keystore/SQLCipher):** vault, DB-encrypted-on-disk, media crypto,
+  session lifecycle, Room migrations (v1→v6), media attachment round-trip, backup round-trip.
+- **CI anti-leak guard:** fails the build if the *merged* manifest declares any network permission;
+  runs locally (`checkNoNetwork*`) and in CI.
 
-## Quality gates
-Detekt/ktlint, Android Lint, dependency-license check (FOSS only).
+## Quality gates (planned for M8)
+Detekt/ktlint, Android Lint, FOSS-only dependency check. Current builds pass with only benign legacy
+variant-API / deprecation warnings (see `gradle.properties`).

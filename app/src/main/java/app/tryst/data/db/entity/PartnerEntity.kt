@@ -16,7 +16,7 @@ data class PartnerEntity(
     val sex: Sex? = null,
     val gender: Gender? = null,
     val relationshipType: RelationshipType? = null,
-    /** Media id of an encrypted partner photo (wired in M4); null until then. */
+    /** Media id of an encrypted partner photo (avatar); null if none. */
     val photoMediaId: String? = null,
     // ---------------------------
     /** Non-null when soft-archived. */
