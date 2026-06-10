@@ -7,8 +7,12 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
+import androidx.core.view.WindowCompat
 import app.tryst.core.prefs.ThemeMode
+import app.tryst.ui.lock.findFragmentActivity
 
 private val BrandDarkColors = darkColorScheme(
     primary = PurplePrimaryDark,
@@ -86,6 +90,20 @@ fun TrystTheme(
         darkTheme -> BrandDarkColors
         else -> BrandLightColors
     }
+
+    // Match system-bar icon contrast to the *app's* resolved theme, not the system's. The user can
+    // force Light while the phone is in Dark (or vice-versa), and edge-to-edge draws content under
+    // transparent bars — so light bars need dark icons and vice-versa, recomputed on every change.
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = view.context.findFragmentActivity().window
+            val controller = WindowCompat.getInsetsController(window, view)
+            controller.isAppearanceLightStatusBars = !darkTheme
+            controller.isAppearanceLightNavigationBars = !darkTheme
+        }
+    }
+
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
