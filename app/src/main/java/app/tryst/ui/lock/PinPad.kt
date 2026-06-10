@@ -1,7 +1,15 @@
 package app.tryst.ui.lock
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +19,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -20,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,8 +37,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import app.tryst.ui.common.rememberHaptics
+import kotlin.math.roundToInt
+import kotlin.math.sin
 
 private const val PIN_LENGTH = 6
 
@@ -47,6 +62,18 @@ fun PinPad(
     modifier: Modifier = Modifier,
 ) {
     var pin by remember { mutableStateOf("") }
+    val haptics = rememberHaptics()
+
+    // Shake the dots horizontally whenever a new error arrives, and buzz a rejection.
+    val shake = remember { Animatable(0f) }
+    LaunchedEffect(error) {
+        if (error != null) {
+            haptics.reject()
+            shake.snapTo(0f)
+            shake.animateTo(1f, tween(400))
+        }
+    }
+    val shakeOffset = (sin(shake.value * 6 * Math.PI) * 10 * (1f - shake.value)).roundToInt()
 
     Column(
         modifier = modifier
@@ -70,7 +97,7 @@ fun PinPad(
         }
 
         Spacer(Modifier.height(32.dp))
-        PinDots(filled = pin.length)
+        PinDots(filled = pin.length, modifier = Modifier.offset { IntOffset(shakeOffset, 0) })
         Spacer(Modifier.height(16.dp))
 
         Text(
@@ -85,6 +112,7 @@ fun PinPad(
             enabled = enabled,
             onDigit = { digit ->
                 if (pin.length < PIN_LENGTH) {
+                    haptics.tick()
                     pin += digit
                     if (pin.length == PIN_LENGTH) {
                         val entered = pin
@@ -93,21 +121,30 @@ fun PinPad(
                     }
                 }
             },
-            onBackspace = { if (pin.isNotEmpty()) pin = pin.dropLast(1) },
+            onBackspace = { if (pin.isNotEmpty()) { haptics.tick(); pin = pin.dropLast(1) } },
         )
     }
 }
 
 @Composable
-private fun PinDots(filled: Int) {
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+private fun PinDots(filled: Int, modifier: Modifier = Modifier) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         repeat(PIN_LENGTH) { index ->
-            val color =
-                if (index < filled) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.surfaceVariant
+            val isFilled = index < filled
+            val color by animateColorAsState(
+                if (isFilled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                animationSpec = tween(150),
+                label = "pinDotColor",
+            )
+            // The newest dot springs up slightly bigger as it fills.
+            val dotSize by animateDpAsState(
+                if (isFilled) 18.dp else 16.dp,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                label = "pinDotSize",
+            )
             Box(
                 modifier = Modifier
-                    .size(16.dp)
+                    .size(dotSize)
                     .clip(CircleShape)
                     .background(color),
             )
@@ -152,11 +189,18 @@ private fun KeyButton(
     filled: Boolean = true,
     onClick: () -> Unit,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val pressed by interactionSource.collectIsPressedAsState()
+    // A quick squish on press gives the key tactile weight, on top of the Surface ripple.
+    val scale by animateFloatAsState(if (pressed) 0.94f else 1f, label = "keyScale")
     Surface(
+        onClick = onClick,
+        enabled = enabled,
+        interactionSource = interactionSource,
         modifier = modifier
             .aspectRatio(1.4f)
-            .clip(CircleShape)
-            .clickable(enabled = enabled, onClick = onClick),
+            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .clip(CircleShape),
         color = if (filled) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
         shape = CircleShape,
     ) {

@@ -1,5 +1,8 @@
 package app.tryst.ui.insights
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +21,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,6 +76,24 @@ fun BreakdownChart(
     }
 }
 
+/**
+ * A 0→1 "grow-in" factor that plays once when a chart first appears, then stays at 1. The played
+ * flag is [rememberSaveable] so scrolling a chart out of and back into the LazyColumn doesn't replay
+ * the reveal — it animates on genuine first sight only.
+ */
+@Composable
+private fun rememberChartReveal(): Float {
+    var played by rememberSaveable { mutableStateOf(false) }
+    val anim = remember { Animatable(if (played) 1f else 0f) }
+    LaunchedEffect(Unit) {
+        if (!played) {
+            anim.animateTo(1f, tween(durationMillis = 420, easing = FastOutSlowInEasing))
+            played = true
+        }
+    }
+    return anim.value
+}
+
 // ---------------------------------------------------------------------------------------
 // Bars
 // ---------------------------------------------------------------------------------------
@@ -81,6 +108,7 @@ fun VerticalBarChart(
     if (data.isEmpty()) return
     val max = (data.maxOf { it.count }).coerceAtLeast(1)
     val barBrush = Brush.verticalGradient(listOf(barColor, barColor.copy(alpha = 0.55f)))
+    val reveal = rememberChartReveal()
     Row(
         modifier = modifier.fillMaxWidth().height(140.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -99,7 +127,8 @@ fun VerticalBarChart(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                val fraction = bucket.count.toFloat() / max
+                // Bars grow up from the baseline on first reveal.
+                val fraction = bucket.count.toFloat() / max * reveal
                 Box(
                     modifier = Modifier
                         .padding(top = 2.dp)
@@ -139,6 +168,7 @@ fun RankedBars(
     if (items.isEmpty()) return
     val shown = items.take(max)
     val top = (shown.maxOf { it.count }).coerceAtLeast(1)
+    val reveal = rememberChartReveal()
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -162,10 +192,11 @@ fun RankedBars(
                         .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
                     contentAlignment = Alignment.CenterStart,
                 ) {
+                    // Bars sweep out from the left on first reveal.
                     Box(
                         modifier = Modifier
                             .fillMaxHeight()
-                            .fillMaxWidth((item.count.toFloat() / top).coerceIn(0.04f, 1f))
+                            .fillMaxWidth((item.count.toFloat() / top).coerceIn(0.04f, 1f) * reveal)
                             .clip(RoundedCornerShape(50))
                             .background(Brush.horizontalGradient(listOf(color.copy(alpha = 0.75f), color))),
                     )
@@ -289,20 +320,22 @@ fun DonutChart(
     }
     val colors = slices.map { TypeColors.colorFor(it.label) }
     val total = slices.sumOf { it.count }.coerceAtLeast(1)
+    val reveal = rememberChartReveal()
 
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Box(Modifier.size(120.dp), contentAlignment = Alignment.Center) {
             Canvas(Modifier.size(120.dp)) {
                 val stroke = 26f
                 val inset = stroke / 2
+                // Sweep the ring open clockwise from the top as it reveals.
                 var start = -90f
                 val arcSize = Size(size.width - stroke, size.height - stroke)
                 slices.forEachIndexed { i, slice ->
-                    val sweep = 360f * slice.count / total
+                    val sweep = 360f * slice.count / total * reveal
                     drawArc(
                         color = colors[i],
                         startAngle = start,
-                        sweepAngle = sweep - 1.5f, // tiny gap between slices
+                        sweepAngle = (sweep - 1.5f).coerceAtLeast(0f), // tiny gap between slices
                         useCenter = false,
                         topLeft = Offset(inset, inset),
                         size = arcSize,

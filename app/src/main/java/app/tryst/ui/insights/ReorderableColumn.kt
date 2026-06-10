@@ -1,5 +1,6 @@
 package app.tryst.ui.insights
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,6 +19,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.zIndex
+import app.tryst.ui.common.rememberHaptics
 
 /**
  * A small long-press-to-drag reorderable column for a short, fixed-height list (the Insights
@@ -41,14 +43,17 @@ fun <T> ReorderableColumn(
     var draggingKey by remember { mutableStateOf<Any?>(null) }
     var accum by remember { mutableFloatStateOf(0f) }
     val currentItems by rememberUpdatedState(items)
+    val haptics = rememberHaptics()
 
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(spacing)) {
         items.forEach { item ->
             val k = key(item)
             val dragging = k == draggingKey
+            // The lifted row scales up a touch so it reads as picked up off the list.
+            val scale by animateFloatAsState(if (dragging) 1.03f else 1f, label = "dragScale")
             val handle = Modifier.pointerInput(k) {
                 detectDragGesturesAfterLongPress(
-                    onDragStart = { draggingKey = k; accum = 0f },
+                    onDragStart = { draggingKey = k; accum = 0f; haptics.pickUp() },
                     onDragEnd = { draggingKey = null; accum = 0f },
                     onDragCancel = { draggingKey = null; accum = 0f },
                     onDrag = { change, dragAmount ->
@@ -58,10 +63,10 @@ fun <T> ReorderableColumn(
                         if (idx < 0) return@detectDragGesturesAfterLongPress
                         when {
                             accum > slotPx / 2 && idx < currentItems.lastIndex -> {
-                                onMove(idx, idx + 1); accum -= slotPx
+                                onMove(idx, idx + 1); accum -= slotPx; haptics.tick()
                             }
                             accum < -slotPx / 2 && idx > 0 -> {
-                                onMove(idx, idx - 1); accum += slotPx
+                                onMove(idx, idx - 1); accum += slotPx; haptics.tick()
                             }
                         }
                     },
@@ -72,9 +77,13 @@ fun <T> ReorderableColumn(
                     .fillMaxWidth()
                     .then(
                         if (dragging) {
-                            Modifier.zIndex(1f).graphicsLayer { translationY = accum }
+                            Modifier.zIndex(1f).graphicsLayer {
+                                translationY = accum
+                                scaleX = scale
+                                scaleY = scale
+                            }
                         } else {
-                            Modifier
+                            Modifier.graphicsLayer { scaleX = scale; scaleY = scale }
                         },
                     ),
             ) {

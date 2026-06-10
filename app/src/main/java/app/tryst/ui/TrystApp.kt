@@ -1,5 +1,10 @@
 package app.tryst.ui
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
@@ -55,6 +60,7 @@ private val topDestinations = listOf(
 )
 
 /** The unlocked app: bottom-nav shell over Trysts / Insights / Partners / Settings, plus the editor. */
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun TrystApp() {
     val navController = rememberNavController()
@@ -90,41 +96,60 @@ fun TrystApp() {
             }
         },
     ) { padding ->
-        NavHost(
-            navController = navController,
-            startDestination = Routes.HISTORY,
-            modifier = Modifier.padding(padding).consumeWindowInsets(padding),
-        ) {
-            composable(Routes.HISTORY) {
-                HistoryScreen(
-                    onAddEncounter = { navController.navigate(Routes.ENCOUNTER_NEW) },
-                    onOpenEncounter = { id -> navController.navigate(Routes.encounterEdit(id)) },
-                )
-            }
-            composable(Routes.INSIGHTS) {
-                InsightsScreen(onOpenAchievements = { navController.navigate(Routes.ACHIEVEMENTS) })
-            }
-            composable(Routes.INSIGHTS_CUSTOMIZE) {
-                InsightsScreen(
-                    startInEditMode = true,
-                    onBack = { navController.popBackStack() },
-                )
-            }
-            composable(Routes.ACHIEVEMENTS) {
-                AchievementsScreen(onBack = { navController.popBackStack() })
-            }
-            composable(Routes.PARTNERS) { PartnersScreen() }
-            composable(Routes.SETTINGS) {
-                SettingsScreen(onCustomizeInsights = { navController.navigate(Routes.INSIGHTS_CUSTOMIZE) })
-            }
-            composable(Routes.ENCOUNTER_NEW) {
-                EncounterEditScreen(encounterId = null, onClose = { navController.popBackStack() })
-            }
-            composable(Routes.ENCOUNTER_EDIT) { entry ->
-                EncounterEditScreen(
-                    encounterId = entry.arguments?.getString("encounterId"),
-                    onClose = { navController.popBackStack() },
-                )
+        // One SharedTransitionLayout spanning every destination so a card / FAB on the list can
+        // morph into the encounter editor (container transform) and back. Destinations cross-fade;
+        // the editor's shared container drives the headline motion. The fades are also what the
+        // system's predictive-back gesture seeks through as you swipe to dismiss.
+        SharedTransitionLayout {
+            NavHost(
+                navController = navController,
+                startDestination = Routes.HISTORY,
+                modifier = Modifier.padding(padding).consumeWindowInsets(padding),
+                enterTransition = { fadeIn(tween(220)) },
+                exitTransition = { fadeOut(tween(180)) },
+                popEnterTransition = { fadeIn(tween(220)) },
+                popExitTransition = { fadeOut(tween(180)) },
+            ) {
+                composable(Routes.HISTORY) {
+                    HistoryScreen(
+                        onAddEncounter = { navController.navigate(Routes.ENCOUNTER_NEW) },
+                        onOpenEncounter = { id -> navController.navigate(Routes.encounterEdit(id)) },
+                        sharedScope = this@SharedTransitionLayout,
+                        animatedScope = this,
+                    )
+                }
+                composable(Routes.INSIGHTS) {
+                    InsightsScreen(onOpenAchievements = { navController.navigate(Routes.ACHIEVEMENTS) })
+                }
+                composable(Routes.INSIGHTS_CUSTOMIZE) {
+                    InsightsScreen(
+                        startInEditMode = true,
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+                composable(Routes.ACHIEVEMENTS) {
+                    AchievementsScreen(onBack = { navController.popBackStack() })
+                }
+                composable(Routes.PARTNERS) { PartnersScreen() }
+                composable(Routes.SETTINGS) {
+                    SettingsScreen(onCustomizeInsights = { navController.navigate(Routes.INSIGHTS_CUSTOMIZE) })
+                }
+                composable(Routes.ENCOUNTER_NEW) {
+                    EncounterEditScreen(
+                        encounterId = null,
+                        onClose = { navController.popBackStack() },
+                        sharedScope = this@SharedTransitionLayout,
+                        animatedScope = this,
+                    )
+                }
+                composable(Routes.ENCOUNTER_EDIT) { entry ->
+                    EncounterEditScreen(
+                        encounterId = entry.arguments?.getString("encounterId"),
+                        onClose = { navController.popBackStack() },
+                        sharedScope = this@SharedTransitionLayout,
+                        animatedScope = this,
+                    )
+                }
             }
         }
     }

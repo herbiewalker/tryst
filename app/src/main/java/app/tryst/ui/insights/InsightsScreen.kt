@@ -48,6 +48,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.core.prefs.ChartStyle
 import app.tryst.ui.achievements.AchievementsTeaser
+import app.tryst.ui.common.rememberHaptics
 import app.tryst.data.stats.Bucket
 import app.tryst.data.stats.Insights
 import app.tryst.data.stats.Tally
@@ -68,6 +69,7 @@ fun InsightsScreen(
     val sectionOrder by viewModel.sectionOrder.collectAsStateWithLifecycle()
     val hiddenSections by viewModel.hiddenSections.collectAsStateWithLifecycle()
     val sectionStyles by viewModel.sectionStyles.collectAsStateWithLifecycle()
+    val haptics = rememberHaptics()
     var editMode by remember { mutableStateOf(startInEditMode) }
 
     Scaffold(
@@ -87,7 +89,10 @@ fun InsightsScreen(
                             Icon(Icons.Filled.EmojiEvents, contentDescription = "Achievements")
                         }
                     }
-                    IconButton(onClick = { if (onBack != null) onBack() else editMode = !editMode }) {
+                    IconButton(onClick = {
+                        haptics.tick()
+                        if (onBack != null) onBack() else editMode = !editMode
+                    }) {
                         if (editMode) {
                             Icon(Icons.Filled.Check, contentDescription = "Done")
                         } else {
@@ -137,12 +142,14 @@ fun InsightsScreen(
                 val sections = InsightSections.ordered(sectionOrder)
                     .filter { it.id !in hiddenSections && it.hasData(insights) }
                 items(sections, key = { it.id }) { section ->
-                    when (section.id) {
-                        InsightSections.OVERVIEW -> OverviewGrid(insights, statOrder, hiddenStats)
-                        // Self-contained summary card (its own header + ViewModel), not a chart section.
-                        InsightSections.ACHIEVEMENTS -> AchievementsTeaser(onSeeAll = onOpenAchievements)
-                        else -> SectionCard(section.title) {
-                            SectionContent(section.id, insights, sectionStyles[section.id] ?: ChartStyle.BARS)
+                    Box(Modifier.animateItem()) {
+                        when (section.id) {
+                            InsightSections.OVERVIEW -> OverviewGrid(insights, statOrder, hiddenStats)
+                            // Self-contained summary card (its own header + ViewModel), not a chart section.
+                            InsightSections.ACHIEVEMENTS -> AchievementsTeaser(onSeeAll = onOpenAchievements)
+                            else -> SectionCard(section.title) {
+                                SectionContent(section.id, insights, sectionStyles[section.id] ?: ChartStyle.BARS)
+                            }
                         }
                     }
                 }

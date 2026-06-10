@@ -173,6 +173,30 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 - [ ] Deferred: a persistent "just unlocked!" celebration (needs acknowledged-ids in encrypted storage).
 
 ## M8 — Polish & release prep
+
+### Polish passes (done)
+- [x] **Pass 1 — Material 3 theming fixes:** shared color/typography/shape tokens applied consistently.
+- [x] **Pass 2 — edge-to-edge & window insets:** transparent system bars, per-screen inset handling.
+- [x] **Pass 3 — motion & micro-interactions** (build + anti-leak green; driven on the emulator, no
+      crashes across the full session). The app had no animations/haptics before this pass.
+  - **Shared-element container transforms:** a history card — and the "+" FAB for a new entry — morph
+    into the encounter editor and back, via one `SharedTransitionLayout` spanning the `NavHost`
+    (`encounterSharedKey()` in `ui/common/SharedKeys.kt`).
+  - **Predictive back:** `android:enableOnBackInvokedCallback="true"` + explicit `NavHost`
+    enter/exit/pop fades that the system back-gesture seeks through.
+  - **State-change animation:** `animateContentSize` on the editor form & partner dialog; `Crossfade`
+    on History empty/calendar/list + the view-toggle icon; `animateItem()` on every list (History,
+    Partners, Achievements, Insights sections); `AnimatedContent` stepper roll; animated calendar-day
+    selection; `AnimatedVisibility` on Settings status/error text; animated achievement progress bars;
+    a play-once **grow-in reveal** for bar/ranked/donut charts (guarded by `rememberSaveable` so it
+    doesn't replay on scroll).
+  - **Haptics** (`ui/common/Haptics.kt`, `HapticFeedbackConstants`): `confirm` on save / `reject` on
+    destructive deletes & wrong PIN, `tick` on PIN digits / stepper / reorder slot-crossing, `pickUp`
+    on drag start. Plus a wrong-PIN shake and reorder lift-scale spring.
+  - **Ripple/pressed states:** cards switched to the `Card(onClick=…)` overload and PIN keys to
+    `Surface(onClick=…)` for proper Material state layers; press-scale on keys.
+
+### Remaining
 - A11y pass + **i18n: extract all hardcoded UI strings to `strings.xml`** (deferred "chunk 6").
 - Optional cleanup: refactor large editor VMs to a single immutable `UiState` (deferred "chunk 6").
 - Onboarding copy (esp. PIN-loss / no-recovery warning).
