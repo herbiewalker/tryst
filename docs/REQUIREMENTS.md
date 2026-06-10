@@ -1,6 +1,6 @@
 # Tryst — Requirements
 
-Status: **Draft v0.1** · Last updated from scoping conversation.
+Status: **v1 (2026-06-08)** — scope largely implemented through M7; M8 (polish & release) remaining.
 
 ## 1. Vision
 

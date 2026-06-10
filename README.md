@@ -19,6 +19,7 @@ device or be trusted to anyone.
 - Log encounters with rich details and optional (encrypted) photos.
 - Track named or anonymous partners, with per-partner stats.
 - See insights: customizable stats, charts (bars/line/donut), streaks, and per-type breakdowns.
+- Earn achievements for milestones, streaks, variety, and more (all derived on-device).
 - Lock the app behind biometric/PIN; auto-lock when backgrounded.
 
 ## Status
