@@ -35,7 +35,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -236,7 +235,7 @@ fun SettingsScreen(
                 onClick = { showDeleteAll = true },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Delete all data", color = Color.White) }
+            ) { Text("Delete all data") }
             Text(
                 "Permanently erases every encounter, partner, photo, and your PIN. This cannot be undone.",
                 style = MaterialTheme.typography.bodySmall,
