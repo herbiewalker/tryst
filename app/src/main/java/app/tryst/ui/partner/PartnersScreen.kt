@@ -19,6 +19,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -26,6 +28,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -71,7 +74,7 @@ fun PartnersScreen(viewModel: PartnersViewModel = hiltViewModel()) {
         topBar = { TopAppBar(title = { Text("Partners") }) },
         floatingActionButton = {
             FloatingActionButton(onClick = { dialogTarget = DialogTarget(null) }) {
-                Text("+", style = MaterialTheme.typography.headlineMedium)
+                Icon(Icons.Filled.Add, contentDescription = "Add partner")
             }
         },
     ) { padding ->
