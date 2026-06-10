@@ -3,6 +3,7 @@ package app.tryst.ui.lock
 import android.security.keystore.KeyPermanentlyInvalidatedException
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -60,6 +61,7 @@ fun LockScreen(viewModel: LockViewModel) {
                 onClick = { launchBiometric() },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
+                    .navigationBarsPadding()
                     .padding(bottom = 16.dp),
             ) {
                 Text("Use biometric")

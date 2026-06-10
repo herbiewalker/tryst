@@ -1,5 +1,7 @@
 package app.tryst.ui
 
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -61,6 +63,11 @@ fun TrystApp() {
     val showBottomBar = currentRoute in topDestinations.map { it.route }
 
     Scaffold(
+        // The bottom NavigationBar consumes the navigation-bar inset itself; each inner screen's
+        // Scaffold + TopAppBar consumes the status-bar inset (drawing under it edge-to-edge). So the
+        // shell adds no insets of its own — it only forwards the bottom-bar height via consumeWindowInsets
+        // below, which keeps the per-screen Scaffolds from double-padding the navigation bar.
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             if (showBottomBar) {
                 NavigationBar {
@@ -86,7 +93,7 @@ fun TrystApp() {
         NavHost(
             navController = navController,
             startDestination = Routes.HISTORY,
-            modifier = Modifier.padding(padding),
+            modifier = Modifier.padding(padding).consumeWindowInsets(padding),
         ) {
             composable(Routes.HISTORY) {
                 HistoryScreen(
