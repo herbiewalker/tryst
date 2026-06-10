@@ -33,6 +33,21 @@ Implement full edge-to-edge support for this app:
 List each screen you changed and what insets handling was added.
 ```
 
+---
+
+## Pass 3 — Motion & Micro-interactions
+
+```
+Do a motion polish pass following Material motion principles:
+- Replace abrupt state changes with animateContentSize, AnimatedVisibility, and spring-based animations
+- Add shared element transitions between screens where there is a clear visual continuity (lists -> detail)
+- Implement predictive back gesture support
+- Add subtle haptic feedback (HapticFeedbackConstants) on key confirm/destructive actions
+- Verify ripple and pressed states on all interactive elements
+
+Keep animations subtle and fast (under ~300ms for most). List every change made.
+```
+
 <!--
 Add new passes below using the same format:
 
