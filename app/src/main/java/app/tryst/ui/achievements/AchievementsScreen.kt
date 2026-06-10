@@ -1,5 +1,6 @@
 package app.tryst.ui.achievements
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -86,7 +87,7 @@ fun AchievementsScreen(
                     )
                 }
                 items(items, key = { it.def.id }) { status ->
-                    AchievementRow(status, today)
+                    AchievementRow(status, today, Modifier.animateItem())
                 }
             }
             item(key = "footer") { Box(Modifier.padding(bottom = 24.dp)) }
@@ -106,8 +107,10 @@ private fun OverallProgress(unlocked: Int, total: Int) {
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
             )
+            val target = if (total == 0) 0f else unlocked.toFloat() / total
+            val animated by animateFloatAsState(target, label = "overallProgress")
             LinearProgressIndicator(
-                progress = { if (total == 0) 0f else unlocked.toFloat() / total },
+                progress = { animated },
                 modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -115,10 +118,10 @@ private fun OverallProgress(unlocked: Int, total: Int) {
 }
 
 @Composable
-private fun AchievementRow(status: AchievementStatus, today: LocalDate) {
+private fun AchievementRow(status: AchievementStatus, today: LocalDate, modifier: Modifier = Modifier) {
     val unlocked = status.unlocked
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
     ) {
         Row(
@@ -154,8 +157,9 @@ private fun AchievementRow(status: AchievementStatus, today: LocalDate) {
                         )
                     }
                 } else {
+                    val animated by animateFloatAsState(status.progress, label = "achievementProgress")
                     LinearProgressIndicator(
-                        progress = { status.progress },
+                        progress = { animated },
                         modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
                     )
                     Text(
@@ -251,7 +255,8 @@ fun AchievementsTeaser(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    LinearProgressIndicator(progress = { next.progress }, modifier = Modifier.fillMaxWidth())
+                    val animated by animateFloatAsState(next.progress, label = "teaserProgress")
+                    LinearProgressIndicator(progress = { animated }, modifier = Modifier.fillMaxWidth())
                     Text(
                         "${next.current.coerceAtMost(next.def.target)} / ${next.def.target}",
                         style = MaterialTheme.typography.labelSmall,

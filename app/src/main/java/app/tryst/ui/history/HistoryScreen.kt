@@ -1,6 +1,12 @@
 package app.tryst.ui.history
 
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -58,6 +65,8 @@ import app.tryst.data.db.relation.EncounterWithDetails
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
 import app.tryst.ui.common.PracticeVisuals
+import app.tryst.ui.common.encounterSharedKey
+import app.tryst.ui.common.rememberHaptics
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -65,14 +74,17 @@ import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun HistoryScreen(
     onAddEncounter: () -> Unit,
     onOpenEncounter: (String) -> Unit,
+    sharedScope: SharedTransitionScope,
+    animatedScope: AnimatedVisibilityScope,
     viewModel: HistoryViewModel = hiltViewModel(),
 ) {
     val encounters by viewModel.encounters.collectAsStateWithLifecycle()
+    val haptics = rememberHaptics()
     var calendarMode by remember { mutableStateOf(false) }
     // Already sorted by startAt DESC; groupBy keeps that order, one section per day.
     val grouped = remember(encounters) {
@@ -84,43 +96,68 @@ fun HistoryScreen(
             TopAppBar(
                 title = { Text("Trysts") },
                 actions = {
-                    IconButton(onClick = { calendarMode = !calendarMode }) {
-                        if (calendarMode) {
-                            Icon(Icons.AutoMirrored.Filled.List, contentDescription = "List view")
-                        } else {
-                            Icon(Icons.Filled.DateRange, contentDescription = "Calendar view")
+                    IconButton(onClick = { haptics.tick(); calendarMode = !calendarMode }) {
+                        // Cross-fade the icon so list/calendar toggle reads as one control changing state.
+                        Crossfade(targetState = calendarMode, animationSpec = tween(180), label = "viewToggleIcon") { cal ->
+                            if (cal) {
+                                Icon(Icons.AutoMirrored.Filled.List, contentDescription = "List view")
+                            } else {
+                                Icon(Icons.Filled.DateRange, contentDescription = "Calendar view")
+                            }
                         }
                     }
                 },
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = onAddEncounter) {
-                Icon(Icons.Filled.Add, contentDescription = "Log encounter")
+            with(sharedScope) {
+                FloatingActionButton(
+                    onClick = onAddEncounter,
+                    // The "+" morphs into the new-encounter editor (and back) as a container transform.
+                    modifier = Modifier.sharedBounds(
+                        rememberSharedContentState(encounterSharedKey(null)),
+                        animatedVisibilityScope = animatedScope,
+                    ),
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "Log encounter")
+                }
             }
         },
     ) { padding ->
-        when {
-            encounters.isEmpty() -> EmptyState(Modifier.padding(padding))
-            calendarMode -> CalendarView(
-                modifier = Modifier.padding(padding),
-                items = encounters,
-                onLoadThumb = { viewModel.decode(it, CARD_THUMB_PX) },
-                onOpenEncounter = onOpenEncounter,
-            )
-            else -> LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 88.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                grouped.forEach { (label, items) ->
-                    item(key = label) { DateHeader(label) }
-                    items(items, key = { it.encounter.id }) { item ->
-                        EncounterCard(
-                            item,
-                            onLoadThumb = { viewModel.decode(it, CARD_THUMB_PX) },
-                            onClick = { onOpenEncounter(item.encounter.id) },
-                        )
+        // Cross-fade between the empty / calendar / list states instead of snapping.
+        val mode = when {
+            encounters.isEmpty() -> "empty"
+            calendarMode -> "calendar"
+            else -> "list"
+        }
+        Crossfade(targetState = mode, animationSpec = tween(200), label = "historyMode") { state ->
+            when (state) {
+                "empty" -> EmptyState(Modifier.padding(padding))
+                "calendar" -> CalendarView(
+                    modifier = Modifier.padding(padding),
+                    items = encounters,
+                    onLoadThumb = { viewModel.decode(it, CARD_THUMB_PX) },
+                    onOpenEncounter = onOpenEncounter,
+                    sharedScope = sharedScope,
+                    animatedScope = animatedScope,
+                )
+                else -> LazyColumn(
+                    modifier = Modifier.fillMaxSize().padding(padding),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 88.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    grouped.forEach { (label, items) ->
+                        item(key = label) { DateHeader(Modifier.animateItem(), label) }
+                        items(items, key = { it.encounter.id }) { item ->
+                            EncounterCard(
+                                item,
+                                onLoadThumb = { viewModel.decode(it, CARD_THUMB_PX) },
+                                onClick = { onOpenEncounter(item.encounter.id) },
+                                sharedScope = sharedScope,
+                                animatedScope = animatedScope,
+                                modifier = Modifier.animateItem(),
+                            )
+                        }
                     }
                 }
             }
@@ -129,8 +166,8 @@ fun HistoryScreen(
 }
 
 @Composable
-private fun DateHeader(label: String) {
-    Surface(color = MaterialTheme.colorScheme.surface, modifier = Modifier.fillMaxWidth()) {
+private fun DateHeader(modifier: Modifier = Modifier, label: String) {
+    Surface(color = MaterialTheme.colorScheme.surface, modifier = modifier.fillMaxWidth()) {
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
@@ -140,15 +177,29 @@ private fun DateHeader(label: String) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 private fun EncounterCard(
     item: EncounterWithDetails,
     onLoadThumb: suspend (MediaEntity) -> ImageBitmap?,
     onClick: () -> Unit,
+    sharedScope: SharedTransitionScope,
+    animatedScope: AnimatedVisibilityScope,
+    modifier: Modifier = Modifier,
 ) {
     val e = item.encounter
-    Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)) {
+    Card(
+        onClick = onClick,
+        modifier = with(sharedScope) {
+            modifier
+                .fillMaxWidth()
+                // This card morphs into the editor when opened (container transform).
+                .sharedBounds(
+                    rememberSharedContentState(encounterSharedKey(e.id)),
+                    animatedVisibilityScope = animatedScope,
+                )
+        },
+    ) {
         Row(modifier = Modifier.padding(12.dp)) {
             DateBadge(e.startAt)
             Column(
@@ -266,12 +317,15 @@ private fun Pill(text: String) {
 private const val CARD_THUMB_PX = 140
 private val selectedDayFormatter = DateTimeFormatter.ofPattern("EEEE, MMM d")
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun CalendarView(
     modifier: Modifier = Modifier,
     items: List<EncounterWithDetails>,
     onLoadThumb: suspend (MediaEntity) -> ImageBitmap?,
     onOpenEncounter: (String) -> Unit,
+    sharedScope: SharedTransitionScope,
+    animatedScope: AnimatedVisibilityScope,
 ) {
     val byDay = remember(items) { items.groupBy { Format.localDate(it.encounter.startAt) } }
     // Headline act icon per day (most intense across all of that day's encounters).
@@ -309,7 +363,7 @@ private fun CalendarView(
         }
         selectedDay?.let { day ->
             item(key = "day-header") {
-                DateHeader(day.format(selectedDayFormatter))
+                DateHeader(Modifier.animateItem(), label = day.format(selectedDayFormatter))
             }
             if (dayItems.isEmpty()) {
                 item(key = "day-empty") {
@@ -317,6 +371,7 @@ private fun CalendarView(
                         "No trysts on this day.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.animateItem(),
                     )
                 }
             } else {
@@ -325,6 +380,9 @@ private fun CalendarView(
                         item,
                         onLoadThumb = onLoadThumb,
                         onClick = { onOpenEncounter(item.encounter.id) },
+                        sharedScope = sharedScope,
+                        animatedScope = animatedScope,
+                        modifier = Modifier.animateItem(),
                     )
                 }
             }
@@ -419,15 +477,22 @@ private fun DayCell(
     isToday: Boolean,
     onClick: () -> Unit,
 ) {
-    val content = when {
+    val targetContent = when {
         selected -> MaterialTheme.colorScheme.onPrimary
         isToday -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.onSurface
     }
+    // Fade the selection pill in/out rather than snapping between days.
+    val container by animateColorAsState(
+        if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+        animationSpec = tween(200),
+        label = "dayCellContainer",
+    )
+    val content by animateColorAsState(targetContent, animationSpec = tween(200), label = "dayCellContent")
     Surface(
         onClick = onClick,
         shape = CircleShape,
-        color = if (selected) MaterialTheme.colorScheme.primary else Color.Transparent,
+        color = container,
         contentColor = content,
         modifier = Modifier.fillMaxSize(),
     ) {
