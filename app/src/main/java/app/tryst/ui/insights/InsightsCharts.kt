@@ -28,14 +28,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import app.tryst.core.prefs.ChartStyle
 import app.tryst.data.stats.Bucket
 import app.tryst.data.stats.Tally
@@ -200,9 +198,8 @@ fun LineAreaChart(
     val fill = Brush.verticalGradient(listOf(lineColor.copy(alpha = 0.35f), lineColor.copy(alpha = 0f)))
     val dot = lineColor
     val measurer = rememberTextMeasurer()
-    val labelStyle = TextStyle(
+    val labelStyle = MaterialTheme.typography.labelSmall.copy(
         color = MaterialTheme.colorScheme.onSurface,
-        fontSize = 10.sp,
         fontWeight = FontWeight.SemiBold,
     )
     Column(modifier.fillMaxWidth()) {

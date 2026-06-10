@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -95,7 +96,7 @@ fun HistoryScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onAddEncounter) {
-                Text("+", style = MaterialTheme.typography.headlineMedium)
+                Icon(Icons.Filled.Add, contentDescription = "Log encounter")
             }
         },
     ) { padding ->
