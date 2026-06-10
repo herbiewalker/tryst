@@ -1,8 +1,9 @@
 package app.tryst.ui.partner
 
 import android.net.Uri
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,6 +62,7 @@ import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
 import app.tryst.ui.common.MediaImages
 import app.tryst.ui.common.rememberCameraCapture
+import app.tryst.ui.common.rememberHaptics
 import app.tryst.ui.common.rememberImagePicker
 import java.io.File
 
@@ -98,6 +100,7 @@ fun PartnersScreen(viewModel: PartnersViewModel = hiltViewModel()) {
                         onLoadPhoto = { viewModel.decodePhoto(it, AVATAR_PX) },
                         onEdit = { dialogTarget = DialogTarget(partner) },
                         onArchive = { viewModel.archive(partner.id) },
+                        modifier = Modifier.animateItem(),
                     )
                 }
             }
@@ -128,8 +131,10 @@ private fun PartnerRow(
     onLoadPhoto: suspend (String) -> ImageBitmap?,
     onEdit: () -> Unit,
     onArchive: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Card(modifier = Modifier.fillMaxWidth().clickable(onClick = onEdit)) {
+    val haptics = rememberHaptics()
+    Card(onClick = onEdit, modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -148,7 +153,7 @@ private fun PartnerRow(
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            TextButton(onClick = onArchive) { Text("Archive") }
+            TextButton(onClick = { haptics.tick(); onArchive() }) { Text("Archive") }
         }
     }
 }
@@ -221,7 +226,11 @@ private fun PartnerDialog(
         title = { Text(if (initial == null) "Add partner" else "Edit partner") },
         text = {
             Column(
-                modifier = Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()),
+                modifier = Modifier
+                    .heightIn(max = 480.dp)
+                    .verticalScroll(rememberScrollState())
+                    // The avatar / "Remove" controls grow and shrink as a photo is added or cleared.
+                    .animateContentSize(),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 Row(
@@ -256,7 +265,7 @@ private fun PartnerDialog(
                                 )
                             }
                         }
-                        if (hasPhoto) {
+                        AnimatedVisibility(visible = hasPhoto) {
                             TextButton(onClick = {
                                 captureTempFile?.delete(); captureTempFile = null; photoUri = null; photoRemoved = true
                             }) { Text("Remove") }

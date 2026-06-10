@@ -3,6 +3,7 @@ package app.tryst.ui.settings
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,6 +45,7 @@ import app.tryst.core.prefs.ThemeMode
 import app.tryst.data.db.entity.ActEntity
 import app.tryst.data.db.entity.PositionEntity
 import app.tryst.ui.common.SingleSelectChips
+import app.tryst.ui.common.rememberHaptics
 import app.tryst.ui.lock.BiometricPromptHelper
 import app.tryst.ui.lock.LockViewModel
 import app.tryst.ui.lock.findFragmentActivity
@@ -56,6 +58,7 @@ fun SettingsScreen(
     viewModel: LockViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
+    val haptics = rememberHaptics()
     val activity = remember(context) { context.findFragmentActivity() }
     val biometricAvailable = remember { viewModel.canUseBiometrics() }
     var biometricEnabled by remember { mutableStateOf(viewModel.isBiometricEnabled()) }
@@ -137,12 +140,17 @@ fun SettingsScreen(
                 ) { Text("Enable biometric unlock") }
             }
 
-            OutlinedButton(onClick = viewModel::lock, modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(
+                onClick = { haptics.tick(); viewModel.lock() },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
                 Text("Lock now")
             }
 
-            viewModel.error?.let {
-                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            AnimatedVisibility(visible = viewModel.error != null) {
+                viewModel.error?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
             }
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
@@ -211,8 +219,10 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            backupViewModel.status?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+            AnimatedVisibility(visible = backupViewModel.status != null) {
+                backupViewModel.status?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                }
             }
             OutlinedButton(
                 onClick = { csvViewModel.suppressAutoLock(); openCsv.launch(arrayOf("*/*")) },
@@ -224,8 +234,10 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            csvViewModel.status?.let {
-                Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+            AnimatedVisibility(visible = csvViewModel.status != null) {
+                csvViewModel.status?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+                }
             }
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
@@ -251,6 +263,7 @@ fun SettingsScreen(
             text = { Text("This permanently erases everything in Tryst and returns to first-run setup. This cannot be undone.") },
             confirmButton = {
                 TextButton(onClick = {
+                    haptics.reject()
                     showDeleteAll = false
                     viewModel.deleteAllData()
                 }) { Text("Delete everything") }

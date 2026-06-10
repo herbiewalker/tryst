@@ -1,5 +1,16 @@
 package app.tryst.ui.encounter
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -64,6 +75,8 @@ import app.tryst.data.db.entity.ToyType
 import app.tryst.ui.common.ActOptions
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
+import app.tryst.ui.common.encounterSharedKey
+import app.tryst.ui.common.rememberHaptics
 import app.tryst.ui.common.MultiSelectChips
 import app.tryst.ui.common.MultiSelectField
 import app.tryst.ui.common.PositionOptions
@@ -75,15 +88,18 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun EncounterEditScreen(
     encounterId: String?,
     onClose: () -> Unit,
+    sharedScope: SharedTransitionScope,
+    animatedScope: AnimatedVisibilityScope,
     viewModel: EncounterEditViewModel = hiltViewModel(),
 ) {
     LaunchedEffect(encounterId) { viewModel.load(encounterId) }
 
+    val haptics = rememberHaptics()
     val partners by viewModel.availablePartners.collectAsStateWithLifecycle()
     val customPositions by viewModel.customPositions.collectAsStateWithLifecycle()
     val customActs by viewModel.customActs.collectAsStateWithLifecycle()
@@ -97,11 +113,20 @@ fun EncounterEditScreen(
     }
 
     Scaffold(
+        // The editor's container is the destination of the card / FAB container transform. A surface
+        // background keeps the morph opaque while the form fades in over it.
+        modifier = with(sharedScope) {
+            Modifier.sharedBounds(
+                rememberSharedContentState(encounterSharedKey(encounterId)),
+                animatedVisibilityScope = animatedScope,
+                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+            )
+        },
         topBar = {
             TopAppBar(
                 title = { Text(if (viewModel.isEditing) "Edit encounter" else "Log encounter") },
                 navigationIcon = { TextButton(onClick = onClose) { Text("Cancel") } },
-                actions = { TextButton(onClick = { viewModel.save(onClose) }) { Text("Save") } },
+                actions = { TextButton(onClick = { haptics.confirm(); viewModel.save(onClose) }) { Text("Save") } },
             )
         },
     ) { padding ->
@@ -113,7 +138,10 @@ fun EncounterEditScreen(
                 // Note) stays visible while typing.
                 .imePadding()
                 .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                // Dynamic rows (ejaculation per orgasm, per-partner orgasm counters, the delete
+                // button) appear and disappear as you edit — let the form resize smoothly.
+                .animateContentSize(),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
             Spacer(Modifier.height(4.dp))
@@ -371,6 +399,7 @@ fun EncounterEditScreen(
             text = { Text("This can't be undone.") },
             confirmButton = {
                 TextButton(onClick = {
+                    haptics.reject()
                     showDeleteConfirm = false
                     viewModel.delete(onClose)
                 }) { Text("Delete") }
@@ -412,17 +441,33 @@ private fun Field(label: String, content: @Composable () -> Unit) {
 
 @Composable
 private fun Stepper(value: Int, onChange: (Int) -> Unit, min: Int = 0, max: Int = 20) {
+    val haptics = rememberHaptics()
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        OutlinedButton(onClick = { if (value > min) onChange(value - 1) }, enabled = value > min) {
-            Text("−")
+        OutlinedButton(
+            onClick = { if (value > min) { haptics.tick(); onChange(value - 1) } },
+            enabled = value > min,
+        ) { Text("−") }
+        // Roll the number up when it grows and down when it shrinks.
+        AnimatedContent(
+            targetState = value,
+            transitionSpec = {
+                if (targetState > initialState) {
+                    slideInVertically { it } + fadeIn() togetherWith slideOutVertically { -it } + fadeOut()
+                } else {
+                    slideInVertically { -it } + fadeIn() togetherWith slideOutVertically { it } + fadeOut()
+                }
+            },
+            label = "stepperValue",
+        ) { v ->
+            Text("$v", style = MaterialTheme.typography.titleLarge)
         }
-        Text("$value", style = MaterialTheme.typography.titleLarge)
-        OutlinedButton(onClick = { if (value < max) onChange(value + 1) }, enabled = value < max) {
-            Text("+")
-        }
+        OutlinedButton(
+            onClick = { if (value < max) { haptics.tick(); onChange(value + 1) } },
+            enabled = value < max,
+        ) { Text("+") }
     }
 }
 
