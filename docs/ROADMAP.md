@@ -1,6 +1,7 @@
 # Tryst — Roadmap / Milestones
 
-Status: **Draft v0.1** — high-level sequencing. Each milestone should end runnable & tested.
+Status: **Live (2026-06-08)** — M0–M7 complete and verified on the emulator; **M8 (polish & release)**
+is the only milestone remaining. Each milestone ends runnable & tested.
 
 ## M0 — Project scaffold  ✅ done (verified building & running)
 - [x] Android project: Gradle KTS, version catalog, Compose, Hilt, base theme.
