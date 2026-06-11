@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -77,6 +78,7 @@ import app.tryst.data.db.entity.Protection
 import app.tryst.data.db.entity.Setting
 import app.tryst.data.db.entity.ToyType
 import app.tryst.ui.common.ActOptions
+import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
 import app.tryst.ui.common.encounterSharedKey
@@ -97,8 +99,11 @@ import java.time.ZoneOffset
 fun EncounterEditScreen(
     encounterId: String?,
     onClose: () -> Unit,
-    sharedScope: SharedTransitionScope,
-    animatedScope: AnimatedVisibilityScope,
+    // Non-null only when launched as a full-screen destination, where the editor's container is
+    // the target of the card / FAB shared-element transform. In the expanded-width two-pane layout
+    // the editor lives in a side pane with no morph, so both scopes are null and sharedBounds is skipped.
+    sharedScope: SharedTransitionScope?,
+    animatedScope: AnimatedVisibilityScope?,
     viewModel: EncounterEditViewModel = hiltViewModel(),
 ) {
     LaunchedEffect(encounterId) { viewModel.load(encounterId) }
@@ -119,12 +124,16 @@ fun EncounterEditScreen(
     Scaffold(
         // The editor's container is the destination of the card / FAB container transform. A surface
         // background keeps the morph opaque while the form fades in over it.
-        modifier = with(sharedScope) {
-            Modifier.sharedBounds(
-                rememberSharedContentState(encounterSharedKey(encounterId)),
-                animatedVisibilityScope = animatedScope,
-                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-            )
+        modifier = if (sharedScope != null && animatedScope != null) {
+            with(sharedScope) {
+                Modifier.sharedBounds(
+                    rememberSharedContentState(encounterSharedKey(encounterId)),
+                    animatedVisibilityScope = animatedScope,
+                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                )
+            }
+        } else {
+            Modifier
         },
         topBar = {
             TopAppBar(
@@ -134,10 +143,13 @@ fun EncounterEditScreen(
             )
         },
     ) { padding ->
+      // Cap + centre the form on wide windows (tablet / medium-width foldable) so the fields
+      // don't stretch into very long rows. A no-op on phones and in the narrow two-pane pane.
+      Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
+                .adaptiveContentWidth()
+                .fillMaxHeight()
                 // Lift the scrolling content above the soft keyboard so the focused field (Duration,
                 // Note) stays visible while typing.
                 .imePadding()
@@ -364,6 +376,7 @@ fun EncounterEditScreen(
 
             Spacer(Modifier.height(24.dp))
         }
+      }
     }
 
     if (showDatePicker) {
