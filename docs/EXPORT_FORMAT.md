@@ -33,13 +33,18 @@ associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, i
 
 - **KDF:** PBKDF2-HMAC-SHA256 (same `Pbkdf2` as the app PIN, 600k iters). The iteration count is in
   the header so it can rise over time; a future format version may switch to Argon2id (the offline-
-  attackable backup is the strongest case for a memory-hard KDF).
+  attackable backup is the strongest case for a memory-hard KDF). On import the header count is
+  **bounded to 100k–5M** — the value is untrusted, and an absurd one (e.g. `Int.MAX_VALUE`) would
+  otherwise freeze the app deriving the key (DoS).
 - **Wrong password** ⇒ the AEAD stream fails authentication on first read (import aborts cleanly).
 - **Tables** (insert order respects FKs; `PRAGMA defer_foreign_keys` also guards it): partners,
   locations, tags, positions, acts, encounters, media, encounter_partner, encounter_position,
   encounter_tag. Rows are inserted with `INSERT OR REPLACE` (idempotent re-import).
 - **Media rows:** `encFilePath` is device-specific, so on import it's repointed at this device's media
-  dir and the blob is written via `EncryptedMediaStore` (re-encrypted under the current media key).
+  dir and the blob is written via `EncryptedMediaStore` (re-encrypted under the current media key). The
+  media id (from the ZIP entry name / `data.json`) is **validated as a safe filename** — no path
+  separators or `..`, and the resolved file must stay inside the media dir — so a crafted backup can't
+  use it to write outside app storage (Zip-Slip).
 - **Schema version** is recorded; restores assume forward-only, additive-nullable migrations (a newer
   backup into an older app isn't supported).
 

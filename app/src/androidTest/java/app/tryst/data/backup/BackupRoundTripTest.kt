@@ -109,4 +109,38 @@ class BackupRoundTripTest {
             runBlocking { backup.import("wrong-password", ByteArrayInputStream(bytes)) }
         }
     }
+
+    /**
+     * Zip-Slip guard: a media id is attacker-controlled during import (it comes from the backup's ZIP
+     * entry names). `fileFor` must reject any id that would resolve outside the media dir, while still
+     * accepting legitimate UUID ids.
+     */
+    @Test
+    fun fileFor_rejectsPathTraversalIds() {
+        for (evil in listOf("../../databases/tryst", "..", ".", "a/b", "a\\b", "")) {
+            assertThrows("Expected '$evil' to be rejected", IllegalArgumentException::class.java) {
+                store.fileFor(evil)
+            }
+        }
+        // A normal id still resolves inside the media dir.
+        val ok = store.fileFor("550e8400-e29b-41d4-a716-446655440000")
+        assertEquals(File(context.filesDir, "media").canonicalFile, ok.canonicalFile.parentFile)
+    }
+
+    /**
+     * KDF DoS guard: the PBKDF2 iteration count is read from the (untrusted) file header. An absurd
+     * value must be rejected fast, before key derivation — never used to hang the app.
+     */
+    @Test
+    fun import_rejectsAbsurdIterationCount() {
+        val header = ByteArrayOutputStream().apply {
+            write("TRYSTBK1".toByteArray(Charsets.US_ASCII)) // MAGIC
+            write(1)                                         // FORMAT_VERSION
+            write(ByteArray(16))                             // salt
+            write(byteArrayOf(0x7F, -1, -1, -1))             // iterations = Int.MAX_VALUE (big-endian)
+        }.toByteArray()
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking { backup.import(password, ByteArrayInputStream(header)) }
+        }
+    }
 }

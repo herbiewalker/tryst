@@ -70,6 +70,9 @@ class BackupManager @Inject constructor(
         require(input.read() == FORMAT_VERSION) { "Unsupported backup version" }
         val salt = ByteArray(SALT_BYTES).also { readFully(input, it) }
         val iterations = ByteBuffer.wrap(ByteArray(4).also { readFully(input, it) }).int
+        // The iteration count comes from the (untrusted) file header. Bound it: a crafted value like
+        // Int.MAX_VALUE would otherwise hang the app for minutes deriving the key (DoS).
+        require(iterations in MIN_ITERATIONS..MAX_ITERATIONS) { "Unsupported backup version" }
 
         val key = Pbkdf2.derive(password, salt, iterations)
         val db = session.database().openHelper.writableDatabase
@@ -159,6 +162,10 @@ class BackupManager @Inject constructor(
         val MAGIC = "TRYSTBK1".toByteArray(Charsets.US_ASCII) // 8 bytes
         const val FORMAT_VERSION = 1
         const val SALT_BYTES = 16
+        // Sane bounds for the file-supplied PBKDF2 iteration count (default is 600k). The upper
+        // bound caps key-derivation time so a malicious header can't freeze the app.
+        const val MIN_ITERATIONS = 100_000
+        const val MAX_ITERATIONS = 5_000_000
         // Insert order respects foreign keys (parents first); defer_foreign_keys also guards it.
         val TABLES = listOf(
             "partners", "locations", "tags", "positions", "acts",
