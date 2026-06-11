@@ -98,6 +98,7 @@ class SessionManager @Inject constructor(
         biometricVault.disable()
         vault.wipe()
         File(context.filesDir, "media").deleteRecursively()
+        clearCaptureCache()
         _state.value = LockState.NeedsSetup
     }
 
@@ -140,7 +141,15 @@ class SessionManager @Inject constructor(
         database.openHelper.writableDatabase // force-open so a bad key fails here, not later
         dek = newDek
         db = database
+        // A camera capture keeps the session open across the OS handoff (auto-lock is suppressed),
+        // so any plaintext temp here at unlock time is an orphan from a killed prior session — sweep it.
+        clearCaptureCache()
         _state.value = LockState.Unlocked
+    }
+
+    /** Delete any plaintext camera captures left in cache (see [app.tryst.ui.common.rememberCameraCapture]). */
+    private fun clearCaptureCache() {
+        File(context.cacheDir, "captures").deleteRecursively()
     }
 
     private fun initialState(): LockState =
