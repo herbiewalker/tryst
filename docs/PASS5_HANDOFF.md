@@ -100,5 +100,8 @@ Check:
 1. `3be5ea4` — ❌ `./gradlew: Permission denied` → wrapper was committed non-executable. Fixed `3035f9b`.
 2. `3035f9b` — ❌ catalog alias `androidx-material3-window-size-class` rejected (`class` is reserved).
    Fixed `1953adc` (alias → `androidx-material3-windowsizeclass`).
-3. `1953adc` — ⏳ first run to reach actual Kotlin compile. **Check its result before trusting the code.**
-   (If it failed, the error + fix should be recorded here or in a follow-up commit.)
+3. `1953adc` / `fd979c0` — ✅ **green.** `assembleDebug` + `testDebugUnitTest` + `lint` +
+   `checkNoNetworkDebug` + banned-SDK guard all pass. The refactor **compiles, unit tests pass, lint is
+   clean** against the pinned Compose BOM (2026.04.01) — so the `calculateWindowSizeClass` API, the
+   nested `animatedScope = this` capture, and the keyed-VM panes are all good. **Only device
+   verification remains** (the checklist above).
