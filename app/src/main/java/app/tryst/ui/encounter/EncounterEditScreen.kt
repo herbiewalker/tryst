@@ -52,12 +52,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -416,7 +420,7 @@ fun EncounterEditScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clickable { viewer = null },
+                    .clickable(onClickLabel = "Close") { viewer = null },
                 contentAlignment = Alignment.Center,
             ) {
                 DecodedImage(
@@ -449,6 +453,7 @@ private fun Stepper(value: Int, onChange: (Int) -> Unit, min: Int = 0, max: Int 
         OutlinedButton(
             onClick = { if (value > min) { haptics.tick(); onChange(value - 1) } },
             enabled = value > min,
+            modifier = Modifier.semantics { contentDescription = "Decrease" },
         ) { Text("−") }
         // Roll the number up when it grows and down when it shrinks.
         AnimatedContent(
@@ -467,6 +472,7 @@ private fun Stepper(value: Int, onChange: (Int) -> Unit, min: Int = 0, max: Int 
         OutlinedButton(
             onClick = { if (value < max) { haptics.tick(); onChange(value + 1) } },
             enabled = value < max,
+            modifier = Modifier.semantics { contentDescription = "Increase" },
         ) { Text("+") }
     }
 }
@@ -510,17 +516,25 @@ private fun PhotoThumb(
             contentScale = ContentScale.Crop,
             load = load,
         )
+        // Small visual badge, but a full 48dp touch target + a proper label for TalkBack.
         Box(
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .padding(4.dp)
-                .size(22.dp)
+                .minimumInteractiveComponentSize()
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f))
-                .clickable(onClick = onRemove),
+                .clickable(onClick = onRemove, role = Role.Button)
+                .semantics { contentDescription = "Remove photo" },
             contentAlignment = Alignment.Center,
         ) {
-            Text("×", color = Color.White, style = MaterialTheme.typography.titleMedium)
+            Box(
+                modifier = Modifier
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.6f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text("×", color = Color.White, style = MaterialTheme.typography.titleMedium)
+            }
         }
     }
 }
@@ -534,7 +548,8 @@ private fun AddPhotoTile(onCamera: () -> Unit, onGallery: () -> Unit) {
                 .size(84.dp)
                 .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                .clickable { menuOpen = true },
+                .clickable(role = Role.Button) { menuOpen = true }
+                .semantics { contentDescription = "Add photo" },
             contentAlignment = Alignment.Center,
         ) {
             Text(

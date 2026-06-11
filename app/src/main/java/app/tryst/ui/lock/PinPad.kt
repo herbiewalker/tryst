@@ -38,6 +38,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -128,7 +132,11 @@ fun PinPad(
 
 @Composable
 private fun PinDots(filled: Int, modifier: Modifier = Modifier) {
-    Row(modifier, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+    // The dots are decorative; expose the entry progress (not the digits) to TalkBack.
+    Row(
+        modifier.semantics { contentDescription = "PIN: $filled of $PIN_LENGTH digits entered" },
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
         repeat(PIN_LENGTH) { index ->
             val isFilled = index < filled
             val color by animateColorAsState(
@@ -176,7 +184,7 @@ private fun Keypad(
         ) {
             Spacer(Modifier.weight(1f))
             KeyButton("0", enabled, Modifier.weight(1f)) { onDigit('0') }
-            KeyButton("⌫", enabled, Modifier.weight(1f), filled = false, onClick = onBackspace)
+            KeyButton("⌫", enabled, Modifier.weight(1f), filled = false, contentDescription = "Delete", onClick = onBackspace)
         }
     }
 }
@@ -187,6 +195,7 @@ private fun KeyButton(
     enabled: Boolean,
     modifier: Modifier,
     filled: Boolean = true,
+    contentDescription: String? = null,
     onClick: () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -200,7 +209,11 @@ private fun KeyButton(
         modifier = modifier
             .aspectRatio(1.4f)
             .graphicsLayer { scaleX = scale; scaleY = scale }
-            .clip(CircleShape),
+            .clip(CircleShape)
+            .semantics {
+                role = Role.Button
+                if (contentDescription != null) this.contentDescription = contentDescription
+            },
         color = if (filled) MaterialTheme.colorScheme.surfaceVariant else MaterialTheme.colorScheme.surface,
         shape = CircleShape,
     ) {

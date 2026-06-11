@@ -53,7 +53,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -61,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.data.db.entity.MediaEntity
+import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.relation.EncounterWithDetails
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
@@ -72,7 +77,6 @@ import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -200,7 +204,8 @@ private fun EncounterCard(
                 )
         },
     ) {
-        Row(modifier = Modifier.padding(12.dp)) {
+        // Merge the whole card into a single TalkBack stop so it reads as one item with one action.
+        Row(modifier = Modifier.padding(12.dp).semantics(mergeDescendants = true) {}) {
             DateBadge(e.startAt)
             Column(
                 modifier = Modifier.weight(1f).padding(start = 14.dp),
@@ -210,10 +215,13 @@ private fun EncounterCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    val primaryActId = PracticeVisuals.primaryPractice(e.practicesPerformed, e.practicesReceived)
+                    val primaryActLabel = primaryActId
+                        ?.let { id -> runCatching { Practice.valueOf(id) }.getOrNull() }
+                        ?.let { Format.enumLabel(it) }
                     PracticeBadge(
-                        PracticeVisuals.icon(
-                            PracticeVisuals.primaryPractice(e.practicesPerformed, e.practicesReceived),
-                        ),
+                        icon = PracticeVisuals.icon(primaryActId),
+                        contentDescription = primaryActLabel,
                     )
                     Text(
                         text = if (item.partners.isEmpty()) "Solo" else item.partners.joinToString(", ") { Format.partnerName(it) },
@@ -226,18 +234,19 @@ private fun EncounterCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
+                // Each pill carries an explicit spoken label so the ★ / ✨ glyphs read meaningfully.
                 val pills = buildList {
-                    e.satisfactionRating?.let { add("★ $it") }
-                    e.durationMin?.let { add("$it min") }
-                    e.mood?.let { add(it.label) }
+                    e.satisfactionRating?.let { add("★ $it" to "Rating $it out of 5") }
+                    e.durationMin?.let { add("$it min" to null) }
+                    e.mood?.let { add(it.label to null) }
                     val orgasms = (e.orgasmCountSelf ?: 0) +
                         (e.partnerOrgasms?.values?.sum() ?: 0) +
                         (e.orgasmCountPartner ?: 0)
-                    if (orgasms > 0) add("✨ $orgasms")
+                    if (orgasms > 0) add("✨ $orgasms" to "$orgasms orgasms")
                 }
                 if (pills.isNotEmpty()) {
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        pills.forEach { Pill(it) }
+                        pills.forEach { (text, cd) -> Pill(text, cd) }
                     }
                 }
 
@@ -286,7 +295,7 @@ private fun DateBadge(epochMillis: Long) {
 }
 
 @Composable
-private fun PracticeBadge(@DrawableRes icon: Int) {
+private fun PracticeBadge(@DrawableRes icon: Int, contentDescription: String?) {
     Surface(
         color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -294,13 +303,13 @@ private fun PracticeBadge(@DrawableRes icon: Int) {
         modifier = Modifier.size(34.dp),
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(22.dp))
+            Icon(painterResource(icon), contentDescription = contentDescription, modifier = Modifier.size(22.dp))
         }
     }
 }
 
 @Composable
-private fun Pill(text: String) {
+private fun Pill(text: String, contentDescription: String? = null) {
     Surface(
         color = MaterialTheme.colorScheme.secondaryContainer,
         contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -309,7 +318,15 @@ private fun Pill(text: String) {
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            modifier = Modifier
+                .padding(horizontal = 10.dp, vertical = 4.dp)
+                .then(
+                    if (contentDescription != null) {
+                        Modifier.semantics { this.contentDescription = contentDescription }
+                    } else {
+                        Modifier
+                    },
+                ),
         )
     }
 }
@@ -392,6 +409,7 @@ private fun CalendarView(
 
 @Composable
 private fun MonthHeader(month: YearMonth, onPrev: () -> Unit, onNext: () -> Unit) {
+    val locale = LocalConfiguration.current.locales[0]
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -401,7 +419,7 @@ private fun MonthHeader(month: YearMonth, onPrev: () -> Unit, onNext: () -> Unit
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous month")
         }
         Text(
-            text = "${month.month.getDisplayName(TextStyle.FULL, Locale.getDefault())} ${month.year}",
+            text = "${month.month.getDisplayName(TextStyle.FULL, locale)} ${month.year}",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
         )
@@ -413,6 +431,7 @@ private fun MonthHeader(month: YearMonth, onPrev: () -> Unit, onNext: () -> Unit
 
 @Composable
 private fun WeekdayLabels() {
+    val locale = LocalConfiguration.current.locales[0]
     // Sunday-first column order.
     val days = listOf(
         DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
@@ -421,7 +440,7 @@ private fun WeekdayLabels() {
     Row(Modifier.fillMaxWidth()) {
         days.forEach { dow ->
             Text(
-                text = dow.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                text = dow.getDisplayName(TextStyle.NARROW, locale),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -489,12 +508,27 @@ private fun DayCell(
         label = "dayCellContainer",
     )
     val content by animateColorAsState(targetContent, animationSpec = tween(200), label = "dayCellContent")
+    // The day number + entry icon are visual only; give TalkBack a full spoken label and state.
+    val locale = LocalConfiguration.current.locales[0]
+    val isSelectedDay = selected
+    val cellDescription = buildString {
+        append(date.month.getDisplayName(TextStyle.FULL, locale))
+        append(' ')
+        append(date.dayOfMonth)
+        if (isToday) append(", today")
+        if (icon != null) append(", has trysts")
+    }
     Surface(
         onClick = onClick,
         shape = CircleShape,
         color = container,
         contentColor = content,
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier
+            .fillMaxSize()
+            .semantics(mergeDescendants = true) {
+                contentDescription = cellDescription
+                this.selected = isSelectedDay
+            },
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),

@@ -37,6 +37,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
@@ -233,7 +235,10 @@ fun LineAreaChart(
         color = MaterialTheme.colorScheme.onSurface,
         fontWeight = FontWeight.SemiBold,
     )
-    Column(modifier.fillMaxWidth()) {
+    // The point values are painted on the Canvas (invisible to TalkBack); restate them here and
+    // collapse the chart into one spoken summary.
+    val chartDescription = "Trend chart. " + data.joinToString(", ") { "${it.label}: ${it.count}" }
+    Column(modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = chartDescription }) {
         Canvas(Modifier.fillMaxWidth().height(132.dp)) {
             val w = size.width
             val h = size.height

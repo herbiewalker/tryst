@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -48,6 +49,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -280,8 +282,17 @@ private fun PartnerDialog(
                     enabled = !anonymous,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Switch(checked = anonymous, onCheckedChange = { anonymous = it })
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .toggleable(
+                            value = anonymous,
+                            role = Role.Switch,
+                            onValueChange = { anonymous = it },
+                        ),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Switch(checked = anonymous, onCheckedChange = null)
                     Text("  Anonymous", style = MaterialTheme.typography.bodyMedium)
                 }
                 OptionalChips("Sex", Sex.entries, sex) { sex = it }
