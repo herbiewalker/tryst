@@ -43,7 +43,8 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 # Version managed by the Compose BOM. Pure layout/window helper (WindowSizeClass) — no network.
-androidx-material3-window-size-class = { group = "androidx.compose.material3", name = "material3-window-size-class" }
+# Alias kept single-segment ("windowsizeclass") — Gradle reserves the segment "class" in catalog aliases.
+androidx-material3-windowsizeclass = { group = "androidx.compose.material3", name = "material3-window-size-class" }
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 androidx-biometric = { group = "androidx.biometric", name = "biometric", version.ref = "biometric" }
 hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
