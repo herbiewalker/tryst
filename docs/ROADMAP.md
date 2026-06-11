@@ -242,8 +242,30 @@ code/dependency changes from earlier passes get re-checked. Status: **4 / 12 don
   - **Residuals (reported, not fixed):** calendar day cells are ~43dp wide — a 7-column grid with 16dp
     side padding can't reach 48dp width on a 360dp screen (matches Material DatePicker's 40dp); edit-mode
     `ReorderableColumn` cards keep fixed heights (drag math) so can clip at the very largest font scale.
-- [ ] **Pass 5 — Adaptive layouts** (tablet/foldable via `WindowSizeClass`; two-pane list/detail on
-      expanded width). *Optional — phone-only is acceptable for v1; revisit only if tablet support is wanted.*
+- [x] **Pass 5 — Adaptive layouts** (`assembleDebug` + `checkNoNetworkDebug` + `lintDebug` green;
+      **visually verified on the emulator** at compact/medium/expanded widths — see the FLAG_SECURE note
+      below). Tablet/foldable support without a `WindowSizeClass` dependency: a self-contained width
+      bucket (`ui/common/WindowSize.kt`, `widthClass()` over `LocalConfiguration.screenWidthDp` at the
+      standard 600/840dp Material breakpoints — recomposes on config change / fold-unfold, no extra lib,
+      keeps the FOSS/no-network surface minimal).
+  - **Adaptive navigation** (`TrystApp`): bottom `NavigationBar` on **compact**; a side
+    `NavigationRail` on **medium + expanded**. Same four destinations; shared `navigateTop()` helper.
+  - **Two-pane Trysts list/detail** on **expanded** width: `HistoryTwoPane` puts the tryst list and the
+    encounter editor side by side (left list + `VerticalDivider` + right detail) instead of navigating —
+    selecting a card (or +) fills the detail pane; an empty-state placeholder otherwise. Selection is
+    `rememberSaveable` (survives config change). `EncounterEditScreen`'s shared-transition scopes were
+    made **nullable** so it renders in the pane with no container-transform (the morph still runs in the
+    compact full-screen path). Compact/medium keep the original navigate-to-editor + shared-element flow.
+  - **No stretched screens:** single-column screens (Insights, Settings, Partners, Achievements, the
+    full-screen editor) cap + centre content at 640dp via `Modifier.wrapContentWidth()
+    .adaptiveContentWidth()` (a no-op on phones) so they don't run edge-to-edge on tablets.
+  - **State retention:** the activity has no `configChanges` override, so resizes recreate it; verified
+    the app stays **unlocked** across every resize (Hilt VMs + `SessionManager` survive; `lifecycle-process`
+    doesn't treat config-change recreation as backgrounding, so no auto-lock fires) and the pane selection
+    persists. No crashes/exceptions in logcat across all transitions.
+  - **Verification note:** `FLAG_SECURE` normally blanks screenshots, so for this pass it was temporarily
+    disabled in a debug build to capture the three width classes (rail, two-pane, width-capped Insights),
+    then **restored** (confirmed the screenshot blanks again) — it ships on as the hard privacy constraint.
 
 ### Security (6–9)
 - [ ] **Pass 6 — Manifest & exported components** (OWASP MASVS): exported flags, intent-filter input

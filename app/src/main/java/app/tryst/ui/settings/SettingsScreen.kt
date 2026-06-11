@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
@@ -46,6 +47,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.core.prefs.ThemeMode
 import app.tryst.data.db.entity.ActEntity
 import app.tryst.data.db.entity.PositionEntity
+import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.SingleSelectChips
 import app.tryst.ui.common.rememberHaptics
 import app.tryst.ui.lock.BiometricPromptHelper
@@ -99,6 +101,9 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                // Cap + centre on wide windows so settings rows don't stretch (Pass 5); no-op on phones.
+                .wrapContentWidth()
+                .adaptiveContentWidth()
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),

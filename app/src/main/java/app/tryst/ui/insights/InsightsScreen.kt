@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -50,6 +51,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.core.prefs.ChartStyle
 import app.tryst.ui.achievements.AchievementsTeaser
+import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.rememberHaptics
 import app.tryst.data.stats.Bucket
 import app.tryst.data.stats.Insights
@@ -110,7 +112,8 @@ fun InsightsScreen(
             return@Scaffold
         }
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
+            // Cap + centre on wide windows so the stacked cards don't stretch (Pass 5); no-op on phones.
+            modifier = Modifier.fillMaxSize().padding(padding).wrapContentWidth().adaptiveContentWidth(),
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
