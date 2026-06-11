@@ -341,8 +341,40 @@ code/dependency changes from earlier passes get re-checked. Status: **8 / 12 don
       dependency is GPLv3-compatible. **License decided: GPLv3** (resolves O-2, D-29). Added repo-root
       `LICENSE` (GPLv3) + `THIRD_PARTY_NOTICES.md` + in-app Settings → About licenses screen (`ui/about/`).
       Open follow-ups: per-file source headers (optional) and distribution choice (F-Droid/Play, M8).
-- [ ] **Pass 11 — Release build hardening:** enable R8 minify + resource shrinking, write/repair
-      `proguard-rules.pro`, confirm `debuggable=false` + debug logging stripped, bump version, protect signing.
+- [x] **Pass 11 — Release build hardening (2026-06-11):** **PASS — release build verified end-to-end on
+      the emulator under R8.** Config was already correct (`isMinifyEnabled` + `isShrinkResources` on
+      `release`, `proguard-android-optimize.txt` + app rules); this pass *proved* it works at runtime, the
+      part a green build can't show.
+  - **R8 build clean:** `:app:assembleRelease` + `minifyReleaseWithR8` produce **zero** R8/ProGuard
+    warnings — no "Missing class" notes, no `-dontwarn` needed. All third-party keep rules (Room 2.7.1,
+    Hilt 2.57.1, Tink 1.15.0, SQLCipher 4.6.1) come from their bundled consumer rules; **no app keep rules
+    required.** Serialization is `org.json` (manual key access, not reflection) so field renaming is a
+    non-issue; persisted enum *names* round-trip via `Enum.valueOf`, which R8 preserves automatically.
+  - **Runtime verification under R8 + obfuscation (the real test):** temporarily disabled `FLAG_SECURE`
+    (Pass 5 procedure), rebuilt release, **debug-signed** the unsigned APK (zipalign + apksigner, debug
+    keystore — *no* committed signing config) and installed on the Pixel 9 Pro XL emulator. Drove the full
+    cold-start path: **PIN setup → Keystore double-wrap (PBKDF2 600k) + SQLCipher DB create/open → unlock →
+    Trysts/Insights/encounter-editor**. Everything renders and the obfuscated DI/crypto graph resolves
+    (logcat shows R8 names like `gd1.s()` running; SQLCipher `mlock errno=12` is benign emulator noise;
+    **no** `FATAL`/`Exception`/`ClassNotFound`/`NoSuchMethod`). Enum-driven chips (Protection/Mood/Positions)
+    prove the `valueOf`/`.label` round-trip survives obfuscation. Then **restored `FLAG_SECURE`**, rebuilt
+    the shippable release, and confirmed `screencap` blanks to black again (PID alive). Working tree clean;
+    temp APKs/screenshots removed.
+  - **debuggable / logging:** no `android:debuggable` in the manifest → release defaults `false` (Pass 6
+    confirmed it's absent from the release merged manifest); `proguard-rules.pro` strips `Log.v/d/i` via
+    `-assumenosideeffects` (and Pass 7 already found zero `Log.*`/`println` in `main`).
+  - **Signing — no leak (by absence):** there is **no signing config in the repo**, so the Gradle release
+    artifact is `app-release-unsigned.apk` — zero keystore credentials committed (the debug-signing above was
+    a throwaway for the emulator smoke test only). **Remaining release step (M8/Pass 12):** add a real
+    signing config sourced from a **gitignored `keystore.properties`** (never inline creds); archive the R8
+    `mapping.txt` per release for crash deobfuscation (it's already generated under
+    `app/build/outputs/mapping/release/`).
+  - **versionCode/versionName:** left at `1` / `0.1.0` — correct for the *first* release; bump on the next.
+  - **Play Integrity API — assessed, deliberately NOT pursued:** it is **fundamentally incompatible** with
+    Tryst's hard no-`INTERNET` constraint (attestation requires a network round-trip to Google's servers
+    and ships Play Services). It also buys nothing here — there's no backend/account/entitlement to protect
+    (fully local, single-user). Recommendation: **do not integrate** (would break the headline privacy
+    guarantee and the anti-leak guard). Noted so Pass 12 doesn't revisit it.
 - [ ] **Pass 12 — Final pre-release checklist:** go/no-go — re-scan for regressions (exported components,
       secrets, cleartext, sensitive logging), confirm license artifacts, R8 release build launches, triage
       remaining TODO/FIXME, then summarize resolved / deferred (with risk) + a final recommendation.
