@@ -194,7 +194,7 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 A separate **12-pass pre-release program** (not tied to any milestone), each pass run in a fresh session
 to keep the audit mindset critical. Full self-contained prompts live in
 [PRERELEASE_PROMPT_PACK.md](PRERELEASE_PROMPT_PACK.md). Order: **UI → security → license/release**, so
-code/dependency changes from earlier passes get re-checked. Status: **4 / 12 done.**
+code/dependency changes from earlier passes get re-checked. Status: **6 / 12 done.**
 
 ### UI (1–5)
 - [x] **Pass 1 — Material 3 / Modern UI:** shared color/typography/shape tokens applied consistently
@@ -268,8 +268,23 @@ code/dependency changes from earlier passes get re-checked. Status: **4 / 12 don
     then **restored** (confirmed the screenshot blanks again) — it ships on as the hard privacy constraint.
 
 ### Security (6–9)
-- [ ] **Pass 6 — Manifest & exported components** (OWASP MASVS): exported flags, intent-filter input
-      validation, `debuggable`/`allowBackup`/cleartext, unnecessary dangerous permissions.
+- [x] **Pass 6 — Manifest & exported components** (OWASP MASVS) — **PASS, no fixes required**
+      (release merged manifest generated + `checkNoNetworkRelease` green to verify, not assume).
+  - **Exported components:** only `MainActivity` (`exported="true"`, MAIN/LAUNCHER) is app-exported, and
+    it reads **no** intent extras/data — `onCreate` renders purely by `LockState`, so there's no
+    intent-filter input to validate. `FileProvider` (`exported="false"`, per-use `content://` grant,
+    cache-path only), `InitializationProvider`, and Room's `MultiInstanceInvalidationService` are all
+    `exported="false"`. The one exported library receiver, `ProfileInstallReceiver`, is gated by
+    `android:permission="android.permission.DUMP"` (signature|privileged → ADB/system only).
+  - **Debug-only noise confirmed stripped from release:** `PreviewActivity` + androidx
+    `ComponentActivity` (`exported="true"`) and `android:debuggable="true"` appear only in the **debug**
+    merged manifest (from `debugImplementation` tooling); the **release** merged manifest has none of them.
+  - **Permissions:** only `USE_BIOMETRIC` / `USE_FINGERPRINT` (normal-level, biometric unlock) plus the
+    auto signature-level `DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`. **No dangerous permissions, no
+    CAMERA** (capture uses FileProvider + camera-app intent), **no INTERNET** (anti-leak guard enforced).
+  - **Backup / cleartext:** `allowBackup="false"` + `data_extraction_rules` exclude every domain from
+    cloud-backup *and* device-transfer; no `usesCleartextTraffic` (targetSdk 36 defaults it false, and
+    there's no networking regardless).
 - [ ] **Pass 7 — Secrets, storage & logging** (MASVS): no hardcoded secrets; no sensitive data in logs
       or plain prefs; Keystore-backed encryption. *Strong fit with the existing privacy/crypto design.*
 - [ ] **Pass 8 — Network security** (MASVS). *Expected near-trivial — the app declares **no INTERNET
