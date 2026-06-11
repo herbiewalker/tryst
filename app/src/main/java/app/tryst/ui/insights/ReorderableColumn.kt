@@ -17,6 +17,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.zIndex
 import app.tryst.ui.common.rememberHaptics
@@ -72,9 +75,21 @@ fun <T> ReorderableColumn(
                     },
                 )
             }
+            // Long-press drag is invisible to TalkBack; expose Move up / Move down as custom actions.
+            val index = items.indexOfFirst { key(it) == k }
             Box(
                 Modifier
                     .fillMaxWidth()
+                    .semantics {
+                        customActions = buildList {
+                            if (index > 0) {
+                                add(CustomAccessibilityAction("Move up") { onMove(index, index - 1); true })
+                            }
+                            if (index in 0 until items.lastIndex) {
+                                add(CustomAccessibilityAction("Move down") { onMove(index, index + 1); true })
+                            }
+                        }
+                    }
                     .then(
                         if (dragging) {
                             Modifier.zIndex(1f).graphicsLayer {

@@ -195,9 +195,33 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
     on drag start. Plus a wrong-PIN shake and reorder lift-scale spring.
   - **Ripple/pressed states:** cards switched to the `Card(onClick=…)` overload and PIN keys to
     `Surface(onClick=…)` for proper Material state layers; press-scale on keys.
+- [x] **Pass 4 — accessibility sweep** (`compileDebugKotlin` + `lintDebug` green; on-device TalkBack
+      pass not possible — `FLAG_SECURE` blanks the screen-reader capture path, so verified via the
+      semantics tree). Contrast was already AA-clean in both themes (no changes).
+  - **Labels + roles + 48dp targets** for the bare-`clickable` glyph controls: photo-remove `×`
+    (now `minimumInteractiveComponentSize()`, 48dp hit area / 22dp badge) & add-photo `＋`
+    (`EncounterEditScreen`), PIN backspace `⌫` (`PinPad`); stepper `−`/`+` got "Decrease"/"Increase";
+    `PinDots` exposes entry progress (count, not digits).
+  - **Merged TalkBack stops** (`semantics(mergeDescendants)`): `EncounterCard` (+ practice badge now
+    announces the headline act; `★`/`✨` pills carry spoken labels), `AchievementRow`, `StatCard`, and
+    calendar `DayCell` (full date + today/has-trysts/selected state).
+  - **Switch rows** (Settings "Material You", Partner "Anonymous") → `Modifier.toggleable(role=Switch)`
+    so the label is associated and toggles.
+  - **Chart a11y (O-6, partly closed):** `LineAreaChart` gained a `contentDescription` restating its
+    canvas-drawn point values (bars/ranked/donut already expose label+count as real `Text`).
+  - **Reorder is now TalkBack-operable:** `ReorderableColumn` rows expose Move-up / Move-down
+    `CustomAccessibilityAction`s (long-press drag alone was invisible to screen readers).
+  - **Font scaling:** `StatCard` fixed `height(92.dp)` → `heightIn(min = 92.dp)` (+ value ellipsis) so
+    it grows instead of clipping at the largest font scale.
+  - **Also fixed** 3 pre-existing `NonObservableLocale` lint **errors** (`HistoryScreen`
+    MonthHeader/WeekdayLabels/DayCell) → read `LocalConfiguration.current.locales[0]` in composables.
+  - **Residuals (reported, not fixed):** calendar day cells are ~43dp wide — a 7-column grid with 16dp
+    side padding can't reach 48dp width on a 360dp screen (matches Material DatePicker's 40dp); edit-mode
+    `ReorderableColumn` cards keep fixed heights (drag math) so can clip at the very largest font scale.
 
 ### Remaining
-- A11y pass + **i18n: extract all hardcoded UI strings to `strings.xml`** (deferred "chunk 6").
+- **i18n: extract all hardcoded UI strings to `strings.xml`** (deferred "chunk 6"; the a11y half of this
+  item is done — see Pass 4).
 - Optional cleanup: refactor large editor VMs to a single immutable `UiState` (deferred "chunk 6").
 - Onboarding copy (esp. PIN-loss / no-recovery warning).
 - Finalize **license & distribution** ([DECISIONS.md](DECISIONS.md)); F-Droid metadata if chosen.
