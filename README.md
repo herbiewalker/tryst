@@ -63,7 +63,7 @@ Progress against the [roadmap](docs/ROADMAP.md):
 
 Separate from the milestones, a **12-pass pre-release audit program** runs each pass in a fresh session
 (full prompts in [docs/PRERELEASE_PROMPT_PACK.md](docs/PRERELEASE_PROMPT_PACK.md); status tracked in
-[docs/ROADMAP.md](docs/ROADMAP.md)). **8 / 12 done:**
+[docs/ROADMAP.md](docs/ROADMAP.md)). **11 / 12 done:**
 
 - ✅ 1 Material 3 / Modern UI · ✅ 2 Edge-to-edge & insets · ✅ 3 Motion & micro-interactions · ✅ 4 Accessibility
   · ✅ 5 Adaptive layouts *(nav rail on medium+, two-pane Trysts/editor on expanded, width-capped screens)*
@@ -71,10 +71,14 @@ Separate from the milestones, a **12-pass pre-release audit program** runs each 
   dangerous perms; debuggable/tooling stripped from release)*
   · ✅ 7 Secrets, storage & logging *(MASVS — no hardcoded secrets, zero sensitive logging, Keystore
   double-wrapped DEK; one LOW fix: sweep orphaned plaintext camera temps on unlock + full-wipe)*
-- ⬜ 8–9 Security *(network, WebView/input — near-trivial given the no-network architecture)*
+- ✅ 8 Network security *(MASVS — zero network surface; no networking lib, no INTERNET perm)*
+  · ✅ 9 WebView & input *(no WebViews; fixed MED Zip-Slip + LOW KDF-DoS in backup import)*
   · ✅ 10 Dependencies & license *(no CVEs, no version bumps needed; all deps GPLv3-compatible;
   project licensed **GPLv3** — LICENSE + THIRD_PARTY_NOTICES.md + in-app Settings → About screen)*
-  · ⬜ 11 Release hardening (R8) · ⬜ 12 Final go/no-go
+- ✅ 11 Release hardening (R8) *(release build verified end-to-end on emulator under R8: zero R8 warnings,
+  no app keep rules needed, full PIN→SQLCipher→unlock path works obfuscated; unsigned artifact = no leaked
+  signing creds; Play Integrity rejected as incompatible with no-network)*
+  · ⬜ 12 Final go/no-go
 
 New here? See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for scope and
 [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) to build it.
