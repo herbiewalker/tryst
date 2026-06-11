@@ -97,8 +97,10 @@ import java.time.ZoneOffset
 fun EncounterEditScreen(
     encounterId: String?,
     onClose: () -> Unit,
-    sharedScope: SharedTransitionScope,
-    animatedScope: AnimatedVisibilityScope,
+    // Non-null only in single-pane mode, where the editor is the destination of the card / FAB
+    // container transform. In the two-pane detail it's null and no morph runs.
+    sharedScope: SharedTransitionScope?,
+    animatedScope: AnimatedVisibilityScope?,
     viewModel: EncounterEditViewModel = hiltViewModel(),
 ) {
     LaunchedEffect(encounterId) { viewModel.load(encounterId) }
@@ -117,14 +119,18 @@ fun EncounterEditScreen(
     }
 
     Scaffold(
-        // The editor's container is the destination of the card / FAB container transform. A surface
-        // background keeps the morph opaque while the form fades in over it.
-        modifier = with(sharedScope) {
-            Modifier.sharedBounds(
-                rememberSharedContentState(encounterSharedKey(encounterId)),
-                animatedVisibilityScope = animatedScope,
-                resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-            )
+        // The editor's container is the destination of the card / FAB container transform (single-pane).
+        // A surface background keeps the morph opaque while the form fades in over it.
+        modifier = if (sharedScope != null && animatedScope != null) {
+            with(sharedScope) {
+                Modifier.sharedBounds(
+                    rememberSharedContentState(encounterSharedKey(encounterId)),
+                    animatedVisibilityScope = animatedScope,
+                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                )
+            }
+        } else {
+            Modifier
         },
         topBar = {
             TopAppBar(

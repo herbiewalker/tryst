@@ -51,6 +51,8 @@ private val unlockDateFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.MED
 @Composable
 fun AchievementsScreen(
     onBack: () -> Unit,
+    // False in the expanded two-pane layout, where Achievements is a permanent detail pane (no back).
+    showBack: Boolean = true,
     viewModel: AchievementsViewModel = hiltViewModel(),
 ) {
     val achievements by viewModel.achievements.collectAsStateWithLifecycle()
@@ -62,8 +64,10 @@ fun AchievementsScreen(
             TopAppBar(
                 title = { Text("Achievements") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    if (showBack) {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
                     }
                 },
             )

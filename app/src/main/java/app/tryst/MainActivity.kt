@@ -7,6 +7,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -27,6 +29,7 @@ class MainActivity : FragmentActivity() {
 
     @Inject lateinit var themePreferences: ThemePreferences
 
+    @OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -51,7 +54,12 @@ class MainActivity : FragmentActivity() {
                     when (state) {
                         LockState.NeedsSetup -> SetupScreen(viewModel)
                         LockState.Locked -> LockScreen(viewModel)
-                        LockState.Unlocked -> TrystApp()
+                        LockState.Unlocked -> {
+                            // Recomputed across fold/rotate/resize, so the shell re-lays itself out
+                            // (bottom bar → rail, single-pane → two-pane) without losing state.
+                            val widthSizeClass = calculateWindowSizeClass(this@MainActivity).widthSizeClass
+                            TrystApp(widthSizeClass = widthSizeClass)
+                        }
                     }
                 }
             }

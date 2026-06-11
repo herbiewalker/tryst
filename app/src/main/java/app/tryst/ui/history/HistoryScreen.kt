@@ -45,6 +45,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.annotation.DrawableRes
 import androidx.compose.ui.Alignment
@@ -83,13 +84,15 @@ import java.time.format.TextStyle
 fun HistoryScreen(
     onAddEncounter: () -> Unit,
     onOpenEncounter: (String) -> Unit,
-    sharedScope: SharedTransitionScope,
-    animatedScope: AnimatedVisibilityScope,
+    // Non-null only in single-pane mode, where a card / the FAB morphs into the editor (container
+    // transform). In two-pane mode the editor is already on screen, so both are null and no morph runs.
+    sharedScope: SharedTransitionScope?,
+    animatedScope: AnimatedVisibilityScope?,
     viewModel: HistoryViewModel = hiltViewModel(),
 ) {
     val encounters by viewModel.encounters.collectAsStateWithLifecycle()
     val haptics = rememberHaptics()
-    var calendarMode by remember { mutableStateOf(false) }
+    var calendarMode by rememberSaveable { mutableStateOf(false) }
     // Already sorted by startAt DESC; groupBy keeps that order, one section per day.
     val grouped = remember(encounters) {
         encounters.groupBy { Format.relativeDay(it.encounter.startAt) }
@@ -114,17 +117,20 @@ fun HistoryScreen(
             )
         },
         floatingActionButton = {
-            with(sharedScope) {
-                FloatingActionButton(
-                    onClick = onAddEncounter,
-                    // The "+" morphs into the new-encounter editor (and back) as a container transform.
-                    modifier = Modifier.sharedBounds(
+            // The "+" morphs into the new-encounter editor (and back) as a container transform — but
+            // only in single-pane mode, where the scopes are present.
+            val fabModifier = if (sharedScope != null && animatedScope != null) {
+                with(sharedScope) {
+                    Modifier.sharedBounds(
                         rememberSharedContentState(encounterSharedKey(null)),
                         animatedVisibilityScope = animatedScope,
-                    ),
-                ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Log encounter")
+                    )
                 }
+            } else {
+                Modifier
+            }
+            FloatingActionButton(onClick = onAddEncounter, modifier = fabModifier) {
+                Icon(Icons.Filled.Add, contentDescription = "Log encounter")
             }
         },
     ) { padding ->
@@ -187,22 +193,27 @@ private fun EncounterCard(
     item: EncounterWithDetails,
     onLoadThumb: suspend (MediaEntity) -> ImageBitmap?,
     onClick: () -> Unit,
-    sharedScope: SharedTransitionScope,
-    animatedScope: AnimatedVisibilityScope,
+    sharedScope: SharedTransitionScope?,
+    animatedScope: AnimatedVisibilityScope?,
     modifier: Modifier = Modifier,
 ) {
     val e = item.encounter
-    Card(
-        onClick = onClick,
-        modifier = with(sharedScope) {
+    // This card morphs into the editor when opened (container transform) — single-pane only.
+    val cardModifier = if (sharedScope != null && animatedScope != null) {
+        with(sharedScope) {
             modifier
                 .fillMaxWidth()
-                // This card morphs into the editor when opened (container transform).
                 .sharedBounds(
                     rememberSharedContentState(encounterSharedKey(e.id)),
                     animatedVisibilityScope = animatedScope,
                 )
-        },
+        }
+    } else {
+        modifier.fillMaxWidth()
+    }
+    Card(
+        onClick = onClick,
+        modifier = cardModifier,
     ) {
         // Merge the whole card into a single TalkBack stop so it reads as one item with one action.
         Row(modifier = Modifier.padding(12.dp).semantics(mergeDescendants = true) {}) {
@@ -341,8 +352,8 @@ private fun CalendarView(
     items: List<EncounterWithDetails>,
     onLoadThumb: suspend (MediaEntity) -> ImageBitmap?,
     onOpenEncounter: (String) -> Unit,
-    sharedScope: SharedTransitionScope,
-    animatedScope: AnimatedVisibilityScope,
+    sharedScope: SharedTransitionScope?,
+    animatedScope: AnimatedVisibilityScope?,
 ) {
     val byDay = remember(items) { items.groupBy { Format.localDate(it.encounter.startAt) } }
     // Headline act icon per day (most intense across all of that day's encounters).

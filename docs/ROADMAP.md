@@ -194,7 +194,7 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 A separate **12-pass pre-release program** (not tied to any milestone), each pass run in a fresh session
 to keep the audit mindset critical. Full self-contained prompts live in
 [PRERELEASE_PROMPT_PACK.md](PRERELEASE_PROMPT_PACK.md). Order: **UI → security → license/release**, so
-code/dependency changes from earlier passes get re-checked. Status: **4 / 12 done.**
+code/dependency changes from earlier passes get re-checked. Status: **5 / 12 done.**
 
 ### UI (1–5)
 - [x] **Pass 1 — Material 3 / Modern UI:** shared color/typography/shape tokens applied consistently
@@ -242,8 +242,41 @@ code/dependency changes from earlier passes get re-checked. Status: **4 / 12 don
   - **Residuals (reported, not fixed):** calendar day cells are ~43dp wide — a 7-column grid with 16dp
     side padding can't reach 48dp width on a 360dp screen (matches Material DatePicker's 40dp); edit-mode
     `ReorderableColumn` cards keep fixed heights (drag math) so can clip at the very largest font scale.
-- [ ] **Pass 5 — Adaptive layouts** (tablet/foldable via `WindowSizeClass`; two-pane list/detail on
-      expanded width). *Optional — phone-only is acceptable for v1; revisit only if tablet support is wanted.*
+- [x] **Pass 5 — Adaptive layouts** (tablet/foldable via `WindowSizeClass`; two-pane list/detail on
+      expanded width). Was marked optional; built out the full two-pane refactor on request.
+      **Not built/run in this session** — the Claude-on-the-web container has no Android SDK, so compile
+      verification rides on CI (`assembleDebug testDebugUnitTest lint checkNoNetworkDebug`); on-device
+      tablet/fold behaviour still needs a human pass. Pure layout change — no new permissions
+      (`material3-window-size-class` is a BOM-managed layout helper, no network).
+  - **Size class plumbing:** `MainActivity` computes `calculateWindowSizeClass(this).widthSizeClass`
+    (recomputed across fold/rotate/resize) and passes it into `TrystApp(widthSizeClass)`. New
+    BOM-managed dep `androidx.compose.material3:material3-window-size-class`.
+  - **Adaptive navigation shell** (`TrystApp`): **compact** → bottom `NavigationBar`; **medium /
+    expanded** → side `NavigationRail` (each owns its own system-bar insets). Single `navigateTopLevel`
+    helper preserves each tab's saved back stack for both.
+  - **Two-pane list/detail on expanded width:**
+    - **Trysts ↔ editor** (`HistoryPane`): list (`LIST_WEIGHT`) + `VerticalDivider` + editor
+      (`DETAIL_WEIGHT`). Selection is a `rememberSaveable` string (`edit:<id>` / `new:<nonce>`); the
+      detail `EncounterEditViewModel` is **keyed** on it (`hiltViewModel(key = …)` + `key(sel)`) so every
+      selection — including a fresh "+" — gets a clean form (`load()` early-returns on a null id, so a
+      reused VM couldn't reset). Empty state shows a `DetailPlaceholder`.
+    - **Insights ↔ Achievements** (`InsightsPane`): dashboard + the full Achievements list side by side.
+      `InsightsScreen(twoPane = true)` hides the now-redundant top-bar Achievements action and the
+      in-list teaser; `AchievementsScreen(showBack = false)` drops the back arrow as a permanent pane.
+  - **No stretched phone layouts:** single-pane screens (Partners, Settings, the full-screen editor /
+    Achievements / Customize routes, and History/Insights on medium width) are centred in a
+    `CenteredPane` max-width lane (840dp) on medium/expanded; compact is a transparent pass-through so
+    the container-transform morph is untouched.
+  - **Morph made optional:** `HistoryScreen` / `EncounterEditScreen` `sharedScope`/`animatedScope` are
+    now nullable — the card/FAB→editor container transform runs in single-pane only; the two-pane detail
+    is already on screen, so no morph.
+  - **Less state loss on config change:** `calendarMode` (History) and `editMode` (Insights) toggles
+    upgraded `remember` → `rememberSaveable`, alongside the saveable pane selection.
+  - **Residuals (reported, not fixed):** folding expanded→compact while the editor detail pane is open
+    drops back to the list (compact can't show two panes — selection survives but isn't re-navigated);
+    `LazyColumn` scroll positions still use default (non-saveable) state, so they reset on rotation as
+    before; the editor reuses *Material* full-form layout in the detail pane rather than a denser tablet
+    form.
 
 ### Security (6–9)
 - [ ] **Pass 6 — Manifest & exported components** (OWASP MASVS): exported flags, intent-filter input

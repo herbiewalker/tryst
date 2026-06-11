@@ -38,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,6 +64,9 @@ fun InsightsScreen(
     // and makes "Done" return instead of toggling edit mode in place.
     onBack: (() -> Unit)? = null,
     onOpenAchievements: () -> Unit = {},
+    // True in the expanded two-pane layout, where the Achievements list sits in the adjacent pane:
+    // hide the redundant top-bar Achievements action and the in-list teaser.
+    twoPane: Boolean = false,
     viewModel: InsightsViewModel = hiltViewModel(),
 ) {
     val insights by viewModel.insights.collectAsStateWithLifecycle()
@@ -72,7 +76,7 @@ fun InsightsScreen(
     val hiddenSections by viewModel.hiddenSections.collectAsStateWithLifecycle()
     val sectionStyles by viewModel.sectionStyles.collectAsStateWithLifecycle()
     val haptics = rememberHaptics()
-    var editMode by remember { mutableStateOf(startInEditMode) }
+    var editMode by rememberSaveable { mutableStateOf(startInEditMode) }
 
     Scaffold(
         topBar = {
@@ -86,7 +90,7 @@ fun InsightsScreen(
                     }
                 },
                 actions = {
-                    if (onBack == null && !editMode) {
+                    if (onBack == null && !editMode && !twoPane) {
                         IconButton(onClick = onOpenAchievements) {
                             Icon(Icons.Filled.EmojiEvents, contentDescription = "Achievements")
                         }
@@ -143,6 +147,8 @@ fun InsightsScreen(
             } else {
                 val sections = InsightSections.ordered(sectionOrder)
                     .filter { it.id !in hiddenSections && it.hasData(insights) }
+                    // In two-pane the full Achievements list is in the adjacent pane, so drop the teaser.
+                    .filter { !(twoPane && it.id == InsightSections.ACHIEVEMENTS) }
                 items(sections, key = { it.id }) { section ->
                     Box(Modifier.animateItem()) {
                         when (section.id) {
