@@ -42,6 +42,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import app.tryst.ui.about.AboutScreen
 import app.tryst.ui.achievements.AchievementsScreen
 import app.tryst.ui.common.WidthClass
 import app.tryst.ui.common.widthClass
@@ -58,6 +59,7 @@ private object Routes {
     const val ACHIEVEMENTS = "achievements"
     const val PARTNERS = "partners"
     const val SETTINGS = "settings"
+    const val ABOUT = "about"
     const val ENCOUNTER_NEW = "encounter/new"
     const val ENCOUNTER_EDIT = "encounter/{encounterId}"
     fun encounterEdit(id: String) = "encounter/$id"
@@ -177,7 +179,13 @@ fun TrystApp() {
                     }
                     composable(Routes.PARTNERS) { PartnersScreen() }
                     composable(Routes.SETTINGS) {
-                        SettingsScreen(onCustomizeInsights = { navController.navigate(Routes.INSIGHTS_CUSTOMIZE) })
+                        SettingsScreen(
+                            onCustomizeInsights = { navController.navigate(Routes.INSIGHTS_CUSTOMIZE) },
+                            onOpenAbout = { navController.navigate(Routes.ABOUT) },
+                        )
+                    }
+                    composable(Routes.ABOUT) {
+                        AboutScreen(onBack = { navController.popBackStack() })
                     }
                     composable(Routes.ENCOUNTER_NEW) {
                         EncounterEditScreen(

@@ -336,9 +336,11 @@ code/dependency changes from earlier passes get re-checked. Status: **8 / 12 don
     `connectedDebugAndroidTest`.
 
 ### License / release (10–12)
-- [ ] **Pass 10 — Dependency vulnerabilities & license compliance:** CVE/outdated scan + safe bumps;
-      confirm every dependency's license is compatible with the chosen license; LICENSE file + notices
-      screen. Gated on **O-2** (license still undecided — the prompt pack assumes GPLv3; confirm first).
+- [x] **Pass 10 — Dependency vulnerabilities & license compliance (2026-06-11):** CVE/outdated scan
+      came back clean (no CVEs, no bumps needed — no networking/serialization libs in the tree); every
+      dependency is GPLv3-compatible. **License decided: GPLv3** (resolves O-2, D-29). Added repo-root
+      `LICENSE` (GPLv3) + `THIRD_PARTY_NOTICES.md` + in-app Settings → About licenses screen (`ui/about/`).
+      Open follow-ups: per-file source headers (optional) and distribution choice (F-Droid/Play, M8).
 - [ ] **Pass 11 — Release build hardening:** enable R8 minify + resource shrinking, write/repair
       `proguard-rules.pro`, confirm `debuggable=false` + debug logging stripped, bump version, protect signing.
 - [ ] **Pass 12 — Final pre-release checklist:** go/no-go — re-scan for regressions (exported components,
