@@ -285,8 +285,30 @@ code/dependency changes from earlier passes get re-checked. Status: **6 / 12 don
   - **Backup / cleartext:** `allowBackup="false"` + `data_extraction_rules` exclude every domain from
     cloud-backup *and* device-transfer; no `usesCleartextTraffic` (targetSdk 36 defaults it false, and
     there's no networking regardless).
-- [ ] **Pass 7 — Secrets, storage & logging** (MASVS): no hardcoded secrets; no sensitive data in logs
-      or plain prefs; Keystore-backed encryption. *Strong fit with the existing privacy/crypto design.*
+- [x] **Pass 7 — Secrets, storage & logging** (OWASP MASVS) — **PASS, one LOW fix applied.**
+  - **No hardcoded secrets:** repo-wide grep for keys/tokens/passwords/credentials/PEM markers across
+    `*.kt/xml/toml/gradle/kts/properties` found only crypto class names (`SecretKey(Spec)`), test markers,
+    enum-token parsing, and the user-supplied **backup password** (never stored — derived via PBKDF2 in
+    `BackupManager.export/import`). No `BuildConfig` fields, no committed signing/keystore creds.
+  - **No sensitive logging:** **zero** `Log.*` / `println` / `printStackTrace` / Timber calls anywhere in
+    `main`. Exceptions surface only as `e.message` written to **ephemeral UI state** shown to the already-
+    unlocked user (lock/backup/CSV/settings VMs) — never logcat, never persisted. (Release R8 log-stripping
+    is moot here, but stays Pass 11's job for any third-party lib chatter.)
+  - **Storage:** all encounter data is in the SQLCipher DB; media blobs are AES-GCM (Tink) in
+    `filesDir/media`. The only two `SharedPreferences` stores (`tryst_appearance`, `tryst_insights`) hold
+    **non-sensitive** theme + Insights-layout prefs — no encounter content — so plaintext prefs are correct,
+    and both are backup/transfer-excluded anyway. No DataStore.
+  - **Keys in Keystore:** the random 256-bit DEK is **double-wrapped** — inner PIN-derived key (PBKDF2 600k)
+    + outer non-exportable AndroidKeystore AES-GCM key (StrongBox→TEE fallback), persisted as ciphertext-only
+    `vault.json`; biometric copy under an auth-required Keystore key in `bio.json` (ct+iv only). No key
+    material ever hits disk in plaintext. Auth-token bullet is **N/A** (no network/accounts).
+  - **LOW fix — orphaned plaintext camera captures:** the in-app camera writes a plaintext JPEG to
+    `cacheDir/captures/` then encrypts→deletes it (`EncounterEditViewModel`/`PartnersViewModel`/`ImagePicker`).
+    A process kill mid-capture could leave the temp behind, and **nothing swept it** — notably
+    `SessionManager.deleteAllData()` (wipes `filesDir/media` only). Fixed: `deleteAllData()` now also wipes
+    `cacheDir/captures`, and `openSession()` sweeps it on every unlock (safe — a live capture keeps the
+    session open across the OS handoff, so any temp present at unlock is necessarily an orphan). Verified
+    `compileDebugKotlin` green.
 - [ ] **Pass 8 — Network security** (MASVS). *Expected near-trivial — the app declares **no INTERNET
       permission** and does no networking; confirm there's no trust-all / cleartext config and move on.*
 - [ ] **Pass 9 — WebView & input validation.** *WebView half is N/A (no WebViews);* still re-check the
