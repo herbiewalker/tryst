@@ -48,6 +48,21 @@ Do a motion polish pass following Material motion principles:
 Keep animations subtle and fast (under ~300ms for most). List every change made.
 ```
 
+---
+
+## Pass 4 — Accessibility Sweep
+
+```
+Run a full accessibility audit:
+- Add contentDescription to every meaningful image/icon; mark decorative ones as null
+- Verify all touch targets are at least 48dp
+- Check text contrast ratios against WCAG AA in both light and dark themes
+- Verify logical TalkBack traversal order on every screen and add semantics/merge descendants where needed
+- Ensure text scales correctly at largest font size setting without clipping
+
+Report every issue with file/line and fix it.
+```
+
 <!--
 Add new passes below using the same format:
 
