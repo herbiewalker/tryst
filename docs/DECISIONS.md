@@ -122,6 +122,16 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   "New" ribbon flags unlocks within ~14 days. A real celebration would store acknowledged ids in the
   encrypted DB (future). **Placement:** a dedicated Achievements screen (trophy icon in the Insights top
   bar) + a teaser card in the Insights scroll — chosen over a 5th nav tab to keep the bottom nav at four.
+- **D-29 (pre-release Pass 10, 2026-06-11):** **License = GPLv3** (resolves O-2). Chosen over
+  MIT/Apache because copyleft best serves the project's "open source so anyone can verify the privacy
+  claims" thesis — a redistributed binary must ship its (matching) source, so the no-network /
+  encrypted-at-rest guarantees stay auditable downstream. Artifacts: full `LICENSE` (GPLv3 text) at the
+  repo root, `THIRD_PARTY_NOTICES.md`, and an in-app **Settings → About** open-source licenses screen
+  (`ui/about/`). Pass 10's dependency audit found **no CVEs and no version bumps needed**, and every
+  dependency is GPLv3-compatible (all Apache-2.0 except JSR-305 BSD-3 and SQLCipher's Zetetic BSD-style;
+  SQLCipher bundles OpenSSL 3.x = Apache-2.0, so no GPL/OpenSSL conflict). Per-file source license headers
+  were **not** added (82 files) — README + LICENSE + notices satisfy the obligation; headers remain an
+  optional follow-up. Distribution (F-Droid / Play) still open.
 - **D-25 (M6):** **No chart library** (resolves O-3). Insights charts are drawn with plain Compose
   layout (`VerticalBarChart`, `RankedBars`) instead of Vico/MPAndroidChart. Rationale: the app already
   hand-rolls its visuals (per-act vector icons, manual `BitmapFactory` downsampling, no third-party
@@ -149,8 +159,9 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
 
 ## Open
 
-- **O-2 License & distribution:** GPLv3 vs MIT/Apache; F-Droid and/or Play. **Decide at M8.**
-  Repo structured to keep options open.
+- **O-2 (resolved) License:** **GPLv3** — see D-29 (pre-release Pass 10). LICENSE + THIRD_PARTY_NOTICES.md
+  + in-app Settings → About screen in place; all deps GPLv3-compatible. **Distribution** (F-Droid and/or
+  Play) is still open, to settle at M8 release prep.
 - **O-3 (resolved) Charts library:** **none** — Insights charts are hand-drawn in Compose (D-25).
 - **O-4 (resolved) Multi-partner per encounter:** **yes** — the editor supports selecting multiple
   partners (M:N) with per-partner orgasm counts (D-22).

@@ -59,6 +59,7 @@ import java.time.LocalDate
 @Composable
 fun SettingsScreen(
     onCustomizeInsights: () -> Unit = {},
+    onOpenAbout: () -> Unit = {},
     viewModel: LockViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -266,6 +267,18 @@ fun SettingsScreen(
             ) { Text("Delete all data") }
             Text(
                 "Permanently erases every encounter, partner, photo, and your PIN. This cannot be undone.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
+            Text("About", style = MaterialTheme.typography.titleMedium)
+            OutlinedButton(onClick = onOpenAbout, modifier = Modifier.fillMaxWidth()) {
+                Text("About & open-source licenses")
+            }
+            Text(
+                "Tryst is open-source under GPLv3. See the credits for the third-party components it uses.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
