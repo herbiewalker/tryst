@@ -63,11 +63,13 @@ Progress against the [roadmap](docs/ROADMAP.md):
 
 Separate from the milestones, a **12-pass pre-release audit program** runs each pass in a fresh session
 (full prompts in [docs/PRERELEASE_PROMPT_PACK.md](docs/PRERELEASE_PROMPT_PACK.md); status tracked in
-[docs/ROADMAP.md](docs/ROADMAP.md)). **5 / 12 done:**
+[docs/ROADMAP.md](docs/ROADMAP.md)). **6 / 12 done:**
 
 - ✅ 1 Material 3 / Modern UI · ✅ 2 Edge-to-edge & insets · ✅ 3 Motion & micro-interactions · ✅ 4 Accessibility
   · ✅ 5 Adaptive layouts *(nav rail on medium+, two-pane Trysts/editor on expanded, width-capped screens)*
-- ⬜ 6–9 Security *(manifest, secrets/logging, network, WebView/input — several near-trivial given the
+  · ✅ 6 Manifest & exported components *(MASVS — clean: sole exported activity takes no intent input; no
+  dangerous perms; debuggable/tooling stripped from release)*
+- ⬜ 7–9 Security *(secrets/logging, network, WebView/input — several near-trivial given the
   no-network architecture)* · ⬜ 10 Dependencies & license · ⬜ 11 Release hardening (R8) · ⬜ 12 Final go/no-go
 
 New here? See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for scope and
