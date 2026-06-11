@@ -157,7 +157,7 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
 - **O-5 CI quality gates:** CI currently runs only the anti-leak guard (+ build/tests). Add
   **Detekt/ktlint**, **Android Lint**, and a **FOSS-license check** before release (M8). Low risk, high
   signal; the code is already clean (0 TODO/FIXME).
-- **O-6 Insights/chart accessibility — mostly closed (M8 Pass 4, 2026-06-10):** the bar / ranked-bar /
+- **O-6 Insights/chart accessibility — mostly closed (pre-release Pass 4, 2026-06-10):** the bar / ranked-bar /
   donut charts already render their label+count as real `Text`, so TalkBack reads them; the
   **line/area** chart painted its point values on the Canvas, so Pass 4 gave it a summarizing
   `contentDescription` ("Trend chart. Jan: 3, Feb: 5, …"). Remaining nicety (deferred): a single

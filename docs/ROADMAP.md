@@ -174,10 +174,34 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 
 ## M8 — Polish & release prep
 
-### Polish passes (done)
-- [x] **Pass 1 — Material 3 theming fixes:** shared color/typography/shape tokens applied consistently.
-- [x] **Pass 2 — edge-to-edge & window insets:** transparent system bars, per-screen inset handling.
-- [x] **Pass 3 — motion & micro-interactions** (build + anti-leak green; driven on the emulator, no
+> Note: the numbered **pre-release audit passes** (Material 3, edge-to-edge, motion, a11y, security,
+> license, release hardening, …) are a cross-cutting pre-release program tracked in their **own section
+> below** — they are **not** M8 deliverables.
+
+### Remaining
+- **i18n: extract all hardcoded UI strings to `strings.xml`** (deferred "chunk 6"; the a11y half of this
+  item is done — see Pass 4 below).
+- Optional cleanup: refactor large editor VMs to a single immutable `UiState` (deferred "chunk 6").
+- Onboarding copy (esp. PIN-loss / no-recovery warning).
+- Finalize **license & distribution** ([DECISIONS.md](DECISIONS.md) O-2); F-Droid metadata if chosen.
+- Security self-review against [THREAT_MODEL.md](THREAT_MODEL.md) (complements the security passes 6–9 below).
+
+> Sequencing rationale: security/storage foundations come **before** features so we never
+> retrofit encryption onto plaintext data.
+
+## Pre-release audit passes
+
+A separate **12-pass pre-release program** (not tied to any milestone), each pass run in a fresh session
+to keep the audit mindset critical. Full self-contained prompts live in
+[PRERELEASE_PROMPT_PACK.md](PRERELEASE_PROMPT_PACK.md). Order: **UI → security → license/release**, so
+code/dependency changes from earlier passes get re-checked. Status: **4 / 12 done.**
+
+### UI (1–5)
+- [x] **Pass 1 — Material 3 / Modern UI:** shared color/typography/shape tokens applied consistently
+      (the theme was already strongly M3-compliant; only minor fixes).
+- [x] **Pass 2 — Edge-to-edge & insets:** transparent system bars, per-screen inset handling, IME
+      padding on the editor.
+- [x] **Pass 3 — Motion & micro-interactions** (build + anti-leak green; driven on the emulator, no
       crashes across the full session). The app had no animations/haptics before this pass.
   - **Shared-element container transforms:** a history card — and the "+" FAB for a new entry — morph
     into the encounter editor and back, via one `SharedTransitionLayout` spanning the `NavHost`
@@ -195,7 +219,7 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
     on drag start. Plus a wrong-PIN shake and reorder lift-scale spring.
   - **Ripple/pressed states:** cards switched to the `Card(onClick=…)` overload and PIN keys to
     `Surface(onClick=…)` for proper Material state layers; press-scale on keys.
-- [x] **Pass 4 — accessibility sweep** (`compileDebugKotlin` + `lintDebug` green; on-device TalkBack
+- [x] **Pass 4 — Accessibility sweep** (`compileDebugKotlin` + `lintDebug` green; on-device TalkBack
       pass not possible — `FLAG_SECURE` blanks the screen-reader capture path, so verified via the
       semantics tree). Contrast was already AA-clean in both themes (no changes).
   - **Labels + roles + 48dp targets** for the bare-`clickable` glyph controls: photo-remove `×`
@@ -218,14 +242,25 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
   - **Residuals (reported, not fixed):** calendar day cells are ~43dp wide — a 7-column grid with 16dp
     side padding can't reach 48dp width on a 360dp screen (matches Material DatePicker's 40dp); edit-mode
     `ReorderableColumn` cards keep fixed heights (drag math) so can clip at the very largest font scale.
+- [ ] **Pass 5 — Adaptive layouts** (tablet/foldable via `WindowSizeClass`; two-pane list/detail on
+      expanded width). *Optional — phone-only is acceptable for v1; revisit only if tablet support is wanted.*
 
-### Remaining
-- **i18n: extract all hardcoded UI strings to `strings.xml`** (deferred "chunk 6"; the a11y half of this
-  item is done — see Pass 4).
-- Optional cleanup: refactor large editor VMs to a single immutable `UiState` (deferred "chunk 6").
-- Onboarding copy (esp. PIN-loss / no-recovery warning).
-- Finalize **license & distribution** ([DECISIONS.md](DECISIONS.md)); F-Droid metadata if chosen.
-- Security self-review against [THREAT_MODEL.md](THREAT_MODEL.md).
+### Security (6–9)
+- [ ] **Pass 6 — Manifest & exported components** (OWASP MASVS): exported flags, intent-filter input
+      validation, `debuggable`/`allowBackup`/cleartext, unnecessary dangerous permissions.
+- [ ] **Pass 7 — Secrets, storage & logging** (MASVS): no hardcoded secrets; no sensitive data in logs
+      or plain prefs; Keystore-backed encryption. *Strong fit with the existing privacy/crypto design.*
+- [ ] **Pass 8 — Network security** (MASVS). *Expected near-trivial — the app declares **no INTERNET
+      permission** and does no networking; confirm there's no trust-all / cleartext config and move on.*
+- [ ] **Pass 9 — WebView & input validation.** *WebView half is N/A (no WebViews);* still re-check the
+      intent / deep-link / file-picker input paths.
 
-> Sequencing rationale: security/storage foundations come **before** features so we never
-> retrofit encryption onto plaintext data.
+### License / release (10–12)
+- [ ] **Pass 10 — Dependency vulnerabilities & license compliance:** CVE/outdated scan + safe bumps;
+      confirm every dependency's license is compatible with the chosen license; LICENSE file + notices
+      screen. Gated on **O-2** (license still undecided — the prompt pack assumes GPLv3; confirm first).
+- [ ] **Pass 11 — Release build hardening:** enable R8 minify + resource shrinking, write/repair
+      `proguard-rules.pro`, confirm `debuggable=false` + debug logging stripped, bump version, protect signing.
+- [ ] **Pass 12 — Final pre-release checklist:** go/no-go — re-scan for regressions (exported components,
+      secrets, cleartext, sensitive logging), confirm license artifacts, R8 release build launches, triage
+      remaining TODO/FIXME, then summarize resolved / deferred (with risk) + a final recommendation.
