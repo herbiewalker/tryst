@@ -21,7 +21,20 @@ class EncryptedMediaStore @Inject constructor(
 ) {
     private val dir: File = File(context.filesDir, "media").apply { if (!exists()) mkdirs() }
 
-    fun fileFor(id: String): File = File(dir, "$id.enc")
+    /**
+     * Resolve the encrypted blob for [id]. Legitimate ids are [java.util.UUID]s, but during a backup
+     * import the id is taken from the (untrusted) backup's ZIP entry names / `data.json`, so it must
+     * be treated as hostile: a value like `../../databases/tryst` would otherwise let a crafted backup
+     * write outside the media dir (Zip-Slip). Reject path separators / traversal and verify the
+     * resolved file stays directly inside [dir].
+     */
+    fun fileFor(id: String): File {
+        require(id.isNotEmpty() && id != "." && id != ".." &&
+            id.none { it == '/' || it == '\\' || it == File.separatorChar }) { "Invalid media id" }
+        val file = File(dir, "$id.enc")
+        require(file.canonicalFile.parentFile == dir.canonicalFile) { "Media id escapes storage dir" }
+        return file
+    }
 
     fun save(id: String, source: InputStream): File {
         val file = fileFor(id)

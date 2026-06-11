@@ -194,7 +194,7 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 A separate **12-pass pre-release program** (not tied to any milestone), each pass run in a fresh session
 to keep the audit mindset critical. Full self-contained prompts live in
 [PRERELEASE_PROMPT_PACK.md](PRERELEASE_PROMPT_PACK.md). Order: **UI → security → license/release**, so
-code/dependency changes from earlier passes get re-checked. Status: **6 / 12 done.**
+code/dependency changes from earlier passes get re-checked. Status: **8 / 12 done.**
 
 ### UI (1–5)
 - [x] **Pass 1 — Material 3 / Modern UI:** shared color/typography/shape tokens applied consistently
@@ -309,10 +309,31 @@ code/dependency changes from earlier passes get re-checked. Status: **6 / 12 don
     `cacheDir/captures`, and `openSession()` sweeps it on every unlock (safe — a live capture keeps the
     session open across the OS handoff, so any temp present at unlock is necessarily an orphan). Verified
     `compileDebugKotlin` green.
-- [ ] **Pass 8 — Network security** (MASVS). *Expected near-trivial — the app declares **no INTERNET
-      permission** and does no networking; confirm there's no trust-all / cleartext config and move on.*
-- [ ] **Pass 9 — WebView & input validation.** *WebView half is N/A (no WebViews);* still re-check the
-      intent / deep-link / file-picker input paths.
+- [x] **Pass 8 — Network security** (MASVS) — **PASS, nothing to fix.** Confirmed zero network surface:
+      no networking lib in `libs.versions.toml` (no Retrofit/OkHttp/Ktor/Volley); no `java.net`/`Socket`/
+      `URLConnection`/`TrustManager`/`HostnameVerifier`/`SSLContext`/`WebView` anywhere in `app/src`. No
+      `INTERNET`/`ACCESS_NETWORK_STATE`/`ACCESS_WIFI_STATE` in the merged **release** manifest (only
+      `USE_BIOMETRIC`/`USE_FINGERPRINT` + the signature-level dynamic-receiver perm). No
+      `network_security_config.xml` needed — with no INTERNET permission cleartext is moot, and targetSdk 36
+      defaults `usesCleartextTraffic=false` regardless. Cert pinning N/A (no endpoints). Verified
+      `checkNoNetworkRelease` exits 0 (build-time anti-leak guard green).
+- [x] **Pass 9 — WebView & input validation** — WebView half **N/A** (no WebViews). Intent/deep-link
+      surface **clean**: `MainActivity` reads no intent data; manifest is MAIN/LAUNCHER only (no custom
+      scheme/host). DB **clean**: all DAO `@Query`s use bound `:params`; the `SELECT * FROM $table` dump in
+      `BackupManager` interpolates only the hardcoded `TABLES` list. CSV import **clean**: values flow into
+      parameterized Room inserts (duration digit-filtered, rating coerced 1–5, dates parsed in `runCatching`).
+      **Two findings fixed in the backup-import path:**
+  - **MED — Zip-Slip path traversal:** media blob ids came straight from the untrusted backup's ZIP entry
+    names / `data.json` into `EncryptedMediaStore.fileFor("$id.enc")`; an id like `../../databases/tryst`
+    could write outside the media dir. Fixed: `fileFor` now rejects empty/`.`/`..`/path-separator ids and
+    verifies the resolved file's parent is exactly the media dir (canonical-path containment). Central guard
+    so `save`/`open`/`delete` are all covered; legit ids are UUIDs so no behavior change.
+  - **LOW — KDF DoS via crafted header:** the PBKDF2 iteration count was read from the (untrusted) file
+    header and passed to `Pbkdf2.derive` unbounded; `Int.MAX_VALUE` would freeze the app for minutes. Fixed:
+    `import` now requires `iterations in 100_000..5_000_000` (default export is 600k → round-trip unaffected).
+  - Added regression tests in `BackupRoundTripTest` (`fileFor_rejectsPathTraversalIds`,
+    `import_rejectsAbsurdIterationCount`); all 3 tests in the class pass on emulator via
+    `connectedDebugAndroidTest`.
 
 ### License / release (10–12)
 - [ ] **Pass 10 — Dependency vulnerabilities & license compliance:** CVE/outdated scan + safe bumps;

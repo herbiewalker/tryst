@@ -39,6 +39,7 @@ app PIN; see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §1, Option B).
 | T3 intercepts traffic | **No `INTERNET` permission** — the app cannot open a socket; nothing to intercept |
 | T3 via bundled SDK | No analytics/ads/crash/third-party SDKs |
 | Data exfil via export file | Export is password-encrypted; user controls where it goes |
+| Crafted backup file abuses the importer | Import treats the file as untrusted: magic + version check, the file-supplied PBKDF2 iteration count is bounded (100k–5M) so a hostile header can't hang the app, and media-blob ids are rejected if they contain path separators / `..` (no Zip-Slip write outside the media dir). Wrong password still fails AEAD auth. See [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §4 |
 
 ## Residual risks (document, don't pretend away)
 

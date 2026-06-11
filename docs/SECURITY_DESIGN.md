@@ -100,6 +100,13 @@ guarantee against forensic seizure in exchange for not having to remember a pass
   strongest case for a memory-hard KDF being the offline-attackable backup).
 - Includes all tables (`data.json`) + decrypted media, re-encrypted under the device key on restore.
   Wrong password fails AEAD auth on first read. Round-trips losslessly.
+- **Import-side input validation (Pass 9):** a backup file is untrusted input, so import validates it
+  defensively — magic + version check; the header's PBKDF2 iteration count is bounded (100k–5M) so a
+  crafted value can't hang the app on key derivation (DoS); media-blob ids (taken from the backup's ZIP
+  entry names / `data.json`) are rejected if they contain path separators or `..`, and the resolved file
+  is verified to stay inside the media dir, so a malicious backup can't write outside it (Zip-Slip). The
+  guard lives in `EncryptedMediaStore.fileFor`, covering every read/write path. Regression-tested in
+  `BackupRoundTripTest`.
 - The format is documented and auditable in [EXPORT_FORMAT.md](EXPORT_FORMAT.md). Importing *other
   apps'* data is a separate generic **CSV importer** (M5b).
 
