@@ -5,6 +5,7 @@ import android.content.ContextWrapper
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import app.tryst.R
 import javax.crypto.Cipher
 
 /**
@@ -28,7 +29,7 @@ object BiometricPromptHelper {
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                     val authed = result.cryptoObject?.cipher
-                    if (authed != null) onSuccess(authed) else onError("No secure cipher returned")
+                    if (authed != null) onSuccess(authed) else onError(activity.getString(R.string.biometric_no_cipher))
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
@@ -45,7 +46,7 @@ object BiometricPromptHelper {
         val info = BiometricPrompt.PromptInfo.Builder()
             .setTitle(title)
             .setSubtitle(subtitle)
-            .setNegativeButtonText("Use PIN")
+            .setNegativeButtonText(activity.getString(R.string.biometric_use_pin))
             .setAllowedAuthenticators(androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG)
             .build()
         prompt.authenticate(info, BiometricPrompt.CryptoObject(cipher))

@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tryst.R
 import app.tryst.core.session.SessionManager
 import app.tryst.data.backup.Csv
 import app.tryst.data.db.entity.EncounterEntity
@@ -70,7 +71,7 @@ class CsvImportViewModel @Inject constructor(
                 } ?: throw IllegalStateException("Couldn't open file")
                 val table = Csv.parse(text)
                 if (table.size < 2) {
-                    status = "That CSV has no data rows."
+                    status = context.getString(R.string.csv_status_no_rows)
                     return@launch
                 }
                 headers = table.first()
@@ -79,7 +80,7 @@ class CsvImportViewModel @Inject constructor(
                 mapping = autoGuess(headers)
                 showMapping = true
             } catch (e: Exception) {
-                status = "Couldn't read CSV: ${e.message}"
+                status = context.getString(R.string.csv_status_read_failed, e.message)
             } finally {
                 busy = false
             }
@@ -101,10 +102,14 @@ class CsvImportViewModel @Inject constructor(
             busy = true
             try {
                 val (imported, skipped) = doImport()
-                status = "Imported $imported encounter(s)" + if (skipped > 0) ", skipped $skipped (no readable date)." else "."
+                status = if (skipped > 0) {
+                    context.getString(R.string.csv_import_done_skipped, imported, skipped)
+                } else {
+                    context.getString(R.string.csv_import_done, imported)
+                }
                 showMapping = false
             } catch (e: Exception) {
-                status = "Import failed: ${e.message}"
+                status = context.getString(R.string.csv_status_import_failed, e.message)
             } finally {
                 busy = false
             }

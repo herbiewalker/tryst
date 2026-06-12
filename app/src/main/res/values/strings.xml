@@ -202,6 +202,8 @@
     <string name="cd_drag_reorder">Drag to reorder</string>
     <string name="cd_show">Show</string>
     <string name="cd_hide">Hide</string>
+    <string name="cd_move_up">Move up</string>
+    <string name="cd_move_down">Move down</string>
     <string name="chart_style_bars">Bars</string>
     <string name="chart_style_line">Line</string>
     <string name="chart_style_donut">Donut</string>
@@ -247,4 +249,29 @@
     <string name="about_license_body">Tryst is free, open-source software, licensed under the GNU General Public License v3.0 (GPLv3). You may use, study, share, and modify it; redistributed versions must also be GPLv3 and ship their source. The full license text is in the LICENSE file of the source repository.</string>
     <string name="about_oss_title">Open-source licenses</string>
     <string name="about_oss_intro">Tryst is built with these open-source components. Each is used under its own license, all of which are compatible with GPLv3.</string>
+
+    <!-- ============================================================= -->
+    <!-- Runtime status / error messages (ViewModels, BiometricPrompt) -->
+    <!-- Surfaced to the user as transient status/error UI text.       -->
+    <!-- %1$s in error templates carries an exception message; the     -->
+    <!-- thrown exception messages themselves stay as developer plumbing. -->
+    <!-- ============================================================= -->
+    <string name="lock_error_setup_failed">Couldn\'t set up the PIN: %1$s</string>
+    <string name="lock_error_wrong_pin">Incorrect PIN — %1$d attempt(s) left</string>
+    <string name="lock_error_wiped">Too many attempts — data was wiped.</string>
+    <string name="lock_error_unlock_failed">Unlock failed: %1$s</string>
+    <string name="lock_error_biometric_changed">Biometric was changed on this device — please use your PIN.</string>
+    <string name="lock_error_biometric_enable_failed">Couldn\'t enable biometric unlock: %1$s</string>
+    <string name="lock_error_biometric_unlock_failed">Biometric unlock failed: %1$s</string>
+    <string name="biometric_use_pin">Use PIN</string>
+    <string name="biometric_no_cipher">No secure cipher returned</string>
+    <string name="backup_status_export_done">Encrypted backup saved.</string>
+    <string name="backup_status_export_failed">Export failed: %1$s</string>
+    <string name="backup_status_restore_done">Restore complete.</string>
+    <string name="backup_status_import_failed">Import failed — wrong password or not a Tryst backup.</string>
+    <string name="csv_status_no_rows">That CSV has no data rows.</string>
+    <string name="csv_status_read_failed">Couldn\'t read CSV: %1$s</string>
+    <string name="csv_import_done">Imported %1$d encounter(s).</string>
+    <string name="csv_import_done_skipped">Imported %1$d encounter(s), skipped %2$d (no readable date).</string>
+    <string name="csv_status_import_failed">Import failed: %1$s</string>
 </resources>
