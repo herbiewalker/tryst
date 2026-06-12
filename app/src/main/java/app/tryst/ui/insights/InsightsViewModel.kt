@@ -10,6 +10,7 @@ import app.tryst.data.repository.PositionRepository
 import app.tryst.data.stats.Insights
 import app.tryst.data.stats.InsightsEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +19,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
 
 @HiltViewModel
 class InsightsViewModel @Inject constructor(

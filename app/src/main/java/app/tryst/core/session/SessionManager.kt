@@ -8,15 +8,15 @@ import app.tryst.core.security.VaultWipedException
 import app.tryst.data.db.TrystDatabase
 import app.tryst.data.db.TrystDatabaseFactory
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.Dispatchers
 import java.io.File
 import javax.crypto.Cipher
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Owns the unlock lifecycle and the in-memory key/database. While locked, the DEK is not in
@@ -34,18 +34,17 @@ class SessionManager @Inject constructor(
     val state: StateFlow<LockState> = _state.asStateFlow()
 
     @Volatile private var dek: ByteArray? = null
+
     @Volatile private var db: TrystDatabase? = null
 
     /** When >now, the next background event is NOT auto-locked (a photo picker/camera is up). */
     @Volatile private var autoLockSuppressedUntil = 0L
 
     /** The open database. Throws if accessed while locked. */
-    fun database(): TrystDatabase =
-        db ?: throw IllegalStateException("Database accessed while locked")
+    fun database(): TrystDatabase = db ?: error("Database accessed while locked")
 
     /** Media encryption key for the current session. Throws if locked. */
-    fun mediaKey(): ByteArray =
-        SessionKeys.mediaKey(dek ?: throw IllegalStateException("Locked"))
+    fun mediaKey(): ByteArray = SessionKeys.mediaKey(dek ?: error("Locked"))
 
     /** First-run: create the vault with [pin] and open a session. */
     suspend fun setupPin(pin: String) = withContext(Dispatchers.IO) {
@@ -81,7 +80,7 @@ class SessionManager @Inject constructor(
 
     /** Enable biometric unlock for the current (unlocked) session. */
     fun enableBiometric(authenticatedCipher: Cipher) {
-        val currentDek = dek ?: throw IllegalStateException("Cannot enable biometric while locked")
+        val currentDek = dek ?: error("Cannot enable biometric while locked")
         biometricVault.store(currentDek, authenticatedCipher)
     }
 
@@ -152,8 +151,7 @@ class SessionManager @Inject constructor(
         File(context.cacheDir, "captures").deleteRecursively()
     }
 
-    private fun initialState(): LockState =
-        if (vault.isInitialized()) LockState.Locked else LockState.NeedsSetup
+    private fun initialState(): LockState = if (vault.isInitialized()) LockState.Locked else LockState.NeedsSetup
 
     private companion object {
         const val AUTO_LOCK_GRACE_MS = 120_000L

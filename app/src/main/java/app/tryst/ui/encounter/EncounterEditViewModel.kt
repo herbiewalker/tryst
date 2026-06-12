@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tryst.core.session.SessionManager
 import app.tryst.data.db.entity.ActEntity
 import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.EncounterEntity
@@ -21,7 +22,6 @@ import app.tryst.data.db.entity.PositionEntity
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.db.entity.Setting
 import app.tryst.data.db.entity.ToyType
-import app.tryst.core.session.SessionManager
 import app.tryst.data.repository.ActRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.PartnerRepository
@@ -29,6 +29,9 @@ import app.tryst.data.repository.PositionRepository
 import app.tryst.ui.common.MediaImages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.File
+import java.util.UUID
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,9 +39,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.util.UUID
-import javax.inject.Inject
 
 /**
  * A photo picked but not yet attached (attached on Save). [tempFile] is set only for in-app camera
@@ -82,9 +82,11 @@ class EncounterEditViewModel @Inject constructor(
     var protection by mutableStateOf<Set<Protection>>(emptySet())
     var orgasmCountSelf by mutableStateOf(0)
         private set
+
     /** Per-orgasm ejaculation location: orgasm index (0-based) -> location. */
     var ejaculations by mutableStateOf<Map<Int, EjaculationLocation>>(emptyMap())
         private set
+
     /** Per-partner orgasm counts: partnerId -> count. */
     var partnerOrgasms by mutableStateOf<Map<String, Int>>(emptyMap())
         private set
@@ -101,6 +103,7 @@ class EncounterEditViewModel @Inject constructor(
     /** Photos already saved on this encounter (minus any the user removed this session). */
     var existingPhotos by mutableStateOf<List<MediaEntity>>(emptyList())
         private set
+
     /** Photos picked this session, attached (encrypted) on Save. */
     var pendingPhotos by mutableStateOf<List<PendingPhoto>>(emptyList())
         private set
@@ -112,6 +115,7 @@ class EncounterEditViewModel @Inject constructor(
     private var loadedId: String? = null
     private var createdAt: Long = 0L
 
+    @Suppress("CyclomaticComplexMethod") // straight-line field mapping from the loaded entity.
     fun load(encounterId: String?) {
         if (encounterId == null || loadedId == encounterId) return
         viewModelScope.launch {
@@ -162,11 +166,9 @@ class EncounterEditViewModel @Inject constructor(
         removedExisting += media
     }
 
-    suspend fun decodeExisting(media: MediaEntity, reqPx: Int): ImageBitmap? =
-        MediaImages.decodeSampled(reqPx) { runCatching { encounters.openMedia(media) }.getOrNull() }
+    suspend fun decodeExisting(media: MediaEntity, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { runCatching { encounters.openMedia(media) }.getOrNull() }
 
-    suspend fun decodePending(uri: Uri, reqPx: Int): ImageBitmap? =
-        MediaImages.decodeSampled(reqPx) { context.contentResolver.openInputStream(uri) }
+    suspend fun decodePending(uri: Uri, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { context.contentResolver.openInputStream(uri) }
 
     fun togglePartner(id: String) {
         selectedPartnerIds = if (id in selectedPartnerIds) {

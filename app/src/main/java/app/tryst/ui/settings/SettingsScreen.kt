@@ -7,12 +7,12 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
@@ -49,8 +49,8 @@ import app.tryst.R
 import app.tryst.core.prefs.ThemeMode
 import app.tryst.data.db.entity.ActEntity
 import app.tryst.data.db.entity.PositionEntity
-import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.SingleSelectChips
+import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.rememberHaptics
 import app.tryst.ui.lock.BiometricPromptHelper
 import app.tryst.ui.lock.LockViewModel
@@ -158,7 +158,10 @@ fun SettingsScreen(
             }
 
             OutlinedButton(
-                onClick = { haptics.tick(); viewModel.lock() },
+                onClick = {
+                    haptics.tick()
+                    viewModel.lock()
+                },
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.settings_lock_now))
@@ -236,7 +239,10 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.settings_export)) }
             OutlinedButton(
-                onClick = { backupViewModel.suppressAutoLock(); openBackup.launch(arrayOf("*/*")) },
+                onClick = {
+                    backupViewModel.suppressAutoLock()
+                    openBackup.launch(arrayOf("*/*"))
+                },
                 enabled = !backupViewModel.busy,
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.settings_import)) }
@@ -251,7 +257,10 @@ fun SettingsScreen(
                 }
             }
             OutlinedButton(
-                onClick = { csvViewModel.suppressAutoLock(); openCsv.launch(arrayOf("*/*")) },
+                onClick = {
+                    csvViewModel.suppressAutoLock()
+                    openCsv.launch(arrayOf("*/*"))
+                },
                 enabled = !csvViewModel.busy,
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.settings_import_csv)) }
@@ -341,7 +350,10 @@ fun SettingsScreen(
                 pendingImportUri?.let { backupViewModel.import(it, pw) }
                 pendingImportUri = null
             },
-            onDismiss = { showImportPw = false; pendingImportUri = null },
+            onDismiss = {
+                showImportPw = false
+                pendingImportUri = null
+            },
         )
     }
 
@@ -411,11 +423,17 @@ private fun CsvFieldRow(field: CsvField, headers: List<String>, selected: Int?, 
                 Text(selected?.let { idx -> headers.getOrNull(idx)?.ifBlank { stringResource(R.string.csv_column_n, idx + 1) } } ?: "—")
             }
             DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-                DropdownMenuItem(text = { Text(stringResource(R.string.csv_none)) }, onClick = { onSet(null); open = false })
+                DropdownMenuItem(text = { Text(stringResource(R.string.csv_none)) }, onClick = {
+                    onSet(null)
+                    open = false
+                })
                 headers.forEachIndexed { i, h ->
                     DropdownMenuItem(
                         text = { Text(h.ifBlank { stringResource(R.string.csv_column_n, i + 1) }) },
-                        onClick = { onSet(i); open = false },
+                        onClick = {
+                            onSet(i)
+                            open = false
+                        },
                     )
                 }
             }

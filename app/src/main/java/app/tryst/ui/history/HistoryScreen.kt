@@ -1,12 +1,12 @@
 package app.tryst.ui.history
 
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,13 +22,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Card
@@ -46,7 +45,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.annotation.DrawableRes
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -103,7 +101,10 @@ fun HistoryScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.history_title)) },
                 actions = {
-                    IconButton(onClick = { haptics.tick(); calendarMode = !calendarMode }) {
+                    IconButton(onClick = {
+                        haptics.tick()
+                        calendarMode = !calendarMode
+                    }) {
                         // Cross-fade the icon so list/calendar toggle reads as one control changing state.
                         Crossfade(targetState = calendarMode, animationSpec = tween(180), label = "viewToggleIcon") { cal ->
                             if (cal) {
@@ -370,8 +371,14 @@ private fun CalendarView(
         item(key = "month-header") {
             MonthHeader(
                 month = month,
-                onPrev = { month = month.minusMonths(1); selectedDay = null },
-                onNext = { month = month.plusMonths(1); selectedDay = null },
+                onPrev = {
+                    month = month.minusMonths(1)
+                    selectedDay = null
+                },
+                onNext = {
+                    month = month.plusMonths(1)
+                    selectedDay = null
+                },
             )
         }
         item(key = "weekday-labels") { WeekdayLabels() }
@@ -439,8 +446,13 @@ private fun WeekdayLabels() {
     val locale = LocalConfiguration.current.locales[0]
     // Sunday-first column order.
     val days = listOf(
-        DayOfWeek.SUNDAY, DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
-        DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY,
+        DayOfWeek.SUNDAY,
+        DayOfWeek.MONDAY,
+        DayOfWeek.TUESDAY,
+        DayOfWeek.WEDNESDAY,
+        DayOfWeek.THURSDAY,
+        DayOfWeek.FRIDAY,
+        DayOfWeek.SATURDAY,
     )
     Row(Modifier.fillMaxWidth()) {
         days.forEach { dow ->
@@ -522,8 +534,14 @@ private fun DayCell(
         append(date.month.getDisplayName(TextStyle.FULL, locale))
         append(' ')
         append(date.dayOfMonth)
-        if (isToday) { append(", "); append(todaySuffix) }
-        if (icon != null) { append(", "); append(hasTrystsSuffix) }
+        if (isToday) {
+            append(", ")
+            append(todaySuffix)
+        }
+        if (icon != null) {
+            append(", ")
+            append(hasTrystsSuffix)
+        }
     }
     Surface(
         onClick = onClick,

@@ -14,18 +14,32 @@ object Csv {
             val c = s[i]
             when {
                 inQuotes -> when {
-                    c == '"' && i + 1 < s.length && s[i + 1] == '"' -> { field.append('"'); i++ }
+                    c == '"' && i + 1 < s.length && s[i + 1] == '"' -> {
+                        field.append('"')
+                        i++
+                    }
                     c == '"' -> inQuotes = false
                     else -> field.append(c)
                 }
                 c == '"' -> inQuotes = true
-                c == ',' -> { row.add(field.toString()); field.clear() }
-                c == '\n' -> { row.add(field.toString()); rows.add(row); row = mutableListOf(); field.clear() }
+                c == ',' -> {
+                    row.add(field.toString())
+                    field.clear()
+                }
+                c == '\n' -> {
+                    row.add(field.toString())
+                    rows.add(row)
+                    row = mutableListOf()
+                    field.clear()
+                }
                 else -> field.append(c)
             }
             i++
         }
-        if (field.isNotEmpty() || row.isNotEmpty()) { row.add(field.toString()); rows.add(row) }
+        if (field.isNotEmpty() || row.isNotEmpty()) {
+            row.add(field.toString())
+            rows.add(row)
+        }
         return rows.filter { cells -> cells.any { it.isNotBlank() } } // drop blank lines
     }
 }

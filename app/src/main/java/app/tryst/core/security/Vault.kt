@@ -2,13 +2,13 @@ package app.tryst.core.security
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
-import org.json.JSONObject
 import java.io.File
 import java.security.GeneralSecurityException
 import java.security.SecureRandom
 import java.util.Base64
 import javax.inject.Inject
 import javax.inject.Singleton
+import org.json.JSONObject
 
 /**
  * The encrypted key vault (Keystore-only model — see docs/SECURITY_DESIGN.md §1).
@@ -41,6 +41,7 @@ class Vault @Inject constructor(
 
     /** Unlocks with [pin], returning the DEK. */
     @Synchronized
+    @Suppress("ThrowsCount") // distinct failure modes (not initialised, wrong PIN, tampered file).
     fun unlock(pin: String): ByteArray {
         if (!isInitialized()) throw VaultNotInitializedException()
         val json = JSONObject(file.readText())

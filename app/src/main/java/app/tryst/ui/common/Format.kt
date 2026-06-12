@@ -27,20 +27,17 @@ object Format {
     fun time(epochMillis: Long): String = zoned(epochMillis).format(timeFormatter)
 
     /** Title-cases an enum constant: PREP -> "Prep", BIRTH_CONTROL -> "Birth control". */
-    fun enumLabel(value: Enum<*>): String =
-        value.name.lowercase(Locale.getDefault())
-            .replace('_', ' ')
-            .replaceFirstChar { it.titlecase(Locale.getDefault()) }
+    fun enumLabel(value: Enum<*>): String = value.name.lowercase(Locale.getDefault())
+        .replace('_', ' ')
+        .replaceFirstChar { it.titlecase(Locale.getDefault()) }
 
-    fun partnerName(partner: PartnerEntity): String =
-        partner.displayName?.takeIf { it.isNotBlank() } ?: "Anonymous"
+    fun partnerName(partner: PartnerEntity): String = partner.displayName?.takeIf { it.isNotBlank() } ?: "Anonymous"
 
     fun dayOfMonth(epochMillis: Long): String = zoned(epochMillis).dayOfMonth.toString()
 
     fun localDate(epochMillis: Long): LocalDate = zoned(epochMillis).toLocalDate()
 
-    fun monthShort(epochMillis: Long): String =
-        zoned(epochMillis).format(monthFormatter).uppercase(Locale.getDefault())
+    fun monthShort(epochMillis: Long): String = zoned(epochMillis).format(monthFormatter).uppercase(Locale.getDefault())
 
     /** "Today" / "Yesterday" / "Monday, Jun 12" / "Jun 12, 2025" — used for list section headers. */
     fun relativeDay(epochMillis: Long): String {
@@ -58,6 +55,5 @@ object Format {
     private val sameYearFormatter = DateTimeFormatter.ofPattern("EEEE, MMM d")
     private val otherYearFormatter = DateTimeFormatter.ofPattern("MMM d, yyyy")
 
-    private fun zoned(epochMillis: Long) =
-        Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault())
+    private fun zoned(epochMillis: Long) = Instant.ofEpochMilli(epochMillis).atZone(ZoneId.systemDefault())
 }

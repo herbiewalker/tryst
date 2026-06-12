@@ -40,8 +40,14 @@ class MigrationTest {
 
         // Applies the full migration chain and validates the schema equals the exported v6 schema.
         helper.runMigrationsAndValidate(
-            dbName, 6, true,
-            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6,
+            dbName,
+            6,
+            true,
+            MIGRATION_1_2,
+            MIGRATION_2_3,
+            MIGRATION_3_4,
+            MIGRATION_4_5,
+            MIGRATION_5_6,
         ).use { db ->
             db.query(
                 "SELECT id, positions, kinks, occasions, partnerOrgasms FROM encounters WHERE id = 'e1'",

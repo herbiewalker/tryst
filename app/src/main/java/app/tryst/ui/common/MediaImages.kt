@@ -6,19 +6,19 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.InputStream
 import kotlin.math.max
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * Decodes images for display without any third-party loader (no network-capable lib, keeping the
@@ -28,17 +28,16 @@ import kotlin.math.max
  */
 object MediaImages {
 
-    suspend fun decodeSampled(reqPx: Int, open: () -> InputStream?): ImageBitmap? =
-        withContext(Dispatchers.IO) {
-            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            runCatching { open()?.use { BitmapFactory.decodeStream(it, null, bounds) } }.getOrNull()
-            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@withContext null
-            val opts = BitmapFactory.Options().apply {
-                inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight, reqPx)
-            }
-            runCatching { open()?.use { BitmapFactory.decodeStream(it, null, opts) } }
-                .getOrNull()?.asImageBitmap()
+    suspend fun decodeSampled(reqPx: Int, open: () -> InputStream?): ImageBitmap? = withContext(Dispatchers.IO) {
+        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+        runCatching { open()?.use { BitmapFactory.decodeStream(it, null, bounds) } }.getOrNull()
+        if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@withContext null
+        val opts = BitmapFactory.Options().apply {
+            inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight, reqPx)
         }
+        runCatching { open()?.use { BitmapFactory.decodeStream(it, null, opts) } }
+            .getOrNull()?.asImageBitmap()
+    }
 
     private fun sampleSize(width: Int, height: Int, reqPx: Int): Int {
         if (reqPx <= 0) return 1

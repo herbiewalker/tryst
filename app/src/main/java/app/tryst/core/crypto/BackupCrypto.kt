@@ -16,12 +16,9 @@ object BackupCrypto {
     private const val SEGMENT_BYTES = 1 shl 20 // 1 MiB segments
     private val ASSOCIATED_DATA = "tryst-backup-v1".toByteArray()
 
-    fun encryptingStream(key: ByteArray, dest: OutputStream): OutputStream =
-        streaming(key).newEncryptingStream(dest, ASSOCIATED_DATA)
+    fun encryptingStream(key: ByteArray, dest: OutputStream): OutputStream = streaming(key).newEncryptingStream(dest, ASSOCIATED_DATA)
 
-    fun decryptingStream(key: ByteArray, source: InputStream): InputStream =
-        streaming(key).newDecryptingStream(source, ASSOCIATED_DATA)
+    fun decryptingStream(key: ByteArray, source: InputStream): InputStream = streaming(key).newDecryptingStream(source, ASSOCIATED_DATA)
 
-    private fun streaming(key: ByteArray) =
-        AesGcmHkdfStreaming(key, "HmacSha256", KEY_SIZE_BYTES, SEGMENT_BYTES, 0)
+    private fun streaming(key: ByteArray) = AesGcmHkdfStreaming(key, "HmacSha256", KEY_SIZE_BYTES, SEGMENT_BYTES, 0)
 }

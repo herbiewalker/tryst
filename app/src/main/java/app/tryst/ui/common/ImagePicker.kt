@@ -60,7 +60,10 @@ fun rememberCameraCapture(onLaunch: () -> Unit = {}, onCaptured: (Uri, File) -> 
             val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
             pending = uri to file
             onLaunch() // suppress the auto-lock that the camera handoff would otherwise trigger
-            runCatching { launcher.launch(uri) }.onFailure { pending = null; file.delete() }
+            runCatching { launcher.launch(uri) }.onFailure {
+                pending = null
+                file.delete()
+            }
         }
     }
 }

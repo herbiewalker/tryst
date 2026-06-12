@@ -2,11 +2,11 @@ package app.tryst.core.prefs
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /** Selectable chart look, chosen per Insights card. */
 enum class ChartStyle { BARS, LINE, DONUT }
@@ -25,6 +25,7 @@ class InsightsPreferences @Inject constructor(
 
     // --- Overview stat tiles ---
     private val _statOrder = MutableStateFlow(loadList(KEY_STAT_ORDER))
+
     /** Ordered tile ids. May omit newly-added tiles; the screen appends unknown ids in catalog order. */
     val statOrder: StateFlow<List<String>> = _statOrder.asStateFlow()
 
@@ -39,6 +40,7 @@ class InsightsPreferences @Inject constructor(
     val hiddenSections: StateFlow<Set<String>> = _hiddenSections.asStateFlow()
 
     private val _sectionStyles = MutableStateFlow(loadStyles())
+
     /** sectionId -> chosen [ChartStyle]; sections absent here use [DEFAULT_STYLE]. */
     val sectionStyles: StateFlow<Map<String, ChartStyle>> = _sectionStyles.asStateFlow()
 
@@ -92,21 +94,18 @@ class InsightsPreferences @Inject constructor(
         flow.value = next
     }
 
-    private fun loadList(key: String): List<String> =
-        prefs.getString(key, null)?.split(DELIM)?.filter { it.isNotBlank() } ?: emptyList()
+    private fun loadList(key: String): List<String> = prefs.getString(key, null)?.split(DELIM)?.filter { it.isNotBlank() } ?: emptyList()
 
-    private fun loadSet(key: String): Set<String> =
-        prefs.getStringSet(key, emptySet())?.toSet() ?: emptySet()
+    private fun loadSet(key: String): Set<String> = prefs.getStringSet(key, emptySet())?.toSet() ?: emptySet()
 
-    private fun loadStyles(): Map<String, ChartStyle> =
-        prefs.getString(KEY_SECTION_STYLES, null)
-            ?.split(DELIM)
-            ?.mapNotNull { entry ->
-                val (id, name) = entry.split(KV).takeIf { it.size == 2 } ?: return@mapNotNull null
-                runCatching { id to ChartStyle.valueOf(name) }.getOrNull()
-            }
-            ?.toMap()
-            ?: emptyMap()
+    private fun loadStyles(): Map<String, ChartStyle> = prefs.getString(KEY_SECTION_STYLES, null)
+        ?.split(DELIM)
+        ?.mapNotNull { entry ->
+            val (id, name) = entry.split(KV).takeIf { it.size == 2 } ?: return@mapNotNull null
+            runCatching { id to ChartStyle.valueOf(name) }.getOrNull()
+        }
+        ?.toMap()
+        ?: emptyMap()
 
     private companion object {
         val DEFAULT_STYLE = ChartStyle.BARS
