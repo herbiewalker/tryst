@@ -13,4 +13,21 @@
     <string name="nav_partners">Partners</string>
     <string name="nav_settings">Settings</string>
     <string name="history_detail_placeholder">Select a tryst to view or edit, or tap + to log a new one.</string>
+
+    <!-- ============================================================= -->
+    <!-- Lock &amp; PIN setup (SetupScreen, LockScreen, PinPad)         -->
+    <!-- ============================================================= -->
+    <string name="setup_create_title">Create a PIN</string>
+    <string name="setup_confirm_title">Confirm your PIN</string>
+    <string name="setup_create_subtitle">Choose a 6-digit PIN to lock Tryst. It\'s separate from your phone\'s PIN, and can\'t be recovered if forgotten.</string>
+    <string name="setup_confirm_subtitle">Enter the same 6 digits again.</string>
+    <string name="setup_pin_mismatch">PINs didn\'t match — start over.</string>
+    <string name="lock_pin_title">Enter your PIN</string>
+    <string name="lock_pin_subtitle">Unlock Tryst.</string>
+    <string name="lock_biometric_title">Unlock Tryst</string>
+    <string name="lock_biometric_subtitle">Confirm your fingerprint</string>
+    <string name="lock_biometric_unavailable">Biometric unavailable — use your PIN.</string>
+    <string name="lock_use_biometric">Use biometric</string>
+    <string name="cd_pin_progress">PIN: %1$d of %2$d digits entered</string>
+    <string name="cd_pin_delete">Delete</string>
 </resources>
