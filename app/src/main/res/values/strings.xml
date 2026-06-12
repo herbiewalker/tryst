@@ -8,6 +8,9 @@
     <string name="action_cancel">Cancel</string>
     <string name="action_ok">OK</string>
     <string name="action_delete">Delete</string>
+    <string name="action_done">Done</string>
+    <string name="action_remove">Remove</string>
+    <string name="action_add">Add</string>
 
     <!-- ============================================================= -->
     <!-- Bottom / rail navigation (TrystApp)                           -->
@@ -112,4 +115,69 @@
     <string name="partner_gender">Gender</string>
     <string name="partner_relationship">Relationship</string>
     <string name="partner_note_label">Note (optional)</string>
+
+    <!-- ============================================================= -->
+    <!-- Settings (SettingsScreen)                                     -->
+    <!-- ============================================================= -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_security">Security</string>
+    <string name="settings_biometric_unavailable">Biometric unlock isn\'t available on this device.</string>
+    <string name="settings_biometric_disable">Disable biometric unlock</string>
+    <string name="settings_biometric_enable">Enable biometric unlock</string>
+    <string name="settings_biometric_enable_subtitle">Confirm to allow unlocking Tryst with your fingerprint</string>
+    <string name="settings_biometric_error">Biometric unavailable: %1$s</string>
+    <string name="settings_lock_now">Lock now</string>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_material_you">"  Use Material You colors"</string>
+    <string name="settings_material_you_desc">Off uses Tryst\'s purple &amp; green palette; on follows your phone\'s wallpaper colors.</string>
+    <string name="settings_insights">Insights</string>
+    <string name="settings_customize_insights">Customize Insights</string>
+    <string name="settings_insights_desc">Reorder or hide the stat boxes and pick a chart style on the Insights tab.</string>
+    <string name="settings_categories">Categories</string>
+    <string name="settings_manage_positions">Manage custom positions</string>
+    <string name="settings_manage_acts">Manage custom acts</string>
+    <string name="settings_backup">Backup &amp; restore</string>
+    <string name="settings_export">Export encrypted backup</string>
+    <string name="settings_import">Import / restore backup</string>
+    <string name="settings_backup_desc">Backups are password-encrypted and include everything (photos too). Keep the password safe — there\'s no recovery if you lose it.</string>
+    <string name="settings_import_csv">Import from CSV (other apps)</string>
+    <string name="settings_csv_desc">Bring in encounter history from other apps/spreadsheets via CSV — you map the columns to Tryst fields.</string>
+    <string name="settings_danger_zone">Danger zone</string>
+    <string name="settings_delete_all">Delete all data</string>
+    <string name="settings_delete_all_desc">Permanently erases every encounter, partner, photo, and your PIN. This cannot be undone.</string>
+    <string name="settings_about">About</string>
+    <string name="settings_about_button">About &amp; open-source licenses</string>
+    <string name="settings_about_desc">Tryst is open-source under GPLv3. See the credits for the third-party components it uses.</string>
+    <string name="settings_delete_all_title">Delete all data?</string>
+    <string name="settings_delete_all_message">This permanently erases everything in Tryst and returns to first-run setup. This cannot be undone.</string>
+    <string name="settings_delete_all_confirm">Delete everything</string>
+
+    <!-- Backup password dialog -->
+    <string name="settings_backup_pw_set_title">Set a backup password</string>
+    <string name="settings_backup_pw_enter_title">Enter backup password</string>
+    <string name="settings_password_label">Password</string>
+    <string name="settings_confirm_password_label">Confirm password</string>
+    <string name="settings_password_mismatch">Passwords don\'t match.</string>
+    <string name="settings_password_hint">At least 6 characters. There is no recovery if you forget it.</string>
+
+    <!-- CSV import mapping dialog -->
+    <string name="csv_map_title">Map CSV columns</string>
+    <string name="csv_rows_found">%1$d row(s) found. Choose which column maps to each field — Date is required.</string>
+    <string name="csv_import">Import</string>
+    <string name="csv_column_n">Column %1$d</string>
+    <string name="csv_none">— (none)</string>
+
+    <!-- Custom acts / positions dialogs -->
+    <string name="custom_acts_title">Custom acts</string>
+    <string name="custom_acts_desc">Custom acts appear alongside the built-in ones (gave &amp; received) when logging a tryst.</string>
+    <string name="custom_acts_add_label">Add an act</string>
+    <string name="custom_acts_empty">No custom acts yet.</string>
+    <string name="custom_positions_title">Custom positions</string>
+    <string name="custom_positions_desc">Custom positions appear alongside the built-in ones when logging a tryst.</string>
+    <string name="custom_positions_add_label">Add a position</string>
+    <string name="custom_positions_empty">No custom positions yet.</string>
 </resources>

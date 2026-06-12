@@ -39,11 +39,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tryst.R
 import app.tryst.core.prefs.ThemeMode
 import app.tryst.data.db.entity.ActEntity
 import app.tryst.data.db.entity.PositionEntity
@@ -97,7 +99,14 @@ fun SettingsScreen(
         if (uri != null) csvViewModel.parse(uri)
     }
 
-    Scaffold(topBar = { TopAppBar(title = { Text("Settings") }) }) { padding ->
+    val biometricEnableTitle = stringResource(R.string.settings_biometric_enable)
+    val biometricEnableSubtitle = stringResource(R.string.settings_biometric_enable_subtitle)
+    val biometricErrorFmt = stringResource(R.string.settings_biometric_error)
+    val themeSystemLabel = stringResource(R.string.settings_theme_system)
+    val themeLightLabel = stringResource(R.string.settings_theme_light)
+    val themeDarkLabel = stringResource(R.string.settings_theme_dark)
+
+    Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.settings_title)) }) }) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -109,11 +118,11 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text("Security", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.settings_security), style = MaterialTheme.typography.titleMedium)
 
             when {
                 !biometricAvailable -> Text(
-                    "Biometric unlock isn't available on this device.",
+                    stringResource(R.string.settings_biometric_unavailable),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -124,35 +133,35 @@ fun SettingsScreen(
                         biometricEnabled = false
                     },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Disable biometric unlock") }
+                ) { Text(stringResource(R.string.settings_biometric_disable)) }
 
                 else -> Button(
                     onClick = {
                         val cipher = try {
                             viewModel.biometricEncryptCipher()
                         } catch (e: Exception) {
-                            viewModel.reportError("Biometric unavailable: ${e.message}")
+                            viewModel.reportError(biometricErrorFmt.format(e.message))
                             return@Button
                         }
                         BiometricPromptHelper.authenticate(
                             activity = activity,
                             cipher = cipher,
-                            title = "Enable biometric unlock",
-                            subtitle = "Confirm to allow unlocking Tryst with your fingerprint",
+                            title = biometricEnableTitle,
+                            subtitle = biometricEnableSubtitle,
                             onSuccess = { authed -> if (viewModel.enableBiometric(authed)) biometricEnabled = true },
                             onError = { viewModel.reportError(it) },
                             onCancel = { },
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Enable biometric unlock") }
+                ) { Text(stringResource(R.string.settings_biometric_enable)) }
             }
 
             OutlinedButton(
                 onClick = { haptics.tick(); viewModel.lock() },
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Lock now")
+                Text(stringResource(R.string.settings_lock_now))
             }
 
             AnimatedVisibility(visible = viewModel.error != null) {
@@ -163,16 +172,16 @@ fun SettingsScreen(
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-            Text("Appearance", style = MaterialTheme.typography.titleMedium)
-            Text("Theme", style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.settings_appearance), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.labelLarge)
             SingleSelectChips(
                 options = ThemeMode.entries,
                 selected = themeMode,
                 label = {
                     when (it) {
-                        ThemeMode.SYSTEM -> "System"
-                        ThemeMode.LIGHT -> "Light"
-                        ThemeMode.DARK -> "Dark"
+                        ThemeMode.SYSTEM -> themeSystemLabel
+                        ThemeMode.LIGHT -> themeLightLabel
+                        ThemeMode.DARK -> themeDarkLabel
                     }
                 },
                 onSelect = { appearanceViewModel.setThemeMode(it) },
@@ -188,51 +197,51 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Switch(checked = dynamicColor, onCheckedChange = null)
-                Text("  Use Material You colors", style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.settings_material_you), style = MaterialTheme.typography.bodyMedium)
             }
             Text(
-                "Off uses Tryst's purple & green palette; on follows your phone's wallpaper colors.",
+                stringResource(R.string.settings_material_you_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-            Text("Insights", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.settings_insights), style = MaterialTheme.typography.titleMedium)
             OutlinedButton(onClick = onCustomizeInsights, modifier = Modifier.fillMaxWidth()) {
-                Text("Customize Insights")
+                Text(stringResource(R.string.settings_customize_insights))
             }
             Text(
-                "Reorder or hide the stat boxes and pick a chart style on the Insights tab.",
+                stringResource(R.string.settings_insights_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-            Text("Categories", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.settings_categories), style = MaterialTheme.typography.titleMedium)
             OutlinedButton(onClick = { showPositions = true }, modifier = Modifier.fillMaxWidth()) {
-                Text("Manage custom positions")
+                Text(stringResource(R.string.settings_manage_positions))
             }
             OutlinedButton(onClick = { showActs = true }, modifier = Modifier.fillMaxWidth()) {
-                Text("Manage custom acts")
+                Text(stringResource(R.string.settings_manage_acts))
             }
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-            Text("Backup & restore", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.settings_backup), style = MaterialTheme.typography.titleMedium)
             OutlinedButton(
                 onClick = { showExportPw = true },
                 enabled = !backupViewModel.busy,
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Export encrypted backup") }
+            ) { Text(stringResource(R.string.settings_export)) }
             OutlinedButton(
                 onClick = { backupViewModel.suppressAutoLock(); openBackup.launch(arrayOf("*/*")) },
                 enabled = !backupViewModel.busy,
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Import / restore backup") }
+            ) { Text(stringResource(R.string.settings_import)) }
             Text(
-                "Backups are password-encrypted and include everything (photos too). Keep the password safe — there's no recovery if you lose it.",
+                stringResource(R.string.settings_backup_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -245,9 +254,9 @@ fun SettingsScreen(
                 onClick = { csvViewModel.suppressAutoLock(); openCsv.launch(arrayOf("*/*")) },
                 enabled = !csvViewModel.busy,
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Import from CSV (other apps)") }
+            ) { Text(stringResource(R.string.settings_import_csv)) }
             Text(
-                "Bring in encounter history from other apps/spreadsheets via CSV — you map the columns to Tryst fields.",
+                stringResource(R.string.settings_csv_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -259,26 +268,26 @@ fun SettingsScreen(
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-            Text("Danger zone", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
+            Text(stringResource(R.string.settings_danger_zone), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
             Button(
                 onClick = { showDeleteAll = true },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("Delete all data") }
+            ) { Text(stringResource(R.string.settings_delete_all)) }
             Text(
-                "Permanently erases every encounter, partner, photo, and your PIN. This cannot be undone.",
+                stringResource(R.string.settings_delete_all_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-            Text("About", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.settings_about), style = MaterialTheme.typography.titleMedium)
             OutlinedButton(onClick = onOpenAbout, modifier = Modifier.fillMaxWidth()) {
-                Text("About & open-source licenses")
+                Text(stringResource(R.string.settings_about_button))
             }
             Text(
-                "Tryst is open-source under GPLv3. See the credits for the third-party components it uses.",
+                stringResource(R.string.settings_about_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -288,16 +297,16 @@ fun SettingsScreen(
     if (showDeleteAll) {
         AlertDialog(
             onDismissRequest = { showDeleteAll = false },
-            title = { Text("Delete all data?") },
-            text = { Text("This permanently erases everything in Tryst and returns to first-run setup. This cannot be undone.") },
+            title = { Text(stringResource(R.string.settings_delete_all_title)) },
+            text = { Text(stringResource(R.string.settings_delete_all_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     haptics.reject()
                     showDeleteAll = false
                     viewModel.deleteAllData()
-                }) { Text("Delete everything") }
+                }) { Text(stringResource(R.string.settings_delete_all_confirm)) }
             },
-            dismissButton = { TextButton(onClick = { showDeleteAll = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { showDeleteAll = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 
@@ -311,7 +320,7 @@ fun SettingsScreen(
 
     if (showExportPw) {
         BackupPasswordDialog(
-            title = "Set a backup password",
+            title = stringResource(R.string.settings_backup_pw_set_title),
             requireConfirm = true,
             onConfirm = { pw ->
                 showExportPw = false
@@ -325,7 +334,7 @@ fun SettingsScreen(
 
     if (showImportPw) {
         BackupPasswordDialog(
-            title = "Enter backup password",
+            title = stringResource(R.string.settings_backup_pw_enter_title),
             requireConfirm = false,
             onConfirm = { pw ->
                 showImportPw = false
@@ -362,14 +371,14 @@ private fun CsvMappingDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Map CSV columns") },
+        title = { Text(stringResource(R.string.csv_map_title)) },
         text = {
             Column(
                 modifier = Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Text(
-                    "$rowCount row(s) found. Choose which column maps to each field — Date is required.",
+                    stringResource(R.string.csv_rows_found, rowCount),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -379,9 +388,9 @@ private fun CsvMappingDialog(
             }
         },
         confirmButton = {
-            TextButton(onClick = onImport, enabled = !busy && mapping[CsvField.DATE] != null) { Text("Import") }
+            TextButton(onClick = onImport, enabled = !busy && mapping[CsvField.DATE] != null) { Text(stringResource(R.string.csv_import)) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
@@ -399,13 +408,13 @@ private fun CsvFieldRow(field: CsvField, headers: List<String>, selected: Int?, 
         )
         Box {
             OutlinedButton(onClick = { open = true }) {
-                Text(selected?.let { idx -> headers.getOrNull(idx)?.ifBlank { "Column ${idx + 1}" } } ?: "—")
+                Text(selected?.let { idx -> headers.getOrNull(idx)?.ifBlank { stringResource(R.string.csv_column_n, idx + 1) } } ?: "—")
             }
             DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-                DropdownMenuItem(text = { Text("— (none)") }, onClick = { onSet(null); open = false })
+                DropdownMenuItem(text = { Text(stringResource(R.string.csv_none)) }, onClick = { onSet(null); open = false })
                 headers.forEachIndexed { i, h ->
                     DropdownMenuItem(
-                        text = { Text(h.ifBlank { "Column ${i + 1}" }) },
+                        text = { Text(h.ifBlank { stringResource(R.string.csv_column_n, i + 1) }) },
                         onClick = { onSet(i); open = false },
                     )
                 }
@@ -435,7 +444,7 @@ private fun BackupPasswordDialog(
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Password") },
+                    label = { Text(stringResource(R.string.settings_password_label)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
@@ -444,22 +453,22 @@ private fun BackupPasswordDialog(
                     OutlinedTextField(
                         value = confirm,
                         onValueChange = { confirm = it },
-                        label = { Text("Confirm password") },
+                        label = { Text(stringResource(R.string.settings_confirm_password_label)) },
                         singleLine = true,
                         isError = mismatch,
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
                     )
                     Text(
-                        if (mismatch) "Passwords don't match." else "At least 6 characters. There is no recovery if you forget it.",
+                        stringResource(if (mismatch) R.string.settings_password_mismatch else R.string.settings_password_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = if (mismatch) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { onConfirm(password) }, enabled = valid) { Text("OK") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        confirmButton = { TextButton(onClick = { onConfirm(password) }, enabled = valid) { Text(stringResource(R.string.action_ok)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
@@ -471,11 +480,11 @@ private fun CustomActsDialog(viewModel: CustomActsViewModel, onDismiss: () -> Un
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Custom acts") },
+        title = { Text(stringResource(R.string.custom_acts_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "Custom acts appear alongside the built-in ones (gave & received) when logging a tryst.",
+                    stringResource(R.string.custom_acts_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -486,7 +495,7 @@ private fun CustomActsDialog(viewModel: CustomActsViewModel, onDismiss: () -> Un
                     OutlinedTextField(
                         value = newLabel,
                         onValueChange = { newLabel = it },
-                        label = { Text("Add an act") },
+                        label = { Text(stringResource(R.string.custom_acts_add_label)) },
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                     )
@@ -496,11 +505,11 @@ private fun CustomActsDialog(viewModel: CustomActsViewModel, onDismiss: () -> Un
                             newLabel = ""
                         },
                         enabled = newLabel.isNotBlank(),
-                    ) { Text("Add") }
+                    ) { Text(stringResource(R.string.action_add)) }
                 }
                 if (acts.isEmpty()) {
                     Text(
-                        "No custom acts yet.",
+                        stringResource(R.string.custom_acts_empty),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -516,7 +525,7 @@ private fun CustomActsDialog(viewModel: CustomActsViewModel, onDismiss: () -> Un
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Done") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_done)) } },
     )
 }
 
@@ -528,7 +537,7 @@ private fun CustomActRow(act: ActEntity, onDelete: () -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(act.label, style = MaterialTheme.typography.bodyLarge)
-        TextButton(onClick = onDelete) { Text("Remove") }
+        TextButton(onClick = onDelete) { Text(stringResource(R.string.action_remove)) }
     }
 }
 
@@ -540,11 +549,11 @@ private fun CustomPositionsDialog(viewModel: CustomPositionsViewModel, onDismiss
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Custom positions") },
+        title = { Text(stringResource(R.string.custom_positions_title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "Custom positions appear alongside the built-in ones when logging a tryst.",
+                    stringResource(R.string.custom_positions_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -555,7 +564,7 @@ private fun CustomPositionsDialog(viewModel: CustomPositionsViewModel, onDismiss
                     OutlinedTextField(
                         value = newLabel,
                         onValueChange = { newLabel = it },
-                        label = { Text("Add a position") },
+                        label = { Text(stringResource(R.string.custom_positions_add_label)) },
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                     )
@@ -565,11 +574,11 @@ private fun CustomPositionsDialog(viewModel: CustomPositionsViewModel, onDismiss
                             newLabel = ""
                         },
                         enabled = newLabel.isNotBlank(),
-                    ) { Text("Add") }
+                    ) { Text(stringResource(R.string.action_add)) }
                 }
                 if (positions.isEmpty()) {
                     Text(
-                        "No custom positions yet.",
+                        stringResource(R.string.custom_positions_empty),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -585,7 +594,7 @@ private fun CustomPositionsDialog(viewModel: CustomPositionsViewModel, onDismiss
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Done") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_done)) } },
     )
 }
 
@@ -597,6 +606,6 @@ private fun CustomPositionRow(position: PositionEntity, onDelete: () -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(position.label, style = MaterialTheme.typography.bodyLarge)
-        TextButton(onClick = onDelete) { Text("Remove") }
+        TextButton(onClick = onDelete) { Text(stringResource(R.string.action_remove)) }
     }
 }
