@@ -1,15 +1,18 @@
 package app.tryst.ui.lock
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tryst.R
 import app.tryst.core.security.VaultWipedException
 import app.tryst.core.security.WrongPinException
 import app.tryst.core.session.LockState
 import app.tryst.core.session.SessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import javax.crypto.Cipher
@@ -17,6 +20,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LockViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val session: SessionManager,
 ) : ViewModel() {
 
@@ -35,7 +39,7 @@ class LockViewModel @Inject constructor(
             try {
                 session.setupPin(pin)
             } catch (e: Exception) {
-                error = "Couldn't set up the PIN: ${e.message}"
+                error = context.getString(R.string.lock_error_setup_failed, e.message)
             } finally {
                 busy = false
             }
@@ -49,11 +53,11 @@ class LockViewModel @Inject constructor(
             try {
                 session.unlockWithPin(pin)
             } catch (e: WrongPinException) {
-                error = "Incorrect PIN — ${e.attemptsRemaining} attempt(s) left"
+                error = context.getString(R.string.lock_error_wrong_pin, e.attemptsRemaining)
             } catch (e: VaultWipedException) {
-                error = "Too many attempts — data was wiped."
+                error = context.getString(R.string.lock_error_wiped)
             } catch (e: Exception) {
-                error = "Unlock failed: ${e.message}"
+                error = context.getString(R.string.lock_error_unlock_failed, e.message)
             } finally {
                 busy = false
             }
@@ -79,7 +83,7 @@ class LockViewModel @Inject constructor(
     /** Called when the biometric key was invalidated (e.g. fingerprints changed). */
     fun onBiometricInvalidated() {
         session.disableBiometric()
-        error = "Biometric was changed on this device — please use your PIN."
+        error = context.getString(R.string.lock_error_biometric_changed)
     }
 
     /** Store the DEK under a freshly authenticated cipher. Returns true on success. */
@@ -89,7 +93,7 @@ class LockViewModel @Inject constructor(
             error = null
             true
         } catch (e: Exception) {
-            error = "Couldn't enable biometric unlock: ${e.message}"
+            error = context.getString(R.string.lock_error_biometric_enable_failed, e.message)
             false
         }
 
@@ -104,7 +108,7 @@ class LockViewModel @Inject constructor(
             try {
                 session.unlockWithBiometric(authenticatedCipher)
             } catch (e: Exception) {
-                error = "Biometric unlock failed: ${e.message}"
+                error = context.getString(R.string.lock_error_biometric_unlock_failed, e.message)
             } finally {
                 busy = false
             }

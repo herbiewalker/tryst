@@ -179,10 +179,27 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 > below** — they are **not** M8 deliverables.
 
 ### Remaining
-- **i18n: extract all hardcoded UI strings to `strings.xml`** (deferred "chunk 6"; the a11y half of this
-  item is done — see Pass 4 below).
-- Optional cleanup: refactor large editor VMs to a single immutable `UiState` (deferred "chunk 6").
-- Onboarding copy (esp. PIN-loss / no-recovery warning).
+- ~~**i18n: extract all hardcoded UI strings to `strings.xml`**~~ **DONE (chrome).** All of the app's own
+  Compose chrome — screen/app-bar titles, buttons, dialogs, field labels, helper/empty-state copy, and
+  the Pass-4 `contentDescription` a11y labels — is now in `app/src/main/res/values/strings.xml`
+  (`app_name` → ~200 entries + `<plurals>`), referenced via `stringResource`/`pluralStringResource`.
+  Behaviour-preserving (English-only v1; the goal was translation-readiness + cleanliness, **not** a
+  second locale). Included the runtime status/error strings in `LockViewModel`/`BackupViewModel`/
+  `CsvImportViewModel` (resolved via injected `@ApplicationContext`) and `BiometricPromptHelper`
+  (`getString` via its `activity`). **Deferred to a future "Localization" milestone** (all are
+  English **identity keys** or non-`Context` plain-data objects, so localizing them naively would shift
+  `TypeColors` chart colours / stats grouping, or needs a parallel `@StringRes`): the taxonomy enum
+  `label`s (`data/db/entity/Enums.kt`), `ui/common/ActOptions`/`PositionOptions` + custom act/position
+  labels, the `StatTiles`/`InsightSections` catalog display names + `editorNote`s, the achievement
+  titles/descriptions/emoji + `category.label` (`data/achievements/Achievements.kt`), the inline chart
+  `Tally`/`Bucket` labels (incl. `"You"`/`"Partners"`/`"Other"`), `CsvField.label`, and `Format.kt`'s
+  `"Anonymous"`/`"Today"`/`"Yesterday"` (pure object, no `Context`). Note: Compose has no stock
+  hardcoded-string lint, so extraction isn't auto-enforced — a Detekt/custom rule is a candidate for the
+  CI quality gates (O-5) item.
+- Optional cleanup: refactor large editor VMs to a single immutable `UiState` (deferred "chunk 6";
+  `EncounterEditViewModel` has **no** UI strings, so this is now fully independent of the i18n work).
+- Onboarding copy (esp. PIN-loss / no-recovery warning). *(The setup-screen no-recovery warning string
+  itself is now in `strings.xml` as `setup_create_subtitle`.)*
 - Finalize **license & distribution** ([DECISIONS.md](DECISIONS.md) O-2); F-Droid metadata if chosen.
 - Security self-review against [THREAT_MODEL.md](THREAT_MODEL.md) (complements the security passes 6–9 below).
 

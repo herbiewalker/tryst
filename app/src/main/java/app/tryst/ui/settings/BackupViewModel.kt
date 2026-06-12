@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tryst.R
 import app.tryst.core.session.SessionManager
 import app.tryst.data.backup.BackupManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,9 +38,9 @@ class BackupViewModel @Inject constructor(
             try {
                 context.contentResolver.openOutputStream(uri)?.use { backup.export(password, it) }
                     ?: throw IOException("Couldn't open the destination file")
-                status = "Encrypted backup saved."
+                status = context.getString(R.string.backup_status_export_done)
             } catch (e: Exception) {
-                status = "Export failed: ${e.message}"
+                status = context.getString(R.string.backup_status_export_failed, e.message)
             } finally {
                 busy = false
             }
@@ -53,9 +54,9 @@ class BackupViewModel @Inject constructor(
             try {
                 context.contentResolver.openInputStream(uri)?.use { backup.import(password, it) }
                     ?: throw IOException("Couldn't open the file")
-                status = "Restore complete."
+                status = context.getString(R.string.backup_status_restore_done)
             } catch (e: Exception) {
-                status = "Import failed — wrong password or not a Tryst backup."
+                status = context.getString(R.string.backup_status_import_failed)
             } finally {
                 busy = false
             }
