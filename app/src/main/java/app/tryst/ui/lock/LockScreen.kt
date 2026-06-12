@@ -13,7 +13,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.tryst.R
 
 /** Unlock screen: biometric (if enabled) with a PIN fallback always available. */
 @Composable
@@ -21,6 +23,9 @@ fun LockScreen(viewModel: LockViewModel) {
     val context = LocalContext.current
     val activity = remember(context) { context.findFragmentActivity() }
     val biometricReady = remember { viewModel.isBiometricEnabled() && viewModel.canUseBiometrics() }
+    val biometricUnavailable = stringResource(R.string.lock_biometric_unavailable)
+    val biometricTitle = stringResource(R.string.lock_biometric_title)
+    val biometricSubtitle = stringResource(R.string.lock_biometric_subtitle)
 
     fun launchBiometric() {
         val cipher = try {
@@ -29,14 +34,14 @@ fun LockScreen(viewModel: LockViewModel) {
             viewModel.onBiometricInvalidated()
             return
         } catch (e: Exception) {
-            viewModel.reportError("Biometric unavailable — use your PIN.")
+            viewModel.reportError(biometricUnavailable)
             return
         }
         BiometricPromptHelper.authenticate(
             activity = activity,
             cipher = cipher,
-            title = "Unlock Tryst",
-            subtitle = "Confirm your fingerprint",
+            title = biometricTitle,
+            subtitle = biometricSubtitle,
             onSuccess = { authed -> viewModel.unlockWithBiometric(authed) },
             onError = { viewModel.reportError(it) },
             onCancel = { /* user chose PIN */ },
@@ -50,8 +55,8 @@ fun LockScreen(viewModel: LockViewModel) {
 
     Box(modifier = Modifier.fillMaxSize()) {
         PinPad(
-            title = "Enter your PIN",
-            subtitle = "Unlock Tryst.",
+            title = stringResource(R.string.lock_pin_title),
+            subtitle = stringResource(R.string.lock_pin_subtitle),
             error = viewModel.error,
             enabled = !viewModel.busy,
             onPinComplete = { entered -> viewModel.unlock(entered) },
@@ -64,7 +69,7 @@ fun LockScreen(viewModel: LockViewModel) {
                     .navigationBarsPadding()
                     .padding(bottom = 16.dp),
             ) {
-                Text("Use biometric")
+                Text(stringResource(R.string.lock_use_biometric))
             }
         }
     }
