@@ -5,15 +5,18 @@ import android.net.Uri
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tryst.core.session.SessionManager
 import app.tryst.data.db.entity.Gender
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.RelationshipType
 import app.tryst.data.db.entity.Sex
-import app.tryst.core.session.SessionManager
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.ui.common.MediaImages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.io.File
+import java.util.UUID
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -21,9 +24,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.util.UUID
-import javax.inject.Inject
 
 @HiltViewModel
 class PartnersViewModel @Inject constructor(
@@ -40,6 +40,9 @@ class PartnersViewModel @Inject constructor(
             .catch { emit(emptyList()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    // Flat field list mirrors the partner form; a wrapper data class would add indirection for
+    // no gain at this single call site.
+    @Suppress("LongParameterList")
     fun save(
         id: String?,
         name: String,
@@ -94,6 +97,5 @@ class PartnersViewModel @Inject constructor(
         viewModelScope.launch { repository.archive(id) }
     }
 
-    suspend fun decodePhoto(photoMediaId: String, reqPx: Int): ImageBitmap? =
-        MediaImages.decodeSampled(reqPx) { runCatching { repository.openPhoto(photoMediaId) }.getOrNull() }
+    suspend fun decodePhoto(photoMediaId: String, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { runCatching { repository.openPhoto(photoMediaId) }.getOrNull() }
 }

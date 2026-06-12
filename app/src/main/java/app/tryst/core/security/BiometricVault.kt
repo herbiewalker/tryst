@@ -5,7 +5,6 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import androidx.biometric.BiometricManager
 import dagger.hilt.android.qualifiers.ApplicationContext
-import org.json.JSONObject
 import java.io.File
 import java.security.KeyStore
 import java.util.Base64
@@ -15,6 +14,7 @@ import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 import javax.inject.Inject
 import javax.inject.Singleton
+import org.json.JSONObject
 
 /**
  * Optional biometric unlock. A separate Android Keystore key (`KEK_bio`) that *requires
@@ -37,18 +37,16 @@ class BiometricVault @Inject constructor(
     fun isEnabled(): Boolean = file.exists()
 
     /** True if the device has usable strong biometrics enrolled. */
-    fun canUseBiometrics(): Boolean =
-        BiometricManager.from(appContext)
-            .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
-            BiometricManager.BIOMETRIC_SUCCESS
+    fun canUseBiometrics(): Boolean = BiometricManager.from(appContext)
+        .canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) ==
+        BiometricManager.BIOMETRIC_SUCCESS
 
     /** Cipher for enabling biometric unlock. Authenticate it, then call [store]. */
-    fun encryptCipher(): Cipher =
-        Cipher.getInstance(TRANSFORMATION).apply { init(Cipher.ENCRYPT_MODE, getOrCreateKey()) }
+    fun encryptCipher(): Cipher = Cipher.getInstance(TRANSFORMATION).apply { init(Cipher.ENCRYPT_MODE, getOrCreateKey()) }
 
     /** Cipher for biometric unlock, using the stored IV. Authenticate it, then call [recover]. */
     fun decryptCipher(): Cipher {
-        val key = existingKey() ?: throw IllegalStateException("Biometric not enabled")
+        val key = existingKey() ?: error("Biometric not enabled")
         val iv = Base64.getDecoder().decode(JSONObject(file.readText()).getString(KEY_IV))
         return Cipher.getInstance(TRANSFORMATION)
             .apply { init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, iv)) }
@@ -74,8 +72,7 @@ class BiometricVault @Inject constructor(
         if (keyStore.containsAlias(ALIAS)) keyStore.deleteEntry(ALIAS)
     }
 
-    private fun existingKey(): SecretKey? =
-        (keyStore.getEntry(ALIAS, null) as? KeyStore.SecretKeyEntry)?.secretKey
+    private fun existingKey(): SecretKey? = (keyStore.getEntry(ALIAS, null) as? KeyStore.SecretKeyEntry)?.secretKey
 
     private fun getOrCreateKey(): SecretKey {
         existingKey()?.let { return it }

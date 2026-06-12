@@ -54,16 +54,15 @@ class SecureKeyStore(private val alias: String) {
         }
     }
 
-    private fun spec(strongBox: Boolean): KeyGenParameterSpec =
-        KeyGenParameterSpec.Builder(
-            alias,
-            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
-        )
-            .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-            .setKeySize(256)
-            .apply { if (strongBox) setIsStrongBoxBacked(true) }
-            .build()
+    private fun spec(strongBox: Boolean): KeyGenParameterSpec = KeyGenParameterSpec.Builder(
+        alias,
+        KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
+    )
+        .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
+        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
+        .setKeySize(256)
+        .apply { if (strongBox) setIsStrongBoxBacked(true) }
+        .build()
 
     private companion object {
         const val ANDROID_KEYSTORE = "AndroidKeyStore"

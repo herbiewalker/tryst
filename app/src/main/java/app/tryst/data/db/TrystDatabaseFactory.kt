@@ -3,9 +3,9 @@ package app.tryst.data.db
 import android.content.Context
 import androidx.room.Room
 import dagger.hilt.android.qualifiers.ApplicationContext
-import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 import javax.inject.Inject
 import javax.inject.Singleton
+import net.zetetic.database.sqlcipher.SupportOpenHelperFactory
 
 /**
  * Builds a SQLCipher-backed [TrystDatabase] from a database key. The DB is created on unlock
@@ -15,6 +15,7 @@ import javax.inject.Singleton
 class TrystDatabaseFactory @Inject constructor(
     @ApplicationContext private val context: Context,
 ) {
+    @Suppress("SpreadOperator") // one-time DB open; the migration-array copy is negligible.
     fun create(databaseKey: ByteArray): TrystDatabase {
         SqlCipherLibrary.ensureLoaded()
         // clearPassphrase = true → SQLCipher zeroes the key bytes after opening.

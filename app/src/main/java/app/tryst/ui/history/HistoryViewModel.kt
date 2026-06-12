@@ -8,11 +8,11 @@ import app.tryst.data.db.relation.EncounterWithDetails
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.ui.common.MediaImages
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.stateIn
-import javax.inject.Inject
 
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
@@ -25,6 +25,5 @@ class HistoryViewModel @Inject constructor(
             .catch { emit(emptyList()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    suspend fun decode(media: MediaEntity, reqPx: Int): ImageBitmap? =
-        MediaImages.decodeSampled(reqPx) { runCatching { repository.openMedia(media) }.getOrNull() }
+    suspend fun decode(media: MediaEntity, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { runCatching { repository.openMedia(media) }.getOrNull() }
 }

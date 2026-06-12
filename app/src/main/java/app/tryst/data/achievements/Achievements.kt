@@ -14,17 +14,13 @@ import app.tryst.data.db.relation.EncounterWithDetails
  */
 object Achievements {
 
-    private fun acts(e: EncounterWithDetails): Set<String> =
-        (e.encounter.practicesPerformed ?: emptySet()) + (e.encounter.practicesReceived ?: emptySet())
+    private fun acts(e: EncounterWithDetails): Set<String> = (e.encounter.practicesPerformed ?: emptySet()) + (e.encounter.practicesReceived ?: emptySet())
 
-    private fun partnerOrgasms(e: EncounterWithDetails): Int =
-        (e.encounter.partnerOrgasms?.values?.sum() ?: 0) + (e.encounter.orgasmCountPartner ?: 0)
+    private fun partnerOrgasms(e: EncounterWithDetails): Int = (e.encounter.partnerOrgasms?.values?.sum() ?: 0) + (e.encounter.orgasmCountPartner ?: 0)
 
-    private fun hasOccasion(e: EncounterWithDetails, vararg occasions: Occasion): Boolean =
-        e.encounter.occasions?.any { it in occasions } == true
+    private fun hasOccasion(e: EncounterWithDetails, vararg occasions: Occasion): Boolean = e.encounter.occasions?.any { it in occasions } == true
 
-    private fun hasContext(e: EncounterWithDetails, vararg settings: Setting): Boolean =
-        e.encounter.contexts?.any { it in settings } == true
+    private fun hasContext(e: EncounterWithDetails, vararg settings: Setting): Boolean = e.encounter.contexts?.any { it in settings } == true
 
     val catalog: List<AchievementDef> = listOf(
         // --- Milestones: total trysts logged ---

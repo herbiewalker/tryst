@@ -11,8 +11,14 @@ object PositionOptions {
 
     /** Built-in position ids shown inline before any selection (the curated "common" set). */
     private val COMMON_IDS = setOf(
-        Position.MISSIONARY, Position.DOGGY_STYLE, Position.COWGIRL, Position.REVERSE_COWGIRL,
-        Position.SPOONING, Position.SIXTY_NINE, Position.STANDING, Position.SIDE_BY_SIDE,
+        Position.MISSIONARY,
+        Position.DOGGY_STYLE,
+        Position.COWGIRL,
+        Position.REVERSE_COWGIRL,
+        Position.SPOONING,
+        Position.SIXTY_NINE,
+        Position.STANDING,
+        Position.SIDE_BY_SIDE,
     ).map { it.name }.toSet()
 
     val builtIns: List<PositionOption> =
@@ -20,6 +26,5 @@ object PositionOptions {
 
     val common: List<PositionOption> = builtIns.filter { it.id in COMMON_IDS }
 
-    fun custom(rows: List<PositionEntity>): List<PositionOption> =
-        rows.map { PositionOption(CUSTOM_PREFIX + it.id, it.label) }
+    fun custom(rows: List<PositionEntity>): List<PositionOption> = rows.map { PositionOption(CUSTOM_PREFIX + it.id, it.label) }
 }

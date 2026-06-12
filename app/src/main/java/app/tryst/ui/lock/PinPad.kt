@@ -127,7 +127,12 @@ fun PinPad(
                     }
                 }
             },
-            onBackspace = { if (pin.isNotEmpty()) { haptics.tick(); pin = pin.dropLast(1) } },
+            onBackspace = {
+                if (pin.isNotEmpty()) {
+                    haptics.tick()
+                    pin = pin.dropLast(1)
+                }
+            },
         )
     }
 }
@@ -211,7 +216,10 @@ private fun KeyButton(
         interactionSource = interactionSource,
         modifier = modifier
             .aspectRatio(1.4f)
-            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .clip(CircleShape)
             .semantics {
                 role = Role.Button

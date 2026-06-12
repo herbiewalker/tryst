@@ -58,9 +58,19 @@ fun <T> ReorderableColumn(
             val scale by animateFloatAsState(if (dragging) 1.03f else 1f, label = "dragScale")
             val handle = Modifier.pointerInput(k) {
                 detectDragGesturesAfterLongPress(
-                    onDragStart = { draggingKey = k; accum = 0f; haptics.pickUp() },
-                    onDragEnd = { draggingKey = null; accum = 0f },
-                    onDragCancel = { draggingKey = null; accum = 0f },
+                    onDragStart = {
+                        draggingKey = k
+                        accum = 0f
+                        haptics.pickUp()
+                    },
+                    onDragEnd = {
+                        draggingKey = null
+                        accum = 0f
+                    },
+                    onDragCancel = {
+                        draggingKey = null
+                        accum = 0f
+                    },
                     onDrag = { change, dragAmount ->
                         change.consume()
                         accum += dragAmount.y
@@ -68,10 +78,14 @@ fun <T> ReorderableColumn(
                         if (idx < 0) return@detectDragGesturesAfterLongPress
                         when {
                             accum > slotPx / 2 && idx < currentItems.lastIndex -> {
-                                onMove(idx, idx + 1); accum -= slotPx; haptics.tick()
+                                onMove(idx, idx + 1)
+                                accum -= slotPx
+                                haptics.tick()
                             }
                             accum < -slotPx / 2 && idx > 0 -> {
-                                onMove(idx, idx - 1); accum += slotPx; haptics.tick()
+                                onMove(idx, idx - 1)
+                                accum += slotPx
+                                haptics.tick()
                             }
                         }
                     },
@@ -87,10 +101,20 @@ fun <T> ReorderableColumn(
                     .semantics {
                         customActions = buildList {
                             if (index > 0) {
-                                add(CustomAccessibilityAction(moveUpLabel) { onMove(index, index - 1); true })
+                                add(
+                                    CustomAccessibilityAction(moveUpLabel) {
+                                        onMove(index, index - 1)
+                                        true
+                                    },
+                                )
                             }
                             if (index in 0 until items.lastIndex) {
-                                add(CustomAccessibilityAction(moveDownLabel) { onMove(index, index + 1); true })
+                                add(
+                                    CustomAccessibilityAction(moveDownLabel) {
+                                        onMove(index, index + 1)
+                                        true
+                                    },
+                                )
                             }
                         }
                     }
@@ -102,7 +126,10 @@ fun <T> ReorderableColumn(
                                 scaleY = scale
                             }
                         } else {
-                            Modifier.graphicsLayer { scaleX = scale; scaleY = scale }
+                            Modifier.graphicsLayer {
+                                scaleX = scale
+                                scaleY = scale
+                            }
                         },
                     ),
             ) {

@@ -8,19 +8,18 @@ import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.db.relation.EncounterWithDetails
+import java.time.LocalDate
+import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalDate
-import java.time.ZoneOffset
 
 class InsightsEngineTest {
 
     private val zone = ZoneOffset.UTC
     private val today = LocalDate.of(2026, 6, 7) // a Sunday
 
-    private fun epoch(date: LocalDate): Long =
-        date.atTime(12, 0).toInstant(ZoneOffset.UTC).toEpochMilli()
+    private fun epoch(date: LocalDate): Long = date.atTime(12, 0).toInstant(ZoneOffset.UTC).toEpochMilli()
 
     private fun encounter(
         id: String,
@@ -58,8 +57,7 @@ class InsightsEngineTest {
         location = null,
     )
 
-    private fun partner(id: String, name: String?) =
-        PartnerEntity(id, name, isAnonymous = name == null, color = null, note = null, archivedAt = null, createdAt = 0, updatedAt = 0)
+    private fun partner(id: String, name: String?) = PartnerEntity(id, name, isAnonymous = name == null, color = null, note = null, archivedAt = null, createdAt = 0, updatedAt = 0)
 
     @Test
     fun emptyLogReturnsEmpty() {
@@ -71,9 +69,9 @@ class InsightsEngineTest {
     @Test
     fun countsTotalsThisMonthAndYear() {
         val log = listOf(
-            encounter("a", today),                       // this month + year
-            encounter("b", LocalDate.of(2026, 5, 30)),   // this year, prev month
-            encounter("c", LocalDate.of(2025, 6, 7)),    // last year
+            encounter("a", today), // this month + year
+            encounter("b", LocalDate.of(2026, 5, 30)), // this year, prev month
+            encounter("c", LocalDate.of(2025, 6, 7)), // last year
         )
         val r = InsightsEngine.compute(log, zone = zone, today = today)
         assertEquals(3, r.totalCount)

@@ -11,11 +11,11 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -63,10 +63,10 @@ import app.tryst.data.db.entity.Gender
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.RelationshipType
 import app.tryst.data.db.entity.Sex
-import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
 import app.tryst.ui.common.MediaImages
+import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.rememberCameraCapture
 import app.tryst.ui.common.rememberHaptics
 import app.tryst.ui.common.rememberImagePicker
@@ -160,7 +160,10 @@ private fun PartnerRow(
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            TextButton(onClick = { haptics.tick(); onArchive() }) { Text(stringResource(R.string.partners_archive)) }
+            TextButton(onClick = {
+                haptics.tick()
+                onArchive()
+            }) { Text(stringResource(R.string.partners_archive)) }
         }
     }
 }
@@ -201,9 +204,15 @@ private fun PartnerDialog(
     onSuppressAutoLock: () -> Unit,
     onDismiss: () -> Unit,
     onSave: (
-        name: String, anonymous: Boolean, note: String,
-        sex: Sex?, gender: Gender?, rel: RelationshipType?,
-        photoUri: Uri?, removePhoto: Boolean, captureTempFile: File?,
+        name: String,
+        anonymous: Boolean,
+        note: String,
+        sex: Sex?,
+        gender: Gender?,
+        rel: RelationshipType?,
+        photoUri: Uri?,
+        removePhoto: Boolean,
+        captureTempFile: File?,
     ) -> Unit,
 ) {
     val context = LocalContext.current
@@ -220,13 +229,22 @@ private fun PartnerDialog(
     val existingPhotoId = initial?.photoMediaId?.takeIf { !photoRemoved }
     val hasPhoto = photoUri != null || existingPhotoId != null
     val pickImage = rememberImagePicker(onLaunch = onSuppressAutoLock) {
-        captureTempFile?.delete(); captureTempFile = null; photoUri = it; photoRemoved = false
+        captureTempFile?.delete()
+        captureTempFile = null
+        photoUri = it
+        photoRemoved = false
     }
     val captureImage = rememberCameraCapture(onLaunch = onSuppressAutoLock) { uri, file ->
-        captureTempFile?.delete(); photoUri = uri; photoRemoved = false; captureTempFile = file
+        captureTempFile?.delete()
+        photoUri = uri
+        photoRemoved = false
+        captureTempFile = file
     }
     // On cancel, drop any unsaved camera temp (on Save the ViewModel deletes it after encrypting).
-    val dismiss = { captureTempFile?.delete(); onDismiss() }
+    val dismiss = {
+        captureTempFile?.delete()
+        onDismiss()
+    }
 
     AlertDialog(
         onDismissRequest = dismiss,
@@ -264,17 +282,26 @@ private fun PartnerDialog(
                             DropdownMenu(expanded = photoMenu, onDismissRequest = { photoMenu = false }) {
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.encounter_add_photo_camera)) },
-                                    onClick = { photoMenu = false; captureImage() },
+                                    onClick = {
+                                        photoMenu = false
+                                        captureImage()
+                                    },
                                 )
                                 DropdownMenuItem(
                                     text = { Text(stringResource(R.string.encounter_add_photo_gallery)) },
-                                    onClick = { photoMenu = false; pickImage() },
+                                    onClick = {
+                                        photoMenu = false
+                                        pickImage()
+                                    },
                                 )
                             }
                         }
                         AnimatedVisibility(visible = hasPhoto) {
                             TextButton(onClick = {
-                                captureTempFile?.delete(); captureTempFile = null; photoUri = null; photoRemoved = true
+                                captureTempFile?.delete()
+                                captureTempFile = null
+                                photoUri = null
+                                photoRemoved = true
                             }) { Text(stringResource(R.string.partner_remove_photo)) }
                         }
                     }

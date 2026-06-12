@@ -16,7 +16,6 @@ import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.PartnerRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -25,6 +24,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 /** The Tryst fields a CSV column can be mapped to. */
 enum class CsvField(val label: String, val required: Boolean = false) {
@@ -68,7 +68,7 @@ class CsvImportViewModel @Inject constructor(
             try {
                 val text = context.contentResolver.openInputStream(uri)?.use {
                     it.readBytes().toString(Charsets.UTF_8)
-                } ?: throw IllegalStateException("Couldn't open file")
+                } ?: error("Couldn't open file")
                 val table = Csv.parse(text)
                 if (table.size < 2) {
                     status = context.getString(R.string.csv_status_no_rows)
@@ -138,8 +138,14 @@ class CsvImportViewModel @Inject constructor(
                     val newId = UUID.randomUUID().toString()
                     partners.upsert(
                         PartnerEntity(
-                            id = newId, displayName = name, isAnonymous = false, color = null,
-                            note = null, archivedAt = null, createdAt = now, updatedAt = now,
+                            id = newId,
+                            displayName = name,
+                            isAnonymous = false,
+                            color = null,
+                            note = null,
+                            archivedAt = null,
+                            createdAt = now,
+                            updatedAt = now,
                         ),
                     )
                     nameToId[key] = newId
@@ -165,8 +171,7 @@ class CsvImportViewModel @Inject constructor(
     }
 
     private fun autoGuess(headers: List<String>): Map<CsvField, Int?> {
-        fun find(vararg keys: String): Int? =
-            headers.indexOfFirst { h -> keys.any { h.trim().lowercase().contains(it) } }.takeIf { it >= 0 }
+        fun find(vararg keys: String): Int? = headers.indexOfFirst { h -> keys.any { h.trim().lowercase().contains(it) } }.takeIf { it >= 0 }
         return mapOf(
             CsvField.DATE to find("date", "day", "when"),
             CsvField.TIME to find("time"),
@@ -197,11 +202,23 @@ class CsvImportViewModel @Inject constructor(
 
     private companion object {
         val DATETIME_PATTERNS = listOf(
-            "yyyy-MM-dd'T'HH:mm:ss", "yyyy-MM-dd'T'HH:mm", "yyyy-MM-dd HH:mm:ss", "yyyy-MM-dd HH:mm",
-            "MM/dd/yyyy HH:mm", "M/d/yyyy H:mm", "MM/dd/yyyy hh:mm a", "M/d/yyyy h:mm a",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd'T'HH:mm",
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd HH:mm",
+            "MM/dd/yyyy HH:mm",
+            "M/d/yyyy H:mm",
+            "MM/dd/yyyy hh:mm a",
+            "M/d/yyyy h:mm a",
         )
         val DATE_PATTERNS = listOf(
-            "yyyy-MM-dd", "MM/dd/yyyy", "M/d/yyyy", "yyyy/MM/dd", "dd-MM-yyyy", "MMM d, yyyy", "MMMM d, yyyy",
+            "yyyy-MM-dd",
+            "MM/dd/yyyy",
+            "M/d/yyyy",
+            "yyyy/MM/dd",
+            "dd-MM-yyyy",
+            "MMM d, yyyy",
+            "MMMM d, yyyy",
         )
     }
 }

@@ -2,10 +2,10 @@ package app.tryst.data.repository
 
 import app.tryst.core.session.SessionManager
 import app.tryst.data.db.entity.PositionEntity
-import kotlinx.coroutines.flow.Flow
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.Flow
 
 /** Manages user-defined (custom) positions. Built-in positions come from the [app.tryst.data.db.entity.Position] enum. */
 @Singleton

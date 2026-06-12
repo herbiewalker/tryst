@@ -12,9 +12,9 @@ import app.tryst.core.session.SessionManager
 import app.tryst.data.backup.BackupManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.launch
 import java.io.IOException
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class BackupViewModel @Inject constructor(

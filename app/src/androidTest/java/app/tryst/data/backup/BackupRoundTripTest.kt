@@ -12,6 +12,9 @@ import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.media.EncryptedMediaStore
 import app.tryst.data.repository.EncounterRepository
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
@@ -23,9 +26,6 @@ import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
-import java.io.File
 
 /**
  * Full backup round-trip: export (encrypted) → wipe → import → data + a photo come back intact;
@@ -135,9 +135,9 @@ class BackupRoundTripTest {
     fun import_rejectsAbsurdIterationCount() {
         val header = ByteArrayOutputStream().apply {
             write("TRYSTBK1".toByteArray(Charsets.US_ASCII)) // MAGIC
-            write(1)                                         // FORMAT_VERSION
-            write(ByteArray(16))                             // salt
-            write(byteArrayOf(0x7F, -1, -1, -1))             // iterations = Int.MAX_VALUE (big-endian)
+            write(1) // FORMAT_VERSION
+            write(ByteArray(16)) // salt
+            write(byteArrayOf(0x7F, -1, -1, -1)) // iterations = Int.MAX_VALUE (big-endian)
         }.toByteArray()
         assertThrows(IllegalArgumentException::class.java) {
             runBlocking { backup.import(password, ByteArrayInputStream(header)) }

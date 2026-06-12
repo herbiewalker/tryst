@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import app.tryst.core.prefs.ThemeMode
 import app.tryst.core.prefs.ThemePreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
+import kotlinx.coroutines.flow.StateFlow
 
 @HiltViewModel
 class AppearanceViewModel @Inject constructor(

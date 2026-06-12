@@ -29,8 +29,12 @@ class EncryptedMediaStore @Inject constructor(
      * resolved file stays directly inside [dir].
      */
     fun fileFor(id: String): File {
-        require(id.isNotEmpty() && id != "." && id != ".." &&
-            id.none { it == '/' || it == '\\' || it == File.separatorChar }) { "Invalid media id" }
+        require(
+            id.isNotEmpty() &&
+                id != "." &&
+                id != ".." &&
+                id.none { it == '/' || it == '\\' || it == File.separatorChar },
+        ) { "Invalid media id" }
         val file = File(dir, "$id.enc")
         require(file.canonicalFile.parentFile == dir.canonicalFile) { "Media id escapes storage dir" }
         return file
@@ -42,8 +46,7 @@ class EncryptedMediaStore @Inject constructor(
         return file
     }
 
-    fun open(id: String): InputStream =
-        MediaCrypto.decryptingStream(session.mediaKey(), fileFor(id).inputStream(), id.toByteArray())
+    fun open(id: String): InputStream = MediaCrypto.decryptingStream(session.mediaKey(), fileFor(id).inputStream(), id.toByteArray())
 
     fun delete(id: String): Boolean = fileFor(id).delete()
 }

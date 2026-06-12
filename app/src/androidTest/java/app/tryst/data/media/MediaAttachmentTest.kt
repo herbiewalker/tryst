@@ -10,6 +10,8 @@ import app.tryst.data.db.TrystDatabase
 import app.tryst.data.db.TrystDatabaseFactory
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.repository.EncounterRepository
+import java.io.ByteArrayInputStream
+import java.io.File
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
@@ -17,8 +19,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.ByteArrayInputStream
-import java.io.File
 
 /**
  * End-to-end media attachment: attach a photo to an encounter, read it back decrypted, confirm the

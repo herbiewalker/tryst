@@ -7,10 +7,6 @@ import app.tryst.core.crypto.BackupCrypto
 import app.tryst.core.security.Pbkdf2
 import app.tryst.core.session.SessionManager
 import app.tryst.data.media.EncryptedMediaStore
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.json.JSONArray
-import org.json.JSONObject
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -21,6 +17,10 @@ import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 
 /**
  * Full encrypted backup / restore (M5). Because the live data is encrypted under a device-bound
@@ -90,6 +90,7 @@ class BackupManager @Inject constructor(
         }
     }
 
+    @Suppress("NestedBlockDepth")
     private fun dumpDatabase(db: androidx.sqlite.db.SupportSQLiteDatabase): JSONObject {
         val tables = JSONObject()
         for (table in TABLES) {
@@ -114,6 +115,7 @@ class BackupManager @Inject constructor(
         return JSONObject().put("schemaVersion", db.version).put("tables", tables)
     }
 
+    @Suppress("CyclomaticComplexMethod", "NestedBlockDepth")
     private fun restoreDatabase(db: androidx.sqlite.db.SupportSQLiteDatabase, root: JSONObject) {
         val tables = root.optJSONObject("tables") ?: return
         db.beginTransaction()
@@ -127,7 +129,10 @@ class BackupManager @Inject constructor(
                     val keys = row.keys()
                     while (keys.hasNext()) {
                         val k = keys.next()
-                        if (row.isNull(k)) { values.putNull(k); continue }
+                        if (row.isNull(k)) {
+                            values.putNull(k)
+                            continue
+                        }
                         when (val v = row.get(k)) {
                             is Int -> values.put(k, v.toLong())
                             is Long -> values.put(k, v)
@@ -162,10 +167,12 @@ class BackupManager @Inject constructor(
         val MAGIC = "TRYSTBK1".toByteArray(Charsets.US_ASCII) // 8 bytes
         const val FORMAT_VERSION = 1
         const val SALT_BYTES = 16
+
         // Sane bounds for the file-supplied PBKDF2 iteration count (default is 600k). The upper
         // bound caps key-derivation time so a malicious header can't freeze the app.
         const val MIN_ITERATIONS = 100_000
         const val MAX_ITERATIONS = 5_000_000
+
         // Insert order respects foreign keys (parents first); defer_foreign_keys also guards it.
         val TABLES = listOf(
             "partners", "locations", "tags", "positions", "acts",

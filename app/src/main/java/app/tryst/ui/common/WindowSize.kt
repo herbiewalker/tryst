@@ -1,12 +1,14 @@
+@file:Suppress("MatchingDeclarationName") // file groups the WidthClass enum + widthClass()/adaptiveContentWidth() helpers.
+
 package app.tryst.ui.common
 
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.widthIn
 
 /**
  * Material 3 window **width** size classes, used to drive Tryst's adaptive layouts (Pass 5).

@@ -6,21 +6,20 @@ import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.relation.EncounterWithDetails
+import java.time.LocalDate
+import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.time.LocalDate
-import java.time.ZoneOffset
 
 class AchievementEngineTest {
 
     private val zone = ZoneOffset.UTC
     private val today = LocalDate.of(2026, 6, 8)
 
-    private fun epoch(date: LocalDate): Long =
-        date.atTime(12, 0).toInstant(ZoneOffset.UTC).toEpochMilli()
+    private fun epoch(date: LocalDate): Long = date.atTime(12, 0).toInstant(ZoneOffset.UTC).toEpochMilli()
 
     private fun enc(
         id: String,
@@ -55,8 +54,7 @@ class AchievementEngineTest {
         location = null,
     )
 
-    private fun partner(id: String) =
-        PartnerEntity(id, "P$id", isAnonymous = false, color = null, note = null, archivedAt = null, createdAt = 0, updatedAt = 0)
+    private fun partner(id: String) = PartnerEntity(id, "P$id", isAnonymous = false, color = null, note = null, archivedAt = null, createdAt = 0, updatedAt = 0)
 
     private fun media(id: String) = MediaEntity(id, encounterId = "e", encFilePath = "/x", mimeType = "image/jpeg", createdAt = 0)
 
@@ -106,7 +104,8 @@ class AchievementEngineTest {
                 enc("a", LocalDate.of(2026, 1, 1), orgasmSelf = 4),
                 enc("b", LocalDate.of(2026, 1, 2), orgasmSelf = 6),
             ),
-            zone, today,
+            zone,
+            today,
         )
         val good = r.byId("p_self10")
         assertTrue(good.unlocked)
@@ -122,7 +121,8 @@ class AchievementEngineTest {
                 enc("a", LocalDate.of(2026, 2, 1), acts = setOf(Practice.KISSING.name, Practice.ORAL.name, Practice.VAGINAL.name, Practice.MANUAL.name)),
                 enc("b", LocalDate.of(2026, 2, 2), acts = setOf(Practice.KISSING.name, Practice.ANAL.name)),
             ),
-            zone, today,
+            zone,
+            today,
         )
         val explorer = r.byId("v_acts5")
         assertTrue(explorer.unlocked)
@@ -137,7 +137,8 @@ class AchievementEngineTest {
                 enc("a", LocalDate.of(2026, 1, 1), partners = listOf(partner("1"), partner("2"))),
                 enc("b", LocalDate.of(2026, 1, 2), partners = listOf(partner("3"))),
             ),
-            zone, today,
+            zone,
+            today,
         )
         assertTrue(r.byId("v_partners3").unlocked)
         assertEquals(3, r.byId("v_partners3").current)
@@ -152,7 +153,8 @@ class AchievementEngineTest {
                 enc("w1", LocalDate.of(2026, 1, 12)),
                 enc("w2", LocalDate.of(2026, 1, 19)),
             ),
-            zone, today,
+            zone,
+            today,
         )
         assertTrue(r.byId("s_2").unlocked)
         assertEquals(LocalDate.of(2026, 1, 12), r.byId("s_2").unlockedAt) // 2-in-a-row reached here
@@ -166,7 +168,8 @@ class AchievementEngineTest {
             listOf(
                 enc("a", LocalDate.of(2026, 3, 1), occasions = setOf(Occasion.MORNING_SEX), media = listOf(media("m1")), durationMin = 75),
             ),
-            zone, today,
+            zone,
+            today,
         )
         assertTrue(r.byId("o_morning").unlocked)
         assertTrue(r.byId("x_photo").unlocked)
@@ -186,7 +189,8 @@ class AchievementEngineTest {
                 enc("b", today.minusDays(1)),
                 enc("c", today),
             ),
-            zone, today,
+            zone,
+            today,
         )
         val s = AchievementEngine.summarize(r, today)
         assertEquals(r.count { it.unlocked }, s.unlockedCount)

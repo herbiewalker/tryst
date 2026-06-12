@@ -1,7 +1,7 @@
 package app.tryst.data.stats
 
-import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.entity.Position
+import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.relation.EncounterWithDetails
 import java.time.Instant
 import java.time.LocalDate
@@ -107,6 +107,9 @@ object InsightsEngine {
 
     private const val CUSTOM_PREFIX = "custom:"
 
+    // One cohesive, sequential aggregation that builds the whole Insights snapshot; splitting it
+    // would scatter tightly-related accumulation with no real readability gain (it is JVM-tested).
+    @Suppress("LongMethod", "CyclomaticComplexMethod")
     fun compute(
         encounters: List<EncounterWithDetails>,
         customActLabels: Map<String, String> = emptyMap(),
@@ -116,8 +119,7 @@ object InsightsEngine {
     ): Insights {
         if (encounters.isEmpty()) return Insights.EMPTY
 
-        fun dateOf(e: EncounterWithDetails): LocalDate =
-            Instant.ofEpochMilli(e.encounter.startAt).atZone(zone).toLocalDate()
+        fun dateOf(e: EncounterWithDetails): LocalDate = Instant.ofEpochMilli(e.encounter.startAt).atZone(zone).toLocalDate()
 
         val dates = encounters.map(::dateOf)
         val thisMonth = YearMonth.from(today)
@@ -181,8 +183,10 @@ object InsightsEngine {
 
         val topActs = tallyLabels(
             encounters.flatMap { e ->
-                ((e.encounter.practicesPerformed ?: emptySet()) +
-                    (e.encounter.practicesReceived ?: emptySet()))
+                (
+                    (e.encounter.practicesPerformed ?: emptySet()) +
+                        (e.encounter.practicesReceived ?: emptySet())
+                    )
                     .map { resolveAct(it, customActLabels) }
             },
         )
@@ -255,25 +259,26 @@ object InsightsEngine {
         )
     }
 
-    private fun partnerName(displayName: String?): String =
-        displayName?.takeIf { it.isNotBlank() } ?: "Anonymous"
+    private fun partnerName(displayName: String?): String = displayName?.takeIf { it.isNotBlank() } ?: "Anonymous"
 
-    private fun resolveAct(id: String, custom: Map<String, String>): String =
-        if (id.startsWith(CUSTOM_PREFIX)) custom[id.removePrefix(CUSTOM_PREFIX)] ?: "Custom act"
-        else runCatching { Practice.valueOf(id).label }.getOrDefault(id)
+    private fun resolveAct(id: String, custom: Map<String, String>): String = if (id.startsWith(CUSTOM_PREFIX)) {
+        custom[id.removePrefix(CUSTOM_PREFIX)] ?: "Custom act"
+    } else {
+        runCatching { Practice.valueOf(id).label }.getOrDefault(id)
+    }
 
-    private fun resolvePosition(id: String, custom: Map<String, String>): String =
-        if (id.startsWith(CUSTOM_PREFIX)) custom[id.removePrefix(CUSTOM_PREFIX)] ?: "Custom position"
-        else runCatching { Position.valueOf(id).label }.getOrDefault(id)
+    private fun resolvePosition(id: String, custom: Map<String, String>): String = if (id.startsWith(CUSTOM_PREFIX)) {
+        custom[id.removePrefix(CUSTOM_PREFIX)] ?: "Custom position"
+    } else {
+        runCatching { Position.valueOf(id).label }.getOrDefault(id)
+    }
 
     /** Tallies `(stableKey, label)` pairs by key, labelling each with its first-seen label. */
-    private fun tally(items: List<Pair<String, String>>): List<Tally> =
-        items.groupBy({ it.first }, { it.second })
-            .map { (_, labels) -> Tally(labels.first(), labels.size) }
-            .sortedWith(compareByDescending<Tally> { it.count }.thenBy { it.label })
+    private fun tally(items: List<Pair<String, String>>): List<Tally> = items.groupBy({ it.first }, { it.second })
+        .map { (_, labels) -> Tally(labels.first(), labels.size) }
+        .sortedWith(compareByDescending<Tally> { it.count }.thenBy { it.label })
 
-    private fun tallyLabels(labels: List<String>): List<Tally> =
-        labels.groupingBy { it }.eachCount()
-            .map { (label, count) -> Tally(label, count) }
-            .sortedWith(compareByDescending<Tally> { it.count }.thenBy { it.label })
+    private fun tallyLabels(labels: List<String>): List<Tally> = labels.groupingBy { it }.eachCount()
+        .map { (label, count) -> Tally(label, count) }
+        .sortedWith(compareByDescending<Tally> { it.count }.thenBy { it.label })
 }

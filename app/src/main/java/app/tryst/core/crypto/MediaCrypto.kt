@@ -24,9 +24,7 @@ object MediaCrypto {
     }
 
     /** Returns a stream that decrypts [source] on the fly. Caller closes it. */
-    fun decryptingStream(key: ByteArray, source: InputStream, associatedData: ByteArray): InputStream =
-        streaming(key).newDecryptingStream(source, associatedData)
+    fun decryptingStream(key: ByteArray, source: InputStream, associatedData: ByteArray): InputStream = streaming(key).newDecryptingStream(source, associatedData)
 
-    private fun streaming(key: ByteArray): StreamingAead =
-        AesGcmHkdfStreaming(key, "HmacSha256", KEY_SIZE_BYTES, SEGMENT_BYTES, 0)
+    private fun streaming(key: ByteArray): StreamingAead = AesGcmHkdfStreaming(key, "HmacSha256", KEY_SIZE_BYTES, SEGMENT_BYTES, 0)
 }

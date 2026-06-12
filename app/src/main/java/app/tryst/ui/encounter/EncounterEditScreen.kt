@@ -2,10 +2,9 @@ package app.tryst.ui.encounter
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -45,6 +44,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
@@ -53,7 +53,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -80,17 +79,17 @@ import app.tryst.data.db.entity.Protection
 import app.tryst.data.db.entity.Setting
 import app.tryst.data.db.entity.ToyType
 import app.tryst.ui.common.ActOptions
-import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
-import app.tryst.ui.common.encounterSharedKey
-import app.tryst.ui.common.rememberHaptics
 import app.tryst.ui.common.MultiSelectChips
 import app.tryst.ui.common.MultiSelectField
 import app.tryst.ui.common.PositionOptions
 import app.tryst.ui.common.SingleSelectChips
 import app.tryst.ui.common.SingleSelectField
+import app.tryst.ui.common.adaptiveContentWidth
+import app.tryst.ui.common.encounterSharedKey
 import app.tryst.ui.common.rememberCameraCapture
+import app.tryst.ui.common.rememberHaptics
 import app.tryst.ui.common.rememberImagePicker
 import java.time.Instant
 import java.time.ZoneId
@@ -141,248 +140,253 @@ fun EncounterEditScreen(
             TopAppBar(
                 title = { Text(stringResource(if (viewModel.isEditing) R.string.encounter_title_edit else R.string.encounter_title_new)) },
                 navigationIcon = { TextButton(onClick = onClose) { Text(stringResource(R.string.action_cancel)) } },
-                actions = { TextButton(onClick = { haptics.confirm(); viewModel.save(onClose) }) { Text(stringResource(R.string.action_save)) } },
+                actions = {
+                    TextButton(onClick = {
+                        haptics.confirm()
+                        viewModel.save(onClose)
+                    }) { Text(stringResource(R.string.action_save)) }
+                },
             )
         },
     ) { padding ->
-      // Cap + centre the form on wide windows (tablet / medium-width foldable) so the fields
-      // don't stretch into very long rows. A no-op on phones and in the narrow two-pane pane.
-      Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
-        Column(
-            modifier = Modifier
-                .adaptiveContentWidth()
-                .fillMaxHeight()
-                // Lift the scrolling content above the soft keyboard so the focused field (Duration,
-                // Note) stays visible while typing.
-                .imePadding()
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState())
-                // Dynamic rows (ejaculation per orgasm, per-partner orgasm counters, the delete
-                // button) appear and disappear as you edit — let the form resize smoothly.
-                .animateContentSize(),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
-            Spacer(Modifier.height(4.dp))
+        // Cap + centre the form on wide windows (tablet / medium-width foldable) so the fields
+        // don't stretch into very long rows. A no-op on phones and in the narrow two-pane pane.
+        Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopCenter) {
+            Column(
+                modifier = Modifier
+                    .adaptiveContentWidth()
+                    .fillMaxHeight()
+                    // Lift the scrolling content above the soft keyboard so the focused field (Duration,
+                    // Note) stays visible while typing.
+                    .imePadding()
+                    .padding(horizontal = 16.dp)
+                    .verticalScroll(rememberScrollState())
+                    // Dynamic rows (ejaculation per orgasm, per-partner orgasm counters, the delete
+                    // button) appear and disappear as you edit — let the form resize smoothly.
+                    .animateContentSize(),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                Spacer(Modifier.height(4.dp))
 
-            Field(stringResource(R.string.encounter_field_when)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = { showDatePicker = true }) {
-                        Text(Format.date(viewModel.startAt))
-                    }
-                    OutlinedButton(onClick = { showTimePicker = true }) {
-                        Text(Format.time(viewModel.startAt))
+                Field(stringResource(R.string.encounter_field_when)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { showDatePicker = true }) {
+                            Text(Format.date(viewModel.startAt))
+                        }
+                        OutlinedButton(onClick = { showTimePicker = true }) {
+                            Text(Format.time(viewModel.startAt))
+                        }
                     }
                 }
-            }
 
-            Field(stringResource(R.string.encounter_field_duration)) {
-                OutlinedTextField(
-                    value = viewModel.durationText,
-                    onValueChange = { viewModel.durationText = it.filter(Char::isDigit) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-
-            Field(stringResource(R.string.encounter_field_partners)) {
-                if (partners.isEmpty()) {
-                    Text(
-                        stringResource(R.string.encounter_no_partners),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                } else {
-                    MultiSelectChips(
-                        options = partners,
-                        selected = partners.filter { it.id in viewModel.selectedPartnerIds }.toSet(),
-                        label = { Format.partnerName(it) },
-                        onToggle = { viewModel.togglePartner(it.id) },
+                Field(stringResource(R.string.encounter_field_duration)) {
+                    OutlinedTextField(
+                        value = viewModel.durationText,
+                        onValueChange = { viewModel.durationText = it.filter(Char::isDigit) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
-            }
 
-            MultiSelectField(
-                label = stringResource(R.string.encounter_field_protection),
-                all = Protection.entries,
-                common = CommonOptions.PROTECTION,
-                selected = viewModel.protection,
-                labelOf = { it.label },
-                onToggle = { viewModel.toggleProtection(it) },
-            )
-
-            SingleSelectField(
-                label = stringResource(R.string.encounter_field_mood),
-                all = Mood.entries,
-                common = CommonOptions.MOOD,
-                selected = viewModel.mood,
-                labelOf = { it.label },
-                onSelect = { viewModel.mood = it },
-            )
-
-            Field(stringResource(R.string.encounter_orgasms_you)) {
-                Stepper(value = viewModel.orgasmCountSelf, onChange = { viewModel.setSelfOrgasms(it) })
-            }
-
-            // One ejaculation location per orgasm you had.
-            repeat(viewModel.orgasmCountSelf) { i ->
-                SingleSelectField(
-                    label = if (viewModel.orgasmCountSelf > 1) {
-                        stringResource(R.string.encounter_ejaculation_n, i + 1)
+                Field(stringResource(R.string.encounter_field_partners)) {
+                    if (partners.isEmpty()) {
+                        Text(
+                            stringResource(R.string.encounter_no_partners),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     } else {
-                        stringResource(R.string.encounter_ejaculation)
-                    },
-                    all = EjaculationLocation.entries,
-                    common = CommonOptions.EJACULATION,
-                    selected = viewModel.ejaculations[i],
+                        MultiSelectChips(
+                            options = partners,
+                            selected = partners.filter { it.id in viewModel.selectedPartnerIds }.toSet(),
+                            label = { Format.partnerName(it) },
+                            onToggle = { viewModel.togglePartner(it.id) },
+                        )
+                    }
+                }
+
+                MultiSelectField(
+                    label = stringResource(R.string.encounter_field_protection),
+                    all = Protection.entries,
+                    common = CommonOptions.PROTECTION,
+                    selected = viewModel.protection,
                     labelOf = { it.label },
-                    onSelect = { viewModel.setEjaculation(i, it) },
+                    onToggle = { viewModel.toggleProtection(it) },
                 )
-            }
 
-            // One orgasm counter per selected partner, ordered by name.
-            partners
-                .filter { it.id in viewModel.selectedPartnerIds }
-                .sortedBy { Format.partnerName(it).lowercase() }
-                .forEach { partner ->
-                    Field(stringResource(R.string.encounter_orgasms_partner, Format.partnerName(partner))) {
-                        Stepper(
-                            value = viewModel.partnerOrgasms[partner.id] ?: 0,
-                            onChange = { viewModel.setPartnerOrgasms(partner.id, it) },
-                        )
+                SingleSelectField(
+                    label = stringResource(R.string.encounter_field_mood),
+                    all = Mood.entries,
+                    common = CommonOptions.MOOD,
+                    selected = viewModel.mood,
+                    labelOf = { it.label },
+                    onSelect = { viewModel.mood = it },
+                )
+
+                Field(stringResource(R.string.encounter_orgasms_you)) {
+                    Stepper(value = viewModel.orgasmCountSelf, onChange = { viewModel.setSelfOrgasms(it) })
+                }
+
+                // One ejaculation location per orgasm you had.
+                repeat(viewModel.orgasmCountSelf) { i ->
+                    SingleSelectField(
+                        label = if (viewModel.orgasmCountSelf > 1) {
+                            stringResource(R.string.encounter_ejaculation_n, i + 1)
+                        } else {
+                            stringResource(R.string.encounter_ejaculation)
+                        },
+                        all = EjaculationLocation.entries,
+                        common = CommonOptions.EJACULATION,
+                        selected = viewModel.ejaculations[i],
+                        labelOf = { it.label },
+                        onSelect = { viewModel.setEjaculation(i, it) },
+                    )
+                }
+
+                // One orgasm counter per selected partner, ordered by name.
+                partners
+                    .filter { it.id in viewModel.selectedPartnerIds }
+                    .sortedBy { Format.partnerName(it).lowercase() }
+                    .forEach { partner ->
+                        Field(stringResource(R.string.encounter_orgasms_partner, Format.partnerName(partner))) {
+                            Stepper(
+                                value = viewModel.partnerOrgasms[partner.id] ?: 0,
+                                onChange = { viewModel.setPartnerOrgasms(partner.id, it) },
+                            )
+                        }
+                    }
+
+                val positionOptions = PositionOptions.builtIns + PositionOptions.custom(customPositions)
+                MultiSelectField(
+                    label = stringResource(R.string.encounter_field_positions),
+                    all = positionOptions,
+                    common = PositionOptions.common,
+                    selected = positionOptions.filter { it.id in viewModel.selectedPositionIds }.toSet(),
+                    labelOf = { it.label },
+                    onToggle = { viewModel.togglePosition(it.id) },
+                )
+
+                val actOptions = ActOptions.builtIns + ActOptions.custom(customActs)
+                MultiSelectField(
+                    label = stringResource(R.string.encounter_field_acts_gave),
+                    all = actOptions,
+                    common = ActOptions.common,
+                    selected = actOptions.filter { it.id in viewModel.practicesPerformed }.toSet(),
+                    labelOf = { it.label },
+                    onToggle = { viewModel.togglePerformed(it.id) },
+                )
+
+                MultiSelectField(
+                    label = stringResource(R.string.encounter_field_acts_received),
+                    all = actOptions,
+                    common = ActOptions.common,
+                    selected = actOptions.filter { it.id in viewModel.practicesReceived }.toSet(),
+                    labelOf = { it.label },
+                    onToggle = { viewModel.toggleReceived(it.id) },
+                )
+
+                MultiSelectField(
+                    label = stringResource(R.string.encounter_field_kink),
+                    all = Kink.entries,
+                    common = CommonOptions.KINK,
+                    selected = viewModel.kinks,
+                    labelOf = { it.label },
+                    onToggle = { viewModel.toggleKink(it) },
+                )
+
+                MultiSelectField(
+                    label = stringResource(R.string.encounter_field_setting),
+                    all = Setting.entries,
+                    common = CommonOptions.SETTING,
+                    selected = viewModel.contexts,
+                    labelOf = { it.label },
+                    onToggle = { viewModel.toggleContext(it) },
+                )
+
+                MultiSelectField(
+                    label = stringResource(R.string.encounter_field_occasion),
+                    all = Occasion.entries,
+                    common = CommonOptions.OCCASION,
+                    selected = viewModel.occasions,
+                    labelOf = { it.label },
+                    onToggle = { viewModel.toggleOccasion(it) },
+                )
+
+                MultiSelectField(
+                    label = stringResource(R.string.encounter_field_toys),
+                    all = ToyType.entries,
+                    common = CommonOptions.TOY,
+                    selected = viewModel.toys,
+                    labelOf = { it.label },
+                    onToggle = { viewModel.toggleToy(it) },
+                )
+
+                Field(stringResource(R.string.encounter_field_initiator)) {
+                    SingleSelectChips(
+                        options = Initiator.entries,
+                        selected = viewModel.initiator,
+                        label = { it.label },
+                        onSelect = { viewModel.initiator = it },
+                    )
+                }
+
+                Field(stringResource(R.string.encounter_field_rating)) {
+                    SingleSelectChips(
+                        options = (1..5).toList(),
+                        selected = viewModel.rating,
+                        label = { "$it" },
+                        onSelect = { viewModel.rating = it },
+                    )
+                }
+
+                Field(stringResource(R.string.encounter_field_note)) {
+                    OutlinedTextField(
+                        value = viewModel.note,
+                        onValueChange = { viewModel.note = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(120.dp),
+                    )
+                }
+
+                Field(stringResource(R.string.encounter_field_photos)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        viewModel.existingPhotos.forEach { media ->
+                            PhotoThumb(
+                                key = media.id,
+                                load = { viewModel.decodeExisting(media, THUMB_PX) },
+                                onClick = { viewer = PhotoView(media.id) { viewModel.decodeExisting(media, FULL_PX) } },
+                                onRemove = { viewModel.removeExisting(media) },
+                            )
+                        }
+                        viewModel.pendingPhotos.forEach { photo ->
+                            PhotoThumb(
+                                key = photo.uri,
+                                load = { viewModel.decodePending(photo.uri, THUMB_PX) },
+                                onClick = { viewer = PhotoView(photo.uri) { viewModel.decodePending(photo.uri, FULL_PX) } },
+                                onRemove = { viewModel.removePending(photo) },
+                            )
+                        }
+                        AddPhotoTile(onCamera = { captureImage() }, onGallery = { pickImage() })
                     }
                 }
 
-            val positionOptions = PositionOptions.builtIns + PositionOptions.custom(customPositions)
-            MultiSelectField(
-                label = stringResource(R.string.encounter_field_positions),
-                all = positionOptions,
-                common = PositionOptions.common,
-                selected = positionOptions.filter { it.id in viewModel.selectedPositionIds }.toSet(),
-                labelOf = { it.label },
-                onToggle = { viewModel.togglePosition(it.id) },
-            )
-
-            val actOptions = ActOptions.builtIns + ActOptions.custom(customActs)
-            MultiSelectField(
-                label = stringResource(R.string.encounter_field_acts_gave),
-                all = actOptions,
-                common = ActOptions.common,
-                selected = actOptions.filter { it.id in viewModel.practicesPerformed }.toSet(),
-                labelOf = { it.label },
-                onToggle = { viewModel.togglePerformed(it.id) },
-            )
-
-            MultiSelectField(
-                label = stringResource(R.string.encounter_field_acts_received),
-                all = actOptions,
-                common = ActOptions.common,
-                selected = actOptions.filter { it.id in viewModel.practicesReceived }.toSet(),
-                labelOf = { it.label },
-                onToggle = { viewModel.toggleReceived(it.id) },
-            )
-
-            MultiSelectField(
-                label = stringResource(R.string.encounter_field_kink),
-                all = Kink.entries,
-                common = CommonOptions.KINK,
-                selected = viewModel.kinks,
-                labelOf = { it.label },
-                onToggle = { viewModel.toggleKink(it) },
-            )
-
-            MultiSelectField(
-                label = stringResource(R.string.encounter_field_setting),
-                all = Setting.entries,
-                common = CommonOptions.SETTING,
-                selected = viewModel.contexts,
-                labelOf = { it.label },
-                onToggle = { viewModel.toggleContext(it) },
-            )
-
-            MultiSelectField(
-                label = stringResource(R.string.encounter_field_occasion),
-                all = Occasion.entries,
-                common = CommonOptions.OCCASION,
-                selected = viewModel.occasions,
-                labelOf = { it.label },
-                onToggle = { viewModel.toggleOccasion(it) },
-            )
-
-            MultiSelectField(
-                label = stringResource(R.string.encounter_field_toys),
-                all = ToyType.entries,
-                common = CommonOptions.TOY,
-                selected = viewModel.toys,
-                labelOf = { it.label },
-                onToggle = { viewModel.toggleToy(it) },
-            )
-
-            Field(stringResource(R.string.encounter_field_initiator)) {
-                SingleSelectChips(
-                    options = Initiator.entries,
-                    selected = viewModel.initiator,
-                    label = { it.label },
-                    onSelect = { viewModel.initiator = it },
-                )
-            }
-
-            Field(stringResource(R.string.encounter_field_rating)) {
-                SingleSelectChips(
-                    options = (1..5).toList(),
-                    selected = viewModel.rating,
-                    label = { "$it" },
-                    onSelect = { viewModel.rating = it },
-                )
-            }
-
-            Field(stringResource(R.string.encounter_field_note)) {
-                OutlinedTextField(
-                    value = viewModel.note,
-                    onValueChange = { viewModel.note = it },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp),
-                )
-            }
-
-            Field(stringResource(R.string.encounter_field_photos)) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .horizontalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    viewModel.existingPhotos.forEach { media ->
-                        PhotoThumb(
-                            key = media.id,
-                            load = { viewModel.decodeExisting(media, THUMB_PX) },
-                            onClick = { viewer = PhotoView(media.id) { viewModel.decodeExisting(media, FULL_PX) } },
-                            onRemove = { viewModel.removeExisting(media) },
-                        )
-                    }
-                    viewModel.pendingPhotos.forEach { photo ->
-                        PhotoThumb(
-                            key = photo.uri,
-                            load = { viewModel.decodePending(photo.uri, THUMB_PX) },
-                            onClick = { viewer = PhotoView(photo.uri) { viewModel.decodePending(photo.uri, FULL_PX) } },
-                            onRemove = { viewModel.removePending(photo) },
-                        )
-                    }
-                    AddPhotoTile(onCamera = { captureImage() }, onGallery = { pickImage() })
+                if (viewModel.isEditing) {
+                    OutlinedButton(
+                        onClick = { showDeleteConfirm = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text(stringResource(R.string.encounter_delete_button)) }
                 }
-            }
 
-            if (viewModel.isEditing) {
-                OutlinedButton(
-                    onClick = { showDeleteConfirm = true },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(stringResource(R.string.encounter_delete_button)) }
+                Spacer(Modifier.height(24.dp))
             }
-
-            Spacer(Modifier.height(24.dp))
         }
-      }
     }
 
     if (showDatePicker) {
@@ -472,7 +476,12 @@ private fun Stepper(value: Int, onChange: (Int) -> Unit, min: Int = 0, max: Int 
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         OutlinedButton(
-            onClick = { if (value > min) { haptics.tick(); onChange(value - 1) } },
+            onClick = {
+                if (value > min) {
+                    haptics.tick()
+                    onChange(value - 1)
+                }
+            },
             enabled = value > min,
             modifier = Modifier.semantics { contentDescription = decreaseDesc },
         ) { Text("−") }
@@ -491,7 +500,12 @@ private fun Stepper(value: Int, onChange: (Int) -> Unit, min: Int = 0, max: Int 
             Text("$v", style = MaterialTheme.typography.titleLarge)
         }
         OutlinedButton(
-            onClick = { if (value < max) { haptics.tick(); onChange(value + 1) } },
+            onClick = {
+                if (value < max) {
+                    haptics.tick()
+                    onChange(value + 1)
+                }
+            },
             enabled = value < max,
             modifier = Modifier.semantics { contentDescription = increaseDesc },
         ) { Text("+") }
@@ -584,11 +598,17 @@ private fun AddPhotoTile(onCamera: () -> Unit, onGallery: () -> Unit) {
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.encounter_add_photo_camera)) },
-                onClick = { menuOpen = false; onCamera() },
+                onClick = {
+                    menuOpen = false
+                    onCamera()
+                },
             )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.encounter_add_photo_gallery)) },
-                onClick = { menuOpen = false; onGallery() },
+                onClick = {
+                    menuOpen = false
+                    onGallery()
+                },
             )
         }
     }
@@ -597,33 +617,73 @@ private fun AddPhotoTile(onCamera: () -> Unit, onGallery: () -> Unit) {
 /** The handful of most-common options shown inline per category; the rest live in "More…". */
 private object CommonOptions {
     val PROTECTION = listOf(
-        Protection.NONE, Protection.CONDOM, Protection.PILL, Protection.IUD,
-        Protection.PREP, Protection.WITHDRAWAL, Protection.INTERNAL_CONDOM,
+        Protection.NONE,
+        Protection.CONDOM,
+        Protection.PILL,
+        Protection.IUD,
+        Protection.PREP,
+        Protection.WITHDRAWAL,
+        Protection.INTERNAL_CONDOM,
         Protection.EMERGENCY_CONTRACEPTION,
     )
     val MOOD = listOf(
-        Mood.AMAZING, Mood.HORNY, Mood.PASSIONATE, Mood.PLAYFUL,
-        Mood.ROMANTIC, Mood.CONNECTED, Mood.RELAXED, Mood.GOOD,
+        Mood.AMAZING,
+        Mood.HORNY,
+        Mood.PASSIONATE,
+        Mood.PLAYFUL,
+        Mood.ROMANTIC,
+        Mood.CONNECTED,
+        Mood.RELAXED,
+        Mood.GOOD,
     )
     val EJACULATION = listOf(
-        EjaculationLocation.NONE, EjaculationLocation.IN_CONDOM, EjaculationLocation.VAGINAL,
-        EjaculationLocation.ANAL, EjaculationLocation.ORAL, EjaculationLocation.SWALLOWED,
-        EjaculationLocation.ON_FACE, EjaculationLocation.ON_CHEST,
+        EjaculationLocation.NONE,
+        EjaculationLocation.IN_CONDOM,
+        EjaculationLocation.VAGINAL,
+        EjaculationLocation.ANAL,
+        EjaculationLocation.ORAL,
+        EjaculationLocation.SWALLOWED,
+        EjaculationLocation.ON_FACE,
+        EjaculationLocation.ON_CHEST,
     )
     val KINK = listOf(
-        Kink.DOMINATION, Kink.SUBMISSION, Kink.BONDAGE, Kink.SPANKING,
-        Kink.CHOKING, Kink.DIRTY_TALK, Kink.ROLEPLAY, Kink.EDGING,
+        Kink.DOMINATION,
+        Kink.SUBMISSION,
+        Kink.BONDAGE,
+        Kink.SPANKING,
+        Kink.CHOKING,
+        Kink.DIRTY_TALK,
+        Kink.ROLEPLAY,
+        Kink.EDGING,
     )
     val SETTING = listOf(
-        Setting.HOME, Setting.BEDROOM, Setting.SHOWER, Setting.CAR,
-        Setting.HOTEL, Setting.OUTDOORS, Setting.LIVING_ROOM, Setting.HOT_TUB,
+        Setting.HOME,
+        Setting.BEDROOM,
+        Setting.SHOWER,
+        Setting.CAR,
+        Setting.HOTEL,
+        Setting.OUTDOORS,
+        Setting.LIVING_ROOM,
+        Setting.HOT_TUB,
     )
     val OCCASION = listOf(
-        Occasion.REGULAR, Occasion.NONE, Occasion.QUICKIE, Occasion.MORNING_SEX,
-        Occasion.MAKEUP_SEX, Occasion.SPONTANEOUS, Occasion.DATE_NIGHT, Occasion.DRUNK_HIGH,
+        Occasion.REGULAR,
+        Occasion.NONE,
+        Occasion.QUICKIE,
+        Occasion.MORNING_SEX,
+        Occasion.MAKEUP_SEX,
+        Occasion.SPONTANEOUS,
+        Occasion.DATE_NIGHT,
+        Occasion.DRUNK_HIGH,
     )
     val TOY = listOf(
-        ToyType.NONE, ToyType.VIBRATOR, ToyType.DILDO, ToyType.BUTT_PLUG,
-        ToyType.COCK_RING, ToyType.STRAP_ON, ToyType.WAND, ToyType.ANAL_BEADS,
+        ToyType.NONE,
+        ToyType.VIBRATOR,
+        ToyType.DILDO,
+        ToyType.BUTT_PLUG,
+        ToyType.COCK_RING,
+        ToyType.STRAP_ON,
+        ToyType.WAND,
+        ToyType.ANAL_BEADS,
     )
 }

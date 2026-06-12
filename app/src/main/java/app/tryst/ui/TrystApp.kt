@@ -1,5 +1,6 @@
 package app.tryst.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
@@ -33,7 +34,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.annotation.StringRes
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -44,6 +44,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import app.tryst.R
 import app.tryst.ui.about.AboutScreen
 import app.tryst.ui.achievements.AchievementsScreen
 import app.tryst.ui.common.WidthClass
@@ -53,7 +54,6 @@ import app.tryst.ui.history.HistoryScreen
 import app.tryst.ui.insights.InsightsScreen
 import app.tryst.ui.partner.PartnersScreen
 import app.tryst.ui.settings.SettingsScreen
-import app.tryst.R
 
 private object Routes {
     const val HISTORY = "history"
@@ -232,8 +232,14 @@ private fun HistoryTwoPane(
     Row(Modifier.fillMaxSize()) {
         Box(Modifier.weight(1f).fillMaxHeight()) {
             HistoryScreen(
-                onAddEncounter = { detailNew = true; detailId = null },
-                onOpenEncounter = { detailId = it; detailNew = false },
+                onAddEncounter = {
+                    detailNew = true
+                    detailId = null
+                },
+                onOpenEncounter = {
+                    detailId = it
+                    detailNew = false
+                },
                 sharedScope = sharedScope,
                 animatedScope = animatedScope,
             )
@@ -245,7 +251,10 @@ private fun HistoryTwoPane(
                 androidx.compose.runtime.key(detailNew, detailId) {
                     EncounterEditScreen(
                         encounterId = detailId,
-                        onClose = { detailNew = false; detailId = null },
+                        onClose = {
+                            detailNew = false
+                            detailId = null
+                        },
                         sharedScope = null,
                         animatedScope = null,
                     )

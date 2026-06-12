@@ -2,11 +2,11 @@ package app.tryst.core.prefs
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /** Light / Dark / follow-the-phone. */
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
@@ -38,10 +38,9 @@ class ThemePreferences @Inject constructor(
         _dynamicColor.value = enabled
     }
 
-    private fun loadMode(): ThemeMode =
-        prefs.getString(KEY_MODE, null)
-            ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
-            ?: ThemeMode.SYSTEM
+    private fun loadMode(): ThemeMode = prefs.getString(KEY_MODE, null)
+        ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
+        ?: ThemeMode.SYSTEM
 
     private companion object {
         const val KEY_MODE = "theme_mode"

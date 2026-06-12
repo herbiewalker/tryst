@@ -26,6 +26,12 @@ coroutines = "1.11.0"
 biometric = "1.1.0"
 navigationCompose = "2.9.0"
 hiltNavigationCompose = "1.2.0"
+# Quality gates (independent of the IDE-driven AGP/Kotlin/KSP toolchain above). Detekt runs
+# AST-only (no type resolution), so its built-against-Kotlin-2.0.21 frontend analyses the 2.2.10
+# source fine — a benign version-mismatch warning is expected. ktlint-gradle 14.x bundles a
+# Kotlin-2.x-compatible ktlint engine.
+detekt = "1.23.8"
+ktlint = "14.2.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -67,3 +73,5 @@ kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }

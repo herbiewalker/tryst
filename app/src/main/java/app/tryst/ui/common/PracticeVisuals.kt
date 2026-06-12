@@ -27,14 +27,12 @@ object PracticeVisuals {
         return ranked + leftovers
     }
 
-    fun primaryPractice(gave: Set<String>?, received: Set<String>?): String? =
-        rankedActs(gave, received).firstOrNull()
+    fun primaryPractice(gave: Set<String>?, received: Set<String>?): String? = rankedActs(gave, received).firstOrNull()
 
     /** Custom drawable for an act id. Custom/unknown acts get the generic badge. */
     @DrawableRes
-    fun icon(actId: String?): Int =
-        actId?.let { id -> runCatching { Practice.valueOf(id) }.getOrNull()?.let { ICONS[it] } }
-            ?: R.drawable.ic_act_custom
+    fun icon(actId: String?): Int = actId?.let { id -> runCatching { Practice.valueOf(id) }.getOrNull()?.let { ICONS[it] } }
+        ?: R.drawable.ic_act_custom
 
     /** Most "headline" first; the first match in an encounter's acts wins. Includes every value. */
     private val PRIORITY = listOf(

@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.detekt)
+    alias(libs.plugins.ktlint)
 }
 
 android {
@@ -56,6 +58,23 @@ ksp {
     // are a hard requirement — see docs/DATA_MODEL.md). Schemas are committed under app/schemas.
     arg("room.schemaLocation", "$projectDir/schemas")
     arg("room.generateKotlin", "true")
+}
+
+// Quality gates (O-5). Detekt runs AST-only (no type resolution) — the plain `detekt` task — so its
+// Kotlin-2.0.21 frontend analyses our 2.2.10 source without a compiler-classpath mismatch. ktlint
+// handles formatting (max line length etc.); detekt's MaxLineLength is disabled to avoid double-report.
+detekt {
+    config.setFrom("$rootDir/config/detekt/detekt.yml")
+    buildUponDefaultConfig = true
+    parallel = true
+    // Analyse production code only — test sources legitimately carry helper smells (many-param
+    // data builders etc.) and aren't shipped. ktlint still formats the test sources.
+    source.setFrom(files("src/main/java"))
+}
+
+ktlint {
+    android = true
+    ignoreFailures = false
 }
 
 dependencies {
