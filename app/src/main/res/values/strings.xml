@@ -1,3 +1,16 @@
 <resources>
     <string name="app_name">Tryst</string>
+
+    <!-- ============================================================= -->
+    <!-- Shared actions (reused across screens)                        -->
+    <!-- ============================================================= -->
+
+    <!-- ============================================================= -->
+    <!-- Bottom / rail navigation (TrystApp)                           -->
+    <!-- ============================================================= -->
+    <string name="nav_trysts">Trysts</string>
+    <string name="nav_insights">Insights</string>
+    <string name="nav_partners">Partners</string>
+    <string name="nav_settings">Settings</string>
+    <string name="history_detail_placeholder">Select a tryst to view or edit, or tap + to log a new one.</string>
 </resources>

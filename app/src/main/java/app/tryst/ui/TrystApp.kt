@@ -33,9 +33,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.annotation.StringRes
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -51,6 +53,7 @@ import app.tryst.ui.history.HistoryScreen
 import app.tryst.ui.insights.InsightsScreen
 import app.tryst.ui.partner.PartnersScreen
 import app.tryst.ui.settings.SettingsScreen
+import app.tryst.R
 
 private object Routes {
     const val HISTORY = "history"
@@ -68,14 +71,14 @@ private object Routes {
 private data class TopDestination(
     val route: String,
     val icon: ImageVector,
-    val label: String,
+    @param:StringRes val labelRes: Int,
 )
 
 private val topDestinations = listOf(
-    TopDestination(Routes.HISTORY, Icons.Filled.Favorite, "Trysts"),
-    TopDestination(Routes.INSIGHTS, Icons.Filled.Insights, "Insights"),
-    TopDestination(Routes.PARTNERS, Icons.Filled.People, "Partners"),
-    TopDestination(Routes.SETTINGS, Icons.Filled.Settings, "Settings"),
+    TopDestination(Routes.HISTORY, Icons.Filled.Favorite, R.string.nav_trysts),
+    TopDestination(Routes.INSIGHTS, Icons.Filled.Insights, R.string.nav_insights),
+    TopDestination(Routes.PARTNERS, Icons.Filled.People, R.string.nav_partners),
+    TopDestination(Routes.SETTINGS, Icons.Filled.Settings, R.string.nav_settings),
 )
 
 /**
@@ -111,11 +114,12 @@ fun TrystApp() {
             if (showBottomBar) {
                 NavigationBar {
                     topDestinations.forEach { dest ->
+                        val label = stringResource(dest.labelRes)
                         NavigationBarItem(
                             selected = currentRoute == dest.route,
                             onClick = { navController.navigateTop(dest.route) },
-                            icon = { Icon(dest.icon, contentDescription = dest.label) },
-                            label = { Text(dest.label) },
+                            icon = { Icon(dest.icon, contentDescription = label) },
+                            label = { Text(label) },
                         )
                     }
                 }
@@ -126,11 +130,12 @@ fun TrystApp() {
             if (showRail) {
                 NavigationRail {
                     topDestinations.forEach { dest ->
+                        val label = stringResource(dest.labelRes)
                         NavigationRailItem(
                             selected = currentRoute == dest.route,
                             onClick = { navController.navigateTop(dest.route) },
-                            icon = { Icon(dest.icon, contentDescription = dest.label) },
-                            label = { Text(dest.label) },
+                            icon = { Icon(dest.icon, contentDescription = label) },
+                            label = { Text(label) },
                         )
                     }
                 }
@@ -248,7 +253,7 @@ private fun HistoryTwoPane(
             } else {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        "Select a tryst to view or edit, or tap + to log a new one.",
+                        stringResource(R.string.history_detail_placeholder),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
