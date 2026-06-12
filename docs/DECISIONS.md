@@ -132,6 +132,19 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   SQLCipher bundles OpenSSL 3.x = Apache-2.0, so no GPL/OpenSSL conflict). Per-file source license headers
   were **not** added (82 files) — README + LICENSE + notices satisfy the obligation; headers remain an
   optional follow-up. Distribution (F-Droid / Play) still open.
+- **D-30 (M8 quality gates, 2026-06-12):** **CI quality gates = Detekt + ktlint** (resolves O-5).
+  Build-failing `detekt` (1.23.8, **AST-only** — no type resolution, so its Kotlin-2.0.21 frontend
+  analyses the 2.2.10 source without a compiler-classpath mismatch) + `ktlint` (ktlint-gradle 14.2.0),
+  run in a dedicated CI `quality` job. **Curated/pragmatic** config (`config/detekt/detekt.yml`,
+  `.editorconfig`): rules that fight idiomatic Compose / deliberate patterns are tuned off — MagicNumber
+  (dp/sp literals), TooManyFunctions (DAOs/Room Converters/VMs), `@Composable` naming + complexity, and
+  `TooGenericExceptionCaught`/`SwallowedException` (Pass 7's intentional catch-broad → user-message,
+  don't-leak-details handling). Line length is delegated/disabled (the achievement data-table rows).
+  **Fixed all violations, no baseline** (cohesive complex functions carry a documented site `@Suppress`).
+  **No license-aggregation plugin** — Pass 10's hand-maintained `OssLicenses` + the CI banned-SDK grep
+  cover the FOSS guard, consistent with the no-extra-deps ethos. **Android Lint** already ran in CI
+  (`lint`), left as-is. No stock rule enforces "no hardcoded Compose strings" — noted as a possible
+  future custom Detekt rule.
 - **D-25 (M6):** **No chart library** (resolves O-3). Insights charts are drawn with plain Compose
   layout (`VerticalBarChart`, `RankedBars`) instead of Vico/MPAndroidChart. Rationale: the app already
   hand-rolls its visuals (per-act vector icons, manual `BitmapFactory` downsampling, no third-party
@@ -165,9 +178,9 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
 - **O-3 (resolved) Charts library:** **none** — Insights charts are hand-drawn in Compose (D-25).
 - **O-4 (resolved) Multi-partner per encounter:** **yes** — the editor supports selecting multiple
   partners (M:N) with per-partner orgasm counts (D-22).
-- **O-5 CI quality gates:** CI currently runs only the anti-leak guard (+ build/tests). Add
-  **Detekt/ktlint**, **Android Lint**, and a **FOSS-license check** before release (M8). Low risk, high
-  signal; the code is already clean (0 TODO/FIXME).
+- **O-5 (resolved) CI quality gates:** **Detekt + ktlint** added as build-failing CI gates (M8, D-30),
+  in a separate `quality` job; **Android Lint** already ran in CI (`lint`); the **FOSS guard** stays the
+  hand-maintained `OssLicenses` + banned-SDK grep (no license plugin). Fixed-all-violations, no baseline.
 - **O-6 Insights/chart accessibility — mostly closed (pre-release Pass 4, 2026-06-10):** the bar / ranked-bar /
   donut charts already render their label+count as real `Text`, so TalkBack reads them; the
   **line/area** chart painted its point values on the Canvas, so Pass 4 gave it a summarizing

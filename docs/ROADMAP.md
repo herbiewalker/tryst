@@ -194,8 +194,14 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
   titles/descriptions/emoji + `category.label` (`data/achievements/Achievements.kt`), the inline chart
   `Tally`/`Bucket` labels (incl. `"You"`/`"Partners"`/`"Other"`), `CsvField.label`, and `Format.kt`'s
   `"Anonymous"`/`"Today"`/`"Yesterday"` (pure object, no `Context`). Note: Compose has no stock
-  hardcoded-string lint, so extraction isn't auto-enforced — a Detekt/custom rule is a candidate for the
-  CI quality gates (O-5) item.
+  hardcoded-string lint, so extraction isn't auto-enforced — a custom Detekt rule remains a possible
+  future add (the CI quality gates themselves landed in D-30).
+- ~~**CI quality gates (O-5)**~~ **DONE (2026-06-12, D-30).** Added build-failing **Detekt** (1.23.8,
+  AST-only) + **ktlint** (ktlint-gradle 14.2.0) gates in a separate CI `quality` job, with a
+  curated/pragmatic `config/detekt/detekt.yml` + `.editorconfig`; fixed all violations (no baseline).
+  Android Lint already ran in CI; the FOSS guard stays the hand-maintained `OssLicenses` + banned-SDK
+  grep (no license plugin — Pass 10 ethos). A "no-hardcoded-Compose-strings" rule has no stock
+  equivalent; left as a possible future custom Detekt rule.
 - Optional cleanup: refactor large editor VMs to a single immutable `UiState` (deferred "chunk 6";
   `EncounterEditViewModel` has **no** UI strings, so this is now fully independent of the i18n work).
 - Onboarding copy (esp. PIN-loss / no-recovery warning). *(The setup-screen no-recovery warning string
