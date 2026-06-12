@@ -50,12 +50,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tryst.R
 import app.tryst.data.db.entity.DisplayLabel
 import app.tryst.data.db.entity.Gender
 import app.tryst.data.db.entity.PartnerEntity
@@ -77,17 +79,17 @@ fun PartnersScreen(viewModel: PartnersViewModel = hiltViewModel()) {
     var dialogTarget by remember { mutableStateOf<DialogTarget?>(null) }
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Partners") }) },
+        topBar = { TopAppBar(title = { Text(stringResource(R.string.partners_title)) }) },
         floatingActionButton = {
             FloatingActionButton(onClick = { dialogTarget = DialogTarget(null) }) {
-                Icon(Icons.Filled.Add, contentDescription = "Add partner")
+                Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.partner_add))
             }
         },
     ) { padding ->
         if (partners.isEmpty()) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 Text(
-                    "No partners yet.\nTap + to add one.",
+                    stringResource(R.string.partners_empty),
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -158,7 +160,7 @@ private fun PartnerRow(
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            TextButton(onClick = { haptics.tick(); onArchive() }) { Text("Archive") }
+            TextButton(onClick = { haptics.tick(); onArchive() }) { Text(stringResource(R.string.partners_archive)) }
         }
     }
 }
@@ -173,7 +175,7 @@ private fun PartnerAvatar(
     if (photoId != null) {
         DecodedImage(
             model = photoId,
-            contentDescription = "Partner photo",
+            contentDescription = stringResource(R.string.cd_partner_photo),
             modifier = Modifier.size(size).clip(CircleShape),
             contentScale = ContentScale.Crop,
             load = { onLoadPhoto(photoId) },
@@ -228,7 +230,7 @@ private fun PartnerDialog(
 
     AlertDialog(
         onDismissRequest = dismiss,
-        title = { Text(if (initial == null) "Add partner" else "Edit partner") },
+        title = { Text(stringResource(if (initial == null) R.string.partner_add else R.string.partner_dialog_edit_title)) },
         text = {
             Column(
                 modifier = Modifier
@@ -246,7 +248,7 @@ private fun PartnerDialog(
                         val uri = photoUri!!
                         DecodedImage(
                             model = uri,
-                            contentDescription = "Partner photo",
+                            contentDescription = stringResource(R.string.cd_partner_photo),
                             modifier = Modifier.size(72.dp).clip(CircleShape),
                             contentScale = ContentScale.Crop,
                             load = { MediaImages.decodeSampled(AVATAR_PX) { context.contentResolver.openInputStream(uri) } },
@@ -257,15 +259,15 @@ private fun PartnerDialog(
                     Column {
                         Box {
                             TextButton(onClick = { photoMenu = true }) {
-                                Text(if (hasPhoto) "Change photo" else "Add photo")
+                                Text(stringResource(if (hasPhoto) R.string.partner_change_photo else R.string.partner_add_photo))
                             }
                             DropdownMenu(expanded = photoMenu, onDismissRequest = { photoMenu = false }) {
                                 DropdownMenuItem(
-                                    text = { Text("Take photo") },
+                                    text = { Text(stringResource(R.string.encounter_add_photo_camera)) },
                                     onClick = { photoMenu = false; captureImage() },
                                 )
                                 DropdownMenuItem(
-                                    text = { Text("Choose from gallery") },
+                                    text = { Text(stringResource(R.string.encounter_add_photo_gallery)) },
                                     onClick = { photoMenu = false; pickImage() },
                                 )
                             }
@@ -273,14 +275,14 @@ private fun PartnerDialog(
                         AnimatedVisibility(visible = hasPhoto) {
                             TextButton(onClick = {
                                 captureTempFile?.delete(); captureTempFile = null; photoUri = null; photoRemoved = true
-                            }) { Text("Remove") }
+                            }) { Text(stringResource(R.string.partner_remove_photo)) }
                         }
                     }
                 }
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Name") },
+                    label = { Text(stringResource(R.string.partner_name_label)) },
                     singleLine = true,
                     enabled = !anonymous,
                     modifier = Modifier.fillMaxWidth(),
@@ -296,15 +298,15 @@ private fun PartnerDialog(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Switch(checked = anonymous, onCheckedChange = null)
-                    Text("  Anonymous", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(R.string.partner_anonymous), style = MaterialTheme.typography.bodyMedium)
                 }
-                OptionalChips("Sex", Sex.entries, sex) { sex = it }
-                OptionalChips("Gender", Gender.entries, gender) { gender = it }
-                OptionalChips("Relationship", RelationshipType.entries, relationship) { relationship = it }
+                OptionalChips(stringResource(R.string.partner_sex), Sex.entries, sex) { sex = it }
+                OptionalChips(stringResource(R.string.partner_gender), Gender.entries, gender) { gender = it }
+                OptionalChips(stringResource(R.string.partner_relationship), RelationshipType.entries, relationship) { relationship = it }
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
-                    label = { Text("Note (optional)") },
+                    label = { Text(stringResource(R.string.partner_note_label)) },
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
@@ -313,9 +315,9 @@ private fun PartnerDialog(
             TextButton(
                 onClick = { onSave(name, anonymous, note, sex, gender, relationship, photoUri, photoRemoved, captureTempFile) },
                 enabled = anonymous || name.isNotBlank(),
-            ) { Text("Save") }
+            ) { Text(stringResource(R.string.action_save)) }
         },
-        dismissButton = { TextButton(onClick = dismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = dismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
