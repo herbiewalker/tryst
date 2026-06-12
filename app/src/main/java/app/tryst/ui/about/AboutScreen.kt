@@ -25,7 +25,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.tryst.R
 import app.tryst.ui.common.adaptiveContentWidth
 
 /**
@@ -53,10 +55,10 @@ fun AboutScreen(onBack: () -> Unit = {}) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("About") },
+                title = { Text(stringResource(R.string.settings_about)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
             )
@@ -72,28 +74,24 @@ fun AboutScreen(onBack: () -> Unit = {}) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Text("Tryst", style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall)
             if (versionName.isNotEmpty()) {
                 Text(
-                    "Version $versionName",
+                    stringResource(R.string.about_version, versionName),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Text(
-                "Tryst is free, open-source software, licensed under the GNU General Public " +
-                    "License v3.0 (GPLv3). You may use, study, share, and modify it; redistributed " +
-                    "versions must also be GPLv3 and ship their source. The full license text is in " +
-                    "the LICENSE file of the source repository.",
+                stringResource(R.string.about_license_body),
                 style = MaterialTheme.typography.bodyMedium,
             )
 
             HorizontalDivider(Modifier.padding(vertical = 4.dp))
 
-            Text("Open-source licenses", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.about_oss_title), style = MaterialTheme.typography.titleMedium)
             Text(
-                "Tryst is built with these open-source components. Each is used under its own " +
-                    "license, all of which are compatible with GPLv3.",
+                stringResource(R.string.about_oss_intro),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
