@@ -207,7 +207,16 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 - Onboarding copy (esp. PIN-loss / no-recovery warning). *(The setup-screen no-recovery warning string
   itself is now in `strings.xml` as `setup_create_subtitle`.)*
 - Finalize **license & distribution** ([DECISIONS.md](DECISIONS.md) O-2); F-Droid metadata if chosen.
-- Security self-review against [THREAT_MODEL.md](THREAT_MODEL.md) (complements the security passes 6–9 below).
+- ~~Security self-review against [THREAT_MODEL.md](THREAT_MODEL.md)~~ **DONE (2026-06-12).** Re-audited
+  every THREAT_MODEL mitigation against live code after this session's broad i18n + ktlint churn — all
+  intact: `FLAG_SECURE`, auto-lock (`TrystApplication` ProcessLifecycleOwner `onStop` + grace window),
+  10-attempt self-wipe (`Vault.MAX_ATTEMPTS`), no `INTERNET`/`allowBackup=false`, **zero** `Log.*` in
+  main, media never to MediaStore, importer MAGIC/version/iteration-bounds + `EncryptedMediaStore.fileFor`
+  Zip-Slip guard. **One LOW finding fixed:** `BackupManager.restoreDatabase` bound row *values* via
+  `ContentValues` but the *column names* came from the untrusted backup JSON straight into the framework's
+  unquoted `INSERT` column list — possible SQL injection on a maliciously-crafted import (no exfil; bounded
+  by AEAD-password + the importer's existing full DB access). Now vetted against a plain-identifier regex
+  (`COLUMN_NAME`). (The heavier 12-pass program's final Pass 12 go/no-go remains, run in a fresh session.)
 
 > Sequencing rationale: security/storage foundations come **before** features so we never
 > retrofit encryption onto plaintext data.

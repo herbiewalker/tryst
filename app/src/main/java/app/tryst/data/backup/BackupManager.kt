@@ -129,16 +129,21 @@ class BackupManager @Inject constructor(
                     val keys = row.keys()
                     while (keys.hasNext()) {
                         val k = keys.next()
-                        if (row.isNull(k)) {
-                            values.putNull(k)
-                            continue
-                        }
-                        when (val v = row.get(k)) {
-                            is Int -> values.put(k, v.toLong())
-                            is Long -> values.put(k, v)
-                            is Double -> values.put(k, v)
-                            is Boolean -> values.put(k, if (v) 1L else 0L)
-                            else -> values.put(k, v.toString())
+                        // Column names come from the untrusted backup JSON, and the framework's
+                        // insert() appends them into the SQL column list unquoted — so reject
+                        // anything that isn't a plain SQL identifier (real columns always match)
+                        // to deny SQL injection via a crafted key. Defence-in-depth: import already
+                        // requires the backup's password (AEAD-authenticated).
+                        if (!COLUMN_NAME.matches(k)) continue
+                        when {
+                            row.isNull(k) -> values.putNull(k)
+                            else -> when (val v = row.get(k)) {
+                                is Int -> values.put(k, v.toLong())
+                                is Long -> values.put(k, v)
+                                is Double -> values.put(k, v)
+                                is Boolean -> values.put(k, if (v) 1L else 0L)
+                                else -> values.put(k, v.toString())
+                            }
                         }
                     }
                     if (table == "media") {
@@ -167,6 +172,10 @@ class BackupManager @Inject constructor(
         val MAGIC = "TRYSTBK1".toByteArray(Charsets.US_ASCII) // 8 bytes
         const val FORMAT_VERSION = 1
         const val SALT_BYTES = 16
+
+        // A plain SQL identifier — used to vet untrusted backup column names before they reach the
+        // framework's (unquoted) INSERT column list.
+        val COLUMN_NAME = Regex("[A-Za-z_][A-Za-z0-9_]*")
 
         // Sane bounds for the file-supplied PBKDF2 iteration count (default is 600k). The upper
         // bound caps key-derivation time so a malicious header can't freeze the app.
