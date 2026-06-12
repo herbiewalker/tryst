@@ -4,6 +4,10 @@
     <!-- ============================================================= -->
     <!-- Shared actions (reused across screens)                        -->
     <!-- ============================================================= -->
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_ok">OK</string>
+    <string name="action_delete">Delete</string>
 
     <!-- ============================================================= -->
     <!-- Bottom / rail navigation (TrystApp)                           -->
@@ -30,4 +34,42 @@
     <string name="lock_use_biometric">Use biometric</string>
     <string name="cd_pin_progress">PIN: %1$d of %2$d digits entered</string>
     <string name="cd_pin_delete">Delete</string>
+
+    <!-- ============================================================= -->
+    <!-- Encounter editor (EncounterEditScreen)                        -->
+    <!-- ============================================================= -->
+    <string name="encounter_title_edit">Edit encounter</string>
+    <string name="encounter_title_new">Log encounter</string>
+    <string name="encounter_field_when">When</string>
+    <string name="encounter_field_duration">Duration (minutes)</string>
+    <string name="encounter_field_partners">Partners</string>
+    <string name="encounter_no_partners">No partners yet — add them in the Partners tab.</string>
+    <string name="encounter_field_protection">Protection</string>
+    <string name="encounter_field_mood">Mood</string>
+    <string name="encounter_orgasms_you">Orgasms — you</string>
+    <string name="encounter_ejaculation">Ejaculation</string>
+    <string name="encounter_ejaculation_n">Ejaculation %1$d</string>
+    <string name="encounter_orgasms_partner">Orgasms — %1$s</string>
+    <string name="encounter_field_positions">Positions</string>
+    <string name="encounter_field_acts_gave">Acts — gave</string>
+    <string name="encounter_field_acts_received">Acts — received</string>
+    <string name="encounter_field_kink">Kink &amp; BDSM</string>
+    <string name="encounter_field_setting">Setting &amp; location</string>
+    <string name="encounter_field_occasion">Occasion</string>
+    <string name="encounter_field_toys">Toys</string>
+    <string name="encounter_field_initiator">Who initiated</string>
+    <string name="encounter_field_rating">Rating</string>
+    <string name="encounter_field_note">Note</string>
+    <string name="encounter_field_photos">Photos</string>
+    <string name="encounter_delete_button">Delete encounter</string>
+    <string name="encounter_delete_title">Delete this encounter?</string>
+    <string name="encounter_delete_message">This can\'t be undone.</string>
+    <string name="encounter_add_photo_camera">Take photo</string>
+    <string name="encounter_add_photo_gallery">Choose from gallery</string>
+    <string name="cd_photo">Photo</string>
+    <string name="cd_remove_photo">Remove photo</string>
+    <string name="cd_add_photo">Add photo</string>
+    <string name="cd_close">Close</string>
+    <string name="cd_stepper_decrease">Decrease</string>
+    <string name="cd_stepper_increase">Increase</string>
 </resources>
