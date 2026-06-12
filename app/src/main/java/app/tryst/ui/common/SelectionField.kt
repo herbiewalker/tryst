@@ -20,7 +20,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import app.tryst.R
 
 /**
  * A labelled multi-select category. Shows the [common] options inline (plus anything already
@@ -54,7 +56,7 @@ fun <T> MultiSelectField(
                     label = { Text(labelOf(option)) },
                 )
             }
-            AssistChip(onClick = { showAll = true }, label = { Text("More…") })
+            AssistChip(onClick = { showAll = true }, label = { Text(stringResource(R.string.action_more)) })
         }
     }
 
@@ -76,7 +78,7 @@ fun <T> MultiSelectField(
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { showAll = false }) { Text("Done") } },
+            confirmButton = { TextButton(onClick = { showAll = false }) { Text(stringResource(R.string.action_done)) } },
         )
     }
 }
@@ -111,7 +113,7 @@ fun <T> SingleSelectField(
                     label = { Text(labelOf(option)) },
                 )
             }
-            AssistChip(onClick = { showAll = true }, label = { Text("More…") })
+            AssistChip(onClick = { showAll = true }, label = { Text(stringResource(R.string.action_more)) })
         }
     }
 
@@ -136,7 +138,7 @@ fun <T> SingleSelectField(
                     }
                 }
             },
-            confirmButton = { TextButton(onClick = { showAll = false }) { Text("Close") } },
+            confirmButton = { TextButton(onClick = { showAll = false }) { Text(stringResource(R.string.action_close)) } },
         )
     }
 }
