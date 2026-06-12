@@ -5,6 +5,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import app.tryst.R
 
 /**
  * First-run PIN creation: enter a 6-digit PIN, then confirm it. On match, sets up the vault.
@@ -15,12 +17,11 @@ fun SetupScreen(viewModel: LockViewModel) {
     var mismatchError by remember { mutableStateOf<String?>(null) }
 
     val confirming = firstPin != null
-    val title = if (confirming) "Confirm your PIN" else "Create a PIN"
-    val subtitle = if (confirming) {
-        "Enter the same 6 digits again."
-    } else {
-        "Choose a 6-digit PIN to lock Tryst. It's separate from your phone's PIN, and can't be recovered if forgotten."
-    }
+    val title = stringResource(if (confirming) R.string.setup_confirm_title else R.string.setup_create_title)
+    val subtitle = stringResource(
+        if (confirming) R.string.setup_confirm_subtitle else R.string.setup_create_subtitle,
+    )
+    val mismatchMessage = stringResource(R.string.setup_pin_mismatch)
 
     PinPad(
         title = title,
@@ -36,7 +37,7 @@ fun SetupScreen(viewModel: LockViewModel) {
                 viewModel.setupPin(entered)
             } else {
                 firstPin = null
-                mismatchError = "PINs didn't match — start over."
+                mismatchError = mismatchMessage
             }
         },
     )

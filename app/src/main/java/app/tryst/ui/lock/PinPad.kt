@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -45,6 +46,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import app.tryst.R
 import app.tryst.ui.common.rememberHaptics
 import kotlin.math.roundToInt
 import kotlin.math.sin
@@ -133,8 +135,9 @@ fun PinPad(
 @Composable
 private fun PinDots(filled: Int, modifier: Modifier = Modifier) {
     // The dots are decorative; expose the entry progress (not the digits) to TalkBack.
+    val progressDesc = stringResource(R.string.cd_pin_progress, filled, PIN_LENGTH)
     Row(
-        modifier.semantics { contentDescription = "PIN: $filled of $PIN_LENGTH digits entered" },
+        modifier.semantics { contentDescription = progressDesc },
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         repeat(PIN_LENGTH) { index ->
@@ -184,7 +187,7 @@ private fun Keypad(
         ) {
             Spacer(Modifier.weight(1f))
             KeyButton("0", enabled, Modifier.weight(1f)) { onDigit('0') }
-            KeyButton("⌫", enabled, Modifier.weight(1f), filled = false, contentDescription = "Delete", onClick = onBackspace)
+            KeyButton("⌫", enabled, Modifier.weight(1f), filled = false, contentDescription = stringResource(R.string.cd_pin_delete), onClick = onBackspace)
         }
     }
 }
