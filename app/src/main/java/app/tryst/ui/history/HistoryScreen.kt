@@ -55,6 +55,8 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -64,6 +66,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tryst.R
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.relation.EncounterWithDetails
@@ -98,15 +101,15 @@ fun HistoryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Trysts") },
+                title = { Text(stringResource(R.string.history_title)) },
                 actions = {
                     IconButton(onClick = { haptics.tick(); calendarMode = !calendarMode }) {
                         // Cross-fade the icon so list/calendar toggle reads as one control changing state.
                         Crossfade(targetState = calendarMode, animationSpec = tween(180), label = "viewToggleIcon") { cal ->
                             if (cal) {
-                                Icon(Icons.AutoMirrored.Filled.List, contentDescription = "List view")
+                                Icon(Icons.AutoMirrored.Filled.List, contentDescription = stringResource(R.string.cd_view_list))
                             } else {
-                                Icon(Icons.Filled.DateRange, contentDescription = "Calendar view")
+                                Icon(Icons.Filled.DateRange, contentDescription = stringResource(R.string.cd_view_calendar))
                             }
                         }
                     }
@@ -123,7 +126,7 @@ fun HistoryScreen(
                         animatedVisibilityScope = animatedScope,
                     ),
                 ) {
-                    Icon(Icons.Filled.Add, contentDescription = "Log encounter")
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.cd_log_encounter))
                 }
             }
         },
@@ -224,7 +227,7 @@ private fun EncounterCard(
                         contentDescription = primaryActLabel,
                     )
                     Text(
-                        text = if (item.partners.isEmpty()) "Solo" else item.partners.joinToString(", ") { Format.partnerName(it) },
+                        text = if (item.partners.isEmpty()) stringResource(R.string.history_solo) else item.partners.joinToString(", ") { Format.partnerName(it) },
                         style = MaterialTheme.typography.titleMedium,
                     )
                 }
@@ -236,13 +239,15 @@ private fun EncounterCard(
 
                 // Each pill carries an explicit spoken label so the ★ / ✨ glyphs read meaningfully.
                 val pills = buildList {
-                    e.satisfactionRating?.let { add("★ $it" to "Rating $it out of 5") }
-                    e.durationMin?.let { add("$it min" to null) }
+                    e.satisfactionRating?.let { add("★ $it" to stringResource(R.string.history_rating_cd, it)) }
+                    e.durationMin?.let { add(stringResource(R.string.history_pill_minutes, it) to null) }
                     e.mood?.let { add(it.label to null) }
                     val orgasms = (e.orgasmCountSelf ?: 0) +
                         (e.partnerOrgasms?.values?.sum() ?: 0) +
                         (e.orgasmCountPartner ?: 0)
-                    if (orgasms > 0) add("✨ $orgasms" to "$orgasms orgasms")
+                    if (orgasms > 0) {
+                        add("✨ $orgasms" to pluralStringResource(R.plurals.cd_orgasm_count, orgasms, orgasms))
+                    }
                 }
                 if (pills.isNotEmpty()) {
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -263,7 +268,7 @@ private fun EncounterCard(
             item.media.firstOrNull()?.let { media ->
                 DecodedImage(
                     model = media.id,
-                    contentDescription = "Photo",
+                    contentDescription = stringResource(R.string.cd_photo),
                     modifier = Modifier
                         .padding(start = 10.dp)
                         .size(48.dp)
@@ -385,7 +390,7 @@ private fun CalendarView(
             if (dayItems.isEmpty()) {
                 item(key = "day-empty") {
                     Text(
-                        "No trysts on this day.",
+                        stringResource(R.string.history_no_trysts_day),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.animateItem(),
@@ -416,7 +421,7 @@ private fun MonthHeader(month: YearMonth, onPrev: () -> Unit, onNext: () -> Unit
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onPrev) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = "Previous month")
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, contentDescription = stringResource(R.string.cd_prev_month))
         }
         Text(
             text = "${month.month.getDisplayName(TextStyle.FULL, locale)} ${month.year}",
@@ -424,7 +429,7 @@ private fun MonthHeader(month: YearMonth, onPrev: () -> Unit, onNext: () -> Unit
             fontWeight = FontWeight.SemiBold,
         )
         IconButton(onClick = onNext) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = "Next month")
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = stringResource(R.string.cd_next_month))
         }
     }
 }
@@ -511,12 +516,14 @@ private fun DayCell(
     // The day number + entry icon are visual only; give TalkBack a full spoken label and state.
     val locale = LocalConfiguration.current.locales[0]
     val isSelectedDay = selected
+    val todaySuffix = stringResource(R.string.cd_day_today)
+    val hasTrystsSuffix = stringResource(R.string.cd_day_has_trysts)
     val cellDescription = buildString {
         append(date.month.getDisplayName(TextStyle.FULL, locale))
         append(' ')
         append(date.dayOfMonth)
-        if (isToday) append(", today")
-        if (icon != null) append(", has trysts")
+        if (isToday) { append(", "); append(todaySuffix) }
+        if (icon != null) { append(", "); append(hasTrystsSuffix) }
     }
     Surface(
         onClick = onClick,
@@ -556,7 +563,7 @@ private fun DayCell(
 private fun EmptyState(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text(
-            "No trysts yet.\nTap + to log one.",
+            stringResource(R.string.history_empty),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
