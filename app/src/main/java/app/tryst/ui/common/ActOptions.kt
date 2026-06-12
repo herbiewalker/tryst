@@ -11,8 +11,14 @@ object ActOptions {
 
     /** Built-in act ids shown inline before any selection (the curated "common" set). */
     private val COMMON_IDS = setOf(
-        Practice.KISSING, Practice.ORAL, Practice.SIXTY_NINE, Practice.VAGINAL,
-        Practice.ANAL, Practice.MANUAL, Practice.FINGERING, Practice.MUTUAL_MASTURBATION,
+        Practice.KISSING,
+        Practice.ORAL,
+        Practice.SIXTY_NINE,
+        Practice.VAGINAL,
+        Practice.ANAL,
+        Practice.MANUAL,
+        Practice.FINGERING,
+        Practice.MUTUAL_MASTURBATION,
     ).map { it.name }.toSet()
 
     val builtIns: List<ActOption> =
@@ -20,6 +26,5 @@ object ActOptions {
 
     val common: List<ActOption> = builtIns.filter { it.id in COMMON_IDS }
 
-    fun custom(rows: List<ActEntity>): List<ActOption> =
-        rows.map { ActOption(CUSTOM_PREFIX + it.id, it.label) }
+    fun custom(rows: List<ActEntity>): List<ActOption> = rows.map { ActOption(CUSTOM_PREFIX + it.id, it.label) }
 }

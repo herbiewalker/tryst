@@ -14,6 +14,7 @@ import javax.crypto.Cipher
  */
 object BiometricPromptHelper {
 
+    @Suppress("LongParameterList") // a biometric callback API: title/subtitle + 3 result callbacks.
     fun authenticate(
         activity: FragmentActivity,
         cipher: Cipher,

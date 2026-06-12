@@ -13,10 +13,10 @@ import app.tryst.core.session.LockState
 import app.tryst.core.session.SessionManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import javax.crypto.Cipher
 import javax.inject.Inject
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class LockViewModel @Inject constructor(
@@ -87,15 +87,14 @@ class LockViewModel @Inject constructor(
     }
 
     /** Store the DEK under a freshly authenticated cipher. Returns true on success. */
-    fun enableBiometric(authenticatedCipher: Cipher): Boolean =
-        try {
-            session.enableBiometric(authenticatedCipher)
-            error = null
-            true
-        } catch (e: Exception) {
-            error = context.getString(R.string.lock_error_biometric_enable_failed, e.message)
-            false
-        }
+    fun enableBiometric(authenticatedCipher: Cipher): Boolean = try {
+        session.enableBiometric(authenticatedCipher)
+        error = null
+        true
+    } catch (e: Exception) {
+        error = context.getString(R.string.lock_error_biometric_enable_failed, e.message)
+        false
+    }
 
     fun disableBiometric() = session.disableBiometric()
 

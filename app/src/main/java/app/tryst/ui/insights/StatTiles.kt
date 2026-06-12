@@ -48,9 +48,11 @@ object StatTiles {
 
     private fun weeks(w: Int): String = if (w == 1) "1 wk" else "$w wks"
 
-    private fun decimal(value: Double): String =
-        if (value == value.toLong().toDouble()) value.toLong().toString()
-        else String.format(Locale.getDefault(), "%.1f", value)
+    private fun decimal(value: Double): String = if (value == value.toLong().toDouble()) {
+        value.toLong().toString()
+    } else {
+        String.format(Locale.getDefault(), "%.1f", value)
+    }
 
     private fun duration(minutes: Int): String {
         val h = minutes / 60

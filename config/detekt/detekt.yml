@@ -1,0 +1,44 @@
+# Detekt config for Tryst — overrides only (buildUponDefaultConfig = true merges these onto the
+# stock ruleset). Tuned so the gate catches real smells without fighting idiomatic Jetpack Compose
+# (PascalCase @Composable functions, long screen composables with many params, pervasive dp/sp
+# literals). Line-length is delegated to ktlint/.editorconfig to avoid double-reporting.
+
+naming:
+  FunctionNaming:
+    # @Composable functions are PascalCase by Compose convention.
+    ignoreAnnotated: ['Composable']
+
+complexity:
+  LongMethod:
+    ignoreAnnotated: ['Composable']
+  LongParameterList:
+    ignoreAnnotated: ['Composable']
+  CyclomaticComplexMethod:
+    ignoreAnnotated: ['Composable']
+  NestedBlockDepth:
+    ignoreAnnotated: ['Composable']
+  # DAOs, Room type Converters, and ViewModels (one handler per UI event) are legitimately
+  # function-heavy by design — this rule is pure noise for them.
+  TooManyFunctions:
+    active: false
+
+exceptions:
+  # The UI/data layer deliberately catches broad Exception and surfaces only a user-facing
+  # message to ephemeral state (never logged, never leaked) — validated in pre-release Pass 7.
+  TooGenericExceptionCaught:
+    active: false
+  # Same deliberate pattern: crypto/IO exception details are intentionally not surfaced.
+  SwallowedException:
+    active: false
+
+style:
+  # dp/sp/weight/alpha/colour literals are meaningful inline throughout the UI layer.
+  MagicNumber:
+    active: false
+  # Delegated to ktlint (.editorconfig max_line_length) to avoid duplicate reports.
+  MaxLineLength:
+    active: false
+  # Early-return parsing/guard style is idiomatic and readable here.
+  ReturnCount:
+    max: 6
+    excludeGuardClauses: true

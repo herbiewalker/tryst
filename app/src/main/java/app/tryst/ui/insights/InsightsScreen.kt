@@ -6,12 +6,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -52,12 +52,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
 import app.tryst.core.prefs.ChartStyle
-import app.tryst.ui.achievements.AchievementsTeaser
-import app.tryst.ui.common.adaptiveContentWidth
-import app.tryst.ui.common.rememberHaptics
 import app.tryst.data.stats.Bucket
 import app.tryst.data.stats.Insights
 import app.tryst.data.stats.Tally
+import app.tryst.ui.achievements.AchievementsTeaser
+import app.tryst.ui.common.adaptiveContentWidth
+import app.tryst.ui.common.rememberHaptics
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

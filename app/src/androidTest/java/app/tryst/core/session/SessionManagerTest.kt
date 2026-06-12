@@ -23,8 +23,7 @@ class SessionManagerTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private val pin = "246810"
 
-    private fun newManager() =
-        SessionManager(context, Vault(context), TrystDatabaseFactory(context), BiometricVault(context))
+    private fun newManager() = SessionManager(context, Vault(context), TrystDatabaseFactory(context), BiometricVault(context))
 
     @Before
     fun setUp() {

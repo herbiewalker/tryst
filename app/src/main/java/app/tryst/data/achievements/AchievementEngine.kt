@@ -52,8 +52,7 @@ data class AchievementStatus(
     val progress: Float get() = (current.toFloat() / def.target).coerceIn(0f, 1f)
 
     /** Unlocked within the recent window relative to [today] → worth a "New" flag. */
-    fun isNew(today: LocalDate, windowDays: Long = RECENT_WINDOW_DAYS): Boolean =
-        unlockedAt != null && ChronoUnit.DAYS.between(unlockedAt, today) in 0..windowDays
+    fun isNew(today: LocalDate, windowDays: Long = RECENT_WINDOW_DAYS): Boolean = unlockedAt != null && ChronoUnit.DAYS.between(unlockedAt, today) in 0..windowDays
 }
 
 /** Compact rollup for the Insights teaser card. */
@@ -76,14 +75,16 @@ private const val RECENT_WINDOW_DAYS = 14L
  */
 object AchievementEngine {
 
+    // `today` is unused by the (purely historical) evaluation but kept for API symmetry with
+    // summarize() and so tests can pin a deterministic reference date.
+    @Suppress("UnusedParameter")
     fun evaluate(
         encounters: List<EncounterWithDetails>,
         zone: ZoneId = ZoneId.systemDefault(),
         today: LocalDate = LocalDate.now(zone),
     ): List<AchievementStatus> {
         val sorted = encounters.sortedBy { it.encounter.startAt }
-        fun dateOf(e: EncounterWithDetails): LocalDate =
-            Instant.ofEpochMilli(e.encounter.startAt).atZone(zone).toLocalDate()
+        fun dateOf(e: EncounterWithDetails): LocalDate = Instant.ofEpochMilli(e.encounter.startAt).atZone(zone).toLocalDate()
 
         return Achievements.catalog.map { def ->
             val (current, unlockedAt) = when (val rule = def.rule) {

@@ -39,8 +39,10 @@ object InsightSections {
         InsightSection(PEOPLE, "People") { it.topPartners.isNotEmpty() },
         InsightSection(ACTS_POSITIONS, "What you did") { it.topActs.isNotEmpty() || it.topPositions.isNotEmpty() },
         InsightSection(VIBE, "Vibe & context") {
-            it.topMoods.isNotEmpty() || it.topKinks.isNotEmpty() ||
-                it.topSettings.isNotEmpty() || it.topOccasions.isNotEmpty()
+            it.topMoods.isNotEmpty() ||
+                it.topKinks.isNotEmpty() ||
+                it.topSettings.isNotEmpty() ||
+                it.topOccasions.isNotEmpty()
         },
         InsightSection(INITIATOR, "Initiator") { it.topInitiators.isNotEmpty() },
         InsightSection(ORGASMS, "Orgasms") {

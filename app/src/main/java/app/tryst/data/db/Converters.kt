@@ -21,66 +21,61 @@ import app.tryst.data.db.entity.ToyType
 class Converters {
 
     @TypeConverter fun initiatorToString(value: Initiator?): String? = value?.name
-    @TypeConverter fun stringToInitiator(value: String?): Initiator? =
-        value?.let { runCatching { Initiator.valueOf(it) }.getOrNull() }
+
+    @TypeConverter fun stringToInitiator(value: String?): Initiator? = value?.let { runCatching { Initiator.valueOf(it) }.getOrNull() }
 
     @TypeConverter fun moodToString(value: Mood?): String? = value?.name
-    @TypeConverter fun stringToMood(value: String?): Mood? =
-        value?.let { runCatching { Mood.valueOf(it) }.getOrNull() }
+
+    @TypeConverter fun stringToMood(value: String?): Mood? = value?.let { runCatching { Mood.valueOf(it) }.getOrNull() }
 
     @TypeConverter fun orgasmToString(value: Orgasm?): String? = value?.name
-    @TypeConverter fun stringToOrgasm(value: String?): Orgasm? =
-        value?.let { runCatching { Orgasm.valueOf(it) }.getOrNull() }
+
+    @TypeConverter fun stringToOrgasm(value: String?): Orgasm? = value?.let { runCatching { Orgasm.valueOf(it) }.getOrNull() }
 
     @TypeConverter fun sexToString(value: Sex?): String? = value?.name
-    @TypeConverter fun stringToSex(value: String?): Sex? =
-        value?.let { runCatching { Sex.valueOf(it) }.getOrNull() }
+
+    @TypeConverter fun stringToSex(value: String?): Sex? = value?.let { runCatching { Sex.valueOf(it) }.getOrNull() }
 
     @TypeConverter fun genderToString(value: Gender?): String? = value?.name
-    @TypeConverter fun stringToGender(value: String?): Gender? =
-        value?.let { runCatching { Gender.valueOf(it) }.getOrNull() }
+
+    @TypeConverter fun stringToGender(value: String?): Gender? = value?.let { runCatching { Gender.valueOf(it) }.getOrNull() }
 
     @TypeConverter fun relationshipToString(value: RelationshipType?): String? = value?.name
-    @TypeConverter fun stringToRelationship(value: String?): RelationshipType? =
-        value?.let { runCatching { RelationshipType.valueOf(it) }.getOrNull() }
+
+    @TypeConverter fun stringToRelationship(value: String?): RelationshipType? = value?.let { runCatching { RelationshipType.valueOf(it) }.getOrNull() }
 
     @TypeConverter
     fun protectionSetToString(value: Set<Protection>): String = value.joinToString(SEP) { it.name }
 
     @TypeConverter
-    fun stringToProtectionSet(value: String): Set<Protection> =
-        value.split(SEP).mapNotNull { runCatching { Protection.valueOf(it) }.getOrNull() }.toSet()
+    fun stringToProtectionSet(value: String): Set<Protection> = value.split(SEP).mapNotNull { runCatching { Protection.valueOf(it) }.getOrNull() }.toSet()
 
     @TypeConverter
-    fun ejaculationMapToString(value: Map<Int, EjaculationLocation>?): String? =
-        value?.entries?.joinToString(SEP) { "${it.key}=${it.value.name}" }
+    fun ejaculationMapToString(value: Map<Int, EjaculationLocation>?): String? = value?.entries?.joinToString(SEP) { "${it.key}=${it.value.name}" }
 
     @TypeConverter
-    fun stringToEjaculationMap(value: String?): Map<Int, EjaculationLocation>? =
-        value?.takeIf { it.isNotBlank() }
-            ?.split(SEP)
-            ?.mapNotNull { token ->
-                val parts = token.split("=")
-                val idx = parts.getOrNull(0)?.toIntOrNull() ?: return@mapNotNull null
-                val loc = parts.getOrNull(1)
-                    ?.let { runCatching { EjaculationLocation.valueOf(it) }.getOrNull() }
-                    ?: return@mapNotNull null
-                idx to loc
-            }?.toMap()
+    fun stringToEjaculationMap(value: String?): Map<Int, EjaculationLocation>? = value?.takeIf { it.isNotBlank() }
+        ?.split(SEP)
+        ?.mapNotNull { token ->
+            val parts = token.split("=")
+            val idx = parts.getOrNull(0)?.toIntOrNull() ?: return@mapNotNull null
+            val loc = parts.getOrNull(1)
+                ?.let { runCatching { EjaculationLocation.valueOf(it) }.getOrNull() }
+                ?: return@mapNotNull null
+            idx to loc
+        }?.toMap()
 
     @TypeConverter
-    fun partnerOrgasmsToString(value: Map<String, Int>?): String? =
-        value?.entries?.joinToString(SEP) { "${it.key}=${it.value}" }
+    fun partnerOrgasmsToString(value: Map<String, Int>?): String? = value?.entries?.joinToString(SEP) { "${it.key}=${it.value}" }
 
     @TypeConverter
-    fun stringToPartnerOrgasms(value: String?): Map<String, Int>? =
-        value?.takeIf { it.isNotBlank() }
-            ?.split(SEP)
-            ?.mapNotNull { token ->
-                val parts = token.split("=")
-                val count = parts.getOrNull(1)?.toIntOrNull() ?: return@mapNotNull null
-                (parts.getOrNull(0) ?: return@mapNotNull null) to count
-            }?.toMap()
+    fun stringToPartnerOrgasms(value: String?): Map<String, Int>? = value?.takeIf { it.isNotBlank() }
+        ?.split(SEP)
+        ?.mapNotNull { token ->
+            val parts = token.split("=")
+            val count = parts.getOrNull(1)?.toIntOrNull() ?: return@mapNotNull null
+            (parts.getOrNull(0) ?: return@mapNotNull null) to count
+        }?.toMap()
 
     @TypeConverter
     fun kinkSetToString(value: Set<Kink>?): String? = value?.joinToString(SEP) { it.name }
@@ -118,9 +113,11 @@ class Converters {
         else -> value.split(SEP).toSet()
     }
 
-    private inline fun <T> String.toEnumSet(parse: (String) -> T): Set<T> =
-        if (isBlank()) emptySet()
-        else split(SEP).mapNotNull { runCatching { parse(it) }.getOrNull() }.toSet()
+    private inline fun <T> String.toEnumSet(parse: (String) -> T): Set<T> = if (isBlank()) {
+        emptySet()
+    } else {
+        split(SEP).mapNotNull { runCatching { parse(it) }.getOrNull() }.toSet()
+    }
 
     private companion object {
         const val SEP = ","
