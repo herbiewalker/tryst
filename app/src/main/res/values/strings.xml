@@ -72,4 +72,44 @@
     <string name="cd_close">Close</string>
     <string name="cd_stepper_decrease">Decrease</string>
     <string name="cd_stepper_increase">Increase</string>
+
+    <!-- ============================================================= -->
+    <!-- History / Trysts list &amp; calendar (HistoryScreen)          -->
+    <!-- ============================================================= -->
+    <string name="history_title">Trysts</string>
+    <string name="history_solo">Solo</string>
+    <string name="history_pill_minutes">%1$d min</string>
+    <string name="history_rating_cd">Rating %1$d out of 5</string>
+    <string name="history_no_trysts_day">No trysts on this day.</string>
+    <string name="history_empty">No trysts yet.\nTap + to log one.</string>
+    <string name="cd_view_list">List view</string>
+    <string name="cd_view_calendar">Calendar view</string>
+    <string name="cd_log_encounter">Log encounter</string>
+    <string name="cd_prev_month">Previous month</string>
+    <string name="cd_next_month">Next month</string>
+    <string name="cd_day_today">today</string>
+    <string name="cd_day_has_trysts">has trysts</string>
+    <plurals name="cd_orgasm_count">
+        <item quantity="one">%1$d orgasm</item>
+        <item quantity="other">%1$d orgasms</item>
+    </plurals>
+
+    <!-- ============================================================= -->
+    <!-- Partners (PartnersScreen)                                     -->
+    <!-- ============================================================= -->
+    <string name="partners_title">Partners</string>
+    <string name="partners_empty">No partners yet.\nTap + to add one.</string>
+    <string name="partners_archive">Archive</string>
+    <string name="partner_add">Add partner</string>
+    <string name="partner_dialog_edit_title">Edit partner</string>
+    <string name="cd_partner_photo">Partner photo</string>
+    <string name="partner_change_photo">Change photo</string>
+    <string name="partner_add_photo">Add photo</string>
+    <string name="partner_remove_photo">Remove</string>
+    <string name="partner_name_label">Name</string>
+    <string name="partner_anonymous">"  Anonymous"</string>
+    <string name="partner_sex">Sex</string>
+    <string name="partner_gender">Gender</string>
+    <string name="partner_relationship">Relationship</string>
+    <string name="partner_note_label">Note (optional)</string>
 </resources>
