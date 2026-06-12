@@ -60,6 +60,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -69,6 +70,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tryst.R
 import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Kink
@@ -137,9 +139,9 @@ fun EncounterEditScreen(
         },
         topBar = {
             TopAppBar(
-                title = { Text(if (viewModel.isEditing) "Edit encounter" else "Log encounter") },
-                navigationIcon = { TextButton(onClick = onClose) { Text("Cancel") } },
-                actions = { TextButton(onClick = { haptics.confirm(); viewModel.save(onClose) }) { Text("Save") } },
+                title = { Text(stringResource(if (viewModel.isEditing) R.string.encounter_title_edit else R.string.encounter_title_new)) },
+                navigationIcon = { TextButton(onClick = onClose) { Text(stringResource(R.string.action_cancel)) } },
+                actions = { TextButton(onClick = { haptics.confirm(); viewModel.save(onClose) }) { Text(stringResource(R.string.action_save)) } },
             )
         },
     ) { padding ->
@@ -162,7 +164,7 @@ fun EncounterEditScreen(
         ) {
             Spacer(Modifier.height(4.dp))
 
-            Field("When") {
+            Field(stringResource(R.string.encounter_field_when)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = { showDatePicker = true }) {
                         Text(Format.date(viewModel.startAt))
@@ -173,7 +175,7 @@ fun EncounterEditScreen(
                 }
             }
 
-            Field("Duration (minutes)") {
+            Field(stringResource(R.string.encounter_field_duration)) {
                 OutlinedTextField(
                     value = viewModel.durationText,
                     onValueChange = { viewModel.durationText = it.filter(Char::isDigit) },
@@ -183,10 +185,10 @@ fun EncounterEditScreen(
                 )
             }
 
-            Field("Partners") {
+            Field(stringResource(R.string.encounter_field_partners)) {
                 if (partners.isEmpty()) {
                     Text(
-                        "No partners yet — add them in the Partners tab.",
+                        stringResource(R.string.encounter_no_partners),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -201,7 +203,7 @@ fun EncounterEditScreen(
             }
 
             MultiSelectField(
-                label = "Protection",
+                label = stringResource(R.string.encounter_field_protection),
                 all = Protection.entries,
                 common = CommonOptions.PROTECTION,
                 selected = viewModel.protection,
@@ -210,7 +212,7 @@ fun EncounterEditScreen(
             )
 
             SingleSelectField(
-                label = "Mood",
+                label = stringResource(R.string.encounter_field_mood),
                 all = Mood.entries,
                 common = CommonOptions.MOOD,
                 selected = viewModel.mood,
@@ -218,14 +220,18 @@ fun EncounterEditScreen(
                 onSelect = { viewModel.mood = it },
             )
 
-            Field("Orgasms — you") {
+            Field(stringResource(R.string.encounter_orgasms_you)) {
                 Stepper(value = viewModel.orgasmCountSelf, onChange = { viewModel.setSelfOrgasms(it) })
             }
 
             // One ejaculation location per orgasm you had.
             repeat(viewModel.orgasmCountSelf) { i ->
                 SingleSelectField(
-                    label = if (viewModel.orgasmCountSelf > 1) "Ejaculation ${i + 1}" else "Ejaculation",
+                    label = if (viewModel.orgasmCountSelf > 1) {
+                        stringResource(R.string.encounter_ejaculation_n, i + 1)
+                    } else {
+                        stringResource(R.string.encounter_ejaculation)
+                    },
                     all = EjaculationLocation.entries,
                     common = CommonOptions.EJACULATION,
                     selected = viewModel.ejaculations[i],
@@ -239,7 +245,7 @@ fun EncounterEditScreen(
                 .filter { it.id in viewModel.selectedPartnerIds }
                 .sortedBy { Format.partnerName(it).lowercase() }
                 .forEach { partner ->
-                    Field("Orgasms — ${Format.partnerName(partner)}") {
+                    Field(stringResource(R.string.encounter_orgasms_partner, Format.partnerName(partner))) {
                         Stepper(
                             value = viewModel.partnerOrgasms[partner.id] ?: 0,
                             onChange = { viewModel.setPartnerOrgasms(partner.id, it) },
@@ -249,7 +255,7 @@ fun EncounterEditScreen(
 
             val positionOptions = PositionOptions.builtIns + PositionOptions.custom(customPositions)
             MultiSelectField(
-                label = "Positions",
+                label = stringResource(R.string.encounter_field_positions),
                 all = positionOptions,
                 common = PositionOptions.common,
                 selected = positionOptions.filter { it.id in viewModel.selectedPositionIds }.toSet(),
@@ -259,7 +265,7 @@ fun EncounterEditScreen(
 
             val actOptions = ActOptions.builtIns + ActOptions.custom(customActs)
             MultiSelectField(
-                label = "Acts — gave",
+                label = stringResource(R.string.encounter_field_acts_gave),
                 all = actOptions,
                 common = ActOptions.common,
                 selected = actOptions.filter { it.id in viewModel.practicesPerformed }.toSet(),
@@ -268,7 +274,7 @@ fun EncounterEditScreen(
             )
 
             MultiSelectField(
-                label = "Acts — received",
+                label = stringResource(R.string.encounter_field_acts_received),
                 all = actOptions,
                 common = ActOptions.common,
                 selected = actOptions.filter { it.id in viewModel.practicesReceived }.toSet(),
@@ -277,7 +283,7 @@ fun EncounterEditScreen(
             )
 
             MultiSelectField(
-                label = "Kink & BDSM",
+                label = stringResource(R.string.encounter_field_kink),
                 all = Kink.entries,
                 common = CommonOptions.KINK,
                 selected = viewModel.kinks,
@@ -286,7 +292,7 @@ fun EncounterEditScreen(
             )
 
             MultiSelectField(
-                label = "Setting & location",
+                label = stringResource(R.string.encounter_field_setting),
                 all = Setting.entries,
                 common = CommonOptions.SETTING,
                 selected = viewModel.contexts,
@@ -295,7 +301,7 @@ fun EncounterEditScreen(
             )
 
             MultiSelectField(
-                label = "Occasion",
+                label = stringResource(R.string.encounter_field_occasion),
                 all = Occasion.entries,
                 common = CommonOptions.OCCASION,
                 selected = viewModel.occasions,
@@ -304,7 +310,7 @@ fun EncounterEditScreen(
             )
 
             MultiSelectField(
-                label = "Toys",
+                label = stringResource(R.string.encounter_field_toys),
                 all = ToyType.entries,
                 common = CommonOptions.TOY,
                 selected = viewModel.toys,
@@ -312,7 +318,7 @@ fun EncounterEditScreen(
                 onToggle = { viewModel.toggleToy(it) },
             )
 
-            Field("Who initiated") {
+            Field(stringResource(R.string.encounter_field_initiator)) {
                 SingleSelectChips(
                     options = Initiator.entries,
                     selected = viewModel.initiator,
@@ -321,7 +327,7 @@ fun EncounterEditScreen(
                 )
             }
 
-            Field("Rating") {
+            Field(stringResource(R.string.encounter_field_rating)) {
                 SingleSelectChips(
                     options = (1..5).toList(),
                     selected = viewModel.rating,
@@ -330,7 +336,7 @@ fun EncounterEditScreen(
                 )
             }
 
-            Field("Note") {
+            Field(stringResource(R.string.encounter_field_note)) {
                 OutlinedTextField(
                     value = viewModel.note,
                     onValueChange = { viewModel.note = it },
@@ -340,7 +346,7 @@ fun EncounterEditScreen(
                 )
             }
 
-            Field("Photos") {
+            Field(stringResource(R.string.encounter_field_photos)) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -371,7 +377,7 @@ fun EncounterEditScreen(
                 OutlinedButton(
                     onClick = { showDeleteConfirm = true },
                     modifier = Modifier.fillMaxWidth(),
-                ) { Text("Delete encounter") }
+                ) { Text(stringResource(R.string.encounter_delete_button)) }
             }
 
             Spacer(Modifier.height(24.dp))
@@ -387,9 +393,9 @@ fun EncounterEditScreen(
                 TextButton(onClick = {
                     state.selectedDateMillis?.let { viewModel.startAt = combineDate(viewModel.startAt, it) }
                     showDatePicker = false
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.action_ok)) }
             },
-            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { showDatePicker = false }) { Text(stringResource(R.string.action_cancel)) } },
         ) { DatePicker(state = state) }
     }
 
@@ -402,9 +408,9 @@ fun EncounterEditScreen(
                 TextButton(onClick = {
                     viewModel.startAt = combineTime(viewModel.startAt, state.hour, state.minute)
                     showTimePicker = false
-                }) { Text("OK") }
+                }) { Text(stringResource(R.string.action_ok)) }
             },
-            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { showTimePicker = false }) { Text(stringResource(R.string.action_cancel)) } },
             text = { TimePicker(state = state) },
         )
     }
@@ -412,16 +418,16 @@ fun EncounterEditScreen(
     if (showDeleteConfirm) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirm = false },
-            title = { Text("Delete this encounter?") },
-            text = { Text("This can't be undone.") },
+            title = { Text(stringResource(R.string.encounter_delete_title)) },
+            text = { Text(stringResource(R.string.encounter_delete_message)) },
             confirmButton = {
                 TextButton(onClick = {
                     haptics.reject()
                     showDeleteConfirm = false
                     viewModel.delete(onClose)
-                }) { Text("Delete") }
+                }) { Text(stringResource(R.string.action_delete)) }
             },
-            dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
 
@@ -433,12 +439,12 @@ fun EncounterEditScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .clickable(onClickLabel = "Close") { viewer = null },
+                    .clickable(onClickLabel = stringResource(R.string.cd_close)) { viewer = null },
                 contentAlignment = Alignment.Center,
             ) {
                 DecodedImage(
                     model = v.key,
-                    contentDescription = "Photo",
+                    contentDescription = stringResource(R.string.cd_photo),
                     modifier = Modifier.fillMaxWidth(),
                     contentScale = ContentScale.Fit,
                     load = v.load,
@@ -459,6 +465,8 @@ private fun Field(label: String, content: @Composable () -> Unit) {
 @Composable
 private fun Stepper(value: Int, onChange: (Int) -> Unit, min: Int = 0, max: Int = 20) {
     val haptics = rememberHaptics()
+    val decreaseDesc = stringResource(R.string.cd_stepper_decrease)
+    val increaseDesc = stringResource(R.string.cd_stepper_increase)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -466,7 +474,7 @@ private fun Stepper(value: Int, onChange: (Int) -> Unit, min: Int = 0, max: Int 
         OutlinedButton(
             onClick = { if (value > min) { haptics.tick(); onChange(value - 1) } },
             enabled = value > min,
-            modifier = Modifier.semantics { contentDescription = "Decrease" },
+            modifier = Modifier.semantics { contentDescription = decreaseDesc },
         ) { Text("−") }
         // Roll the number up when it grows and down when it shrinks.
         AnimatedContent(
@@ -485,7 +493,7 @@ private fun Stepper(value: Int, onChange: (Int) -> Unit, min: Int = 0, max: Int 
         OutlinedButton(
             onClick = { if (value < max) { haptics.tick(); onChange(value + 1) } },
             enabled = value < max,
-            modifier = Modifier.semantics { contentDescription = "Increase" },
+            modifier = Modifier.semantics { contentDescription = increaseDesc },
         ) { Text("+") }
     }
 }
@@ -518,10 +526,11 @@ private fun PhotoThumb(
     onClick: () -> Unit,
     onRemove: () -> Unit,
 ) {
+    val removeDesc = stringResource(R.string.cd_remove_photo)
     Box(modifier = Modifier.size(84.dp)) {
         DecodedImage(
             model = key,
-            contentDescription = "Photo",
+            contentDescription = stringResource(R.string.cd_photo),
             modifier = Modifier
                 .fillMaxSize()
                 .clip(RoundedCornerShape(12.dp))
@@ -536,7 +545,7 @@ private fun PhotoThumb(
                 .minimumInteractiveComponentSize()
                 .clip(CircleShape)
                 .clickable(onClick = onRemove, role = Role.Button)
-                .semantics { contentDescription = "Remove photo" },
+                .semantics { contentDescription = removeDesc },
             contentAlignment = Alignment.Center,
         ) {
             Box(
@@ -555,6 +564,7 @@ private fun PhotoThumb(
 @Composable
 private fun AddPhotoTile(onCamera: () -> Unit, onGallery: () -> Unit) {
     var menuOpen by remember { mutableStateOf(false) }
+    val addPhotoDesc = stringResource(R.string.cd_add_photo)
     Box {
         Box(
             modifier = Modifier
@@ -562,7 +572,7 @@ private fun AddPhotoTile(onCamera: () -> Unit, onGallery: () -> Unit) {
                 .clip(RoundedCornerShape(12.dp))
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .clickable(role = Role.Button) { menuOpen = true }
-                .semantics { contentDescription = "Add photo" },
+                .semantics { contentDescription = addPhotoDesc },
             contentAlignment = Alignment.Center,
         ) {
             Text(
@@ -573,11 +583,11 @@ private fun AddPhotoTile(onCamera: () -> Unit, onGallery: () -> Unit) {
         }
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
             DropdownMenuItem(
-                text = { Text("Take photo") },
+                text = { Text(stringResource(R.string.encounter_add_photo_camera)) },
                 onClick = { menuOpen = false; onCamera() },
             )
             DropdownMenuItem(
-                text = { Text("Choose from gallery") },
+                text = { Text(stringResource(R.string.encounter_add_photo_gallery)) },
                 onClick = { menuOpen = false; onGallery() },
             )
         }
