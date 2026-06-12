@@ -180,4 +180,59 @@
     <string name="custom_positions_desc">Custom positions appear alongside the built-in ones when logging a tryst.</string>
     <string name="custom_positions_add_label">Add a position</string>
     <string name="custom_positions_empty">No custom positions yet.</string>
+
+    <!-- ============================================================= -->
+    <!-- Insights (InsightsScreen, InsightsCharts)                     -->
+    <!-- Note: chart data labels (Tally/Bucket, incl. "You"/"Partners"/ -->
+    <!-- "Other") and the StatTiles/InsightSections catalogs are       -->
+    <!-- deliberately NOT extracted — they are TypeColors identity keys -->
+    <!-- / plain-data display names (deferred Localization milestone).  -->
+    <!-- ============================================================= -->
+    <string name="insights_title">Insights</string>
+    <string name="cd_back_to_settings">Back to Settings</string>
+    <string name="cd_customize">Customize</string>
+    <string name="insights_reset">Reset to default layout</string>
+    <string name="insights_sections_header">Sections</string>
+    <string name="insights_sections_desc">Drag to reorder. Tap the eye to show or hide a section, and pick its chart style.</string>
+    <string name="insights_overview_header">Overview stats</string>
+    <string name="insights_stats_desc">Drag to reorder. Tap the eye to show or hide a stat on the overview.</string>
+    <string name="insights_empty">No insights yet.\nLog a few trysts to see your stats.</string>
+    <string name="cd_drag_reorder">Drag to reorder</string>
+    <string name="cd_show">Show</string>
+    <string name="cd_hide">Hide</string>
+    <string name="chart_style_bars">Bars</string>
+    <string name="chart_style_line">Line</string>
+    <string name="chart_style_donut">Donut</string>
+    <string name="cd_trend_chart_prefix">"Trend chart. "</string>
+    <!-- Sub-chart section headings (Text labels only, not color keys) -->
+    <string name="insights_sub_per_month">Per month</string>
+    <string name="insights_sub_by_weekday">By day of week</string>
+    <string name="insights_sub_acts">Acts</string>
+    <string name="insights_sub_positions">Positions</string>
+    <string name="insights_sub_moods">Moods</string>
+    <string name="insights_sub_kinks">Kinks</string>
+    <string name="insights_sub_places">Places</string>
+    <string name="insights_sub_occasions">Occasions</string>
+    <string name="insights_sub_you_vs_partners">You vs partners</string>
+    <string name="insights_sub_orgasms_per_partner">Orgasms per partner</string>
+    <string name="insights_sub_over_time">Over time</string>
+    <string name="insights_sub_finish">Finish / ejaculation</string>
+    <string name="insights_sub_toys">Toys</string>
+    <string name="insights_sub_protection">Protection</string>
+
+    <!-- ============================================================= -->
+    <!-- Achievements (AchievementsScreen, AchievementsTeaser)         -->
+    <!-- Note: achievement titles/descriptions/emoji and category.label -->
+    <!-- are data-layer values (deferred, like enum labels).            -->
+    <!-- ============================================================= -->
+    <string name="achievements_title">Achievements</string>
+    <string name="achievements_unlocked_count">%1$d / %2$d unlocked</string>
+    <string name="achievements_unlocked_date">Unlocked %1$s</string>
+    <string name="achievements_progress">%1$d / %2$d</string>
+    <string name="achievements_new_ribbon">NEW</string>
+    <string name="achievements_teaser_title">🏆 Achievements</string>
+    <string name="achievements_recently_unlocked">Recently unlocked</string>
+    <string name="achievements_almost_there">Almost there: %1$s</string>
+    <string name="achievements_see_all">See all</string>
+    <string name="cd_back">Back</string>
 </resources>

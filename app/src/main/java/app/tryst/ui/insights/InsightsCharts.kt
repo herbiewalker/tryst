@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -45,6 +46,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import app.tryst.R
 import app.tryst.core.prefs.ChartStyle
 import app.tryst.data.stats.Bucket
 import app.tryst.data.stats.Tally
@@ -237,7 +239,8 @@ fun LineAreaChart(
     )
     // The point values are painted on the Canvas (invisible to TalkBack); restate them here and
     // collapse the chart into one spoken summary.
-    val chartDescription = "Trend chart. " + data.joinToString(", ") { "${it.label}: ${it.count}" }
+    val chartDescription = stringResource(R.string.cd_trend_chart_prefix) +
+        data.joinToString(", ") { "${it.label}: ${it.count}" }
     Column(modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = chartDescription }) {
         Canvas(Modifier.fillMaxWidth().height(132.dp)) {
             val w = size.width

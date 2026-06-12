@@ -35,12 +35,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tryst.R
 import app.tryst.data.achievements.AchievementCategory
 import app.tryst.data.achievements.AchievementStatus
 import java.time.LocalDate
@@ -62,10 +64,10 @@ fun AchievementsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Achievements") },
+                title = { Text(stringResource(R.string.achievements_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
             )
@@ -107,7 +109,7 @@ private fun OverallProgress(unlocked: Int, total: Int) {
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                "$unlocked / $total unlocked",
+                stringResource(R.string.achievements_unlocked_count, unlocked, total),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
             )
@@ -155,7 +157,7 @@ private fun AchievementRow(status: AchievementStatus, today: LocalDate, modifier
                 if (unlocked) {
                     status.unlockedAt?.let {
                         Text(
-                            "Unlocked ${it.format(unlockDateFormat)}",
+                            stringResource(R.string.achievements_unlocked_date, it.format(unlockDateFormat)),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.primary,
                         )
@@ -167,7 +169,7 @@ private fun AchievementRow(status: AchievementStatus, today: LocalDate, modifier
                         modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
                     )
                     Text(
-                        "${status.current.coerceAtMost(status.def.target)} / ${status.def.target}",
+                        stringResource(R.string.achievements_progress, status.current.coerceAtMost(status.def.target), status.def.target),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -199,7 +201,7 @@ private fun NewRibbon() {
         contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
     ) {
         Text(
-            "NEW",
+            stringResource(R.string.achievements_new_ribbon),
             style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 6.dp, vertical = 1.dp),
@@ -226,13 +228,13 @@ fun AchievementsTeaser(
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "🏆 Achievements",
+                    stringResource(R.string.achievements_teaser_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    "${summary.unlockedCount} / ${summary.total}",
+                    stringResource(R.string.achievements_progress, summary.unlockedCount, summary.total),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
@@ -241,7 +243,7 @@ fun AchievementsTeaser(
             if (summary.recent.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        "Recently unlocked",
+                        stringResource(R.string.achievements_recently_unlocked),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -254,7 +256,7 @@ fun AchievementsTeaser(
             summary.nearest.firstOrNull()?.let { next ->
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        "Almost there: ${next.def.title}",
+                        stringResource(R.string.achievements_almost_there, next.def.title),
                         style = MaterialTheme.typography.bodyMedium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -262,7 +264,7 @@ fun AchievementsTeaser(
                     val animated by animateFloatAsState(next.progress, label = "teaserProgress")
                     LinearProgressIndicator(progress = { animated }, modifier = Modifier.fillMaxWidth())
                     Text(
-                        "${next.current.coerceAtMost(next.def.target)} / ${next.def.target}",
+                        stringResource(R.string.achievements_progress, next.current.coerceAtMost(next.def.target), next.def.target),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -270,7 +272,7 @@ fun AchievementsTeaser(
             }
 
             TextButton(onClick = onSeeAll, modifier = Modifier.align(Alignment.End)) {
-                Text("See all")
+                Text(stringResource(R.string.achievements_see_all))
             }
         }
     }

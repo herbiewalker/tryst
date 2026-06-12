@@ -42,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,6 +50,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.tryst.R
 import app.tryst.core.prefs.ChartStyle
 import app.tryst.ui.achievements.AchievementsTeaser
 import app.tryst.ui.common.adaptiveContentWidth
@@ -79,18 +81,18 @@ fun InsightsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (editMode) "Customize Insights" else "Insights") },
+                title = { Text(stringResource(if (editMode) R.string.settings_customize_insights else R.string.insights_title)) },
                 navigationIcon = {
                     if (onBack != null) {
                         IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back to Settings")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back_to_settings))
                         }
                     }
                 },
                 actions = {
                     if (onBack == null && !editMode) {
                         IconButton(onClick = onOpenAchievements) {
-                            Icon(Icons.Filled.EmojiEvents, contentDescription = "Achievements")
+                            Icon(Icons.Filled.EmojiEvents, contentDescription = stringResource(R.string.achievements_title))
                         }
                     }
                     IconButton(onClick = {
@@ -98,9 +100,9 @@ fun InsightsScreen(
                         if (onBack != null) onBack() else editMode = !editMode
                     }) {
                         if (editMode) {
-                            Icon(Icons.Filled.Check, contentDescription = "Done")
+                            Icon(Icons.Filled.Check, contentDescription = stringResource(R.string.action_done))
                         } else {
-                            Icon(Icons.Filled.Tune, contentDescription = "Customize")
+                            Icon(Icons.Filled.Tune, contentDescription = stringResource(R.string.cd_customize))
                         }
                     }
                 },
@@ -139,7 +141,7 @@ fun InsightsScreen(
                 }
                 item(key = "reset") {
                     Column {
-                        TextButton(onClick = viewModel::resetLayout) { Text("Reset to default layout") }
+                        TextButton(onClick = viewModel::resetLayout) { Text(stringResource(R.string.insights_reset)) }
                         Box(Modifier.height(48.dp))
                     }
                 }
@@ -222,8 +224,8 @@ private fun SectionContent(id: String, insights: Insights, style: ChartStyle) {
         InsightSections.ACTIVITY -> GroupedSubCharts(
             style,
             listOf(
-                TrendSub("Per month", insights.monthly),
-                TrendSub("By day of week", insights.byWeekday),
+                TrendSub(stringResource(R.string.insights_sub_per_month), insights.monthly),
+                TrendSub(stringResource(R.string.insights_sub_by_weekday), insights.byWeekday),
             ),
         )
         InsightSections.SATISFACTION -> GroupedSubCharts(
@@ -234,21 +236,22 @@ private fun SectionContent(id: String, insights: Insights, style: ChartStyle) {
         InsightSections.ACTS_POSITIONS -> GroupedSubCharts(
             style,
             listOf(
-                BreakSub("Acts", insights.topActs),
-                BreakSub("Positions", insights.topPositions),
+                BreakSub(stringResource(R.string.insights_sub_acts), insights.topActs),
+                BreakSub(stringResource(R.string.insights_sub_positions), insights.topPositions),
             ),
         )
         InsightSections.VIBE -> GroupedSubCharts(
             style,
             listOf(
-                BreakSub("Moods", insights.topMoods),
-                BreakSub("Kinks", insights.topKinks),
-                BreakSub("Places", insights.topSettings),
-                BreakSub("Occasions", insights.topOccasions),
+                BreakSub(stringResource(R.string.insights_sub_moods), insights.topMoods),
+                BreakSub(stringResource(R.string.insights_sub_kinks), insights.topKinks),
+                BreakSub(stringResource(R.string.insights_sub_places), insights.topSettings),
+                BreakSub(stringResource(R.string.insights_sub_occasions), insights.topOccasions),
             ),
         )
         InsightSections.INITIATOR -> GroupedSubCharts(style, listOf(BreakSub("", insights.topInitiators)))
         InsightSections.ORGASMS -> {
+            // Tally labels ("You"/"Partners") are TypeColors identity keys — left as English (deferred).
             val yourVsPartner = buildList {
                 if (insights.totalSelfOrgasms > 0) add(Tally("You", insights.totalSelfOrgasms))
                 if (insights.totalPartnerOrgasms > 0) add(Tally("Partners", insights.totalPartnerOrgasms))
@@ -256,18 +259,18 @@ private fun SectionContent(id: String, insights: Insights, style: ChartStyle) {
             GroupedSubCharts(
                 style,
                 listOf(
-                    BreakSub("You vs partners", yourVsPartner),
-                    BreakSub("Orgasms per partner", insights.orgasmsPerPartner),
-                    TrendSub("Over time", insights.orgasmsMonthly),
-                    BreakSub("Finish / ejaculation", insights.topEjaculation),
+                    BreakSub(stringResource(R.string.insights_sub_you_vs_partners), yourVsPartner),
+                    BreakSub(stringResource(R.string.insights_sub_orgasms_per_partner), insights.orgasmsPerPartner),
+                    TrendSub(stringResource(R.string.insights_sub_over_time), insights.orgasmsMonthly),
+                    BreakSub(stringResource(R.string.insights_sub_finish), insights.topEjaculation),
                 ),
             )
         }
         InsightSections.DETAILS -> GroupedSubCharts(
             style,
             listOf(
-                BreakSub("Toys", insights.topToys),
-                BreakSub("Protection", insights.topProtection),
+                BreakSub(stringResource(R.string.insights_sub_toys), insights.topToys),
+                BreakSub(stringResource(R.string.insights_sub_protection), insights.topProtection),
             ),
         )
     }
@@ -332,9 +335,9 @@ private fun SectionsEditor(
 ) {
     val sections = remember(order) { InsightSections.ordered(order) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Sections", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        Text(stringResource(R.string.insights_sections_header), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         Text(
-            "Drag to reorder. Tap the eye to show or hide a section, and pick its chart style.",
+            stringResource(R.string.insights_sections_desc),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -362,7 +365,7 @@ private fun SectionsEditor(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             Icons.Filled.DragHandle,
-                            contentDescription = "Drag to reorder",
+                            contentDescription = stringResource(R.string.cd_drag_reorder),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = handle.size(28.dp),
                         )
@@ -375,7 +378,7 @@ private fun SectionsEditor(
                         IconButton(onClick = { onToggleHidden(section.id, !isHidden) }) {
                             Icon(
                                 if (isHidden) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                                contentDescription = if (isHidden) "Show" else "Hide",
+                                contentDescription = stringResource(if (isHidden) R.string.cd_show else R.string.cd_hide),
                                 tint = if (isHidden) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
                             )
                         }
@@ -417,9 +420,9 @@ private fun StatEditor(
 ) {
     val tiles = remember(order) { StatTiles.ordered(order) }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Overview stats", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        Text(stringResource(R.string.insights_overview_header), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         Text(
-            "Drag to reorder. Tap the eye to show or hide a stat on the overview.",
+            stringResource(R.string.insights_stats_desc),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -448,7 +451,7 @@ private fun StatEditor(
                 ) {
                     Icon(
                         Icons.Filled.DragHandle,
-                        contentDescription = "Drag to reorder",
+                        contentDescription = stringResource(R.string.cd_drag_reorder),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = handle.size(28.dp),
                     )
@@ -467,7 +470,7 @@ private fun StatEditor(
                     IconButton(onClick = { onToggleHidden(tile.id, !isHidden) }) {
                         Icon(
                             if (isHidden) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                            contentDescription = if (isHidden) "Show" else "Hide",
+                            contentDescription = stringResource(if (isHidden) R.string.cd_show else R.string.cd_hide),
                             tint = if (isHidden) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
                         )
                     }
@@ -477,17 +480,20 @@ private fun StatEditor(
     }
 }
 
-private fun styleLabel(style: ChartStyle): String = when (style) {
-    ChartStyle.BARS -> "Bars"
-    ChartStyle.LINE -> "Line"
-    ChartStyle.DONUT -> "Donut"
-}
+@Composable
+private fun styleLabel(style: ChartStyle): String = stringResource(
+    when (style) {
+        ChartStyle.BARS -> R.string.chart_style_bars
+        ChartStyle.LINE -> R.string.chart_style_line
+        ChartStyle.DONUT -> R.string.chart_style_donut
+    },
+)
 
 @Composable
 private fun EmptyState(modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text(
-            "No insights yet.\nLog a few trysts to see your stats.",
+            stringResource(R.string.insights_empty),
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
