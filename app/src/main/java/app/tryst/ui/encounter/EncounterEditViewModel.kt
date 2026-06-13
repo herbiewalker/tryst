@@ -234,6 +234,9 @@ class EncounterEditViewModel @Inject constructor(
         viewModelScope.launch {
             val now = System.currentTimeMillis()
             val id = loadedId ?: UUID.randomUUID().toString()
+            // Solo (no partner) hides the "who initiated" / "acts received" fields in the editor —
+            // drop their values so a solo row never carries stale partner-only data.
+            val solo = selectedPartnerIds.isEmpty()
             val entity = EncounterEntity(
                 id = id,
                 startAt = startAt,
@@ -242,13 +245,13 @@ class EncounterEditViewModel @Inject constructor(
                 satisfactionRating = rating,
                 orgasm = null,
                 mood = mood,
-                initiator = initiator,
+                initiator = if (solo) null else initiator,
                 protectionUsed = protection,
                 orgasmCountSelf = orgasmCountSelf,
                 orgasmCountPartner = null,
                 ejaculationLocations = ejaculations.ifEmpty { null },
                 practicesPerformed = practicesPerformed,
-                practicesReceived = practicesReceived,
+                practicesReceived = if (solo) emptySet() else practicesReceived,
                 positions = selectedPositionIds,
                 kinks = kinks,
                 contexts = contexts,
