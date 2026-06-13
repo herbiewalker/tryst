@@ -63,6 +63,7 @@ object PracticeVisuals {
         Practice.MANUAL,
         Practice.MUTUAL_MASTURBATION,
         Practice.MASTURBATION,
+        Practice.WATCHING_PORN,
         Practice.FROTTAGE,
         Practice.TITJOB,
         Practice.BREAST_PLAY,

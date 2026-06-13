@@ -176,6 +176,7 @@ enum class Practice(override val label: String) : DisplayLabel {
     MASSAGE("Massage"),
     MUTUAL_MASTURBATION("Mutual masturbation"),
     MASTURBATION("Masturbation"),
+    WATCHING_PORN("Watching porn"),
     SPIT_PLAY("Spit play"),
     CREAMPIE("Creampie"),
     ANAL_CREAMPIE("Anal creampie"),
