@@ -131,7 +131,20 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   dependency is GPLv3-compatible (all Apache-2.0 except JSR-305 BSD-3 and SQLCipher's Zetetic BSD-style;
   SQLCipher bundles OpenSSL 3.x = Apache-2.0, so no GPL/OpenSSL conflict). Per-file source license headers
   were **not** added (82 files) — README + LICENSE + notices satisfy the obligation; headers remain an
-  optional follow-up. Distribution (F-Droid / Play) still open.
+  optional follow-up. Distribution (F-Droid / Play) settled in **D-32**.
+- **D-32 (M8 release prep, 2026-06-12):** **Distribution = F-Droid only** (resolves the distribution
+  half of O-2). Chosen over Google Play (and over "both") because F-Droid is the principled home for a
+  FOSS, privacy-first, zero-network app: it builds from source on F-Droid's own infra (so the published
+  binary is verifiably the audited source — reinforcing the D-29 "verify the privacy claims" thesis),
+  reaches the privacy-conscious audience that browses F-Droid, has no Google-Play-Services / Play
+  Integrity dependency (which the no-`INTERNET` constraint rules out anyway), and avoids the GPLv3-vs-Play
+  Terms §6 "further restrictions" friction plus Play's content-policy review exposure for an
+  intimacy/sexual-wellness app. Cost accepted: slower update cadence and maintaining the submission
+  metadata ourselves. Artifacts: **`fastlane/metadata/android/en-US/`** (title / short + full
+  description / changelog) in-repo for F-Droid to ingest, and **`docs/RELEASE.md`** documenting the
+  F-Droid submission + signing/tagging process. The release build stays **unsigned in-repo** (F-Droid
+  signs its own builds); the gitignored `keystore.properties` path is for any future self-distributed
+  APK, not F-Droid. Google Play remains a possible later addition if reach demands it — not pursued now.
 - **D-31 (M8, 2026-06-12):** **Configurable auto-lock timeout** (Settings → General), default
   **immediate**. A process-scoped delayed `lock()` is scheduled on background and cancelled on
   foreground (`SessionManager.onAppBackgrounded`/`onAppForegrounded` + `GeneralPreferences`), so the DEK
@@ -179,9 +192,9 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
 
 ## Open
 
-- **O-2 (resolved) License:** **GPLv3** — see D-29 (pre-release Pass 10). LICENSE + THIRD_PARTY_NOTICES.md
-  + in-app Settings → About screen in place; all deps GPLv3-compatible. **Distribution** (F-Droid and/or
-  Play) is still open, to settle at M8 release prep.
+- **O-2 (resolved) License & distribution:** **License = GPLv3** (D-29) and **distribution = F-Droid only**
+  (D-32). LICENSE + THIRD_PARTY_NOTICES.md + in-app Settings → About screen in place; all deps
+  GPLv3-compatible. F-Droid fastlane metadata + `docs/RELEASE.md` submission guide added.
 - **O-3 (resolved) Charts library:** **none** — Insights charts are hand-drawn in Compose (D-25).
 - **O-4 (resolved) Multi-partner per encounter:** **yes** — the editor supports selecting multiple
   partners (M:N) with per-partner orgasm counts (D-22).
