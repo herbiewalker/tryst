@@ -10,6 +10,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -21,6 +24,7 @@ import app.tryst.ui.common.LocalHapticsEnabled
 import app.tryst.ui.lock.LockScreen
 import app.tryst.ui.lock.LockViewModel
 import app.tryst.ui.lock.SetupScreen
+import app.tryst.ui.lock.WelcomeScreen
 import app.tryst.ui.theme.TrystTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -56,7 +60,16 @@ class MainActivity : FragmentActivity() {
                         val state by viewModel.state.collectAsState()
 
                         when (state) {
-                            LockState.NeedsSetup -> SetupScreen(viewModel)
+                            LockState.NeedsSetup -> {
+                                // Show the one-time welcome/privacy intro before PIN creation;
+                                // rememberSaveable keeps us on the PIN step across config changes.
+                                var welcomed by rememberSaveable { mutableStateOf(false) }
+                                if (welcomed) {
+                                    SetupScreen(viewModel)
+                                } else {
+                                    WelcomeScreen(onContinue = { welcomed = true })
+                                }
+                            }
                             LockState.Locked -> LockScreen(viewModel)
                             LockState.Unlocked -> TrystApp()
                         }
