@@ -27,7 +27,7 @@ core/
   security/   Vault (DEK double-wrap), SecureKeyStore, BiometricVault, Pbkdf2, SessionKeys
   session/    SessionManager (lock lifecycle, opens/closes the DB), LockState
   crypto/     MediaCrypto (Tink streaming), BackupCrypto (password KDF + AEAD container)
-  prefs/      ThemePreferences, InsightsPreferences  (SharedPreferences, non-sensitive)
+  prefs/      ThemePreferences, InsightsPreferences, GeneralPreferences (auto-lock/haptics/week-start)  (SharedPreferences, non-sensitive)
 data/
   db/         TrystDatabase, TrystDatabaseFactory, entities, DAOs, Converters, Migrations, SqlCipherLibrary
   repository/ Encounter / Partner / Position / Act repositories (read DAOs from the unlocked session)
@@ -36,13 +36,13 @@ data/
   stats/      InsightsEngine + Insights model (pure Kotlin)
 di/           Hilt wiring (most types use @Inject constructors; module is minimal)
 ui/
-  common/     SelectionField/Chips, MediaImages, ImagePicker, Format, Position/Act options, PracticeVisuals
-  lock/        SetupScreen, LockScreen, LockViewModel, BiometricPromptHelper
+  common/     SelectionField/Chips, MediaImages, ImagePicker, Format, Position/Act options, PracticeVisuals, Haptics (LocalHapticsEnabled), WindowSize
+  lock/        SetupScreen, LockScreen, ChangePinScreen, LockViewModel, BiometricPromptHelper, PinPad
   history/     HistoryScreen (list + calendar), HistoryViewModel
   encounter/   EncounterEditScreen + ViewModel
   partner/     PartnersScreen + ViewModel
   insights/    InsightsScreen, charts, StatTiles/InsightSections catalogs, TypeColors, ViewModel
-  settings/    SettingsScreen + Appearance/Backup/CsvImport/CustomActs/CustomPositions VMs
+  settings/    SettingsScreen (General/Security/Appearance/Insights/Categories/Backup/Danger/About) + Appearance/General/Backup/CsvImport/CustomActs/CustomPositions VMs
   theme/       Color, Theme, Type, Shape (brand purple/green; sleek-dark default)
 MainActivity   FragmentActivity; FLAG_SECURE; renders by LockState (Setup / Lock / Unlocked → TrystApp)
 ```
@@ -53,14 +53,20 @@ MainActivity   FragmentActivity; FLAG_SECURE; renders by LockState (Setup / Lock
   photo-picker/camera handoff). Repositories and the media store read from it — there is no DB or key
   in memory while locked.
 - The **`Vault`** double-wraps the DEK (Keystore key + PIN via PBKDF2) and self-wipes after 10 fails.
+  **Change PIN** verifies the current PIN with a non-counting `verifyPin` and re-wraps the in-memory DEK
+  via `reprotect` — never through the wipe path, so it can't lose data.
+- **Auto-lock delay** is user-configurable (`GeneralPreferences`, default immediate): `SessionManager`
+  schedules/cancels a process-scoped delayed `lock()` across background/foreground.
 - A single audited crypto layer (`core/crypto`, Tink); feature code never rolls its own crypto.
 - `MainActivity` is the only `Activity` and sets `FLAG_SECURE`.
 
 ## Navigation
-Compose Navigation. Bottom-nav top destinations: **Trysts** (history/calendar), **Insights**,
-**Partners**, **Settings**. Plus the encounter editor (`encounter/new`, `encounter/{id}`) and the
-Insights customizer sub-screen (`insights/customize`, reached from Settings, with a back arrow). The
-whole graph is gated by the lock screen in `MainActivity`.
+Compose Navigation (adaptive: bottom bar on compact, nav rail on medium/expanded). Top destinations:
+**Trysts** (history/calendar), **Insights**, **Partners**, **Settings**. Plus the encounter editor
+(`encounter/new`, `encounter/{id}`), the Insights customizer (`insights/customize`), the Achievements
+screen, the About screen, and the **Change-PIN** flow (`change-pin`) — the last three reached from
+Settings. The whole graph is gated by the lock screen in `MainActivity` (which also provides
+`LocalHapticsEnabled` around setup/lock/unlocked).
 
 ## Testing strategy
 - **JVM unit:** stats engine (`InsightsEngineTest`), Insights catalogs (`StatTilesTest`,
@@ -70,6 +76,9 @@ whole graph is gated by the lock screen in `MainActivity`.
 - **CI anti-leak guard:** fails the build if the *merged* manifest declares any network permission;
   runs locally (`checkNoNetwork*`) and in CI.
 
-## Quality gates (planned for M8)
-Detekt/ktlint, Android Lint, FOSS-only dependency check. Current builds pass with only benign legacy
-variant-API / deprecation warnings (see `gradle.properties`).
+## Quality gates (M8, live — see DECISIONS D-30)
+Build-failing **Detekt** (1.23.8, AST-only) + **ktlint** (ktlint-gradle 14.2.0) run in a dedicated CI
+`quality` job (`config/detekt/detekt.yml` + `.editorconfig`, curated to fit idiomatic Compose).
+**Android Lint** already runs in CI (`lint`); the FOSS guard is the hand-maintained `OssLicenses` + the
+CI banned-SDK grep (no license plugin). Builds pass with only benign legacy variant-API / Kotlin-2.x
+annotation-use-site / deprecation warnings (see `gradle.properties`).
