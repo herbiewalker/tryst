@@ -113,6 +113,9 @@ fun EncounterEditScreen(
     val partners by viewModel.availablePartners.collectAsStateWithLifecycle()
     val customPositions by viewModel.customPositions.collectAsStateWithLifecycle()
     val customActs by viewModel.customActs.collectAsStateWithLifecycle()
+    // Solo = no partner selected (matches the history "Solo" badge). Partner-only fields are hidden so
+    // the editor reads cleanly as a solo entry; the per-partner orgasm counters already auto-hide.
+    val solo = viewModel.selectedPartnerIds.isEmpty()
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -277,14 +280,16 @@ fun EncounterEditScreen(
                     onToggle = { viewModel.togglePerformed(it.id) },
                 )
 
-                MultiSelectField(
-                    label = stringResource(R.string.encounter_field_acts_received),
-                    all = actOptions,
-                    common = ActOptions.common,
-                    selected = actOptions.filter { it.id in viewModel.practicesReceived }.toSet(),
-                    labelOf = { it.label },
-                    onToggle = { viewModel.toggleReceived(it.id) },
-                )
+                if (!solo) {
+                    MultiSelectField(
+                        label = stringResource(R.string.encounter_field_acts_received),
+                        all = actOptions,
+                        common = ActOptions.common,
+                        selected = actOptions.filter { it.id in viewModel.practicesReceived }.toSet(),
+                        labelOf = { it.label },
+                        onToggle = { viewModel.toggleReceived(it.id) },
+                    )
+                }
 
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_kink),
@@ -322,13 +327,15 @@ fun EncounterEditScreen(
                     onToggle = { viewModel.toggleToy(it) },
                 )
 
-                Field(stringResource(R.string.encounter_field_initiator)) {
-                    SingleSelectChips(
-                        options = Initiator.entries,
-                        selected = viewModel.initiator,
-                        label = { it.label },
-                        onSelect = { viewModel.initiator = it },
-                    )
+                if (!solo) {
+                    Field(stringResource(R.string.encounter_field_initiator)) {
+                        SingleSelectChips(
+                            options = Initiator.entries,
+                            selected = viewModel.initiator,
+                            label = { it.label },
+                            onSelect = { viewModel.initiator = it },
+                        )
+                    }
                 }
 
                 Field(stringResource(R.string.encounter_field_rating)) {
