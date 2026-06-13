@@ -135,6 +135,13 @@
     <string name="settings_autolock_30s">30s</string>
     <string name="settings_autolock_1m">1 min</string>
     <string name="settings_autolock_5m">5 min</string>
+    <string name="settings_change_pin">Change PIN</string>
+    <!-- Change-PIN flow -->
+    <string name="change_pin_current_title">Enter current PIN</string>
+    <string name="change_pin_new_title">Choose a new PIN</string>
+    <string name="change_pin_confirm_title">Confirm new PIN</string>
+    <string name="change_pin_wrong_current">Incorrect current PIN.</string>
+    <string name="change_pin_mismatch">PINs didn\'t match — try again.</string>
     <string name="settings_security">Security</string>
     <string name="settings_biometric_unavailable">Biometric unlock isn\'t available on this device.</string>
     <string name="settings_biometric_disable">Disable biometric unlock</string>

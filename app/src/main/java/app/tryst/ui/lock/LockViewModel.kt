@@ -15,8 +15,10 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.crypto.Cipher
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class LockViewModel @Inject constructor(
@@ -68,6 +70,26 @@ class LockViewModel @Inject constructor(
 
     fun reportError(message: String?) {
         error = message
+    }
+
+    /** Verify the current PIN (off-main; PBKDF2). For the change-PIN flow's first step. */
+    fun verifyCurrentPin(pin: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            busy = true
+            val ok = withContext(Dispatchers.IO) { session.verifyCurrentPin(pin) }
+            busy = false
+            onResult(ok)
+        }
+    }
+
+    /** Re-wrap the vault under a new PIN (verifies [current] first). [onResult] true on success. */
+    fun changePin(current: String, new: String, onResult: (Boolean) -> Unit) {
+        viewModelScope.launch {
+            busy = true
+            val ok = withContext(Dispatchers.IO) { session.changePin(current, new) }
+            busy = false
+            onResult(ok)
+        }
     }
 
     // --- Biometric ---------------------------------------------------------------------

@@ -52,6 +52,7 @@ import app.tryst.ui.common.widthClass
 import app.tryst.ui.encounter.EncounterEditScreen
 import app.tryst.ui.history.HistoryScreen
 import app.tryst.ui.insights.InsightsScreen
+import app.tryst.ui.lock.ChangePinScreen
 import app.tryst.ui.partner.PartnersScreen
 import app.tryst.ui.settings.SettingsScreen
 
@@ -63,6 +64,7 @@ private object Routes {
     const val PARTNERS = "partners"
     const val SETTINGS = "settings"
     const val ABOUT = "about"
+    const val CHANGE_PIN = "change-pin"
     const val ENCOUNTER_NEW = "encounter/new"
     const val ENCOUNTER_EDIT = "encounter/{encounterId}"
     fun encounterEdit(id: String) = "encounter/$id"
@@ -187,10 +189,14 @@ fun TrystApp() {
                         SettingsScreen(
                             onCustomizeInsights = { navController.navigate(Routes.INSIGHTS_CUSTOMIZE) },
                             onOpenAbout = { navController.navigate(Routes.ABOUT) },
+                            onChangePin = { navController.navigate(Routes.CHANGE_PIN) },
                         )
                     }
                     composable(Routes.ABOUT) {
                         AboutScreen(onBack = { navController.popBackStack() })
+                    }
+                    composable(Routes.CHANGE_PIN) {
+                        ChangePinScreen(onClose = { navController.popBackStack() })
                     }
                     composable(Routes.ENCOUNTER_NEW) {
                         EncounterEditScreen(
