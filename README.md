@@ -84,9 +84,12 @@ Separate from the milestones, a **12-pass pre-release audit program** runs each 
 - ✅ 11 Release hardening (R8) *(release build verified end-to-end on emulator under R8: zero R8 warnings,
   no app keep rules needed, full PIN→SQLCipher→unlock path works obfuscated; unsigned artifact = no leaked
   signing creds; Play Integrity rejected as incompatible with no-network)*
-  · ✅ 12 Final go/no-go *(**GO, conditional** — regression re-scan clean, license artifacts current, R8
-  release build launches end-to-end on the actual minified binary, zero TODO/FIXME; remaining before a
-  public build is human-only: real signing config, MobSF dynamic scan, real-device + TalkBack pass)*
+  · ✅ 12 Final go/no-go *(**GO** — regression re-scan clean, license artifacts current, R8 release build
+  launches end-to-end on the actual minified binary, zero TODO/FIXME. Included a **real-device pass on a
+  Pixel 9 Pro XL** that hard-proved StrongBox backs the vault key and **caught + fixed two backup
+  data-loss bugs** the emulator missed — wipe→restore dropped photos, and partner avatars were never
+  backed up (both fixed, regression-tested, user-confirmed). Remaining before a public build is
+  human-only: MobSF dynamic scan, broader real-device/OEM + TalkBack coverage.)*
 
 New here? See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for scope and
 [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) to build it.

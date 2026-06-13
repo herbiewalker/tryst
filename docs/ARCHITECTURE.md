@@ -72,7 +72,10 @@ Settings. The whole graph is gated by the lock screen in `MainActivity` (which a
 - **JVM unit:** stats engine (`InsightsEngineTest`), Insights catalogs (`StatTilesTest`,
   `InsightSectionsTest`), CSV parser (`CsvParseTest`).
 - **Instrumented (emulator, real Keystore/SQLCipher):** vault, DB-encrypted-on-disk, media crypto,
-  session lifecycle, Room migrations (v1→v6), media attachment round-trip, backup round-trip.
+  session lifecycle, Room migrations (v1→v6), media attachment round-trip, backup round-trip, and
+  backup/restore regression edge cases (`BackupRestoreRegressionTest`: restore-over-existing,
+  restore-after-delete-all-data, partner-avatar-survives — the paths that produced the Pass-12 data-loss
+  bugs).
 - **CI anti-leak guard:** fails the build if the *merged* manifest declares any network permission;
   runs locally (`checkNoNetwork*`) and in CI.
 
