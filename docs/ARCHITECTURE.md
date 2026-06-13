@@ -27,7 +27,7 @@ core/
   security/   Vault (DEK double-wrap), SecureKeyStore, BiometricVault, Pbkdf2, SessionKeys
   session/    SessionManager (lock lifecycle, opens/closes the DB), LockState
   crypto/     MediaCrypto (Tink streaming), BackupCrypto (password KDF + AEAD container)
-  prefs/      ThemePreferences, InsightsPreferences, GeneralPreferences (auto-lock/haptics/week-start)  (SharedPreferences, non-sensitive)
+  prefs/      ThemePreferences, InsightsPreferences, GeneralPreferences (auto-lock/haptics/week-start/last-seen-version)  (SharedPreferences, non-sensitive)
 data/
   db/         TrystDatabase, TrystDatabaseFactory, entities, DAOs, Converters, Migrations, SqlCipherLibrary
   repository/ Encounter / Partner / Position / Act repositories (read DAOs from the unlocked session)
@@ -36,13 +36,14 @@ data/
   stats/      InsightsEngine + Insights model (pure Kotlin)
 di/           Hilt wiring (most types use @Inject constructors; module is minimal)
 ui/
-  common/     SelectionField/Chips, MediaImages, ImagePicker, Format, Position/Act options, PracticeVisuals, Haptics (LocalHapticsEnabled), WindowSize
+  common/     SelectionField/Chips, MediaImages, ImagePicker, Format, Position/Act options, PracticeVisuals, Haptics (LocalHapticsEnabled), WindowSize, AppVersion (PackageManager version code/name)
   lock/        SetupScreen, LockScreen, ChangePinScreen, LockViewModel, BiometricPromptHelper, PinPad
   history/     HistoryScreen (list + calendar), HistoryViewModel
   encounter/   EncounterEditScreen + ViewModel
   partner/     PartnersScreen + ViewModel
   insights/    InsightsScreen, charts, StatTiles/InsightSections catalogs, TypeColors, ViewModel
-  settings/    SettingsScreen (General/Security/Appearance/Insights/Categories/Backup/Danger/About) + Appearance/General/Backup/CsvImport/CustomActs/CustomPositions VMs
+  settings/    SettingsScreen (General/Security/Appearance/Insights/Categories/Backup/Danger/About) + ResetDataScreen (type-to-confirm wipe) + Appearance/General/Backup/CsvImport/CustomActs/CustomPositions VMs
+  whatsnew/    ReleaseNotes (bundled notes), WhatsNewScreen + WhatsNewDialog (post-update popup)
   theme/       Color, Theme, Type, Shape (brand purple/green; sleek-dark default)
 MainActivity   FragmentActivity; FLAG_SECURE; renders by LockState (Setup / Lock / Unlocked → TrystApp)
 ```
@@ -64,9 +65,11 @@ MainActivity   FragmentActivity; FLAG_SECURE; renders by LockState (Setup / Lock
 Compose Navigation (adaptive: bottom bar on compact, nav rail on medium/expanded). Top destinations:
 **Trysts** (history/calendar), **Insights**, **Partners**, **Settings**. Plus the encounter editor
 (`encounter/new`, `encounter/{id}`), the Insights customizer (`insights/customize`), the Achievements
-screen, the About screen, and the **Change-PIN** flow (`change-pin`) — the last three reached from
-Settings. The whole graph is gated by the lock screen in `MainActivity` (which also provides
-`LocalHapticsEnabled` around setup/lock/unlocked).
+screen, the About screen, the **Change-PIN** flow (`change-pin`), the **reset-all** page
+(`settings/reset`), and the **What's-new** screen (`whats-new`) — the Settings sub-pages all reached
+from Settings. The whole graph is gated by the lock screen in `MainActivity` (which also provides
+`LocalHapticsEnabled` around setup/lock/unlocked). On entering the unlocked shell, `TrystApp` fires the
+one-time **post-update What's-new popup** (installed `versionCode` vs `GeneralPreferences.lastSeenVersionCode`).
 
 ## Testing strategy
 - **JVM unit:** stats engine (`InsightsEngineTest`), Insights catalogs (`StatTilesTest`,

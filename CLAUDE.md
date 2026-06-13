@@ -92,3 +92,4 @@ See [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) for toolchain details.
 - [docs/ROADMAP.md](docs/ROADMAP.md) — milestones
 - [docs/DECISIONS.md](docs/DECISIONS.md) — decision log + open questions
 - [docs/RELEASE.md](docs/RELEASE.md) — cut-a-release checklist + F-Droid submission guide
+- [CHANGELOG.md](CHANGELOG.md) — per-release notes; kept in sync with the in-app "What's new" (`ui/whatsnew/ReleaseNotes.kt`) + the F-Droid changelog files

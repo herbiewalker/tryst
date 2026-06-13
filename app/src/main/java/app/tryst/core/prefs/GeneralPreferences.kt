@@ -48,6 +48,17 @@ class GeneralPreferences @Inject constructor(
         _weekStart.value = start
     }
 
+    /**
+     * The app versionCode the user last saw "What's new" for. 0 = never recorded (fresh install or a
+     * pre-feature upgrade), which deliberately suppresses the popup the first time — there's no prior
+     * version to announce.
+     */
+    fun lastSeenVersionCode(): Long = prefs.getLong(KEY_LAST_SEEN_VERSION, 0L)
+
+    fun setLastSeenVersionCode(code: Long) {
+        prefs.edit().putLong(KEY_LAST_SEEN_VERSION, code).apply()
+    }
+
     private fun loadWeekStart(): WeekStart = prefs.getString(KEY_WEEK_START, null)
         ?.let { runCatching { WeekStart.valueOf(it) }.getOrNull() }
         ?: WeekStart.SUNDAY
@@ -56,5 +67,6 @@ class GeneralPreferences @Inject constructor(
         const val KEY_AUTO_LOCK_MS = "auto_lock_ms"
         const val KEY_HAPTICS = "haptics_enabled"
         const val KEY_WEEK_START = "week_start"
+        const val KEY_LAST_SEEN_VERSION = "last_seen_version_code"
     }
 }

@@ -55,6 +55,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
@@ -240,14 +241,29 @@ private fun PartnerDialog(
         photoRemoved = false
         captureTempFile = file
     }
+    var showDiscardConfirm by remember { mutableStateOf(false) }
     // On cancel, drop any unsaved camera temp (on Save the ViewModel deletes it after encrypting).
     val dismiss = {
         captureTempFile?.delete()
         onDismiss()
     }
+    // Has the user touched anything worth protecting? Outside-taps are disabled outright (below); a
+    // back-press or Cancel on a touched form routes through the "Discard changes?" prompt so a stray
+    // tap while reaching past the keyboard for Save can't wipe a just-taken photo and typed details.
+    val isDirty = name != (initial?.displayName ?: "") ||
+        anonymous != (initial?.isAnonymous ?: false) ||
+        note != (initial?.note ?: "") ||
+        sex != initial?.sex ||
+        gender != initial?.gender ||
+        relationship != initial?.relationshipType ||
+        photoUri != null ||
+        photoRemoved
+    val attemptDismiss = { if (isDirty) showDiscardConfirm = true else dismiss() }
 
     AlertDialog(
-        onDismissRequest = dismiss,
+        // Don't dismiss on an outside-scrim tap — far too easy to hit while the keyboard covers Save.
+        properties = DialogProperties(dismissOnClickOutside = false),
+        onDismissRequest = attemptDismiss,
         title = { Text(stringResource(if (initial == null) R.string.partner_add else R.string.partner_dialog_edit_title)) },
         text = {
             Column(
@@ -344,8 +360,23 @@ private fun PartnerDialog(
                 enabled = anonymous || name.isNotBlank(),
             ) { Text(stringResource(R.string.action_save)) }
         },
-        dismissButton = { TextButton(onClick = dismiss) { Text(stringResource(R.string.action_cancel)) } },
+        dismissButton = { TextButton(onClick = attemptDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
+
+    if (showDiscardConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDiscardConfirm = false },
+            title = { Text(stringResource(R.string.discard_changes_title)) },
+            text = { Text(stringResource(R.string.discard_changes_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDiscardConfirm = false
+                    dismiss()
+                }) { Text(stringResource(R.string.action_discard)) }
+            },
+            dismissButton = { TextButton(onClick = { showDiscardConfirm = false }) { Text(stringResource(R.string.action_keep_editing)) } },
+        )
+    }
 }
 
 /** A labelled optional single-select: tapping the selected chip again clears it. */

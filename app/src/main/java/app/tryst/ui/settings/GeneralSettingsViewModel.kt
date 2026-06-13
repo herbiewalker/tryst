@@ -21,4 +21,9 @@ class GeneralSettingsViewModel @Inject constructor(
     fun setHapticsEnabled(enabled: Boolean) = prefs.setHapticsEnabled(enabled)
 
     fun setWeekStart(start: WeekStart) = prefs.setWeekStart(start)
+
+    /** versionCode the user last saw release notes for; 0 = never (fresh install / pre-feature upgrade). */
+    fun lastSeenVersionCode(): Long = prefs.lastSeenVersionCode()
+
+    fun markVersionSeen(code: Long) = prefs.setLastSeenVersionCode(code)
 }
