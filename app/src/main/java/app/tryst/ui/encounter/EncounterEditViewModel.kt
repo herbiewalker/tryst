@@ -113,9 +113,18 @@ class EncounterEditViewModel @Inject constructor(
     var uiState by mutableStateOf(EncounterEditUiState())
         private set
 
+    // The form as it stood when first shown (a blank new entry, or the loaded encounter). Edits are
+    // compared against this so an accidental back-press / swipe on an *untouched* form closes silently,
+    // while a touched one prompts before discarding. EncounterEditUiState is a value type, so structural
+    // equality covers every field including the pending/removed photo lists.
+    private var baseline = uiState
+
     private val removedExisting = mutableListOf<MediaEntity>()
     private var loadedId: String? = null
     private var createdAt: Long = 0L
+
+    /** True once the user has changed anything not yet saved — drives the "Discard changes?" guard. */
+    fun hasUnsavedChanges(): Boolean = uiState != baseline
 
     @Suppress("CyclomaticComplexMethod") // straight-line field mapping from the loaded entity.
     fun load(encounterId: String?) {
@@ -147,6 +156,7 @@ class EncounterEditViewModel @Inject constructor(
                 existingPhotos = details.media,
                 isEditing = true,
             )
+            baseline = uiState
         }
     }
 

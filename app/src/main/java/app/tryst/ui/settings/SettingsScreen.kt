@@ -70,6 +70,8 @@ fun SettingsScreen(
     onCustomizeInsights: () -> Unit = {},
     onOpenAbout: () -> Unit = {},
     onChangePin: () -> Unit = {},
+    onOpenReset: () -> Unit = {},
+    onOpenWhatsNew: () -> Unit = {},
     viewModel: LockViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -77,7 +79,6 @@ fun SettingsScreen(
     val activity = remember(context) { context.findFragmentActivity() }
     val biometricAvailable = remember { viewModel.canUseBiometrics() }
     var biometricEnabled by remember { mutableStateOf(viewModel.isBiometricEnabled()) }
-    var showDeleteAll by remember { mutableStateOf(false) }
     var showPositions by remember { mutableStateOf(false) }
     var showActs by remember { mutableStateOf(false) }
     val positionsViewModel: CustomPositionsViewModel = hiltViewModel()
@@ -356,9 +357,9 @@ fun SettingsScreen(
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
             Text(stringResource(R.string.settings_danger_zone), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
-            Button(
-                onClick = { showDeleteAll = true },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
+            OutlinedButton(
+                onClick = onOpenReset,
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.settings_delete_all)) }
             Text(
@@ -370,6 +371,14 @@ fun SettingsScreen(
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
             Text(stringResource(R.string.settings_about), style = MaterialTheme.typography.titleMedium)
+            OutlinedButton(onClick = onOpenWhatsNew, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.settings_whats_new))
+            }
+            Text(
+                stringResource(R.string.settings_whats_new_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             OutlinedButton(onClick = onOpenAbout, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.settings_about_button))
             }
@@ -379,22 +388,6 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-    }
-
-    if (showDeleteAll) {
-        AlertDialog(
-            onDismissRequest = { showDeleteAll = false },
-            title = { Text(stringResource(R.string.settings_delete_all_title)) },
-            text = { Text(stringResource(R.string.settings_delete_all_message)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    haptics.reject()
-                    showDeleteAll = false
-                    viewModel.deleteAllData()
-                }) { Text(stringResource(R.string.settings_delete_all_confirm)) }
-            },
-            dismissButton = { TextButton(onClick = { showDeleteAll = false }) { Text(stringResource(R.string.action_cancel)) } },
-        )
     }
 
     if (showPositions) {

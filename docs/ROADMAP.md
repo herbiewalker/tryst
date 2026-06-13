@@ -242,6 +242,24 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 - **Settings → General section** — app/how-it-works blurb, **Change PIN** (D-31), **auto-lock timeout**
   (D-31), **haptics** on/off (app-wide via `LocalHapticsEnabled`), **calendar week start** (Sun/Mon).
 
+### Late additions (2026-06-13) — pre-release UX hardening
+- **Unsaved-changes guard (data-loss fix, D-33)** — the partner add/edit dialog no longer dismisses on an
+  outside-scrim tap (`DialogProperties(dismissOnClickOutside = false)`), and both it and the full-screen
+  encounter editor now route back/Cancel through a **"Discard changes?"** prompt **only when the form is
+  dirty**. Fixes the reported loss of a half-entered partner/encounter (and its just-taken photo) when a
+  stray tap or back-swipe landed while the keyboard covered Save. Dirtiness =
+  `EncounterEditViewModel.hasUnsavedChanges()` (uiState vs a load-time baseline) / a field comparison in
+  the partner dialog; a clean form still closes silently (keeps predictive-back animation).
+- **Reset-all on its own page with type-to-confirm (D-34)** — "Delete all data" moved off the main
+  Settings scroll to a dedicated `settings/reset` page (`ResetDataScreen`); the erase button stays
+  disabled until the user types **`DELETE`**. Far harder to fire by accident than the old inline
+  red-button + single dialog.
+- **"What's new" release notes + post-update popup (D-35)** — bundled `ui/whatsnew/ReleaseNotes.kt`,
+  shown as a browsable screen (Settings → About) and a one-time popup on the first launch after a
+  `versionCode` bump (fresh installs see nothing). Notes stay in sync with `CHANGELOG.md` + the F-Droid
+  changelog files (RELEASE.md per-release steps). No version bump — folds into v0.1.0.
+- Verified: `assembleDebug`, `ktlintCheck`, `detekt`, `testDebugUnitTest` all green.
+
 > Sequencing rationale: security/storage foundations come **before** features so we never
 > retrofit encryption onto plaintext data.
 

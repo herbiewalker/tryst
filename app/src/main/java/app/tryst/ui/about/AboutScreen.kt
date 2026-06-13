@@ -1,7 +1,5 @@
 package app.tryst.ui.about
 
-import android.content.pm.PackageManager
-import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +26,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.tryst.R
+import app.tryst.ui.common.AppVersion
 import app.tryst.ui.common.adaptiveContentWidth
 
 /**
@@ -39,18 +38,7 @@ import app.tryst.ui.common.adaptiveContentWidth
 @Composable
 fun AboutScreen(onBack: () -> Unit = {}) {
     val context = LocalContext.current
-    val versionName = remember {
-        runCatching {
-            val pm = context.packageManager
-            val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                pm.getPackageInfo(context.packageName, PackageManager.PackageInfoFlags.of(0))
-            } else {
-                @Suppress("DEPRECATION")
-                pm.getPackageInfo(context.packageName, 0)
-            }
-            info.versionName
-        }.getOrNull() ?: ""
-    }
+    val versionName = remember { AppVersion.name(context) }
 
     Scaffold(
         topBar = {

@@ -30,14 +30,18 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -47,6 +51,7 @@ import androidx.navigation.compose.rememberNavController
 import app.tryst.R
 import app.tryst.ui.about.AboutScreen
 import app.tryst.ui.achievements.AchievementsScreen
+import app.tryst.ui.common.AppVersion
 import app.tryst.ui.common.WidthClass
 import app.tryst.ui.common.widthClass
 import app.tryst.ui.encounter.EncounterEditScreen
@@ -54,7 +59,13 @@ import app.tryst.ui.history.HistoryScreen
 import app.tryst.ui.insights.InsightsScreen
 import app.tryst.ui.lock.ChangePinScreen
 import app.tryst.ui.partner.PartnersScreen
+import app.tryst.ui.settings.GeneralSettingsViewModel
+import app.tryst.ui.settings.ResetDataScreen
 import app.tryst.ui.settings.SettingsScreen
+import app.tryst.ui.whatsnew.ReleaseNote
+import app.tryst.ui.whatsnew.ReleaseNotes
+import app.tryst.ui.whatsnew.WhatsNewDialog
+import app.tryst.ui.whatsnew.WhatsNewScreen
 
 private object Routes {
     const val HISTORY = "history"
@@ -65,6 +76,8 @@ private object Routes {
     const val SETTINGS = "settings"
     const val ABOUT = "about"
     const val CHANGE_PIN = "change-pin"
+    const val RESET = "settings/reset"
+    const val WHATS_NEW = "whats-new"
     const val ENCOUNTER_NEW = "encounter/new"
     const val ENCOUNTER_EDIT = "encounter/{encounterId}"
     fun encounterEdit(id: String) = "encounter/$id"
@@ -105,6 +118,20 @@ fun TrystApp() {
     val useRail = width != WidthClass.COMPACT
     val showBottomBar = isTopDestination && !useRail
     val showRail = isTopDestination && useRail
+
+    // First launch after an update: surface the new version's notes once. A fresh install (lastSeen 0)
+    // shows nothing — there's no prior version to announce — it just records the current code.
+    val context = LocalContext.current
+    val generalViewModel: GeneralSettingsViewModel = hiltViewModel()
+    var whatsNewNotes by remember { mutableStateOf<List<ReleaseNote>>(emptyList()) }
+    LaunchedEffect(Unit) {
+        val lastSeen = generalViewModel.lastSeenVersionCode()
+        val current = AppVersion.code(context)
+        if (lastSeen != 0L && current > lastSeen) {
+            whatsNewNotes = ReleaseNotes.since(lastSeen)
+        }
+        generalViewModel.markVersionSeen(current)
+    }
 
     Scaffold(
         // The bottom NavigationBar / side NavigationRail consume the system-bar insets on their own
@@ -190,10 +217,18 @@ fun TrystApp() {
                             onCustomizeInsights = { navController.navigate(Routes.INSIGHTS_CUSTOMIZE) },
                             onOpenAbout = { navController.navigate(Routes.ABOUT) },
                             onChangePin = { navController.navigate(Routes.CHANGE_PIN) },
+                            onOpenReset = { navController.navigate(Routes.RESET) },
+                            onOpenWhatsNew = { navController.navigate(Routes.WHATS_NEW) },
                         )
                     }
                     composable(Routes.ABOUT) {
                         AboutScreen(onBack = { navController.popBackStack() })
+                    }
+                    composable(Routes.RESET) {
+                        ResetDataScreen(onBack = { navController.popBackStack() })
+                    }
+                    composable(Routes.WHATS_NEW) {
+                        WhatsNewScreen(onBack = { navController.popBackStack() })
                     }
                     composable(Routes.CHANGE_PIN) {
                         ChangePinScreen(onClose = { navController.popBackStack() })
@@ -217,6 +252,10 @@ fun TrystApp() {
                 }
             }
         }
+    }
+
+    if (whatsNewNotes.isNotEmpty()) {
+        WhatsNewDialog(notes = whatsNewNotes, onDismiss = { whatsNewNotes = emptyList() })
     }
 }
 

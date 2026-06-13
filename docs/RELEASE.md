@@ -21,9 +21,13 @@ signing key. This document is the checklist for cutting a release and getting it
 1. **Bump the version** in [`app/build.gradle.kts`](../app/build.gradle.kts):
    - `versionCode` — integer, +1 every release (currently `1`).
    - `versionName` — human string (currently `0.1.0`).
-2. **Add a changelog** for the new `versionCode` at
-   `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` (e.g. `2.txt`). F-Droid shows this as the
-   "What's New" text. Keep the existing `1.txt` for the first release.
+2. **Add the release notes in all three synced places** (kept in lock-step on purpose — see D-35):
+   - `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` (e.g. `2.txt`) — F-Droid's "What's New"
+     text. Keep the existing `1.txt` for the first release.
+   - `ReleaseNotes.all` in [`app/src/main/java/app/tryst/ui/whatsnew/ReleaseNotes.kt`](../app/src/main/java/app/tryst/ui/whatsnew/ReleaseNotes.kt)
+     — **prepend** a new `ReleaseNote` (newest first) with the bumped `versionName`/`versionCode`. This
+     drives the in-app **What's new** screen and the one-time post-update popup.
+   - [`CHANGELOG.md`](../CHANGELOG.md) at the repo root — add a dated section under the version heading.
 3. **Update the store copy** if needed:
    `fastlane/metadata/android/en-US/{title,short_description,full_description}.txt`.
    (`short_description` ≤ 80 chars; `full_description` ≤ 4000 chars; plain text, blank lines for paragraphs,

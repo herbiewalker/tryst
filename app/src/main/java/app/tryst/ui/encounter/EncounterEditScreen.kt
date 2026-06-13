@@ -1,5 +1,6 @@
 package app.tryst.ui.encounter
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -120,7 +121,14 @@ fun EncounterEditScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showDiscardConfirm by remember { mutableStateOf(false) }
     var viewer by remember { mutableStateOf<PhotoView?>(null) }
+
+    // Guard accidental exits (predictive-back swipe, the Cancel chevron) once the form is touched —
+    // a stray gesture while reaching for Save shouldn't silently drop the entry and its photos.
+    val dirty = viewModel.hasUnsavedChanges()
+    val attemptClose = { if (dirty) showDiscardConfirm = true else onClose() }
+    BackHandler(enabled = dirty) { showDiscardConfirm = true }
     val pickImage = rememberImagePicker(onLaunch = { viewModel.suppressAutoLock() }) { viewModel.addPhoto(it) }
     val captureImage = rememberCameraCapture(onLaunch = { viewModel.suppressAutoLock() }) { uri, file ->
         viewModel.addCapturedPhoto(uri, file)
@@ -143,7 +151,7 @@ fun EncounterEditScreen(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(if (ui.isEditing) R.string.encounter_title_edit else R.string.encounter_title_new)) },
-                navigationIcon = { TextButton(onClick = onClose) { Text(stringResource(R.string.action_cancel)) } },
+                navigationIcon = { TextButton(onClick = attemptClose) { Text(stringResource(R.string.action_cancel)) } },
                 actions = {
                     TextButton(onClick = {
                         haptics.confirm()
@@ -440,6 +448,21 @@ fun EncounterEditScreen(
                 }) { Text(stringResource(R.string.action_delete)) }
             },
             dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.action_cancel)) } },
+        )
+    }
+
+    if (showDiscardConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDiscardConfirm = false },
+            title = { Text(stringResource(R.string.discard_changes_title)) },
+            text = { Text(stringResource(R.string.discard_changes_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDiscardConfirm = false
+                    onClose()
+                }) { Text(stringResource(R.string.action_discard)) }
+            },
+            dismissButton = { TextButton(onClick = { showDiscardConfirm = false }) { Text(stringResource(R.string.action_keep_editing)) } },
         )
     }
 

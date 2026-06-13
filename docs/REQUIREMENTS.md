@@ -55,7 +55,12 @@ with deeply personal data. Inspired by the iOS app *Nice*.
 ### 4.5 Backup & portability
 - **FR-15** **Manual encrypted export** to a user-chosen file (password-protected).
 - **FR-16** **Import** from a previously exported file (for new-phone migration).
-- **FR-17** Full **wipe** ("delete all data") with confirmation.
+- **FR-17** Full **wipe** ("delete all data") on its own page, gated by a **type-to-confirm** step
+  (D-34); returns the app to first-run setup.
+- **FR-19** **Unsaved-changes guard:** the partner and encounter editors prompt before discarding
+  unsaved edits (incl. attached photos); they don't dismiss on a stray outside-tap or back-swipe (D-33).
+- **FR-20** In-app **release notes**: a "What's new" screen and a one-time popup after each app update
+  (bundled, no network — D-35).
 
 ## 5. Non-functional requirements
 

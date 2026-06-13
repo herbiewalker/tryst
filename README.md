@@ -23,6 +23,9 @@ device or be trusted to anyone.
 - Lock the app behind biometric/PIN; auto-lock when backgrounded (with a configurable delay) and a
   Change-PIN flow.
 - Tune it in **Settings → General**: app info, change PIN, auto-lock timeout, haptics, calendar week start.
+- Never lose a half-finished entry: editing a partner or encounter prompts before discarding unsaved
+  changes (photos included), and **Delete all data** lives on its own page behind a type-to-confirm.
+- A **What's new** screen (Settings → About) plus a one-time release-notes popup after each update.
 
 ## Status
 

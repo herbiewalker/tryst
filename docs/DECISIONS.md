@@ -165,6 +165,37 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   cover the FOSS guard, consistent with the no-extra-deps ethos. **Android Lint** already ran in CI
   (`lint`), left as-is. No stock rule enforces "no hardcoded Compose strings" — noted as a possible
   future custom Detekt rule.
+- **D-33 (2026-06-13) Unsaved-changes guard on the editor forms.** The partner add/edit `AlertDialog`
+  dismissed on an outside-scrim tap **and** on back-press, and `onDismissRequest` threw away all
+  in-memory state — so a stray tap past the soft keyboard (reaching for Save) wiped typed fields and a
+  **just-taken camera photo**; the full-screen encounter editor had the analogous loss on the
+  predictive-back swipe. Decision: **disable outside-tap dismissal** on the partner dialog
+  (`DialogProperties(dismissOnClickOutside = false)`) and route back/Cancel through a **"Discard
+  changes?"** confirmation **only when the form is dirty** (an untouched form still closes silently).
+  The encounter editor gets a `BackHandler(enabled = dirty)` + the same prompt on the Cancel chevron;
+  dirtiness is `EncounterEditViewModel.hasUnsavedChanges()` = current `uiState` ≠ a baseline snapshot
+  captured at load. Chosen over "never prompt, never dismiss accidentally" because the explicit prompt
+  is the platform-standard, least-surprising behaviour and keeps predictive-back animation on a clean
+  form (the `BackHandler` stays disabled until something is touched).
+- **D-34 (2026-06-13) Reset-all moved to its own page, type-to-confirm gated.** "Delete all data" was a
+  red button one tap deep in the main Settings scroll behind a single yes/no dialog — too easy to fire
+  an irreversible wipe. Decision: move it to a dedicated `settings/reset` destination (`ResetDataScreen`)
+  whose erase button stays **disabled until the user types the confirmation word `DELETE`**
+  (case-insensitive), with a reminder to export a backup first. Chosen over hold-to-confirm / a second
+  dialog because typing is the strongest, most deliberate guard (the GitHub/Google "danger zone"
+  convention) for an unrecoverable action. The wipe still calls `LockViewModel.deleteAllData()` →
+  `SessionManager` → `NeedsSetup`, which tears the nav graph back to first-run, so no post-wipe
+  navigation is needed.
+- **D-35 (2026-06-13) In-app "What's new" = bundled notes + post-update popup.** Ship release notes
+  **bundled in the binary** (`ui/whatsnew/ReleaseNotes.kt`) — no fetch, consistent with the no-network
+  constraint — surfaced both as a browsable **What's new** screen (Settings → About, route `whats-new`)
+  and a **one-time popup** on the first launch after a `versionCode` increase. The trigger compares the
+  installed `versionCode` (read via `PackageManager`, so no `BuildConfig` build-feature) against
+  `GeneralPreferences.lastSeenVersionCode` (default `0`); a **fresh install shows nothing** (the `0`
+  sentinel) and just records the current code, so only genuine updates announce. Notes are kept in sync
+  across three places — `ReleaseNotes.all`, the F-Droid `fastlane/.../changelogs/<versionCode>.txt`, and
+  the repo `CHANGELOG.md` — documented in RELEASE.md and the `ReleaseNotes` KDoc. **No version bump** in
+  this change: it folds into the still-unreleased v0.1.0, so the popup first fires on the eventual v2.
 - **D-25 (M6):** **No chart library** (resolves O-3). Insights charts are drawn with plain Compose
   layout (`VerticalBarChart`, `RankedBars`) instead of Vico/MPAndroidChart. Rationale: the app already
   hand-rolls its visuals (per-act vector icons, manual `BitmapFactory` downsampling, no third-party
