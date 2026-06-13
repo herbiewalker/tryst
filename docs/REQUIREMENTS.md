@@ -48,6 +48,9 @@ with deeply personal data. Inspired by the iOS app *Nice*.
 - **FR-14** First-run setup of the app lock — a distinct 6-digit **PIN** (biometric optional). The PIN
   protects the data-encryption key; there is no recovery if it's forgotten (see
   [SECURITY_DESIGN.md](SECURITY_DESIGN.md)). *Implemented as a PIN, not a passphrase (see DECISIONS D-12).*
+  The PIN can be **changed** later (Settings → General) without data loss — D-31.
+- **FR-18** A **General** settings section: app/how-it-works info, change PIN, auto-lock timeout (FR-12),
+  haptics on/off, calendar week start.
 
 ### 4.5 Backup & portability
 - **FR-15** **Manual encrypted export** to a user-chosen file (password-protected).

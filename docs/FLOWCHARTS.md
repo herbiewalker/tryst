@@ -183,14 +183,20 @@ flowchart TD
 
 ## 8. Auto-lock & picker handoff
 
-Backgrounding normally locks immediately. Handing off to the OS photo picker / camera unavoidably
+Backgrounding locks after the user's **auto-lock delay** (Settings → General; default **immediate**). A
+non-zero delay schedules a process-scoped `lock()` that is cancelled if the app returns to the foreground
+first (`ON_START` → `onAppForegrounded`). Handing off to the OS photo picker / camera unavoidably
 backgrounds the app, so those launches arm a one-shot ~2-minute grace that skips exactly one auto-lock.
 
 ```mermaid
 flowchart TD
     BG["App backgrounded (ProcessLifecycle ON_STOP)"] --> Q{"suppressNextAutoLock armed?<br/>(within 2-min grace)"}
     Q -->|"yes — picker/camera handoff"| R["consume grace · stay unlocked"]
-    Q -->|"no"| L["lock(): close DB · zero DEK · state = Locked"]
+    Q -->|"no"| T{"auto-lock timeout?"}
+    T -->|"0 (immediate)"| L["lock(): close DB · zero DEK · state = Locked"]
+    T -->|"> 0"| D["schedule delayed lock()"]
+    D -->|"timeout elapses"| L
+    D -->|"app foregrounded first (ON_START)"| C["cancel pending lock · stay unlocked"]
 ```
 
 ## 9. Achievements (derivation)
