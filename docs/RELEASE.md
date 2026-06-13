@@ -6,9 +6,9 @@ signing key. This document is the checklist for cutting a release and getting it
 
 ## Prerequisites (one-time)
 
-- [ ] **The source repository must be public.** F-Droid builds from a public git repo; it cannot ingest a
-      private one. The repo is currently **private** (`origin` = the GitHub `herbiewalker/tryst` remote) —
-      make it public (or mirror to a public host) before submitting. This is a hard blocker for F-Droid.
+- [x] **The source repository must be public.** F-Droid builds from a public git repo; it cannot ingest a
+      private one. **Done (2026-06-12):** `herbiewalker/tryst` was switched private → public
+      (<https://github.com/herbiewalker/tryst>); GitHub auto-detects the license as GPL-3.0.
 - [ ] All dependencies are FOSS and there are no proprietary blobs (verified in pre-release Pass 10; the
       `OssLicenses` list + the banned-SDK grep guard this). F-Droid will reject non-free dependencies or
       `anti-features` we haven't declared. Tryst has **no anti-features** (no tracking, no non-free deps,
@@ -57,8 +57,8 @@ Categories:
   - Connectivity        # adjust to the closest real F-Droid categories
 License: GPL-3.0-only
 AuthorName: Tryst
-SourceCode: https://github.com/<public-owner>/tryst
-IssueTracker: https://github.com/<public-owner>/tryst/issues
+SourceCode: https://github.com/herbiewalker/tryst
+IssueTracker: https://github.com/herbiewalker/tryst/issues
 
 AutoName: Tryst
 Description: |-
@@ -66,7 +66,7 @@ Description: |-
     F-Droid pulls the title, descriptions, and changelogs from there automatically.
 
 RepoType: git
-Repo: https://github.com/<public-owner>/tryst.git
+Repo: https://github.com/herbiewalker/tryst.git
 
 Builds:
   - versionName: 0.1.0
