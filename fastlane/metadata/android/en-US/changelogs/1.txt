@@ -1,0 +1,3 @@
+First public release.
+
+Private, local-only intimacy tracker: encrypted SQLCipher database and encrypted photo storage, PIN + optional biometric lock, auto-lock on background, and no network access at all. Log encounters, partners, acts, positions and more; explore on-device Insights and Achievements; move your data with a manual password-encrypted backup.
