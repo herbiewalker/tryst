@@ -98,6 +98,21 @@ class SessionManager @Inject constructor(
 
     fun disableBiometric() = biometricVault.disable()
 
+    /** Verify the current PIN without affecting the self-wipe counter (re-auth for change-PIN). */
+    fun verifyCurrentPin(pin: String): Boolean = vault.verifyPin(pin)
+
+    /**
+     * Change the app PIN while unlocked: verify [current] (no wipe on a wrong PIN), then re-wrap the
+     * **in-memory** DEK under [new]. The session/DB and the biometric wrap (DEK-based, PIN-independent)
+     * are untouched. Returns false if the current PIN is wrong or the session isn't unlocked.
+     */
+    fun changePin(current: String, new: String): Boolean {
+        if (!vault.verifyPin(current)) return false
+        val currentDek = dek ?: return false
+        vault.reprotect(currentDek, new)
+        return true
+    }
+
     /** Irreversibly destroy ALL app data: keys, database, and encrypted media. Returns to setup. */
     @Synchronized
     fun deleteAllData() {
