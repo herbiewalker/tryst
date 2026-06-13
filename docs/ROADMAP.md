@@ -202,10 +202,23 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
   Android Lint already ran in CI; the FOSS guard stays the hand-maintained `OssLicenses` + banned-SDK
   grep (no license plugin — Pass 10 ethos). A "no-hardcoded-Compose-strings" rule has no stock
   equivalent; left as a possible future custom Detekt rule.
-- Optional cleanup: refactor large editor VMs to a single immutable `UiState` (deferred "chunk 6";
-  `EncounterEditViewModel` has **no** UI strings, so this is now fully independent of the i18n work).
-- Onboarding copy (esp. PIN-loss / no-recovery warning). *(The setup-screen no-recovery warning string
-  itself is now in `strings.xml` as `setup_create_subtitle`.)*
+- ~~Optional cleanup: refactor large editor VMs to a single immutable `UiState` (deferred "chunk 6")~~
+  **DONE (2026-06-12).** `EncounterEditViewModel`'s ~21 per-field `mutableStateOf` properties collapsed
+  into one immutable `EncounterEditUiState`, exposed as a single `var uiState by mutableStateOf(...)`
+  (`private set`); all edits go through `copy()`-ing update methods (added explicit
+  `setStartAt`/`setDuration`/`setRating`/`setMood`/`setInitiator`/`setNote` to replace the screen's former
+  direct field writes). Repo-backed option `StateFlow`s + internal bookkeeping (`loadedId`/`createdAt`/
+  `removedExisting`) stay on the VM; `solo` is now a derived prop on the state. Behaviour-preserving; the
+  screen reads a single `val ui = viewModel.uiState` snapshot. Verified compile/ktlint/detekt/assembleDebug.
+- ~~Onboarding copy (esp. PIN-loss / no-recovery warning)~~ **DONE (2026-06-12).** Added a one-time
+  first-run **`WelcomeScreen`** (`ui/lock/WelcomeScreen.kt`), shown before PIN creation: app intro +
+  three privacy points (local-only / encrypted+locked / yours-alone) + an **error-container callout**
+  for the no-recovery warning, then a single "Get started" CTA. Gated in `MainActivity`'s
+  `NeedsSetup` branch via a `rememberSaveable` `welcomed` flag (survives config changes; advances to
+  the existing `SetupScreen`). Copy in `strings.xml` under a new `welcome_*` block. The inline
+  no-recovery line on `setup_create_subtitle` stays as reinforcement. Verified assembleDebug + lint +
+  ktlint + detekt. *(On-device visual check deferred — needs a fresh `pm clear` to reach NeedsSetup +
+  the Pass-5 FLAG_SECURE-off procedure.)*
 - Finalize **license & distribution** ([DECISIONS.md](DECISIONS.md) O-2); F-Droid metadata if chosen.
 - ~~Security self-review against [THREAT_MODEL.md](THREAT_MODEL.md)~~ **DONE (2026-06-12).** Re-audited
   every THREAT_MODEL mitigation against live code after this session's broad i18n + ktlint churn — all

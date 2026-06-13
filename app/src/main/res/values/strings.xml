@@ -24,6 +24,21 @@
     <string name="history_detail_placeholder">Select a tryst to view or edit, or tap + to log a new one.</string>
 
     <!-- ============================================================= -->
+    <!-- First-run welcome (WelcomeScreen, shown once before PIN setup) -->
+    <!-- ============================================================= -->
+    <string name="welcome_title">Welcome to Tryst</string>
+    <string name="welcome_tagline">A private place to log your intimate life.</string>
+    <string name="welcome_point_local_title">Stays on this phone</string>
+    <string name="welcome_point_local_body">No account, no sync, no internet access at all — nothing can leave this device.</string>
+    <string name="welcome_point_encrypted_title">Encrypted and locked</string>
+    <string name="welcome_point_encrypted_body">Your entries and photos are encrypted behind your PIN, with optional biometric unlock, and the app locks itself when it leaves the screen.</string>
+    <string name="welcome_point_yours_title">Yours alone</string>
+    <string name="welcome_point_yours_body">Log encounters, partners, and photos, and see your own insights — all offline, with an encrypted backup when you switch phones.</string>
+    <string name="welcome_no_recovery_title">There\'s no password recovery</string>
+    <string name="welcome_no_recovery_body">The PIN you create next is the only key. If you forget it and haven\'t set up biometric unlock, your data can\'t be unlocked — there\'s no email reset, because there\'s no server.</string>
+    <string name="welcome_get_started">Get started</string>
+
+    <!-- ============================================================= -->
     <!-- Lock &amp; PIN setup (SetupScreen, LockScreen, PinPad)         -->
     <!-- ============================================================= -->
     <string name="setup_create_title">Create a PIN</string>
