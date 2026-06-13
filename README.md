@@ -69,7 +69,7 @@ Progress against the [roadmap](docs/ROADMAP.md):
 
 Separate from the milestones, a **12-pass pre-release audit program** runs each pass in a fresh session
 (full prompts in [docs/PRERELEASE_PROMPT_PACK.md](docs/PRERELEASE_PROMPT_PACK.md); status tracked in
-[docs/ROADMAP.md](docs/ROADMAP.md)). **11 / 12 done:**
+[docs/ROADMAP.md](docs/ROADMAP.md)). **All 12 done — final verdict: GO (conditional):**
 
 - ✅ 1 Material 3 / Modern UI · ✅ 2 Edge-to-edge & insets · ✅ 3 Motion & micro-interactions · ✅ 4 Accessibility
   · ✅ 5 Adaptive layouts *(nav rail on medium+, two-pane Trysts/editor on expanded, width-capped screens)*
@@ -84,7 +84,9 @@ Separate from the milestones, a **12-pass pre-release audit program** runs each 
 - ✅ 11 Release hardening (R8) *(release build verified end-to-end on emulator under R8: zero R8 warnings,
   no app keep rules needed, full PIN→SQLCipher→unlock path works obfuscated; unsigned artifact = no leaked
   signing creds; Play Integrity rejected as incompatible with no-network)*
-  · ⬜ 12 Final go/no-go
+  · ✅ 12 Final go/no-go *(**GO, conditional** — regression re-scan clean, license artifacts current, R8
+  release build launches end-to-end on the actual minified binary, zero TODO/FIXME; remaining before a
+  public build is human-only: real signing config, MobSF dynamic scan, real-device + TalkBack pass)*
 
 New here? See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for scope and
 [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) to build it.
