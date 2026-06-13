@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
+import app.tryst.core.prefs.WeekStart
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.relation.EncounterWithDetails
@@ -89,6 +90,7 @@ fun HistoryScreen(
     viewModel: HistoryViewModel = hiltViewModel(),
 ) {
     val encounters by viewModel.encounters.collectAsStateWithLifecycle()
+    val weekStart by viewModel.weekStart.collectAsStateWithLifecycle()
     val haptics = rememberHaptics()
     var calendarMode by remember { mutableStateOf(false) }
     // Already sorted by startAt DESC; groupBy keeps that order, one section per day.
@@ -144,6 +146,7 @@ fun HistoryScreen(
                 "calendar" -> CalendarView(
                     modifier = Modifier.padding(padding),
                     items = encounters,
+                    weekStart = weekStart,
                     onLoadThumb = { viewModel.decode(it, CARD_THUMB_PX) },
                     onOpenEncounter = onOpenEncounter,
                     sharedScope = sharedScope,
@@ -345,6 +348,7 @@ private val selectedDayFormatter = DateTimeFormatter.ofPattern("EEEE, MMM d")
 private fun CalendarView(
     modifier: Modifier = Modifier,
     items: List<EncounterWithDetails>,
+    weekStart: WeekStart,
     onLoadThumb: suspend (MediaEntity) -> ImageBitmap?,
     onOpenEncounter: (String) -> Unit,
     sharedScope: SharedTransitionScope,
@@ -381,12 +385,13 @@ private fun CalendarView(
                 },
             )
         }
-        item(key = "weekday-labels") { WeekdayLabels() }
+        item(key = "weekday-labels") { WeekdayLabels(weekStart) }
         item(key = "month-grid") {
             MonthGrid(
                 month = month,
                 dayIcons = dayIcons,
                 selected = selectedDay,
+                weekStart = weekStart,
                 onSelect = { selectedDay = if (it == selectedDay) null else it },
             )
         }
@@ -442,18 +447,9 @@ private fun MonthHeader(month: YearMonth, onPrev: () -> Unit, onNext: () -> Unit
 }
 
 @Composable
-private fun WeekdayLabels() {
+private fun WeekdayLabels(weekStart: WeekStart) {
     val locale = LocalConfiguration.current.locales[0]
-    // Sunday-first column order.
-    val days = listOf(
-        DayOfWeek.SUNDAY,
-        DayOfWeek.MONDAY,
-        DayOfWeek.TUESDAY,
-        DayOfWeek.WEDNESDAY,
-        DayOfWeek.THURSDAY,
-        DayOfWeek.FRIDAY,
-        DayOfWeek.SATURDAY,
-    )
+    val days = weekdayOrder(weekStart)
     Row(Modifier.fillMaxWidth()) {
         days.forEach { dow ->
             Text(
@@ -467,16 +463,40 @@ private fun WeekdayLabels() {
     }
 }
 
+/** Column order for the calendar, Sunday- or Monday-first per the user's setting. */
+private fun weekdayOrder(weekStart: WeekStart): List<DayOfWeek> = when (weekStart) {
+    WeekStart.MONDAY -> listOf(
+        DayOfWeek.MONDAY,
+        DayOfWeek.TUESDAY,
+        DayOfWeek.WEDNESDAY,
+        DayOfWeek.THURSDAY,
+        DayOfWeek.FRIDAY,
+        DayOfWeek.SATURDAY,
+        DayOfWeek.SUNDAY,
+    )
+    WeekStart.SUNDAY -> listOf(
+        DayOfWeek.SUNDAY,
+        DayOfWeek.MONDAY,
+        DayOfWeek.TUESDAY,
+        DayOfWeek.WEDNESDAY,
+        DayOfWeek.THURSDAY,
+        DayOfWeek.FRIDAY,
+        DayOfWeek.SATURDAY,
+    )
+}
+
 @Composable
 private fun MonthGrid(
     month: YearMonth,
     dayIcons: Map<LocalDate, Int>,
     selected: LocalDate?,
+    weekStart: WeekStart,
     onSelect: (LocalDate) -> Unit,
 ) {
     val daysInMonth = month.lengthOfMonth()
-    // Sunday=0 .. Saturday=6 offset for the 1st of the month.
-    val leadingBlanks = month.atDay(1).dayOfWeek.value % 7
+    // Offset of the 1st within its week. dayOfWeek.value is Mon=1..Sun=7.
+    val firstDow = month.atDay(1).dayOfWeek.value
+    val leadingBlanks = if (weekStart == WeekStart.MONDAY) (firstDow + 6) % 7 else firstDow % 7
     val cells: List<LocalDate?> = buildList {
         repeat(leadingBlanks) { add(null) }
         for (d in 1..daysInMonth) add(month.atDay(d))
