@@ -234,7 +234,7 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
   `ContentValues` but the *column names* came from the untrusted backup JSON straight into the framework's
   unquoted `INSERT` column list — possible SQL injection on a maliciously-crafted import (no exfil; bounded
   by AEAD-password + the importer's existing full DB access). Now vetted against a plain-identifier regex
-  (`COLUMN_NAME`). (The heavier 12-pass program's final Pass 12 go/no-go remains, run in a fresh session.)
+  (`COLUMN_NAME`). (The heavier 12-pass program's final Pass 12 go/no-go has since passed — GO, conditional.)
 
 ### Late additions (2026-06-12)
 - **Solo-aware editor** — with no partner selected, the editor hides "Who initiated" + "Acts — received"
@@ -250,7 +250,8 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 A separate **12-pass pre-release program** (not tied to any milestone), each pass run in a fresh session
 to keep the audit mindset critical. Full self-contained prompts live in
 [PRERELEASE_PROMPT_PACK.md](PRERELEASE_PROMPT_PACK.md). Order: **UI → security → license/release**, so
-code/dependency changes from earlier passes get re-checked. Status: **8 / 12 done.**
+code/dependency changes from earlier passes get re-checked. Status: **12 / 12 done — final verdict GO
+(conditional), 2026-06-12.**
 
 ### UI (1–5)
 - [x] **Pass 1 — Material 3 / Modern UI:** shared color/typography/shape tokens applied consistently
@@ -431,6 +432,29 @@ code/dependency changes from earlier passes get re-checked. Status: **8 / 12 don
     and ships Play Services). It also buys nothing here — there's no backend/account/entitlement to protect
     (fully local, single-user). Recommendation: **do not integrate** (would break the headline privacy
     guarantee and the anti-leak guard). Noted so Pass 12 doesn't revisit it.
-- [ ] **Pass 12 — Final pre-release checklist:** go/no-go — re-scan for regressions (exported components,
-      secrets, cleartext, sensitive logging), confirm license artifacts, R8 release build launches, triage
-      remaining TODO/FIXME, then summarize resolved / deferred (with risk) + a final recommendation.
+- [x] **Pass 12 — Final pre-release checklist = GO (conditional), 2026-06-12.** Final go/no-go run in a
+      fresh session. **Regression re-scan = clean:** no `INTERNET`/any permission in the manifest (only
+      `MainActivity` exported — MAIN/LAUNCHER, reads no intent input; `FileProvider` `exported=false`);
+      zero `Log.*`/`println`/`printStackTrace` in `src/main`; no hardcoded secrets (every `password` hit is
+      user-supplied, PBKDF2-derived, never stored); `allowBackup=false` + `data_extraction_rules` exclude
+      all domains (cloud-backup + device-transfer); no cleartext config needed (no networking). **License
+      artifacts present + current:** root `LICENSE` (full GPLv3), `THIRD_PARTY_NOTICES.md`, in-app
+      Settings → About (`ui/about/AboutScreen.kt` + `OssLicenses.kt`); per-file source headers deliberately
+      omitted (D-10 ethos — README+LICENSE+notices satisfy GPLv3; not a blocker). **Release build verified
+      end-to-end:** `checkNoNetworkRelease assembleRelease` = BUILD SUCCESSFUL, `minifyReleaseWithR8` zero
+      warnings (only the known-benign Kotlin annotation-target KT-73255 warnings); produced
+      `app-release-unsigned.apk` (~25.8 MB, no signing config = zero committed creds) + `mapping.txt`.
+      **Launch smoke-tested on the actual R8 release binary** (not just debug): debug-signed the unsigned
+      release APK (zipalign + apksigner, debug keystore — throwaway), installed on emulator, launched →
+      `topResumedActivity=app.tryst/.MainActivity`, process alive, **zero FATAL/crash** in logcat; restored
+      the normal debug build afterward. (Covers the runtime code that changed since Pass 11: WelcomeScreen,
+      `EncounterEditViewModel` UiState refactor.) **TODO/FIXME/HACK = ZERO** across the whole `app/src`
+      (main + tests). **Deferred (none release-blocking):** real signing config from gitignored
+      `keystore.properties` (THE release step — by design not in repo); fdroiddata MR (manual GitLab step,
+      post-Pass-12, runbook in RELEASE.md); localization (English-only v1); polish backlog (history
+      filters, VACUUM secure-delete, Argon2id PIN KDF, Keystore monotonic attempt counter, persistent
+      achievement celebration). **GO — conditional on the human-only checks an automated audit cannot
+      cover:** real-device testing across OEMs/Android versions; visual + TalkBack/a11y runtime (FLAG_SECURE
+      blanks the capture path — verified via code/lint/semantics only); dynamic analysis (MobSF on the
+      release APK, recommended before public launch); biometric hardware flow on real fingerprint hardware.
+      **All 12 passes now ✅.**

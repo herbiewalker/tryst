@@ -96,7 +96,8 @@ Notes:
 ### MR runbook (must be done by a human on GitLab — F-Droid is GitLab-hosted)
 
 The submission cannot be automated from this repo's tooling (no `glab`, no GitLab credential; F-Droid is
-on GitLab, not GitHub). Do it once, by hand, **after Pass 12 passes**:
+on GitLab, not GitHub). Pass 12 has passed (GO, conditional — see [ROADMAP.md](ROADMAP.md)), so this is
+now unblocked; do it once, by hand:
 
 1. Sign in / register at <https://gitlab.com> and **fork** <https://gitlab.com/fdroid/fdroiddata>.
 2. Clone your fork and create a branch:
