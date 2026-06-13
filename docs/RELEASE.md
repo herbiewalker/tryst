@@ -54,7 +54,7 @@ F-Droid metadata lives in F-Droid's **fdroiddata** repo, not ours. Submit a merg
 
 ```yaml
 Categories:
-  - Connectivity        # adjust to the closest real F-Droid categories
+  - Sports & Health     # closest fit for a wellness/intimacy tracker (no network category — the app has no network)
 License: GPL-3.0-only
 AuthorName: Tryst
 SourceCode: https://github.com/herbiewalker/tryst
@@ -92,6 +92,33 @@ Notes:
 - Screenshots are optional and **not** included: `FLAG_SECURE` blanks captures, so producing real ones
   needs the temporary FLAG_SECURE-off procedure from pre-release Pass 5. Add them later under
   `fastlane/metadata/android/en-US/images/phoneScreenshots/` if desired.
+
+### MR runbook (must be done by a human on GitLab — F-Droid is GitLab-hosted)
+
+The submission cannot be automated from this repo's tooling (no `glab`, no GitLab credential; F-Droid is
+on GitLab, not GitHub). Do it once, by hand, **after Pass 12 passes**:
+
+1. Sign in / register at <https://gitlab.com> and **fork** <https://gitlab.com/fdroid/fdroiddata>.
+2. Clone your fork and create a branch:
+   ```bash
+   git clone https://gitlab.com/<you>/fdroiddata.git && cd fdroiddata
+   git checkout -b add-app.tryst
+   ```
+3. Save the YAML block above as `metadata/app.tryst.yml` (verify `commit: v0.1.0` matches the pushed tag,
+   and that `versionCode`/`versionName` match `app/build.gradle.kts`).
+4. Optionally lint locally with F-Droid's tooling: `fdroid readmeta && fdroid lint app.tryst` (needs
+   `fdroidserver` installed; F-Droid CI will lint it regardless).
+5. Commit and push to your fork:
+   ```bash
+   git commit -am "New app: Tryst (app.tryst)"
+   git push -u origin add-app.tryst
+   ```
+6. Open a merge request from your branch into `fdroid/fdroiddata:master`. Suggested MR description:
+   > New app: **Tryst** (`app.tryst`) — a private, local-only, fully offline intimacy tracker. GPL-3.0,
+   > no `INTERNET` permission, no trackers/ads/analytics, encrypted at rest. Source:
+   > https://github.com/herbiewalker/tryst, release tag `v0.1.0`. No anti-features.
+7. Respond to the F-Droid reviewers' feedback on the MR until it's merged; the first build then appears in
+   the repo within a build cycle.
 
 ## Why no signing config here
 
