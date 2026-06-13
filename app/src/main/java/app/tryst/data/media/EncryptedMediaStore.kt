@@ -42,6 +42,10 @@ class EncryptedMediaStore @Inject constructor(
 
     fun save(id: String, source: InputStream): File {
         val file = fileFor(id)
+        // The media dir is created in the constructor, but it can be removed later (deleteAllData wipes
+        // it) while this singleton lives on with a stale reference. Recreate it so a restore that runs
+        // after a wipe — the standard "delete all data, then restore" migration — doesn't fail.
+        if (!dir.exists()) dir.mkdirs()
         file.outputStream().use { out -> MediaCrypto.encrypt(session.mediaKey(), source, out, id.toByteArray()) }
         return file
     }

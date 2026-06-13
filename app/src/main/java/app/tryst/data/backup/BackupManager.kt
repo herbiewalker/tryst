@@ -53,13 +53,19 @@ class BackupManager @Inject constructor(
             zip.putNextEntry(ZipEntry("data.json"))
             zip.write(dumpDatabase(db).toString().toByteArray(Charsets.UTF_8))
             zip.closeEntry()
-            db.query("SELECT id FROM media").use { c ->
-                while (c.moveToNext()) {
-                    val id = c.getString(0)
-                    zip.putNextEntry(ZipEntry("media/$id"))
-                    mediaStore.open(id).use { it.copyTo(zip) } // decrypt → re-encrypted by the container
-                    zip.closeEntry()
-                }
+            // Encounter photos (rows in the media table) AND partner avatars (blobs referenced only by
+            // Partner.photoMediaId, with no media-table row) — both must be backed up. They share the
+            // media/<id> namespace; import saves any such entry by id, and the restored rows point back.
+            val blobIds = LinkedHashSet<String>()
+            db.query("SELECT id FROM media").use { c -> while (c.moveToNext()) blobIds.add(c.getString(0)) }
+            db.query("SELECT photoMediaId FROM partners WHERE photoMediaId IS NOT NULL").use { c ->
+                while (c.moveToNext()) blobIds.add(c.getString(0))
+            }
+            for (id in blobIds) {
+                if (!mediaStore.fileFor(id).exists()) continue // skip a dangling reference rather than fail
+                zip.putNextEntry(ZipEntry("media/$id"))
+                mediaStore.open(id).use { it.copyTo(zip) } // decrypt → re-encrypted by the container
+                zip.closeEntry()
             }
         }
     }

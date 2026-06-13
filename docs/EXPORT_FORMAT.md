@@ -28,7 +28,9 @@ AES-256-GCM-HKDF streaming (Tink `AesGcmHkdfStreaming`, 1 MiB segments,
 associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, iterations) → 32 bytes
         ↓ plaintext of that stream is a ZIP:
   data.json        every table dumped generically: { "schemaVersion": N, "tables": { <table>: [ {col: value, …}, … ] } }
-  media/<id>       the decrypted bytes of each photo (re-encrypted by the container)
+  media/<id>       the decrypted bytes of each photo blob (re-encrypted by the container) —
+                   both encounter photos (media-table rows) AND partner avatars (referenced
+                   only by Partner.photoMediaId, no media-table row)
 ```
 
 - **KDF:** PBKDF2-HMAC-SHA256 (same `Pbkdf2` as the app PIN, 600k iters). The iteration count is in
@@ -40,11 +42,15 @@ associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, i
 - **Tables** (insert order respects FKs; `PRAGMA defer_foreign_keys` also guards it): partners,
   locations, tags, positions, acts, encounters, media, encounter_partner, encounter_position,
   encounter_tag. Rows are inserted with `INSERT OR REPLACE` (idempotent re-import).
-- **Media rows:** `encFilePath` is device-specific, so on import it's repointed at this device's media
-  dir and the blob is written via `EncryptedMediaStore` (re-encrypted under the current media key). The
-  media id (from the ZIP entry name / `data.json`) is **validated as a safe filename** — no path
-  separators or `..`, and the resolved file must stay inside the media dir — so a crafted backup can't
-  use it to write outside app storage (Zip-Slip).
+- **Media blobs:** export gathers ids from **both** `media` rows (encounter photos) **and**
+  `partners.photoMediaId` (avatars) — avatars have no media-table row, so dumping the table alone would
+  silently drop them from the backup. On import, `encFilePath` is device-specific, so it's repointed at
+  this device's media dir and the blob is written via `EncryptedMediaStore` (re-encrypted under the
+  current media key). `EncryptedMediaStore.save` recreates the media dir if it's missing — the standard
+  "delete all data, then restore" migration removes it, and a stale singleton would otherwise fail the
+  first write. The media id (from the ZIP entry name / `data.json`) is **validated as a safe filename** —
+  no path separators or `..`, and the resolved file must stay inside the media dir — so a crafted backup
+  can't use it to write outside app storage (Zip-Slip).
 - **Schema version** is recorded; restores assume forward-only, additive-nullable migrations (a newer
   backup into an older app isn't supported).
 

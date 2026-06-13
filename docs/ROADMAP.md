@@ -458,3 +458,19 @@ code/dependency changes from earlier passes get re-checked. Status: **12 / 12 do
       blanks the capture path — verified via code/lint/semantics only); dynamic analysis (MobSF on the
       release APK, recommended before public launch); biometric hardware flow on real fingerprint hardware.
       **All 12 passes now ✅.**
+  - **Real-device pass on a Pixel 9 Pro XL (2026-06-12) — found + fixed TWO backup data-loss bugs.**
+    Drove the R8 release build on real hardware: StrongBox **hard-proven** to back the vault key
+    (instrumented `KeyInfo.getSecurityLevel()==STRONGBOX`, vs the emulator's TEE fallback); strong
+    (Class 3) fingerprint enroll/unlock; encounter logging; real-camera photo with **zero** leakage to
+    MediaStore/DCIM/shared storage; encrypted backup = maximal-entropy ciphertext. **Then backup
+    RESTORE lost photos.** Root causes: (1) `EncryptedMediaStore.save` never recreated the `media/` dir,
+    which `SessionManager.deleteAllData` removes — so the standard "delete all data, then restore"
+    migration threw `FileNotFoundException` on the first media write (after `data.json` had already
+    committed) and silently dropped every photo; (2) **partner avatars** are blobs referenced only by
+    `Partner.photoMediaId` with no `media`-table row, so `export`'s `SELECT id FROM media` never included
+    them — partner photos were absent from every backup. **Fixes:** `save` now `mkdirs` the dir; `export`
+    gathers blob ids from both `media` rows and `partners.photoMediaId`. The shipped `BackupRoundTripTest`
+    missed both (it only restored into a freshly-constructed store). Added `BackupRestoreRegressionTest`
+    (restore-over-existing, restore-after-media-dir-wipe, partner-avatar-survives) — all green on the
+    Pixel; **user-confirmed both photos return through the full wipe→restore flow.** These bugs exist in
+    the `v0.1.0` tag → the tag must be re-cut on the fixed commit before any F-Droid submission.
