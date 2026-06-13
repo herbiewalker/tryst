@@ -62,7 +62,7 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
 - [x] **Settings**: biometric enable/disable (relocated from home), Lock now, **Delete all data**
       (`SessionManager.deleteAllData()` wipes keys + DB + media → setup).
 - [x] ViewModels use `stateIn` + `.catch` (survive the DB closing on auto-lock).
-- [ ] Deferred: history **filters/search**, change-PIN UI, configurable auto-lock timeout.
+- [ ] Deferred: history **filters/search**. (change-PIN UI ✅ M8/D-31; configurable auto-lock timeout ✅ M8/D-31.)
 
 ## M3.x — Category, partner & presentation expansion  ✅ done (verified on emulator)
 - [x] **M3.1 (schema v5):** partner sex/gender/relationship (+ `photoMediaId` M4 hook); custom
@@ -217,6 +217,12 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
   unquoted `INSERT` column list — possible SQL injection on a maliciously-crafted import (no exfil; bounded
   by AEAD-password + the importer's existing full DB access). Now vetted against a plain-identifier regex
   (`COLUMN_NAME`). (The heavier 12-pass program's final Pass 12 go/no-go remains, run in a fresh session.)
+
+### Late additions (2026-06-12)
+- **Solo-aware editor** — with no partner selected, the editor hides "Who initiated" + "Acts — received"
+  (per-partner orgasm counters already auto-hid) so it reads cleanly as solo; a solo save drops those.
+- **Settings → General section** — app/how-it-works blurb, **Change PIN** (D-31), **auto-lock timeout**
+  (D-31), **haptics** on/off (app-wide via `LocalHapticsEnabled`), **calendar week start** (Sun/Mon).
 
 > Sequencing rationale: security/storage foundations come **before** features so we never
 > retrofit encryption onto plaintext data.
