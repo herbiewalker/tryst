@@ -219,7 +219,12 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
   no-recovery line on `setup_create_subtitle` stays as reinforcement. Verified assembleDebug + lint +
   ktlint + detekt. *(On-device visual check deferred — needs a fresh `pm clear` to reach NeedsSetup +
   the Pass-5 FLAG_SECURE-off procedure.)*
-- Finalize **license & distribution** ([DECISIONS.md](DECISIONS.md) O-2); F-Droid metadata if chosen.
+- ~~Finalize **license & distribution** ([DECISIONS.md](DECISIONS.md) O-2)~~ **DONE (2026-06-12).**
+  License = GPLv3 (D-29); **distribution = F-Droid only** (D-32). Added F-Droid fastlane metadata
+  (`fastlane/metadata/android/en-US/`: title, short/full description, `changelogs/1.txt`) and a
+  **[docs/RELEASE.md](RELEASE.md)** cut-a-release + F-Droid submission guide (incl. the `app.tryst.yml`
+  recipe template). **Open blocker noted in RELEASE.md:** the source repo is currently private — F-Droid
+  needs it public before submission.
 - ~~Security self-review against [THREAT_MODEL.md](THREAT_MODEL.md)~~ **DONE (2026-06-12).** Re-audited
   every THREAT_MODEL mitigation against live code after this session's broad i18n + ktlint churn — all
   intact: `FLAG_SECURE`, auto-lock (`TrystApplication` ProcessLifecycleOwner `onStop` + grace window),

@@ -1,0 +1,20 @@
+Tryst is a private, local-only journal for your intimate life. It keeps everything on your phone — there is no account, no sign-up, no sync, and no internet access at all. The app declares no INTERNET permission, so your data simply cannot be sent anywhere.
+
+Privacy is the whole point, not an add-on:
+
+* No network. The app has no INTERNET permission, so nothing can leak to a server. There are no analytics, ads, or crash-reporting SDKs of any kind.
+* Encrypted at rest. Your entries live in an encrypted SQLCipher database and your photos are encrypted in the app's private storage — never in your gallery or any shared/cloud location.
+* Locked behind your PIN. A 6-digit app PIN (separate from your phone's) gates everything, with optional biometric unlock. The app locks itself when it leaves the screen, and screenshots and the app-switcher preview are blocked.
+* No backup leakage. The app is excluded from cloud auto-backup. The only way to move your data is the app's own manual, password-encrypted export.
+
+What you can do:
+
+* Log encounters in as much or as little detail as you like — date and time, duration, partners, acts, positions, protection, mood, setting, occasion, toys, satisfaction rating, orgasms, notes, and encrypted photo attachments.
+* Track partners (named or anonymous) with per-partner stats.
+* Explore Insights: streaks, trends, and per-attribute breakdowns, all computed on-device with hand-drawn charts.
+* Earn Achievements derived from your own log.
+* Customize the look with light/dark themes and Material You dynamic color.
+
+Important — there is no password recovery. Your PIN is the only key. If you forget it and have not set up biometric unlock, your data cannot be unlocked: there is no email reset, because there is no server. Keep your PIN safe and use the encrypted export to back up your data.
+
+Tryst is free and open-source software under the GNU General Public License v3.0, so anyone can verify these privacy claims in the source.

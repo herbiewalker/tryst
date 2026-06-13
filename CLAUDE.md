@@ -91,3 +91,4 @@ See [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) for toolchain details.
 - [docs/FLOWCHARTS.md](docs/FLOWCHARTS.md) — visual maps of the core logic flows
 - [docs/ROADMAP.md](docs/ROADMAP.md) — milestones
 - [docs/DECISIONS.md](docs/DECISIONS.md) — decision log + open questions
+- [docs/RELEASE.md](docs/RELEASE.md) — cut-a-release checklist + F-Droid submission guide
