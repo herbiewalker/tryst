@@ -46,6 +46,42 @@ import kotlinx.coroutines.withContext
  */
 data class PendingPhoto(val uri: Uri, val mimeType: String, val tempFile: File? = null)
 
+/**
+ * The editor's full form state, held immutably and replaced wholesale on every edit (the VM owns the
+ * only [androidx.compose.runtime.MutableState], so the screen never mutates a field directly). Repo-backed
+ * option lists (partners / custom positions / acts) live on the VM as their own [StateFlow]s, not here.
+ */
+data class EncounterEditUiState(
+    val startAt: Long = System.currentTimeMillis(),
+    val durationText: String = "",
+    val rating: Int? = null,
+    val mood: Mood? = null,
+    val initiator: Initiator? = null,
+    val protection: Set<Protection> = emptySet(),
+    val orgasmCountSelf: Int = 0,
+    /** Per-orgasm ejaculation location: orgasm index (0-based) -> location. */
+    val ejaculations: Map<Int, EjaculationLocation> = emptyMap(),
+    /** Per-partner orgasm counts: partnerId -> count. */
+    val partnerOrgasms: Map<String, Int> = emptyMap(),
+    val practicesPerformed: Set<String> = emptySet(),
+    val practicesReceived: Set<String> = emptySet(),
+    val selectedPositionIds: Set<String> = emptySet(),
+    val kinks: Set<Kink> = emptySet(),
+    val contexts: Set<Setting> = emptySet(),
+    val occasions: Set<Occasion> = emptySet(),
+    val toys: Set<ToyType> = emptySet(),
+    val note: String = "",
+    val selectedPartnerIds: Set<String> = emptySet(),
+    /** Photos already saved on this encounter (minus any the user removed this session). */
+    val existingPhotos: List<MediaEntity> = emptyList(),
+    /** Photos picked this session, attached (encrypted) on Save. */
+    val pendingPhotos: List<PendingPhoto> = emptyList(),
+    val isEditing: Boolean = false,
+) {
+    /** No partner selected: hide the partner-only fields and drop their values on save. */
+    val solo: Boolean get() = selectedPartnerIds.isEmpty()
+}
+
 @HiltViewModel
 class EncounterEditViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -74,44 +110,10 @@ class EncounterEditViewModel @Inject constructor(
             .catch { emit(emptyList()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    var startAt by mutableStateOf(System.currentTimeMillis())
-    var durationText by mutableStateOf("")
-    var rating by mutableStateOf<Int?>(null)
-    var mood by mutableStateOf<Mood?>(null)
-    var initiator by mutableStateOf<Initiator?>(null)
-    var protection by mutableStateOf<Set<Protection>>(emptySet())
-    var orgasmCountSelf by mutableStateOf(0)
+    var uiState by mutableStateOf(EncounterEditUiState())
         private set
 
-    /** Per-orgasm ejaculation location: orgasm index (0-based) -> location. */
-    var ejaculations by mutableStateOf<Map<Int, EjaculationLocation>>(emptyMap())
-        private set
-
-    /** Per-partner orgasm counts: partnerId -> count. */
-    var partnerOrgasms by mutableStateOf<Map<String, Int>>(emptyMap())
-        private set
-    var practicesPerformed by mutableStateOf<Set<String>>(emptySet())
-    var practicesReceived by mutableStateOf<Set<String>>(emptySet())
-    var selectedPositionIds by mutableStateOf<Set<String>>(emptySet())
-    var kinks by mutableStateOf<Set<Kink>>(emptySet())
-    var contexts by mutableStateOf<Set<Setting>>(emptySet())
-    var occasions by mutableStateOf<Set<Occasion>>(emptySet())
-    var toys by mutableStateOf<Set<ToyType>>(emptySet())
-    var note by mutableStateOf("")
-    var selectedPartnerIds by mutableStateOf<Set<String>>(emptySet())
-
-    /** Photos already saved on this encounter (minus any the user removed this session). */
-    var existingPhotos by mutableStateOf<List<MediaEntity>>(emptyList())
-        private set
-
-    /** Photos picked this session, attached (encrypted) on Save. */
-    var pendingPhotos by mutableStateOf<List<PendingPhoto>>(emptyList())
-        private set
     private val removedExisting = mutableListOf<MediaEntity>()
-
-    var isEditing by mutableStateOf(false)
-        private set
-
     private var loadedId: String? = null
     private var createdAt: Long = 0L
 
@@ -122,47 +124,68 @@ class EncounterEditViewModel @Inject constructor(
             val details = encounters.get(encounterId) ?: return@launch
             val e = details.encounter
             loadedId = encounterId
-            isEditing = true
             createdAt = e.createdAt
-            startAt = e.startAt
-            durationText = e.durationMin?.toString() ?: ""
-            rating = e.satisfactionRating
-            mood = e.mood
-            initiator = e.initiator
-            protection = e.protectionUsed
-            orgasmCountSelf = e.orgasmCountSelf ?: 0
-            ejaculations = e.ejaculationLocations ?: emptyMap()
-            partnerOrgasms = e.partnerOrgasms ?: emptyMap()
-            practicesPerformed = e.practicesPerformed ?: emptySet()
-            practicesReceived = e.practicesReceived ?: emptySet()
-            selectedPositionIds = e.positions ?: emptySet()
-            kinks = e.kinks ?: emptySet()
-            contexts = e.contexts ?: emptySet()
-            occasions = e.occasions ?: emptySet()
-            toys = e.toys ?: emptySet()
-            note = e.note ?: ""
-            selectedPartnerIds = details.partners.map { it.id }.toSet()
-            existingPhotos = details.media
+            uiState = EncounterEditUiState(
+                startAt = e.startAt,
+                durationText = e.durationMin?.toString() ?: "",
+                rating = e.satisfactionRating,
+                mood = e.mood,
+                initiator = e.initiator,
+                protection = e.protectionUsed,
+                orgasmCountSelf = e.orgasmCountSelf ?: 0,
+                ejaculations = e.ejaculationLocations ?: emptyMap(),
+                partnerOrgasms = e.partnerOrgasms ?: emptyMap(),
+                practicesPerformed = e.practicesPerformed ?: emptySet(),
+                practicesReceived = e.practicesReceived ?: emptySet(),
+                selectedPositionIds = e.positions ?: emptySet(),
+                kinks = e.kinks ?: emptySet(),
+                contexts = e.contexts ?: emptySet(),
+                occasions = e.occasions ?: emptySet(),
+                toys = e.toys ?: emptySet(),
+                note = e.note ?: "",
+                selectedPartnerIds = details.partners.map { it.id }.toSet(),
+                existingPhotos = details.media,
+                isEditing = true,
+            )
         }
+    }
+
+    fun setStartAt(value: Long) {
+        uiState = uiState.copy(startAt = value)
+    }
+    fun setDuration(text: String) {
+        uiState = uiState.copy(durationText = text.filter(Char::isDigit))
+    }
+    fun setRating(value: Int?) {
+        uiState = uiState.copy(rating = value)
+    }
+    fun setMood(value: Mood?) {
+        uiState = uiState.copy(mood = value)
+    }
+    fun setInitiator(value: Initiator?) {
+        uiState = uiState.copy(initiator = value)
+    }
+    fun setNote(value: String) {
+        uiState = uiState.copy(note = value)
     }
 
     fun addPhoto(uri: Uri) {
         val mime = context.contentResolver.getType(uri) ?: "image/*"
-        pendingPhotos = pendingPhotos + PendingPhoto(uri, mime)
+        uiState = uiState.copy(pendingPhotos = uiState.pendingPhotos + PendingPhoto(uri, mime))
     }
 
     /** From the in-app camera: [file] is the plaintext capture in cache, deleted once encrypted. */
     fun addCapturedPhoto(uri: Uri, file: File) {
-        pendingPhotos = pendingPhotos + PendingPhoto(uri, "image/jpeg", file)
+        uiState = uiState.copy(pendingPhotos = uiState.pendingPhotos + PendingPhoto(uri, "image/jpeg", file))
     }
 
     fun removePending(photo: PendingPhoto) {
-        pendingPhotos = pendingPhotos - photo
+        uiState = uiState.copy(pendingPhotos = uiState.pendingPhotos - photo)
         photo.tempFile?.delete()
     }
 
     fun removeExisting(media: MediaEntity) {
-        existingPhotos = existingPhotos - media
+        uiState = uiState.copy(existingPhotos = uiState.existingPhotos - media)
         removedExisting += media
     }
 
@@ -171,108 +194,110 @@ class EncounterEditViewModel @Inject constructor(
     suspend fun decodePending(uri: Uri, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { context.contentResolver.openInputStream(uri) }
 
     fun togglePartner(id: String) {
-        selectedPartnerIds = if (id in selectedPartnerIds) {
-            partnerOrgasms = partnerOrgasms - id // drop orgasm count for a de-selected partner
-            selectedPartnerIds - id
+        uiState = if (id in uiState.selectedPartnerIds) {
+            uiState.copy(
+                selectedPartnerIds = uiState.selectedPartnerIds - id,
+                partnerOrgasms = uiState.partnerOrgasms - id, // drop orgasm count for a de-selected partner
+            )
         } else {
-            selectedPartnerIds + id
+            uiState.copy(selectedPartnerIds = uiState.selectedPartnerIds + id)
         }
     }
 
     /** Sets how many times the user came; trims ejaculation rows beyond the new count. */
     fun setSelfOrgasms(count: Int) {
-        orgasmCountSelf = count
-        if (ejaculations.keys.any { it >= count }) {
-            ejaculations = ejaculations.filterKeys { it < count }
-        }
+        uiState = uiState.copy(
+            orgasmCountSelf = count,
+            ejaculations = uiState.ejaculations.filterKeys { it < count },
+        )
     }
 
     fun setEjaculation(index: Int, value: EjaculationLocation) {
-        ejaculations = ejaculations + (index to value)
+        uiState = uiState.copy(ejaculations = uiState.ejaculations + (index to value))
     }
 
     fun setPartnerOrgasms(id: String, count: Int) {
-        partnerOrgasms = if (count <= 0) partnerOrgasms - id else partnerOrgasms + (id to count)
+        uiState = uiState.copy(
+            partnerOrgasms = if (count <= 0) uiState.partnerOrgasms - id else uiState.partnerOrgasms + (id to count),
+        )
     }
 
     fun toggleProtection(value: Protection) {
-        protection = if (value in protection) protection - value else protection + value
+        uiState = uiState.copy(protection = uiState.protection.toggle(value))
     }
 
     fun togglePerformed(id: String) {
-        practicesPerformed =
-            if (id in practicesPerformed) practicesPerformed - id else practicesPerformed + id
+        uiState = uiState.copy(practicesPerformed = uiState.practicesPerformed.toggle(id))
     }
 
     fun toggleReceived(id: String) {
-        practicesReceived =
-            if (id in practicesReceived) practicesReceived - id else practicesReceived + id
+        uiState = uiState.copy(practicesReceived = uiState.practicesReceived.toggle(id))
     }
 
     fun togglePosition(id: String) {
-        selectedPositionIds =
-            if (id in selectedPositionIds) selectedPositionIds - id else selectedPositionIds + id
+        uiState = uiState.copy(selectedPositionIds = uiState.selectedPositionIds.toggle(id))
     }
 
     fun toggleKink(value: Kink) {
-        kinks = if (value in kinks) kinks - value else kinks + value
+        uiState = uiState.copy(kinks = uiState.kinks.toggle(value))
     }
 
     fun toggleContext(value: Setting) {
-        contexts = if (value in contexts) contexts - value else contexts + value
+        uiState = uiState.copy(contexts = uiState.contexts.toggle(value))
     }
 
     fun toggleOccasion(value: Occasion) {
-        occasions = if (value in occasions) occasions - value else occasions + value
+        uiState = uiState.copy(occasions = uiState.occasions.toggle(value))
     }
 
     fun toggleToy(value: ToyType) {
-        toys = if (value in toys) toys - value else toys + value
+        uiState = uiState.copy(toys = uiState.toys.toggle(value))
     }
 
     fun save(onDone: () -> Unit) {
+        val s = uiState
         viewModelScope.launch {
             val now = System.currentTimeMillis()
             val id = loadedId ?: UUID.randomUUID().toString()
             // Solo (no partner) hides the "who initiated" / "acts received" fields in the editor —
             // drop their values so a solo row never carries stale partner-only data.
-            val solo = selectedPartnerIds.isEmpty()
+            val solo = s.solo
             val entity = EncounterEntity(
                 id = id,
-                startAt = startAt,
-                durationMin = durationText.toIntOrNull(),
-                note = note.ifBlank { null },
-                satisfactionRating = rating,
+                startAt = s.startAt,
+                durationMin = s.durationText.toIntOrNull(),
+                note = s.note.ifBlank { null },
+                satisfactionRating = s.rating,
                 orgasm = null,
-                mood = mood,
-                initiator = if (solo) null else initiator,
-                protectionUsed = protection,
-                orgasmCountSelf = orgasmCountSelf,
+                mood = s.mood,
+                initiator = if (solo) null else s.initiator,
+                protectionUsed = s.protection,
+                orgasmCountSelf = s.orgasmCountSelf,
                 orgasmCountPartner = null,
-                ejaculationLocations = ejaculations.ifEmpty { null },
-                practicesPerformed = practicesPerformed,
-                practicesReceived = if (solo) emptySet() else practicesReceived,
-                positions = selectedPositionIds,
-                kinks = kinks,
-                contexts = contexts,
-                occasions = occasions,
-                partnerOrgasms = partnerOrgasms.ifEmpty { null },
-                toys = toys,
+                ejaculationLocations = s.ejaculations.ifEmpty { null },
+                practicesPerformed = s.practicesPerformed,
+                practicesReceived = if (solo) emptySet() else s.practicesReceived,
+                positions = s.selectedPositionIds,
+                kinks = s.kinks,
+                contexts = s.contexts,
+                occasions = s.occasions,
+                partnerOrgasms = s.partnerOrgasms.ifEmpty { null },
+                toys = s.toys,
                 locationId = null,
-                createdAt = if (isEditing) createdAt else now,
+                createdAt = if (s.isEditing) createdAt else now,
                 updatedAt = now,
             )
-            encounters.save(entity, partnerIds = selectedPartnerIds.toList())
+            encounters.save(entity, partnerIds = s.selectedPartnerIds.toList())
             // Encrypt + attach newly-picked photos and remove any the user dropped (after the
             // encounter row exists, so the media FK is satisfied).
             withContext(Dispatchers.IO) {
-                pendingPhotos.forEach { photo ->
+                s.pendingPhotos.forEach { photo ->
                     context.contentResolver.openInputStream(photo.uri)?.use {
                         encounters.attachMedia(id, photo.mimeType, it, now)
                     }
                 }
                 removedExisting.forEach { encounters.deleteMedia(it) }
-                pendingPhotos.forEach { it.tempFile?.delete() } // remove plaintext camera temps
+                s.pendingPhotos.forEach { it.tempFile?.delete() } // remove plaintext camera temps
             }
             onDone()
         }
@@ -280,7 +305,7 @@ class EncounterEditViewModel @Inject constructor(
 
     override fun onCleared() {
         // Best-effort cleanup of any uncommitted camera temps (e.g. on Cancel / back).
-        pendingPhotos.forEach { it.tempFile?.delete() }
+        uiState.pendingPhotos.forEach { it.tempFile?.delete() }
     }
 
     fun delete(onDone: () -> Unit) {
@@ -291,3 +316,6 @@ class EncounterEditViewModel @Inject constructor(
         }
     }
 }
+
+/** Add [value] to the set if absent, remove it if present. */
+private fun <T> Set<T>.toggle(value: T): Set<T> = if (value in this) this - value else this + value

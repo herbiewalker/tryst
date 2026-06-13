@@ -110,12 +110,13 @@ fun EncounterEditScreen(
     LaunchedEffect(encounterId) { viewModel.load(encounterId) }
 
     val haptics = rememberHaptics()
+    val ui = viewModel.uiState
     val partners by viewModel.availablePartners.collectAsStateWithLifecycle()
     val customPositions by viewModel.customPositions.collectAsStateWithLifecycle()
     val customActs by viewModel.customActs.collectAsStateWithLifecycle()
     // Solo = no partner selected (matches the history "Solo" badge). Partner-only fields are hidden so
     // the editor reads cleanly as a solo entry; the per-partner orgasm counters already auto-hide.
-    val solo = viewModel.selectedPartnerIds.isEmpty()
+    val solo = ui.solo
     var showDatePicker by remember { mutableStateOf(false) }
     var showTimePicker by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -141,7 +142,7 @@ fun EncounterEditScreen(
         },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(if (viewModel.isEditing) R.string.encounter_title_edit else R.string.encounter_title_new)) },
+                title = { Text(stringResource(if (ui.isEditing) R.string.encounter_title_edit else R.string.encounter_title_new)) },
                 navigationIcon = { TextButton(onClick = onClose) { Text(stringResource(R.string.action_cancel)) } },
                 actions = {
                     TextButton(onClick = {
@@ -174,18 +175,18 @@ fun EncounterEditScreen(
                 Field(stringResource(R.string.encounter_field_when)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = { showDatePicker = true }) {
-                            Text(Format.date(viewModel.startAt))
+                            Text(Format.date(ui.startAt))
                         }
                         OutlinedButton(onClick = { showTimePicker = true }) {
-                            Text(Format.time(viewModel.startAt))
+                            Text(Format.time(ui.startAt))
                         }
                     }
                 }
 
                 Field(stringResource(R.string.encounter_field_duration)) {
                     OutlinedTextField(
-                        value = viewModel.durationText,
-                        onValueChange = { viewModel.durationText = it.filter(Char::isDigit) },
+                        value = ui.durationText,
+                        onValueChange = { viewModel.setDuration(it) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(),
@@ -202,7 +203,7 @@ fun EncounterEditScreen(
                     } else {
                         MultiSelectChips(
                             options = partners,
-                            selected = partners.filter { it.id in viewModel.selectedPartnerIds }.toSet(),
+                            selected = partners.filter { it.id in ui.selectedPartnerIds }.toSet(),
                             label = { Format.partnerName(it) },
                             onToggle = { viewModel.togglePartner(it.id) },
                         )
@@ -213,7 +214,7 @@ fun EncounterEditScreen(
                     label = stringResource(R.string.encounter_field_protection),
                     all = Protection.entries,
                     common = CommonOptions.PROTECTION,
-                    selected = viewModel.protection,
+                    selected = ui.protection,
                     labelOf = { it.label },
                     onToggle = { viewModel.toggleProtection(it) },
                 )
@@ -222,26 +223,26 @@ fun EncounterEditScreen(
                     label = stringResource(R.string.encounter_field_mood),
                     all = Mood.entries,
                     common = CommonOptions.MOOD,
-                    selected = viewModel.mood,
+                    selected = ui.mood,
                     labelOf = { it.label },
-                    onSelect = { viewModel.mood = it },
+                    onSelect = { viewModel.setMood(it) },
                 )
 
                 Field(stringResource(R.string.encounter_orgasms_you)) {
-                    Stepper(value = viewModel.orgasmCountSelf, onChange = { viewModel.setSelfOrgasms(it) })
+                    Stepper(value = ui.orgasmCountSelf, onChange = { viewModel.setSelfOrgasms(it) })
                 }
 
                 // One ejaculation location per orgasm you had.
-                repeat(viewModel.orgasmCountSelf) { i ->
+                repeat(ui.orgasmCountSelf) { i ->
                     SingleSelectField(
-                        label = if (viewModel.orgasmCountSelf > 1) {
+                        label = if (ui.orgasmCountSelf > 1) {
                             stringResource(R.string.encounter_ejaculation_n, i + 1)
                         } else {
                             stringResource(R.string.encounter_ejaculation)
                         },
                         all = EjaculationLocation.entries,
                         common = CommonOptions.EJACULATION,
-                        selected = viewModel.ejaculations[i],
+                        selected = ui.ejaculations[i],
                         labelOf = { it.label },
                         onSelect = { viewModel.setEjaculation(i, it) },
                     )
@@ -249,12 +250,12 @@ fun EncounterEditScreen(
 
                 // One orgasm counter per selected partner, ordered by name.
                 partners
-                    .filter { it.id in viewModel.selectedPartnerIds }
+                    .filter { it.id in ui.selectedPartnerIds }
                     .sortedBy { Format.partnerName(it).lowercase() }
                     .forEach { partner ->
                         Field(stringResource(R.string.encounter_orgasms_partner, Format.partnerName(partner))) {
                             Stepper(
-                                value = viewModel.partnerOrgasms[partner.id] ?: 0,
+                                value = ui.partnerOrgasms[partner.id] ?: 0,
                                 onChange = { viewModel.setPartnerOrgasms(partner.id, it) },
                             )
                         }
@@ -265,7 +266,7 @@ fun EncounterEditScreen(
                     label = stringResource(R.string.encounter_field_positions),
                     all = positionOptions,
                     common = PositionOptions.common,
-                    selected = positionOptions.filter { it.id in viewModel.selectedPositionIds }.toSet(),
+                    selected = positionOptions.filter { it.id in ui.selectedPositionIds }.toSet(),
                     labelOf = { it.label },
                     onToggle = { viewModel.togglePosition(it.id) },
                 )
@@ -275,7 +276,7 @@ fun EncounterEditScreen(
                     label = stringResource(R.string.encounter_field_acts_gave),
                     all = actOptions,
                     common = ActOptions.common,
-                    selected = actOptions.filter { it.id in viewModel.practicesPerformed }.toSet(),
+                    selected = actOptions.filter { it.id in ui.practicesPerformed }.toSet(),
                     labelOf = { it.label },
                     onToggle = { viewModel.togglePerformed(it.id) },
                 )
@@ -285,7 +286,7 @@ fun EncounterEditScreen(
                         label = stringResource(R.string.encounter_field_acts_received),
                         all = actOptions,
                         common = ActOptions.common,
-                        selected = actOptions.filter { it.id in viewModel.practicesReceived }.toSet(),
+                        selected = actOptions.filter { it.id in ui.practicesReceived }.toSet(),
                         labelOf = { it.label },
                         onToggle = { viewModel.toggleReceived(it.id) },
                     )
@@ -295,7 +296,7 @@ fun EncounterEditScreen(
                     label = stringResource(R.string.encounter_field_kink),
                     all = Kink.entries,
                     common = CommonOptions.KINK,
-                    selected = viewModel.kinks,
+                    selected = ui.kinks,
                     labelOf = { it.label },
                     onToggle = { viewModel.toggleKink(it) },
                 )
@@ -304,7 +305,7 @@ fun EncounterEditScreen(
                     label = stringResource(R.string.encounter_field_setting),
                     all = Setting.entries,
                     common = CommonOptions.SETTING,
-                    selected = viewModel.contexts,
+                    selected = ui.contexts,
                     labelOf = { it.label },
                     onToggle = { viewModel.toggleContext(it) },
                 )
@@ -313,7 +314,7 @@ fun EncounterEditScreen(
                     label = stringResource(R.string.encounter_field_occasion),
                     all = Occasion.entries,
                     common = CommonOptions.OCCASION,
-                    selected = viewModel.occasions,
+                    selected = ui.occasions,
                     labelOf = { it.label },
                     onToggle = { viewModel.toggleOccasion(it) },
                 )
@@ -322,7 +323,7 @@ fun EncounterEditScreen(
                     label = stringResource(R.string.encounter_field_toys),
                     all = ToyType.entries,
                     common = CommonOptions.TOY,
-                    selected = viewModel.toys,
+                    selected = ui.toys,
                     labelOf = { it.label },
                     onToggle = { viewModel.toggleToy(it) },
                 )
@@ -331,9 +332,9 @@ fun EncounterEditScreen(
                     Field(stringResource(R.string.encounter_field_initiator)) {
                         SingleSelectChips(
                             options = Initiator.entries,
-                            selected = viewModel.initiator,
+                            selected = ui.initiator,
                             label = { it.label },
-                            onSelect = { viewModel.initiator = it },
+                            onSelect = { viewModel.setInitiator(it) },
                         )
                     }
                 }
@@ -341,16 +342,16 @@ fun EncounterEditScreen(
                 Field(stringResource(R.string.encounter_field_rating)) {
                     SingleSelectChips(
                         options = (1..5).toList(),
-                        selected = viewModel.rating,
+                        selected = ui.rating,
                         label = { "$it" },
-                        onSelect = { viewModel.rating = it },
+                        onSelect = { viewModel.setRating(it) },
                     )
                 }
 
                 Field(stringResource(R.string.encounter_field_note)) {
                     OutlinedTextField(
-                        value = viewModel.note,
-                        onValueChange = { viewModel.note = it },
+                        value = ui.note,
+                        onValueChange = { viewModel.setNote(it) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(120.dp),
@@ -364,7 +365,7 @@ fun EncounterEditScreen(
                             .horizontalScroll(rememberScrollState()),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        viewModel.existingPhotos.forEach { media ->
+                        ui.existingPhotos.forEach { media ->
                             PhotoThumb(
                                 key = media.id,
                                 load = { viewModel.decodeExisting(media, THUMB_PX) },
@@ -372,7 +373,7 @@ fun EncounterEditScreen(
                                 onRemove = { viewModel.removeExisting(media) },
                             )
                         }
-                        viewModel.pendingPhotos.forEach { photo ->
+                        ui.pendingPhotos.forEach { photo ->
                             PhotoThumb(
                                 key = photo.uri,
                                 load = { viewModel.decodePending(photo.uri, THUMB_PX) },
@@ -384,7 +385,7 @@ fun EncounterEditScreen(
                     }
                 }
 
-                if (viewModel.isEditing) {
+                if (ui.isEditing) {
                     OutlinedButton(
                         onClick = { showDeleteConfirm = true },
                         modifier = Modifier.fillMaxWidth(),
@@ -397,12 +398,12 @@ fun EncounterEditScreen(
     }
 
     if (showDatePicker) {
-        val state = rememberDatePickerState(initialSelectedDateMillis = viewModel.startAt)
+        val state = rememberDatePickerState(initialSelectedDateMillis = ui.startAt)
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
-                    state.selectedDateMillis?.let { viewModel.startAt = combineDate(viewModel.startAt, it) }
+                    state.selectedDateMillis?.let { viewModel.setStartAt(combineDate(ui.startAt, it)) }
                     showDatePicker = false
                 }) { Text(stringResource(R.string.action_ok)) }
             },
@@ -411,13 +412,13 @@ fun EncounterEditScreen(
     }
 
     if (showTimePicker) {
-        val zoned = Instant.ofEpochMilli(viewModel.startAt).atZone(ZoneId.systemDefault())
+        val zoned = Instant.ofEpochMilli(ui.startAt).atZone(ZoneId.systemDefault())
         val state = rememberTimePickerState(initialHour = zoned.hour, initialMinute = zoned.minute)
         AlertDialog(
             onDismissRequest = { showTimePicker = false },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.startAt = combineTime(viewModel.startAt, state.hour, state.minute)
+                    viewModel.setStartAt(combineTime(ui.startAt, state.hour, state.minute))
                     showTimePicker = false
                 }) { Text(stringResource(R.string.action_ok)) }
             },
