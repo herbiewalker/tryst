@@ -7,14 +7,17 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.fragment.app.FragmentActivity
 import androidx.hilt.navigation.compose.hiltViewModel
+import app.tryst.core.prefs.GeneralPreferences
 import app.tryst.core.prefs.ThemePreferences
 import app.tryst.core.session.LockState
 import app.tryst.ui.TrystApp
+import app.tryst.ui.common.LocalHapticsEnabled
 import app.tryst.ui.lock.LockScreen
 import app.tryst.ui.lock.LockViewModel
 import app.tryst.ui.lock.SetupScreen
@@ -26,6 +29,8 @@ import javax.inject.Inject
 class MainActivity : FragmentActivity() {
 
     @Inject lateinit var themePreferences: ThemePreferences
+
+    @Inject lateinit var generalPreferences: GeneralPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,18 +45,21 @@ class MainActivity : FragmentActivity() {
         setContent {
             val themeMode by themePreferences.themeMode.collectAsState()
             val dynamicColor by themePreferences.dynamicColor.collectAsState()
+            val hapticsEnabled by generalPreferences.hapticsEnabled.collectAsState()
             TrystTheme(themeMode = themeMode, dynamicColor = dynamicColor) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background,
-                ) {
-                    val viewModel: LockViewModel = hiltViewModel()
-                    val state by viewModel.state.collectAsState()
+                CompositionLocalProvider(LocalHapticsEnabled provides hapticsEnabled) {
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background,
+                    ) {
+                        val viewModel: LockViewModel = hiltViewModel()
+                        val state by viewModel.state.collectAsState()
 
-                    when (state) {
-                        LockState.NeedsSetup -> SetupScreen(viewModel)
-                        LockState.Locked -> LockScreen(viewModel)
-                        LockState.Unlocked -> TrystApp()
+                        when (state) {
+                            LockState.NeedsSetup -> SetupScreen(viewModel)
+                            LockState.Locked -> LockScreen(viewModel)
+                            LockState.Unlocked -> TrystApp()
+                        }
                     }
                 }
             }

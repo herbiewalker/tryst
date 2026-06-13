@@ -122,6 +122,13 @@
     <!-- Settings (SettingsScreen)                                     -->
     <!-- ============================================================= -->
     <string name="settings_title">Settings</string>
+    <!-- General section -->
+    <string name="settings_general">General</string>
+    <string name="settings_about_app_blurb">Tryst keeps everything on this device — no account, no sync, and no internet access at all, so nothing can leak to a server. Your entries and photos are encrypted at rest behind your PIN (and optional biometric unlock), and the app locks itself when it leaves the screen. There\'s no password recovery: if you forget your PIN with no biometric set, the data can\'t be unlocked. The only way to move your data to a new phone is the encrypted backup under Backup &amp; restore.</string>
+    <string name="settings_haptics">"  Haptics"</string>
+    <string name="settings_week_start">Calendar week start</string>
+    <string name="settings_week_start_sunday">Sunday</string>
+    <string name="settings_week_start_monday">Monday</string>
     <string name="settings_security">Security</string>
     <string name="settings_biometric_unavailable">Biometric unlock isn\'t available on this device.</string>
     <string name="settings_biometric_disable">Disable biometric unlock</string>

@@ -47,6 +47,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
 import app.tryst.core.prefs.ThemeMode
+import app.tryst.core.prefs.WeekStart
 import app.tryst.data.db.entity.ActEntity
 import app.tryst.data.db.entity.PositionEntity
 import app.tryst.ui.common.SingleSelectChips
@@ -77,6 +78,9 @@ fun SettingsScreen(
     val appearanceViewModel: AppearanceViewModel = hiltViewModel()
     val themeMode by appearanceViewModel.themeMode.collectAsStateWithLifecycle()
     val dynamicColor by appearanceViewModel.dynamicColor.collectAsStateWithLifecycle()
+    val generalViewModel: GeneralSettingsViewModel = hiltViewModel()
+    val hapticsEnabled by generalViewModel.hapticsEnabled.collectAsStateWithLifecycle()
+    val weekStart by generalViewModel.weekStart.collectAsStateWithLifecycle()
     val backupViewModel: BackupViewModel = hiltViewModel()
     var showExportPw by remember { mutableStateOf(false) }
     var showImportPw by remember { mutableStateOf(false) }
@@ -105,6 +109,8 @@ fun SettingsScreen(
     val themeSystemLabel = stringResource(R.string.settings_theme_system)
     val themeLightLabel = stringResource(R.string.settings_theme_light)
     val themeDarkLabel = stringResource(R.string.settings_theme_dark)
+    val weekStartSundayLabel = stringResource(R.string.settings_week_start_sunday)
+    val weekStartMondayLabel = stringResource(R.string.settings_week_start_monday)
 
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.settings_title)) }) }) { padding ->
         Column(
@@ -118,6 +124,42 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            Text(stringResource(R.string.settings_general), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(R.string.settings_about_app_blurb),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .toggleable(
+                        value = hapticsEnabled,
+                        role = Role.Switch,
+                        onValueChange = { generalViewModel.setHapticsEnabled(it) },
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Switch(checked = hapticsEnabled, onCheckedChange = null)
+                Text(stringResource(R.string.settings_haptics), style = MaterialTheme.typography.bodyMedium)
+            }
+
+            Text(stringResource(R.string.settings_week_start), style = MaterialTheme.typography.labelLarge)
+            SingleSelectChips(
+                options = WeekStart.entries,
+                selected = weekStart,
+                label = {
+                    when (it) {
+                        WeekStart.SUNDAY -> weekStartSundayLabel
+                        WeekStart.MONDAY -> weekStartMondayLabel
+                    }
+                },
+                onSelect = { generalViewModel.setWeekStart(it) },
+            )
+
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
             Text(stringResource(R.string.settings_security), style = MaterialTheme.typography.titleMedium)
 
             when {
