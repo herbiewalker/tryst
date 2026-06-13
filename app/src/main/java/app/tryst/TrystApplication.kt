@@ -32,6 +32,10 @@ class TrystApplication : Application() {
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(
             object : DefaultLifecycleObserver {
+                override fun onStart(owner: LifecycleOwner) {
+                    session.onAppForegrounded()
+                }
+
                 override fun onStop(owner: LifecycleOwner) {
                     session.onAppBackgrounded()
                 }

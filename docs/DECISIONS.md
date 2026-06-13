@@ -132,6 +132,13 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   SQLCipher bundles OpenSSL 3.x = Apache-2.0, so no GPL/OpenSSL conflict). Per-file source license headers
   were **not** added (82 files) — README + LICENSE + notices satisfy the obligation; headers remain an
   optional follow-up. Distribution (F-Droid / Play) still open.
+- **D-31 (M8, 2026-06-12):** **Configurable auto-lock timeout** (Settings → General), default
+  **immediate**. A process-scoped delayed `lock()` is scheduled on background and cancelled on
+  foreground (`SessionManager.onAppBackgrounded`/`onAppForegrounded` + `GeneralPreferences`), so the DEK
+  lives in memory only up to the chosen delay (Immediately / 30s / 1m / 5m). A non-zero value weakens the
+  immediate-background-lock guarantee — see THREAT_MODEL R-LOCK; surfaced inline in the setting's
+  description. Default keeps current behaviour. Same commit added the **General** settings section
+  (app/how-it-works blurb, haptics toggle, calendar week-start) and the **Change PIN** flow.
 - **D-30 (M8 quality gates, 2026-06-12):** **CI quality gates = Detekt + ktlint** (resolves O-5).
   Build-failing `detekt` (1.23.8, **AST-only** — no type resolution, so its Kotlin-2.0.21 frontend
   analyses the 2.2.10 source without a compiler-classpath mismatch) + `ktlint` (ktlint-gradle 14.2.0),
