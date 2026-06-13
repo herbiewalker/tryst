@@ -8,6 +8,7 @@
 gradlew text eol=lf
 
 # Binary files — never normalize.
+*.tryst binary
 *.jar binary
 *.png binary
 *.jpg binary
