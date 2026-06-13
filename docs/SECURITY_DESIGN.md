@@ -54,6 +54,11 @@ guarantee against forensic seizure in exchange for not having to remember a pass
 - **Lockout:** after N failed attempts the vault self-wipes (wrapped blobs + Keystore keys deleted).
 - **Biometric (M2b):** a second Keystore key with `setUserAuthenticationRequired(true)` wraps a
   copy of the DEK for fingerprint/face unlock; the PIN remains the fallback.
+- **Change PIN (M8):** re-wraps the **already-unlocked** in-memory DEK under a new PIN
+  (`Vault.reprotect`) after a **non-counting** `Vault.verifyPin` confirms the current PIN — so it never
+  touches the self-wipe counter and a mistyped current PIN can't wipe or lose data. The DB key and the
+  biometric wrap (both DEK-derived, PIN-independent) are untouched. (The earlier `Vault.changePin` routed
+  through `unlock()` and the wipe counter — removed.)
 
 **Residual risks (honest):**
 - A short PIN is brute-forceable in principle. The hardware-bound outer layer means a *disk image
@@ -75,17 +80,21 @@ guarantee against forensic seizure in exchange for not having to remember a pass
 - **Media (photos):** never via MediaStore. Stored in app-internal storage as
   **AES-256-GCM** streams (Google Tink) under a media key derived/wrapped from the DEK.
   Decrypted only in-memory for display; no decrypted temp files.
-- **Preferences:** non-sensitive prefs (theme mode, Material You toggle) in plain
-  `SharedPreferences` (`tryst_appearance`), excluded from backup/transfer like everything else.
-  Anything sensitive would be encrypted; none is stored yet.
+- **Preferences:** non-sensitive prefs in plain `SharedPreferences`, excluded from backup/transfer like
+  everything else: `tryst_appearance` (theme / Material You), `tryst_insights` (Insights layout), and
+  `tryst_general` (auto-lock timeout, haptics, calendar week-start). Anything sensitive would be
+  encrypted; none is stored in prefs.
 
 ## 3. App lock & UI hardening
 
-- App lock on cold start and **immediately on background** (`ProcessLifecycle ON_STOP` →
-  `SessionManager.onAppBackgrounded()`). A user-configurable *timeout* is a deferred enhancement; the
-  current default is immediate. The one exception is a one-shot ~2-minute grace while handing off to the
-  OS photo picker / camera (`suppressNextAutoLock`), which otherwise would background us and drop the
-  result — see [FLOWCHARTS.md](FLOWCHARTS.md) §8.
+- App lock on cold start and on background (`ProcessLifecycle ON_STOP` →
+  `SessionManager.onAppBackgrounded()`). The lock delay is **user-configurable** (Settings → General;
+  `GeneralPreferences.autoLockTimeoutMs`), **default immediate (0)**: the handler either locks now or
+  schedules a process-scoped delayed `lock()` that `onAppForegrounded` (`ON_START`) cancels if the user
+  returns first. A non-zero timeout keeps the DEK in memory for that window while backgrounded — the
+  opt-in trade-off documented as THREAT_MODEL **R-LOCK** / DECISIONS **D-31**. The one exception is a
+  one-shot ~2-minute grace while handing off to the OS photo picker / camera (`suppressNextAutoLock`),
+  which otherwise would background us and drop the result — see [FLOWCHARTS.md](FLOWCHARTS.md) §8.
 - `FLAG_SECURE` on all windows (no screenshots, redacted recents preview).
 - DEK released into memory only while unlocked; cleared (zeroed) on lock/background.
 - Re-auth before sensitive actions is **not** currently required beyond the app lock (a possible
@@ -105,8 +114,10 @@ guarantee against forensic seizure in exchange for not having to remember a pass
   crafted value can't hang the app on key derivation (DoS); media-blob ids (taken from the backup's ZIP
   entry names / `data.json`) are rejected if they contain path separators or `..`, and the resolved file
   is verified to stay inside the media dir, so a malicious backup can't write outside it (Zip-Slip). The
-  guard lives in `EncryptedMediaStore.fileFor`, covering every read/write path. Regression-tested in
-  `BackupRoundTripTest`.
+  guard lives in `EncryptedMediaStore.fileFor`, covering every read/write path. **DB column names** taken
+  from the backup JSON are also validated against a plain SQL-identifier pattern before reaching the
+  framework's unquoted `INSERT` column list, so a crafted backup can't inject SQL (`BackupManager.restoreDatabase`;
+  added in the M8 security self-review). Regression-tested in `BackupRoundTripTest`.
 - The format is documented and auditable in [EXPORT_FORMAT.md](EXPORT_FORMAT.md). Importing *other
   apps'* data is a separate generic **CSV importer** (M5b).
 

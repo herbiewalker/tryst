@@ -35,7 +35,8 @@ If a request conflicts with the above, say so and propose an alternative — don
   Partners can be named or anonymous; per-partner stats supported.
 - **Rich encounter logging** + optional **photo attachments** (encrypted).
 - **Insights:** stats, charts, streaks/trends, and **achievements/badges**.
-- **App lock:** biometric / PIN, auto-lock on background.
+- **App lock:** biometric / PIN (changeable in Settings → General), auto-lock on background
+  (configurable delay; default immediate).
 - **Manual encrypted export/import** for migrating to a new phone.
 
 Out of scope for v1: cross-device sync, cloud anything, disguise/decoy mode (hook left
@@ -73,6 +74,7 @@ $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"
 .\gradlew.bat checkNoNetworkDebug        # anti-leak guard (no network permission)
 .\gradlew.bat connectedDebugAndroidTest  # instrumented tests on a running emulator/device
 .\gradlew.bat lint
+.\gradlew.bat detekt ktlintCheck         # M8 quality gates (Detekt + ktlint; ktlintFormat to auto-fix)
 ```
 Install + launch on the emulator (adb at `%LOCALAPPDATA%\Android\Sdk\platform-tools\adb.exe`):
 `adb install -r app\build\outputs\apk\debug\app-debug.apk` then

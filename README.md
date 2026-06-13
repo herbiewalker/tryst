@@ -20,7 +20,9 @@ device or be trusted to anyone.
 - Track named or anonymous partners, with per-partner stats.
 - See insights: customizable stats, charts (bars/line/donut), streaks, and per-type breakdowns.
 - Earn achievements for milestones, streaks, variety, and more (all derived on-device).
-- Lock the app behind biometric/PIN; auto-lock when backgrounded.
+- Lock the app behind biometric/PIN; auto-lock when backgrounded (with a configurable delay) and a
+  Change-PIN flow.
+- Tune it in **Settings → General**: app info, change PIN, auto-lock timeout, haptics, calendar week start.
 
 ## Status
 
@@ -57,7 +59,11 @@ Progress against the [roadmap](docs/ROADMAP.md):
 - ✅ **M7** — **Achievements**: ~67 derived achievements (milestones, week streaks, variety, pleasure,
   occasions) with progress bars and unlock dates, on a dedicated screen (trophy icon in Insights) plus an
   Insights teaser card. Computed from the log — no extra storage.
-- ⬜ **M8** — release prep: string/i18n extraction, onboarding copy, license & distribution, security self-review.
+- 🚧 **M8** — release prep, in progress: ✅ i18n string extraction (~200 `strings.xml` entries); ✅ CI
+  **quality gates** (build-failing Detekt + ktlint); ✅ security self-review (+ a LOW backup-importer
+  SQL-injection fix); plus a **solo-aware editor** and a **Settings → General** section (app info, Change
+  PIN, configurable auto-lock timeout, haptics, calendar week start). Remaining: optional `UiState`
+  refactor, onboarding copy, and the license & **distribution** choice.
 
 ### Pre-release audit passes
 
