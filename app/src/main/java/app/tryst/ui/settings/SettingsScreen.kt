@@ -58,6 +58,12 @@ import app.tryst.ui.lock.LockViewModel
 import app.tryst.ui.lock.findFragmentActivity
 import java.time.LocalDate
 
+// Auto-lock delay options (ms). 0 = lock immediately on background (default, strongest privacy).
+private const val AUTO_LOCK_30S = 30_000L
+private const val AUTO_LOCK_1M = 60_000L
+private const val AUTO_LOCK_5M = 300_000L
+private val AUTO_LOCK_OPTIONS = listOf(0L, AUTO_LOCK_30S, AUTO_LOCK_1M, AUTO_LOCK_5M)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -81,6 +87,7 @@ fun SettingsScreen(
     val generalViewModel: GeneralSettingsViewModel = hiltViewModel()
     val hapticsEnabled by generalViewModel.hapticsEnabled.collectAsStateWithLifecycle()
     val weekStart by generalViewModel.weekStart.collectAsStateWithLifecycle()
+    val autoLockMs by generalViewModel.autoLockTimeoutMs.collectAsStateWithLifecycle()
     val backupViewModel: BackupViewModel = hiltViewModel()
     var showExportPw by remember { mutableStateOf(false) }
     var showImportPw by remember { mutableStateOf(false) }
@@ -111,6 +118,10 @@ fun SettingsScreen(
     val themeDarkLabel = stringResource(R.string.settings_theme_dark)
     val weekStartSundayLabel = stringResource(R.string.settings_week_start_sunday)
     val weekStartMondayLabel = stringResource(R.string.settings_week_start_monday)
+    val autoLockImmediateLabel = stringResource(R.string.settings_autolock_immediate)
+    val autoLock30sLabel = stringResource(R.string.settings_autolock_30s)
+    val autoLock1mLabel = stringResource(R.string.settings_autolock_1m)
+    val autoLock5mLabel = stringResource(R.string.settings_autolock_5m)
 
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.settings_title)) }) }) { padding ->
         Column(
@@ -127,6 +138,26 @@ fun SettingsScreen(
             Text(stringResource(R.string.settings_general), style = MaterialTheme.typography.titleMedium)
             Text(
                 stringResource(R.string.settings_about_app_blurb),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            Text(stringResource(R.string.settings_autolock), style = MaterialTheme.typography.labelLarge)
+            SingleSelectChips(
+                options = AUTO_LOCK_OPTIONS,
+                selected = autoLockMs,
+                label = {
+                    when (it) {
+                        AUTO_LOCK_30S -> autoLock30sLabel
+                        AUTO_LOCK_1M -> autoLock1mLabel
+                        AUTO_LOCK_5M -> autoLock5mLabel
+                        else -> autoLockImmediateLabel
+                    }
+                },
+                onSelect = { generalViewModel.setAutoLockTimeoutMs(it) },
+            )
+            Text(
+                stringResource(R.string.settings_autolock_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

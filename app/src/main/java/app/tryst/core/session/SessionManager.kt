@@ -1,6 +1,7 @@
 package app.tryst.core.session
 
 import android.content.Context
+import app.tryst.core.prefs.GeneralPreferences
 import app.tryst.core.security.BiometricVault
 import app.tryst.core.security.SessionKeys
 import app.tryst.core.security.Vault
@@ -12,10 +13,15 @@ import java.io.File
 import javax.crypto.Cipher
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
@@ -29,7 +35,13 @@ class SessionManager @Inject constructor(
     private val vault: Vault,
     private val databaseFactory: TrystDatabaseFactory,
     private val biometricVault: BiometricVault,
+    private val generalPreferences: GeneralPreferences,
 ) {
+    // Drives the delayed auto-lock when a non-zero timeout is configured. Process-scoped so the timer
+    // survives the app being backgrounded (and dies with the process, which loses the keys anyway).
+    private val lockScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    @Volatile private var pendingLock: Job? = null
     private val _state = MutableStateFlow(initialState())
     val state: StateFlow<LockState> = _state.asStateFlow()
 
@@ -115,13 +127,32 @@ class SessionManager @Inject constructor(
         autoLockSuppressedUntil = System.currentTimeMillis() + AUTO_LOCK_GRACE_MS
     }
 
-    /** Called when the app goes to background: lock, unless a picker/camera launch just suppressed it. */
+    /**
+     * Called when the app goes to background. Locks immediately by default; if the user configured a
+     * non-zero auto-lock timeout (Settings → General), schedules the lock after that delay instead —
+     * cancelled by [onAppForegrounded] if they return first. A picker/camera launch suppresses it.
+     */
     fun onAppBackgrounded() {
         if (System.currentTimeMillis() < autoLockSuppressedUntil) {
             autoLockSuppressedUntil = 0L
             return
         }
-        lock()
+        val timeout = generalPreferences.autoLockTimeoutMs.value
+        if (timeout <= 0L) {
+            lock()
+        } else {
+            pendingLock?.cancel()
+            pendingLock = lockScope.launch {
+                delay(timeout)
+                lock()
+            }
+        }
+    }
+
+    /** Called when the app returns to the foreground: cancel any pending delayed auto-lock. */
+    fun onAppForegrounded() {
+        pendingLock?.cancel()
+        pendingLock = null
     }
 
     /** Clear all in-memory secrets and lock the app. */

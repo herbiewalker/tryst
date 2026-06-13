@@ -129,6 +129,12 @@
     <string name="settings_week_start">Calendar week start</string>
     <string name="settings_week_start_sunday">Sunday</string>
     <string name="settings_week_start_monday">Monday</string>
+    <string name="settings_autolock">Auto-lock</string>
+    <string name="settings_autolock_desc">Lock when Tryst leaves the screen. A longer delay is more convenient but keeps your data unlocked in memory during that window.</string>
+    <string name="settings_autolock_immediate">Immediately</string>
+    <string name="settings_autolock_30s">30s</string>
+    <string name="settings_autolock_1m">1 min</string>
+    <string name="settings_autolock_5m">5 min</string>
     <string name="settings_security">Security</string>
     <string name="settings_biometric_unavailable">Biometric unlock isn\'t available on this device.</string>
     <string name="settings_biometric_disable">Disable biometric unlock</string>

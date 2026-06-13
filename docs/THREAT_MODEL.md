@@ -48,6 +48,10 @@ app PIN; see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §1, Option B).
   setup. (An optional passphrase-root mode could be added later behind the same key seam.)
 - **R2** While the app is unlocked and in the foreground, decrypted content is in memory and on screen
   — vulnerable to live observation or a compromised OS.
+- **R-LOCK** Auto-lock defaults to **immediate** on background. If the user raises the auto-lock timeout
+  (Settings → General), the DEK and open DB stay in memory for that window while backgrounded, so a
+  curious person (T1) who picks the phone up within the window finds it unlocked. Opt-in; the default
+  preserves the strongest guarantee and the setting states the trade-off inline. See D-31.
 - **R3** Biometric convenience unlock is only as strong as the device's biometric + Keystore; the app
   **PIN** is the fallback and root of trust.
 - **R-PIN** A 6-digit PIN is brute-forceable in principle. The hardware-bound outer wrap means a disk
