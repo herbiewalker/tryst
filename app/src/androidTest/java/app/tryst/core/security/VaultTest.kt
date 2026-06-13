@@ -61,12 +61,26 @@ class VaultTest {
     }
 
     @Test
-    fun changePin_reprotectsSameDek() {
+    fun reprotect_rewrapsSameDekUnderNewPin() {
         val vault = newVault()
         val created = vault.setup("111111")
-        vault.changePin("111111", "222222")
+        // Re-wrap the already-unlocked DEK under a new PIN (the change-PIN path).
+        vault.reprotect(created, "222222")
         assertArrayEquals(created, vault.unlock("222222"))
         assertThrows(WrongPinException::class.java) { vault.unlock("111111") }
+    }
+
+    @Test
+    fun verifyPin_acceptsCorrect_rejectsWrong_withoutCountingTowardWipe() {
+        val vault = newVault()
+        val created = vault.setup("111111")
+        assertFalse(vault.verifyPin("999999"))
+        assertTrue(vault.verifyPin("111111"))
+        // verifyPin must NOT increment the attempt counter or wipe — far more wrong checks than
+        // MAX_ATTEMPTS, yet the vault is intact and the correct PIN still unlocks the same DEK.
+        repeat(15) { assertFalse(vault.verifyPin("999999")) }
+        assertTrue(vault.isInitialized())
+        assertArrayEquals(created, vault.unlock("111111"))
     }
 
     @Test

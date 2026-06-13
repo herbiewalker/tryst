@@ -3,6 +3,7 @@ package app.tryst.data.media
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.tryst.core.prefs.GeneralPreferences
 import app.tryst.core.security.BiometricVault
 import app.tryst.core.security.Vault
 import app.tryst.core.session.SessionManager
@@ -37,7 +38,7 @@ class MediaAttachmentTest {
     @Before
     fun setUp() {
         reset()
-        manager = SessionManager(context, Vault(context), TrystDatabaseFactory(context), BiometricVault(context))
+        manager = SessionManager(context, Vault(context), TrystDatabaseFactory(context), BiometricVault(context), GeneralPreferences(context))
         runBlocking { manager.setupPin(pin) } // unlocks: DB open, media key available
         store = EncryptedMediaStore(context, manager)
         repo = EncounterRepository(manager, store)

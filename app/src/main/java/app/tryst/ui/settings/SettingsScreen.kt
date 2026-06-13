@@ -69,6 +69,7 @@ private val AUTO_LOCK_OPTIONS = listOf(0L, AUTO_LOCK_30S, AUTO_LOCK_1M, AUTO_LOC
 fun SettingsScreen(
     onCustomizeInsights: () -> Unit = {},
     onOpenAbout: () -> Unit = {},
+    onChangePin: () -> Unit = {},
     viewModel: LockViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -141,6 +142,10 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
+            OutlinedButton(onClick = onChangePin, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.settings_change_pin))
+            }
 
             Text(stringResource(R.string.settings_autolock), style = MaterialTheme.typography.labelLarge)
             SingleSelectChips(

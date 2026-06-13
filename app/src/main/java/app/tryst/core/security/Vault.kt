@@ -70,12 +70,36 @@ class Vault @Inject constructor(
         return dek
     }
 
-    /** Re-protects the existing DEK under a new PIN. */
+    /**
+     * Checks [pin] **without** counting a failed attempt or wiping — for re-authentication while the
+     * vault is already unlocked (e.g. confirming the current PIN before a change). Returns false on a
+     * wrong PIN rather than throwing. Do not use for the lock screen (that must use [unlock], which
+     * enforces the self-wipe).
+     */
     @Synchronized
-    fun changePin(oldPin: String, newPin: String) {
-        val dek = unlock(oldPin)
-        persist(dek, newPin)
+    fun verifyPin(pin: String): Boolean {
+        if (!isInitialized()) return false
+        val json = JSONObject(file.readText())
+        val salt = b64d(json.getString(KEY_SALT))
+        val iterations = json.getInt(KEY_ITER)
+        val wrapped = b64d(json.getString(KEY_WRAPPED))
+        val inner = keyStore.decrypt(wrapped)
+        val pinKey = Pbkdf2.derive(pin, salt, iterations)
+        return try {
+            AesGcm.decrypt(pinKey, inner)
+            true
+        } catch (_: GeneralSecurityException) {
+            false
+        }
     }
+
+    /**
+     * Re-wraps an already-unlocked [dek] under [newPin]. The caller must have authorised the change
+     * (e.g. via [verifyPin]); this does not check any old PIN, so it never touches the wipe counter
+     * and can't lose data on a mistyped current PIN.
+     */
+    @Synchronized
+    fun reprotect(dek: ByteArray, newPin: String) = persist(dek, newPin)
 
     /** Destroys all key material (lockout, or a future "delete all data"). */
     @Synchronized

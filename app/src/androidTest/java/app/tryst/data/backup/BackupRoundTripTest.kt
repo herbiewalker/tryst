@@ -3,6 +3,7 @@ package app.tryst.data.backup
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.tryst.core.prefs.GeneralPreferences
 import app.tryst.core.security.BiometricVault
 import app.tryst.core.security.Vault
 import app.tryst.core.session.SessionManager
@@ -45,7 +46,7 @@ class BackupRoundTripTest {
     @Before
     fun setUp() {
         reset()
-        manager = SessionManager(context, Vault(context), TrystDatabaseFactory(context), BiometricVault(context))
+        manager = SessionManager(context, Vault(context), TrystDatabaseFactory(context), BiometricVault(context), GeneralPreferences(context))
         runBlocking { manager.setupPin(pin) }
         store = EncryptedMediaStore(context, manager)
         encounters = EncounterRepository(manager, store)
