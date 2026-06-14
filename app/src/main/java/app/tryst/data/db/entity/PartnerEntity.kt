@@ -18,6 +18,15 @@ data class PartnerEntity(
     val relationshipType: RelationshipType? = null,
     /** Media id of an encrypted partner photo (avatar); null if none. */
     val photoMediaId: String? = null,
+    // --- added in schema v7 (demographics) ---
+    /** Date of birth as epoch millis (date only); age is derived for display. */
+    val birthDate: Long? = null,
+    val ethnicity: Ethnicity? = null,
+    /** Free-text height (e.g. "5'10\"" or "178 cm") — units are the user's choice. */
+    val height: String? = null,
+    val bodyType: BodyType? = null,
+    /** Free-text location / city. */
+    val location: String? = null,
     // ---------------------------
     /** Non-null when soft-archived. */
     val archivedAt: Long?,

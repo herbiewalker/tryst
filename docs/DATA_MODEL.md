@@ -1,6 +1,6 @@
 # Tryst — Data Model
 
-Status: **Live — schema v6** (Room over SQLCipher). Matches the entities in
+Status: **Live — schema v7** (Room over SQLCipher). Matches the entities in
 `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change
 ships a non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 
@@ -58,10 +58,35 @@ position/tag cross-refs are legacy/unused (positions live in the `positions` col
 | gender | Gender? | Man / Woman / Non-binary / Other |
 | relationshipType | RelationshipType? | spouse / partner / FWB / … |
 | photoMediaId | String? | **M4 hook** — encrypted partner photo (wired in M4) |
+| birthDate | Long? | **v7** epoch millis (date only, stored local-noon); age is derived |
+| ethnicity | Ethnicity? | **v7** demographic |
+| height | String? | **v7** free-text (units the user's choice) |
+| bodyType | BodyType? | **v7** demographic |
+| location | String? | **v7** free-text city |
 | color | String? | optional UI accent, local only |
 | note | String? | |
 | archivedAt | Long? | soft-archive |
 | createdAt / updatedAt | Long | |
+
+## Profile (table `profile`) — the user's own self (v7)
+A **single row** (`id = "self"`) holding the user's photo + demographics, mirroring the partner fields
+so "you" and a partner read the same way. Surfaced in Settings → Your profile and the "You" card on
+Partners.
+
+| Field | Type | Notes |
+|-------|------|-------|
+| id | String | PK, always `"self"` |
+| displayName | String? | |
+| photoMediaId | String? | encrypted profile photo (reuses the media store, like a partner avatar) |
+| sex | Sex? | |
+| gender | Gender? | |
+| birthDate | Long? | epoch millis (date only, local-noon); age derived |
+| ethnicity | Ethnicity? | |
+| height | String? | free-text |
+| bodyType | BodyType? | |
+| location | String? | free-text city |
+| note | String? | "about you" |
+| updatedAt | Long | |
 
 ## Custom-option tables
 - **Position** (`positions`): `id`, `label`, `isBuiltIn`. Built-ins come from the `Position` enum;
@@ -75,13 +100,15 @@ position/tag cross-refs are legacy/unused (positions live in the `positions` col
 - **Tag** (`tags`): freeform user tags (legacy/unused in the current UI).
 - **Media** (`media`): `id`, `encounterId` (FK, CASCADE), `encFilePath` (AES-GCM blob in app-internal
   storage), `mimeType`, `createdAt`. Bytes are **not** in the DB and **not** in MediaStore. (M4 wires
-  the attach/view UI; partner photos reuse this via `Partner.photoMediaId`.)
+  the attach/view UI; partner photos reuse this via `Partner.photoMediaId`, and the profile photo via
+  `Profile.photoMediaId` — both are blobs with no `media` row, so the backup gathers their ids
+  explicitly, like partner avatars.)
 
 ## Category enums (`data/db/entity/Enums.kt`)
 All implement `DisplayLabel` (human-written `label` shown in the UI): `Initiator`, `Mood`,
 `Protection`, `EjaculationLocation`, `Practice` (acts), `Kink`, `Setting` (places),
-`Occasion`, `ToyType`, `Position`, plus partner enums `Sex`, `Gender`, `RelationshipType`.
-`Orgasm` is a legacy enum kept for migration.
+`Occasion`, `ToyType`, `Position`, plus partner/profile enums `Sex`, `Gender`, `RelationshipType`,
+and the **v7 demographic** enums `Ethnicity`, `BodyType`. `Orgasm` is a legacy enum kept for migration.
 
 ## Achievements (M7 — derived, **no tables**)
 Achievements are **not persisted**. The catalog is static code (`data/achievements/Achievements.kt`)

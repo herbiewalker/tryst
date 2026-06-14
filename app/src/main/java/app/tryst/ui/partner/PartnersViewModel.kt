@@ -6,6 +6,8 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tryst.core.session.SessionManager
+import app.tryst.data.db.entity.BodyType
+import app.tryst.data.db.entity.Ethnicity
 import app.tryst.data.db.entity.Gender
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.RelationshipType
@@ -25,6 +27,24 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/** Everything the partner editor collects, passed to [PartnersViewModel.save] in one shot. */
+data class PartnerDraft(
+    val name: String,
+    val anonymous: Boolean,
+    val note: String,
+    val sex: Sex?,
+    val gender: Gender?,
+    val relationshipType: RelationshipType?,
+    val birthDate: Long?,
+    val ethnicity: Ethnicity?,
+    val height: String,
+    val bodyType: BodyType?,
+    val location: String,
+    val newPhotoUri: Uri?,
+    val removePhoto: Boolean,
+    val captureTempFile: File?,
+)
+
 @HiltViewModel
 class PartnersViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -40,34 +60,20 @@ class PartnersViewModel @Inject constructor(
             .catch { emit(emptyList()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    // Flat field list mirrors the partner form; a wrapper data class would add indirection for
-    // no gain at this single call site.
-    @Suppress("LongParameterList")
-    fun save(
-        id: String?,
-        name: String,
-        anonymous: Boolean,
-        note: String,
-        sex: Sex?,
-        gender: Gender?,
-        relationshipType: RelationshipType?,
-        newPhotoUri: Uri?,
-        removePhoto: Boolean,
-        captureTempFile: File? = null,
-    ) {
+    fun save(id: String?, draft: PartnerDraft) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
             val existing = id?.let { repository.getById(it) }
             val oldPhotoId = existing?.photoMediaId
             val photoMediaId = when {
-                newPhotoUri != null -> {
+                draft.newPhotoUri != null -> {
                     val newId = withContext(Dispatchers.IO) {
-                        context.contentResolver.openInputStream(newPhotoUri)?.use { repository.savePhoto(it) }
+                        context.contentResolver.openInputStream(draft.newPhotoUri)?.use { repository.savePhoto(it) }
                     }
                     if (newId != null && oldPhotoId != null) repository.deletePhoto(oldPhotoId)
                     newId ?: oldPhotoId
                 }
-                removePhoto -> {
+                draft.removePhoto -> {
                     oldPhotoId?.let { repository.deletePhoto(it) }
                     null
                 }
@@ -76,20 +82,25 @@ class PartnersViewModel @Inject constructor(
             repository.upsert(
                 PartnerEntity(
                     id = id ?: UUID.randomUUID().toString(),
-                    displayName = if (anonymous) null else name.trim().ifBlank { null },
-                    isAnonymous = anonymous,
+                    displayName = if (draft.anonymous) null else draft.name.trim().ifBlank { null },
+                    isAnonymous = draft.anonymous,
                     color = existing?.color,
-                    note = note.trim().ifBlank { null },
-                    sex = sex,
-                    gender = gender,
-                    relationshipType = relationshipType,
+                    note = draft.note.trim().ifBlank { null },
+                    sex = draft.sex,
+                    gender = draft.gender,
+                    relationshipType = draft.relationshipType,
                     photoMediaId = photoMediaId,
+                    birthDate = draft.birthDate,
+                    ethnicity = draft.ethnicity,
+                    height = draft.height.trim().ifBlank { null },
+                    bodyType = draft.bodyType,
+                    location = draft.location.trim().ifBlank { null },
                     archivedAt = existing?.archivedAt,
                     createdAt = existing?.createdAt ?: now,
                     updatedAt = now,
                 ),
             )
-            captureTempFile?.delete() // plaintext camera temp, now encrypted into the blob
+            draft.captureTempFile?.delete() // plaintext camera temp, now encrypted into the blob
         }
     }
 

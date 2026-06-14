@@ -26,7 +26,7 @@ class MigrationTest {
     )
 
     @Test
-    fun migrate1To6_preservesRowsAndAddsColumns() {
+    fun migrate1To7_preservesRowsAndAddsColumns() {
         helper.createDatabase(dbName, 1).use { db ->
             db.execSQL(
                 "INSERT INTO encounters (id, startAt, protectionUsed, createdAt, updatedAt) " +
@@ -38,16 +38,17 @@ class MigrationTest {
             )
         }
 
-        // Applies the full migration chain and validates the schema equals the exported v6 schema.
+        // Applies the full migration chain and validates the schema equals the exported v7 schema.
         helper.runMigrationsAndValidate(
             dbName,
-            6,
+            7,
             true,
             MIGRATION_1_2,
             MIGRATION_2_3,
             MIGRATION_3_4,
             MIGRATION_4_5,
             MIGRATION_5_6,
+            MIGRATION_6_7,
         ).use { db ->
             db.query(
                 "SELECT id, positions, kinks, occasions, partnerOrgasms FROM encounters WHERE id = 'e1'",
@@ -59,11 +60,24 @@ class MigrationTest {
                 assertTrue("occasions column should be NULL for migrated row", cursor.isNull(3))
                 assertTrue("partnerOrgasms column should be NULL for migrated row", cursor.isNull(4))
             }
-            db.query("SELECT id, displayName, sex, relationshipType FROM partners WHERE id = 'p1'").use { cursor ->
+            db.query(
+                "SELECT displayName, sex, relationshipType, birthDate, ethnicity, height, bodyType, location " +
+                    "FROM partners WHERE id = 'p1'",
+            ).use { cursor ->
                 assertTrue(cursor.moveToFirst())
-                assertEquals("Alex", cursor.getString(1))
-                assertTrue("sex column should be NULL for migrated row", cursor.isNull(2))
-                assertTrue("relationshipType column should be NULL for migrated row", cursor.isNull(3))
+                assertEquals("Alex", cursor.getString(0))
+                assertTrue("sex column should be NULL for migrated row", cursor.isNull(1))
+                assertTrue("relationshipType column should be NULL for migrated row", cursor.isNull(2))
+                assertTrue("birthDate (v7) should be NULL for migrated row", cursor.isNull(3))
+                assertTrue("ethnicity (v7) should be NULL for migrated row", cursor.isNull(4))
+                assertTrue("height (v7) should be NULL for migrated row", cursor.isNull(5))
+                assertTrue("bodyType (v7) should be NULL for migrated row", cursor.isNull(6))
+                assertTrue("location (v7) should be NULL for migrated row", cursor.isNull(7))
+            }
+            // The new single-row profile table exists and starts empty.
+            db.query("SELECT COUNT(*) FROM profile").use { cursor ->
+                assertTrue(cursor.moveToFirst())
+                assertEquals(0, cursor.getInt(0))
             }
         }
     }

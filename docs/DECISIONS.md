@@ -196,6 +196,21 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   across three places — `ReleaseNotes.all`, the F-Droid `fastlane/.../changelogs/<versionCode>.txt`, and
   the repo `CHANGELOG.md` — documented in RELEASE.md and the `ReleaseNotes` KDoc. **No version bump** in
   this change: it folds into the still-unreleased v0.1.0, so the popup first fires on the eventual v2.
+- **D-36 (2026-06-13, schema v7) Partner demographics + a self profile.** Added a "standard" demographic
+  set — **date of birth → derived age, ethnicity, height, body type, location** — to partners, and a new
+  single-row **`profile`** table giving the user their **own** photo + the same demographics (the app had
+  no concept of "you" before). Field-style choices mirror the existing pattern: `Ethnicity` / `BodyType`
+  are `DisplayLabel` enum chips (like `Sex`/`Gender`, translation- and stats-ready), while height/location
+  are free-text and DOB is a date picker. **Height is free-text** (e.g. `5'10"` or `178 cm`) rather than a
+  canonical unit — avoids a unit-conversion UX for a field with no stats use yet. **DOB is stored as
+  local-noon millis** for the picked calendar day (the Material picker returns UTC-midnight, which renders
+  as the day before in behind-UTC zones), normalised on the way in/out. Storage = the **encrypted DB**
+  (demographics are sensitive — not SharedPreferences); the profile photo reuses the encrypted media store
+  like a partner avatar, and the backup gathers its blob id explicitly (same fix shape as the Pass-12
+  partner-avatar gap). Migration **`MIGRATION_6_7`**: additive nullable columns on `partners` + a
+  `CREATE TABLE profile`; `MigrationTest` extended to v1→v7. Profile reached from **both** Settings → Your
+  profile and a pinned **"You" card** atop Partners (D-33's discard guard applies to both editors). The
+  shared `DemographicFields` + `OptionalChips` composables keep the partner and profile editors identical.
 - **D-25 (M6):** **No chart library** (resolves O-3). Insights charts are drawn with plain Compose
   layout (`VerticalBarChart`, `RankedBars`) instead of Vico/MPAndroidChart. Rationale: the app already
   hand-rolls its visuals (per-act vector icons, manual `BitmapFactory` downsampling, no third-party

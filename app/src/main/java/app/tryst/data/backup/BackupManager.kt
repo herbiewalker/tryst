@@ -61,6 +61,9 @@ class BackupManager @Inject constructor(
             db.query("SELECT photoMediaId FROM partners WHERE photoMediaId IS NOT NULL").use { c ->
                 while (c.moveToNext()) blobIds.add(c.getString(0))
             }
+            db.query("SELECT photoMediaId FROM profile WHERE photoMediaId IS NOT NULL").use { c ->
+                while (c.moveToNext()) blobIds.add(c.getString(0))
+            }
             for (id in blobIds) {
                 if (!mediaStore.fileFor(id).exists()) continue // skip a dangling reference rather than fail
                 zip.putNextEntry(ZipEntry("media/$id"))
@@ -189,8 +192,9 @@ class BackupManager @Inject constructor(
         const val MAX_ITERATIONS = 5_000_000
 
         // Insert order respects foreign keys (parents first); defer_foreign_keys also guards it.
+        // `profile` has no FKs (single self row) — order is irrelevant for it.
         val TABLES = listOf(
-            "partners", "locations", "tags", "positions", "acts",
+            "partners", "profile", "locations", "tags", "positions", "acts",
             "encounters", "media", "encounter_partner", "encounter_position", "encounter_tag",
         )
     }

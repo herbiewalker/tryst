@@ -1,7 +1,9 @@
 package app.tryst.data.db
 
 import androidx.room.TypeConverter
+import app.tryst.data.db.entity.BodyType
 import app.tryst.data.db.entity.EjaculationLocation
+import app.tryst.data.db.entity.Ethnicity
 import app.tryst.data.db.entity.Gender
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Kink
@@ -43,6 +45,14 @@ class Converters {
     @TypeConverter fun relationshipToString(value: RelationshipType?): String? = value?.name
 
     @TypeConverter fun stringToRelationship(value: String?): RelationshipType? = value?.let { runCatching { RelationshipType.valueOf(it) }.getOrNull() }
+
+    @TypeConverter fun ethnicityToString(value: Ethnicity?): String? = value?.name
+
+    @TypeConverter fun stringToEthnicity(value: String?): Ethnicity? = value?.let { runCatching { Ethnicity.valueOf(it) }.getOrNull() }
+
+    @TypeConverter fun bodyTypeToString(value: BodyType?): String? = value?.name
+
+    @TypeConverter fun stringToBodyType(value: String?): BodyType? = value?.let { runCatching { BodyType.valueOf(it) }.getOrNull() }
 
     @TypeConverter
     fun protectionSetToString(value: Set<Protection>): String = value.joinToString(SEP) { it.name }
