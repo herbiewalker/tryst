@@ -11,9 +11,11 @@ definition.
 
 ## The one architectural decision that shapes everything: a shared filter/query layer
 
-Four of the big asks — **Search**, the **Insights Explorer**, the **Photo Gallery**, and **Granular
-erase** — are all the same primitive underneath: *"select a subset of encounters by date range(s),
-partner, act/position/place, time-of-day, rating, etc."* 
+Most of the big asks — **Search**, the **page-wide Insights scope (INS-2)**, the **Insights Explorer**,
+the **Photo Gallery**, and **Granular erase** — are all the same primitive underneath: *"select a
+subset of encounters by date range(s), partner, act/position/place, time-of-day, rating, etc."* The
+**date range** in particular is the single most-reused filter (INS-2 makes it the default lens on the
+whole Insights tab).
 
 Rather than hand-roll filtering four times, build **one reusable filter/query layer** first (a
 `EncounterFilter` data model + a pure-Kotlin query function over the log, mirroring how
@@ -52,10 +54,27 @@ v0.3.0 below is deliberately the filter layer, before the features that consume 
 | **FILT-1** | **Shared `EncounterFilter` query layer** | The reusable filter model + stateless query described above. Pure-Kotlin, JVM-testable, no schema change (it queries the existing log). |
 | **SRCH-1** | **Global search** | A search entry (on Trysts, and/or app-wide) that filters encounters by free text (notes, partner names, act/position/place labels) on top of the filter layer. First consumer of the layer. |
 
-### v0.4.0 — Insights Explorer *(the big one)*
+### v0.4.0 — Insights Explorer & scope *(the big one)*
 | ID | Item | Current state | Proposed |
 |----|------|---------------|----------|
-| **INS-1** | **Clickable category cards → drill-down page** | Insights cards are display-only; the engine already computes a rich **orgasm drill-down** (you-vs-partner, per-partner, over-time, finish). | Tapping a category card (e.g. Orgasms, Acts, Partners) opens a **dedicated detail page**: all stats for that category, with the **full filter set** (multi/range dates, people, time-of-day, …), adjustable chart style (reuse the per-card Bars/Line/Donut), and searchable. Generalize the existing orgasm drill-down into a per-category pattern, fed by the v0.3.0 layer. |
+| **INS-2** | **Page-wide time scope** *(do this first — simpler, high-value)* | All Insights stats are computed over the **entire** log; no time selector. | A scope selector at the top of the Insights tab that **re-computes every stat/chart/tile** for the chosen window. **Default = current calendar year**, with options: pick a **specific year**, **all time**, or a **custom date range** (+ the standard presets). Implementation is light: feed a date-bounded subset of encounters into the existing `InsightsEngine.compute()`; everything downstream already reflects its input. |
+| **INS-1** | **Clickable category cards → drill-down page** | Insights cards are display-only; the engine already computes a rich **orgasm drill-down** (you-vs-partner, per-partner, over-time, finish). | Tapping a category card (e.g. Orgasms, Acts, Partners) opens a **dedicated detail page**: all stats for that category, with the **full filter set** (multi/range dates, people, time-of-day, …), adjustable chart style (reuse the per-card Bars/Line/Donut), and searchable. Generalize the existing orgasm drill-down into a per-category pattern, fed by the v0.3.0 layer. The page inherits the **INS-2 scope** as its starting filter, then refines. |
+
+**Product rules / design notes for the Insights scope (INS-2):**
+- **Achievements are exempt — always all-time / cumulative.** They represent lifetime progress, so the
+  scope selector must **not** apply to the Achievements section (keep feeding the full log to
+  `AchievementEngine`). Make this visually clear (the scope chip sits on the stats sections, not the
+  Achievements teaser/page).
+- **Streaks need a decision:** "longest streak" naturally respects the window, but "current streak" is
+  inherently all-time. Proposal: show *longest-in-range* under a scope, and only show *current* streak
+  in the all-time view (or label it explicitly).
+- **Persistence:** decide whether the chosen scope is remembered (persist last choice in
+  `InsightsPreferences`) or resets to "current year" each visit. Default-to-current-year on launch is
+  the safest, most predictable behaviour.
+- **Empty windows:** a year/range with no encounters must render a clean empty state, not a crash or a
+  misleading zero-chart.
+- INS-2 shares the date primitive from **FILT-1** (v0.3.0) — same reason the filter layer is built
+  first. It could even land in v0.3.0 if you want the scope before the full Explorer.
 
 ### v0.5.0 — Photo gallery *(reuses decrypt-in-memory + the filter layer)*
 | ID | Item | Proposed |
