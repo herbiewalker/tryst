@@ -47,6 +47,7 @@ v0.3.0 below is deliberately the filter layer, before the features that consume 
 | **QOL-2** | **Calendar: today indicator** | **Already exists** — today's cell is primary-colored + bold with a "today" a11y label. | Confirm it's rendering; if it's just not prominent enough, strengthen it (outline ring / filled chip). *Possibly already done — verify first.* |
 | **QOL-3** | **Partner editor → its own page** | Partner add/edit is an `AlertDialog` popout; the **self-profile is already a full-screen page** (`ProfileScreen`). | Convert the partner editor to a full-screen route to match. Reuse `DemographicFields`/`OptionalChips`; carry over the existing discard-changes guard (D-33). Net effect: "you" and "a partner" edit identically. |
 | **QOL-4** | **Updated icon set** | Launcher icon + per-act vector icons (`ic_act_*.xml`). | New launcher icon (adaptive + **themed/monochrome** for Material You), refreshed act icons. Largely a design/drawable swap — act icons are already a drawable-swap-only seam (`PracticeVisuals`). Design brief: [design/ICON_PROJECT_PROMPT.md](../design/ICON_PROJECT_PROMPT.md). Can land in any release. |
+| **QOL-5** | **App settings in the backup** (survive reinstall / new phone) | The encrypted backup restores DB + media but **deliberately excludes** the three settings stores — `tryst_appearance` (theme), `tryst_insights` (Insights customization), `tryst_general` (haptics/auto-lock/week-start) — the prefs classes' own comments say "excluded from backup/transfer". Note: a same-device **"Delete all data" does *not* clear these prefs** (`SessionManager.deleteAllData` wipes DB/keys/media only), so settings survive an in-app reset; they're lost on **reinstall / new phone / OS clear** (`allowBackup=false` → no cloud backup). | Add a non-sensitive `settings.json` (the three prefs as key→value) to the encrypted backup container so **theme + Insights layout + general prefs restore on a new device / reinstall**. The Insights customization (reorder/hide cards, per-card chart styles) is the highest-value thing to preserve — it's real user effort. Restore reapplies **known keys only** (skip-unknown, forward-compatible). Bump the export-format version (additive/optional section; older apps ignore it). **Never** include the PIN / vault / biometric config. Optional: an "include settings" toggle on export, and a separate *"Reset preferences to default"* action on the reset page (since data-reset currently leaves them). |
 
 ### v0.3.0 — Search & the filter foundation *(the enabling layer)*
 | ID | Item | Proposed |
@@ -106,8 +107,10 @@ v0.3.0 below is deliberately the filter layer, before the features that consume 
 
 ## Cross-cutting considerations
 - **Schema impact:** most items are **read-side** and need **no migration** (search, explorer, gallery
-  are derived; selective-erase is deletes). Icons = none. If any item later needs a column, follow the
-  standard rule (version bump + additive migration + migration test).
+  are derived; selective-erase is deletes). Icons = none. **QOL-5** touches the **backup/export format**
+  (not the DB schema) — version that format additively (`EXPORT_FORMAT.md`), and restore must skip
+  unknown keys for forward-compat. If any item later needs a column, follow the standard rule (version
+  bump + additive migration + migration test).
 - **Privacy invariants:** all items stay local, no-network, encrypted, `FLAG_SECURE` — no new
   permissions, no new external surface.
 - **Testability:** keep the filter/query logic pure-Kotlin (like `InsightsEngine`) so it's JVM-tested
