@@ -61,7 +61,7 @@ object Achievements {
         AchievementDef("v_toys10", "Toy Collector", "Use 10 different toys.", AchievementCategory.VARIETY, 10, "🪀", Distinct { e, _ -> e.encounter.toys?.map { it.name }?.toSet() ?: emptySet() }),
         AchievementDef("v_moods10", "Mood Ring", "Log 10 different moods.", AchievementCategory.VARIETY, 10, "🎭", Distinct { e, _ -> e.encounter.mood?.let { setOf(it.name) } ?: emptySet() }),
         AchievementDef("v_protection4", "Safety First Class", "Use 4 different kinds of protection.", AchievementCategory.VARIETY, 4, "🛡️", Distinct { e, _ -> e.encounter.protectionUsed.filter { it != Protection.NONE }.map { it.name }.toSet() }),
-        AchievementDef("v_finish6", "Sharpshooter", "Finish in 6 different places.", AchievementCategory.VARIETY, 6, "🎯", Distinct { e, _ -> e.encounter.ejaculationLocations?.values?.filter { it != EjaculationLocation.NONE }?.map { it.name }?.toSet() ?: emptySet() }),
+        AchievementDef("v_finish6", "Sharpshooter", "Finish in 6 different places.", AchievementCategory.VARIETY, 6, "🎯", Distinct { e, _ -> e.encounter.ejaculationLocations?.values?.flatten()?.filter { it != EjaculationLocation.NONE }?.map { it.name }?.toSet() ?: emptySet() }),
         AchievementDef("v_week", "Week Complete", "Log on all 7 days of the week.", AchievementCategory.VARIETY, 7, "🗓️", Distinct { _, d -> setOf(d.dayOfWeek.name) }),
         AchievementDef("v_year", "All Year Round", "Log in all 12 months.", AchievementCategory.VARIETY, 12, "🎆", Distinct { _, d -> setOf(d.month.name) }),
 

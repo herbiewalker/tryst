@@ -202,7 +202,7 @@ object InsightsEngine {
         val topOccasions = tallyLabels(encounters.flatMap { e -> (e.encounter.occasions ?: emptySet()).map { it.label } })
         val topProtection = tallyLabels(encounters.flatMap { e -> e.encounter.protectionUsed.map { it.label } })
         val topEjaculation = tallyLabels(
-            encounters.flatMap { e -> (e.encounter.ejaculationLocations?.values ?: emptyList()).map { it.label } },
+            encounters.flatMap { e -> (e.encounter.ejaculationLocations?.values?.flatten() ?: emptyList()).map { it.label } },
         )
         val topInitiators = tallyLabels(encounters.mapNotNull { it.encounter.initiator?.label })
 

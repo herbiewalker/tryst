@@ -60,19 +60,28 @@ class Converters {
     @TypeConverter
     fun stringToProtectionSet(value: String): Set<Protection> = value.split(SEP).mapNotNull { runCatching { Protection.valueOf(it) }.getOrNull() }.toSet()
 
+    // orgasm-index -> location(s), encoded as "idx=LOC1|LOC2,idx=LOC3" in the same TEXT column.
+    // Locations within one orgasm join on '|' (SEP=',' separates entries). Legacy single-value
+    // rows ("idx=LOC", no '|') parse straight into singleton sets — backward compatible.
     @TypeConverter
-    fun ejaculationMapToString(value: Map<Int, EjaculationLocation>?): String? = value?.entries?.joinToString(SEP) { "${it.key}=${it.value.name}" }
+    fun ejaculationMapToString(value: Map<Int, Set<EjaculationLocation>>?): String? = value?.entries
+        ?.filter { it.value.isNotEmpty() }
+        ?.takeIf { it.isNotEmpty() }
+        ?.joinToString(SEP) { (idx, locs) -> "$idx=${locs.joinToString("|") { it.name }}" }
 
     @TypeConverter
-    fun stringToEjaculationMap(value: String?): Map<Int, EjaculationLocation>? = value?.takeIf { it.isNotBlank() }
+    fun stringToEjaculationMap(value: String?): Map<Int, Set<EjaculationLocation>>? = value?.takeIf { it.isNotBlank() }
         ?.split(SEP)
         ?.mapNotNull { token ->
-            val parts = token.split("=")
+            val parts = token.split("=", limit = 2)
             val idx = parts.getOrNull(0)?.toIntOrNull() ?: return@mapNotNull null
-            val loc = parts.getOrNull(1)
-                ?.let { runCatching { EjaculationLocation.valueOf(it) }.getOrNull() }
-                ?: return@mapNotNull null
-            idx to loc
+            val locs = parts.getOrNull(1)
+                ?.split("|")
+                ?.mapNotNull { runCatching { EjaculationLocation.valueOf(it) }.getOrNull() }
+                ?.toSet()
+                .orEmpty()
+            if (locs.isEmpty()) return@mapNotNull null
+            idx to locs
         }?.toMap()
 
     @TypeConverter

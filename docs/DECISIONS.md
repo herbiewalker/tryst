@@ -211,6 +211,16 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   `CREATE TABLE profile`; `MigrationTest` extended to v1→v7. Profile reached from **both** Settings → Your
   profile and a pinned **"You" card** atop Partners (D-33's discard guard applies to both editors). The
   shared `DemographicFields` + `OptionalChips` composables keep the partner and profile editors identical.
+- **D-37 (2026-06-14, post-v0.1.0) Ejaculation location is multi-select per orgasm.** A single orgasm can
+  land in more than one place (e.g. *on chest **and** stomach*), so the per-orgasm value changed from one
+  `EjaculationLocation` to a **`Set<EjaculationLocation>`** (`ejaculationLocations: Map<Int, Set<…>>`), and
+  the editor field became a `MultiSelectField`. **No DB migration:** the column is plain `TEXT` and its
+  app-side encoding had already moved Set→Map at v5→v6 without a SQL change, so this Map→Map-of-Sets move is
+  likewise encoding-only. The converter stays **backward-compatible** — entries join on `,` (SEP) and the
+  per-orgasm locations on `|`, so legacy single-value rows (`0=ON_CHEST`, no `|`) parse into a one-element
+  set. Insights/Achievements `flatten()` the sets before tallying. Also added `IN_SHOWER` ("In the shower")
+  for solo-in-the-shower, and renamed the kink label `Costume / dress-up` → `Lingerie / dress-up` (display
+  label only; the persisted enum name `COSTUME_PLAY` is unchanged, so existing entries keep their data).
 - **D-25 (M6):** **No chart library** (resolves O-3). Insights charts are drawn with plain Compose
   layout (`VerticalBarChart`, `RankedBars`) instead of Vico/MPAndroidChart. Rationale: the app already
   hand-rolls its visuals (per-act vector icons, manual `BitmapFactory` downsampling, no third-party

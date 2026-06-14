@@ -59,8 +59,8 @@ data class EncounterEditUiState(
     val initiator: Initiator? = null,
     val protection: Set<Protection> = emptySet(),
     val orgasmCountSelf: Int = 0,
-    /** Per-orgasm ejaculation location: orgasm index (0-based) -> location. */
-    val ejaculations: Map<Int, EjaculationLocation> = emptyMap(),
+    /** Per-orgasm ejaculation location(s): orgasm index (0-based) -> locations (multi-select). */
+    val ejaculations: Map<Int, Set<EjaculationLocation>> = emptyMap(),
     /** Per-partner orgasm counts: partnerId -> count. */
     val partnerOrgasms: Map<String, Int> = emptyMap(),
     val practicesPerformed: Set<String> = emptySet(),
@@ -222,8 +222,10 @@ class EncounterEditViewModel @Inject constructor(
         )
     }
 
-    fun setEjaculation(index: Int, value: EjaculationLocation) {
-        uiState = uiState.copy(ejaculations = uiState.ejaculations + (index to value))
+    fun toggleEjaculation(index: Int, value: EjaculationLocation) {
+        val current = uiState.ejaculations[index] ?: emptySet()
+        val updated = if (value in current) current - value else current + value
+        uiState = uiState.copy(ejaculations = uiState.ejaculations + (index to updated))
     }
 
     fun setPartnerOrgasms(id: String, count: Int) {
@@ -284,7 +286,7 @@ class EncounterEditViewModel @Inject constructor(
                 protectionUsed = s.protection,
                 orgasmCountSelf = s.orgasmCountSelf,
                 orgasmCountPartner = null,
-                ejaculationLocations = s.ejaculations.ifEmpty { null },
+                ejaculationLocations = s.ejaculations.filterValues { it.isNotEmpty() }.ifEmpty { null },
                 practicesPerformed = s.practicesPerformed,
                 practicesReceived = if (solo) emptySet() else s.practicesReceived,
                 positions = s.selectedPositionIds,
