@@ -71,8 +71,17 @@ v0.3.0 below is deliberately the filter layer, before the features that consume 
 - **Persistence:** decide whether the chosen scope is remembered (persist last choice in
   `InsightsPreferences`) or resets to "current year" each visit. Default-to-current-year on launch is
   the safest, most predictable behaviour.
-- **Empty windows:** a year/range with no encounters must render a clean empty state, not a crash or a
-  misleading zero-chart.
+- **Empty windows — DECIDED: empty-state, do NOT auto-hide cards.** A scoped window with no data
+  keeps its card and shows a compact empty state (e.g. *"No encounters in 2021"*), rather than the card
+  vanishing. Rationale: (1) **layout stability** — cards popping in/out as the scope changes feels
+  broken and loses the user's place; (2) **a zero is signal** in a tracker (a real example: the
+  dataset's 2021 gap — auto-hide would blank the page into confusion); (3) it respects the **existing
+  manual show/hide** (`InsightsPreferences`) instead of overriding it on data state; (4) **empty is
+  teachable** — *"No toys logged in 2024"* shows what's trackable and invites action.
+  - *List items within a breakdown* already omit zeros (a per-act breakdown lists only acts used) —
+    keep that; the rule is about whole **cards/sections**, which persist.
+  - Optional **opt-in** toggle *"Hide empty cards for this range"* (default **off**) for users who
+    prefer the tidy view — keeps the predictable default while offering the choice.
 - INS-2 shares the date primitive from **FILT-1** (v0.3.0) — same reason the filter layer is built
   first. It could even land in v0.3.0 if you want the scope before the full Explorer.
 
