@@ -48,7 +48,7 @@ Progress against the [roadmap](docs/ROADMAP.md):
 - ✅ **M3.x** — Partner sex/gender/relationship; custom **acts** (alongside custom positions);
   big category expansion; **Setting & Location** split out from **Occasion**; per-partner orgasm
   counts + per-orgasm ejaculation; **theming** (purple/green palette, Light/Dark/System, optional
-  Material You); a **calendar** view on the Trysts screen with custom per-act icons. Schema at **v6**.
+  Material You); a **calendar** view on the Trysts screen with custom per-act icons.
 - ✅ **M4** — encrypted photo attachments UI: pick via the Android Photo Picker (no permission),
   encrypted to app-internal storage, decrypted in-memory only; on encounters (editor + viewer +
   history/calendar thumbnail) and partners (avatar).
