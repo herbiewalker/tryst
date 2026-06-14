@@ -31,7 +31,7 @@ class InsightsEngineTest {
         partnerOrgasms: Map<String, Int>? = null,
         acts: Set<String>? = null,
         protection: Set<Protection> = emptySet(),
-        ejaculation: Map<Int, EjaculationLocation>? = null,
+        ejaculation: Map<Int, Set<EjaculationLocation>>? = null,
         initiator: Initiator? = null,
         partners: List<PartnerEntity> = emptyList(),
     ) = EncounterWithDetails(
@@ -200,10 +200,19 @@ class InsightsEngineTest {
     @Test
     fun ejaculationTallies() {
         val log = listOf(
-            encounter("a", today, ejaculation = mapOf(0 to EjaculationLocation.VAGINAL, 1 to EjaculationLocation.ON_FACE)),
+            encounter(
+                "a",
+                today,
+                ejaculation = mapOf(
+                    0 to setOf(EjaculationLocation.VAGINAL, EjaculationLocation.ON_STOMACH),
+                    1 to setOf(EjaculationLocation.ON_FACE),
+                ),
+            ),
         )
         val r = InsightsEngine.compute(log, zone = zone, today = today)
         assertTrue(r.topEjaculation.any { it.label == EjaculationLocation.VAGINAL.label })
         assertTrue(r.topEjaculation.any { it.label == EjaculationLocation.ON_FACE.label })
+        // multi-select: both locations of a single orgasm are counted
+        assertTrue(r.topEjaculation.any { it.label == EjaculationLocation.ON_STOMACH.label })
     }
 }

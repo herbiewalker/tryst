@@ -240,9 +240,9 @@ fun EncounterEditScreen(
                     Stepper(value = ui.orgasmCountSelf, onChange = { viewModel.setSelfOrgasms(it) })
                 }
 
-                // One ejaculation location per orgasm you had.
+                // Ejaculation location(s) per orgasm you had — multi-select (e.g. chest + stomach).
                 repeat(ui.orgasmCountSelf) { i ->
-                    SingleSelectField(
+                    MultiSelectField(
                         label = if (ui.orgasmCountSelf > 1) {
                             stringResource(R.string.encounter_ejaculation_n, i + 1)
                         } else {
@@ -250,9 +250,9 @@ fun EncounterEditScreen(
                         },
                         all = EjaculationLocation.entries,
                         common = CommonOptions.EJACULATION,
-                        selected = ui.ejaculations[i],
+                        selected = ui.ejaculations[i] ?: emptySet(),
                         labelOf = { it.label },
-                        onSelect = { viewModel.setEjaculation(i, it) },
+                        onToggle = { viewModel.toggleEjaculation(i, it) },
                     )
                 }
 
@@ -676,6 +676,8 @@ private object CommonOptions {
         EjaculationLocation.SWALLOWED,
         EjaculationLocation.ON_FACE,
         EjaculationLocation.ON_CHEST,
+        EjaculationLocation.ON_STOMACH,
+        EjaculationLocation.IN_SHOWER,
     )
     val KINK = listOf(
         Kink.DOMINATION,
