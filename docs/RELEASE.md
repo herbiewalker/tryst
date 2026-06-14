@@ -6,9 +6,11 @@ signing key. This document is the checklist for cutting a release and getting it
 
 ## Prerequisites (one-time)
 
-- [x] **The source repository must be public.** F-Droid builds from a public git repo; it cannot ingest a
-      private one. **Done (2026-06-12):** `herbiewalker/tryst` was switched private → public
-      (<https://github.com/herbiewalker/tryst>); GitHub auto-detects the license as GPL-3.0.
+- [ ] **The source repository must be public.** F-Droid builds from a public git repo; it cannot ingest a
+      private one. `herbiewalker/tryst` is **deliberately kept private until release** (it stays private
+      while the app is unfinished). **Making it public is the final pre-submission step** — at that point
+      GitHub auto-detects the license as GPL-3.0. (It was briefly flipped public on 2026-06-12, then set
+      back to private; current state is **private** — confirmed via the GitHub API on 2026-06-13.)
 - [ ] All dependencies are FOSS and there are no proprietary blobs (verified in pre-release Pass 10; the
       `OssLicenses` list + the banned-SDK grep guard this). F-Droid will reject non-free dependencies or
       `anti-features` we haven't declared. Tryst has **no anti-features** (no tracking, no non-free deps,
