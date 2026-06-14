@@ -1,14 +1,19 @@
 # Tryst — Threat Model
 
-Status: **v1 (2026-06-08)** — aligned with the *implemented* security model (Keystore-only + distinct
-app PIN; see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §1, Option B).
+Status: **v1 (2026-06-13)** — aligned with the *implemented* security model (Keystore-only + distinct
+app PIN; see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §1, Option B). Covers schema v7 (partner
+demographics + the single-row self `profile`).
 
 ## Assets to protect
 
 - **A1** Encounter records (the highly sensitive content).
-- **A2** Partner identities.
-- **A3** Photo attachments.
+- **A2** Partner identities — including the v7 **demographics** (date of birth, ethnicity, height,
+  body type, location) attached to each partner.
+- **A3** Photo attachments — encounter photos, partner avatars, and the self-profile photo.
 - **A4** The mere fact / metadata of usage (timestamps, app presence).
+- **A5** The user's **own** identifying data — the single-row `profile` (name, photo, sex/gender,
+  date of birth, ethnicity, height, body type, location). Self-identifying, so its disclosure also
+  links the device owner to all of the above.
 
 ## Adversaries in scope
 
