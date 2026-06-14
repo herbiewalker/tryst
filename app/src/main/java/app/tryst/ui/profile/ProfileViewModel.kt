@@ -1,4 +1,4 @@
-package app.tryst.ui.partner
+package app.tryst.ui.profile
 
 import android.content.Context
 import android.net.Uri
@@ -9,15 +9,13 @@ import app.tryst.core.session.SessionManager
 import app.tryst.data.db.entity.BodyType
 import app.tryst.data.db.entity.Ethnicity
 import app.tryst.data.db.entity.Gender
-import app.tryst.data.db.entity.PartnerEntity
-import app.tryst.data.db.entity.RelationshipType
+import app.tryst.data.db.entity.ProfileEntity
 import app.tryst.data.db.entity.Sex
-import app.tryst.data.repository.PartnerRepository
+import app.tryst.data.repository.ProfileRepository
 import app.tryst.ui.common.MediaImages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
-import java.util.UUID
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,43 +25,42 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** Everything the partner editor collects, passed to [PartnersViewModel.save] in one shot. */
-data class PartnerDraft(
-    val name: String,
-    val anonymous: Boolean,
-    val note: String,
+/** Everything the self-profile editor collects, passed to [ProfileViewModel.save] in one shot. */
+data class ProfileDraft(
+    val displayName: String,
     val sex: Sex?,
     val gender: Gender?,
-    val relationshipType: RelationshipType?,
     val birthDate: Long?,
     val ethnicity: Ethnicity?,
     val height: String,
     val bodyType: BodyType?,
     val location: String,
+    val note: String,
     val newPhotoUri: Uri?,
     val removePhoto: Boolean,
     val captureTempFile: File?,
 )
 
 @HiltViewModel
-class PartnersViewModel @Inject constructor(
+class ProfileViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val session: SessionManager,
-    private val repository: PartnerRepository,
+    private val repository: ProfileRepository,
 ) : ViewModel() {
 
     /** Keep the app unlocked across the photo-picker/camera handoff. */
     fun suppressAutoLock() = session.suppressNextAutoLock()
 
-    val partners: StateFlow<List<PartnerEntity>> =
-        repository.observeActive()
-            .catch { emit(emptyList()) }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    /** The single self row, or null until loaded / if never set. */
+    val profile: StateFlow<ProfileEntity?> =
+        repository.observe()
+            .catch { emit(null) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    fun save(id: String?, draft: PartnerDraft) {
+    fun save(draft: ProfileDraft, onDone: () -> Unit) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
-            val existing = id?.let { repository.getById(it) }
+            val existing = repository.get()
             val oldPhotoId = existing?.photoMediaId
             val photoMediaId = when {
                 draft.newPhotoUri != null -> {
@@ -80,32 +77,24 @@ class PartnersViewModel @Inject constructor(
                 else -> oldPhotoId
             }
             repository.upsert(
-                PartnerEntity(
-                    id = id ?: UUID.randomUUID().toString(),
-                    displayName = if (draft.anonymous) null else draft.name.trim().ifBlank { null },
-                    isAnonymous = draft.anonymous,
-                    color = existing?.color,
-                    note = draft.note.trim().ifBlank { null },
+                ProfileEntity(
+                    id = ProfileEntity.SELF_ID,
+                    displayName = draft.displayName.trim().ifBlank { null },
+                    photoMediaId = photoMediaId,
                     sex = draft.sex,
                     gender = draft.gender,
-                    relationshipType = draft.relationshipType,
-                    photoMediaId = photoMediaId,
                     birthDate = draft.birthDate,
                     ethnicity = draft.ethnicity,
                     height = draft.height.trim().ifBlank { null },
                     bodyType = draft.bodyType,
                     location = draft.location.trim().ifBlank { null },
-                    archivedAt = existing?.archivedAt,
-                    createdAt = existing?.createdAt ?: now,
+                    note = draft.note.trim().ifBlank { null },
                     updatedAt = now,
                 ),
             )
             draft.captureTempFile?.delete() // plaintext camera temp, now encrypted into the blob
+            onDone()
         }
-    }
-
-    fun archive(id: String) {
-        viewModelScope.launch { repository.archive(id) }
     }
 
     suspend fun decodePhoto(photoMediaId: String, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { runCatching { repository.openPhoto(photoMediaId) }.getOrNull() }

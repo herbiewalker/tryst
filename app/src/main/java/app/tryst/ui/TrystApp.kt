@@ -59,6 +59,7 @@ import app.tryst.ui.history.HistoryScreen
 import app.tryst.ui.insights.InsightsScreen
 import app.tryst.ui.lock.ChangePinScreen
 import app.tryst.ui.partner.PartnersScreen
+import app.tryst.ui.profile.ProfileScreen
 import app.tryst.ui.settings.GeneralSettingsViewModel
 import app.tryst.ui.settings.ResetDataScreen
 import app.tryst.ui.settings.SettingsScreen
@@ -78,6 +79,7 @@ private object Routes {
     const val CHANGE_PIN = "change-pin"
     const val RESET = "settings/reset"
     const val WHATS_NEW = "whats-new"
+    const val PROFILE = "profile"
     const val ENCOUNTER_NEW = "encounter/new"
     const val ENCOUNTER_EDIT = "encounter/{encounterId}"
     fun encounterEdit(id: String) = "encounter/$id"
@@ -211,7 +213,9 @@ fun TrystApp() {
                     composable(Routes.ACHIEVEMENTS) {
                         AchievementsScreen(onBack = { navController.popBackStack() })
                     }
-                    composable(Routes.PARTNERS) { PartnersScreen() }
+                    composable(Routes.PARTNERS) {
+                        PartnersScreen(onOpenProfile = { navController.navigate(Routes.PROFILE) })
+                    }
                     composable(Routes.SETTINGS) {
                         SettingsScreen(
                             onCustomizeInsights = { navController.navigate(Routes.INSIGHTS_CUSTOMIZE) },
@@ -219,6 +223,7 @@ fun TrystApp() {
                             onChangePin = { navController.navigate(Routes.CHANGE_PIN) },
                             onOpenReset = { navController.navigate(Routes.RESET) },
                             onOpenWhatsNew = { navController.navigate(Routes.WHATS_NEW) },
+                            onOpenProfile = { navController.navigate(Routes.PROFILE) },
                         )
                     }
                     composable(Routes.ABOUT) {
@@ -229,6 +234,9 @@ fun TrystApp() {
                     }
                     composable(Routes.WHATS_NEW) {
                         WhatsNewScreen(onBack = { navController.popBackStack() })
+                    }
+                    composable(Routes.PROFILE) {
+                        ProfileScreen(onBack = { navController.popBackStack() })
                     }
                     composable(Routes.CHANGE_PIN) {
                         ChangePinScreen(onClose = { navController.popBackStack() })

@@ -258,7 +258,14 @@ Key model decided: **Keystore-only + distinct 6-digit app PIN** (O-1 → D-12). 
   shown as a browsable screen (Settings → About) and a one-time popup on the first launch after a
   `versionCode` bump (fresh installs see nothing). Notes stay in sync with `CHANGELOG.md` + the F-Droid
   changelog files (RELEASE.md per-release steps). No version bump — folds into v0.1.0.
-- Verified: `assembleDebug`, `ktlintCheck`, `detekt`, `testDebugUnitTest` all green.
+- **Partner demographics + a self profile (D-36, schema v7)** — partners gain DOB→age, ethnicity, height,
+  body type, and location; a new single-row `profile` table gives the user their own photo + the same
+  demographics, edited from Settings → Your profile and a pinned "You" card on Partners. Additive
+  `MIGRATION_6_7` (+ profile table); `MigrationTest` extended to v1→v7; backup covers the profile row and
+  its photo. Shared `DemographicFields`/`OptionalChips` keep the two editors identical.
+- Verified: `assembleDebug`, `ktlintCheck`, `detekt`, `testDebugUnitTest` all green (the v1→v7
+  `MigrationTest` is instrumented — its `CREATE TABLE` was checked byte-for-byte against the exported
+  `7.json`, runs on a device).
 
 > Sequencing rationale: security/storage foundations come **before** features so we never
 > retrofit encryption onto plaintext data.

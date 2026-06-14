@@ -3,6 +3,7 @@ package app.tryst.ui.common
 import app.tryst.data.db.entity.PartnerEntity
 import java.time.Instant
 import java.time.LocalDate
+import java.time.Period
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -36,6 +37,10 @@ object Format {
     fun dayOfMonth(epochMillis: Long): String = zoned(epochMillis).dayOfMonth.toString()
 
     fun localDate(epochMillis: Long): LocalDate = zoned(epochMillis).toLocalDate()
+
+    /** Whole years from a birth date (epoch millis) to today; null if the date is in the future. */
+    fun age(birthEpochMillis: Long): Int? = Period.between(localDate(birthEpochMillis), LocalDate.now())
+        .years.takeIf { it >= 0 }
 
     fun monthShort(epochMillis: Long): String = zoned(epochMillis).format(monthFormatter).uppercase(Locale.getDefault())
 

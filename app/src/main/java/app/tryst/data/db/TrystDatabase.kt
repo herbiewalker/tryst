@@ -9,6 +9,7 @@ import app.tryst.data.db.dao.LocationDao
 import app.tryst.data.db.dao.MediaDao
 import app.tryst.data.db.dao.PartnerDao
 import app.tryst.data.db.dao.PositionDao
+import app.tryst.data.db.dao.ProfileDao
 import app.tryst.data.db.dao.TagDao
 import app.tryst.data.db.entity.ActEntity
 import app.tryst.data.db.entity.EncounterEntity
@@ -19,11 +20,13 @@ import app.tryst.data.db.entity.LocationEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.PositionEntity
+import app.tryst.data.db.entity.ProfileEntity
 import app.tryst.data.db.entity.TagEntity
 
 @Database(
     entities = [
         PartnerEntity::class,
+        ProfileEntity::class,
         EncounterEntity::class,
         LocationEntity::class,
         TagEntity::class,
@@ -34,12 +37,13 @@ import app.tryst.data.db.entity.TagEntity
         EncounterPositionCrossRef::class,
         EncounterTagCrossRef::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
 abstract class TrystDatabase : RoomDatabase() {
     abstract fun partnerDao(): PartnerDao
+    abstract fun profileDao(): ProfileDao
     abstract fun encounterDao(): EncounterDao
     abstract fun mediaDao(): MediaDao
     abstract fun tagDao(): TagDao

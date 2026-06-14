@@ -72,6 +72,7 @@ fun SettingsScreen(
     onChangePin: () -> Unit = {},
     onOpenReset: () -> Unit = {},
     onOpenWhatsNew: () -> Unit = {},
+    onOpenProfile: () -> Unit = {},
     viewModel: LockViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -140,6 +141,15 @@ fun SettingsScreen(
             Text(stringResource(R.string.settings_general), style = MaterialTheme.typography.titleMedium)
             Text(
                 stringResource(R.string.settings_about_app_blurb),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            OutlinedButton(onClick = onOpenProfile, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.settings_profile))
+            }
+            Text(
+                stringResource(R.string.settings_profile_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

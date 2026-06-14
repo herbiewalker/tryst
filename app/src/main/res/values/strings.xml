@@ -16,6 +16,17 @@
     <string name="action_discard">Discard</string>
     <string name="action_keep_editing">Keep editing</string>
     <string name="action_got_it">Got it</string>
+    <string name="action_clear">Clear</string>
+
+    <!-- Shared demographic fields (partner editor + self profile) -->
+    <string name="demo_birth_date">Date of birth</string>
+    <string name="demo_set_birth_date">Set date of birth</string>
+    <string name="demo_age">Age %1$d</string>
+    <string name="demo_ethnicity">Ethnicity</string>
+    <string name="demo_height">Height</string>
+    <string name="demo_height_hint">e.g. 5\'10\" or 178 cm</string>
+    <string name="demo_body_type">Body type</string>
+    <string name="demo_location">Location</string>
 
     <!-- Unsaved-changes guard (partner dialog, encounter editor) -->
     <string name="discard_changes_title">Discard changes?</string>
@@ -141,11 +152,22 @@
     <string name="partner_note_label">Note (optional)</string>
 
     <!-- ============================================================= -->
+    <!-- Self profile (ProfileScreen, "You" card)                      -->
+    <!-- ============================================================= -->
+    <string name="profile_title">Your profile</string>
+    <string name="profile_note_label">About you (optional)</string>
+    <string name="profile_you">You</string>
+    <string name="profile_you_initial">Y</string>
+    <string name="profile_you_cta">Add your photo and details</string>
+
+    <!-- ============================================================= -->
     <!-- Settings (SettingsScreen)                                     -->
     <!-- ============================================================= -->
     <string name="settings_title">Settings</string>
     <!-- General section -->
     <string name="settings_general">General</string>
+    <string name="settings_profile">Your profile</string>
+    <string name="settings_profile_desc">Your own photo and details — stored encrypted on this device, like everything else.</string>
     <string name="settings_about_app_blurb">Tryst keeps everything on this device — no account, no sync, and no internet access at all, so nothing can leak to a server. Your entries and photos are encrypted at rest behind your PIN (and optional biometric unlock), and the app locks itself when it leaves the screen. There\'s no password recovery: if you forget your PIN with no biometric set, the data can\'t be unlocked. The only way to move your data to a new phone is the encrypted backup under Backup &amp; restore.</string>
     <string name="settings_haptics">"  Haptics"</string>
     <string name="settings_week_start">Calendar week start</string>

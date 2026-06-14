@@ -7,8 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,7 +27,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -59,24 +56,32 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
-import app.tryst.data.db.entity.DisplayLabel
 import app.tryst.data.db.entity.Gender
 import app.tryst.data.db.entity.PartnerEntity
+import app.tryst.data.db.entity.ProfileEntity
 import app.tryst.data.db.entity.RelationshipType
 import app.tryst.data.db.entity.Sex
 import app.tryst.ui.common.DecodedImage
+import app.tryst.ui.common.DemographicFields
 import app.tryst.ui.common.Format
 import app.tryst.ui.common.MediaImages
+import app.tryst.ui.common.OptionalChips
 import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.rememberCameraCapture
 import app.tryst.ui.common.rememberHaptics
 import app.tryst.ui.common.rememberImagePicker
+import app.tryst.ui.profile.ProfileViewModel
 import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PartnersScreen(viewModel: PartnersViewModel = hiltViewModel()) {
+fun PartnersScreen(
+    onOpenProfile: () -> Unit = {},
+    viewModel: PartnersViewModel = hiltViewModel(),
+    profileViewModel: ProfileViewModel = hiltViewModel(),
+) {
     val partners by viewModel.partners.collectAsStateWithLifecycle()
+    val profile by profileViewModel.profile.collectAsStateWithLifecycle()
     var dialogTarget by remember { mutableStateOf<DialogTarget?>(null) }
 
     Scaffold(
@@ -87,21 +92,30 @@ fun PartnersScreen(viewModel: PartnersViewModel = hiltViewModel()) {
             }
         },
     ) { padding ->
-        if (partners.isEmpty()) {
-            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text(
-                    stringResource(R.string.partners_empty),
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+        LazyColumn(
+            // Cap + centre on wide windows so partner rows don't stretch (Pass 5); no-op on phones.
+            modifier = Modifier.fillMaxSize().padding(padding).wrapContentWidth().adaptiveContentWidth(),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            // The user's own profile, pinned above the partner list.
+            item(key = "you") {
+                YouCard(
+                    profile = profile,
+                    onLoadPhoto = { profileViewModel.decodePhoto(it, AVATAR_PX) },
+                    onClick = onOpenProfile,
                 )
             }
-        } else {
-            LazyColumn(
-                // Cap + centre on wide windows so partner rows don't stretch (Pass 5); no-op on phones.
-                modifier = Modifier.fillMaxSize().padding(padding).wrapContentWidth().adaptiveContentWidth(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
+            if (partners.isEmpty()) {
+                item(key = "empty") {
+                    Text(
+                        stringResource(R.string.partners_empty),
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+                    )
+                }
+            } else {
                 items(partners, key = { it.id }) { partner ->
                     PartnerRow(
                         partner = partner,
@@ -121,8 +135,8 @@ fun PartnersScreen(viewModel: PartnersViewModel = hiltViewModel()) {
             onLoadPhoto = { viewModel.decodePhoto(it, AVATAR_PX) },
             onSuppressAutoLock = { viewModel.suppressAutoLock() },
             onDismiss = { dialogTarget = null },
-            onSave = { name, anonymous, note, sex, gender, rel, photoUri, removePhoto, tempFile ->
-                viewModel.save(target.partner?.id, name, anonymous, note, sex, gender, rel, photoUri, removePhoto, tempFile)
+            onSave = { draft ->
+                viewModel.save(target.partner?.id, draft)
                 dialogTarget = null
             },
         )
@@ -132,6 +146,40 @@ fun PartnersScreen(viewModel: PartnersViewModel = hiltViewModel()) {
 private data class DialogTarget(val partner: PartnerEntity?)
 
 private const val AVATAR_PX = 200
+
+/** The user's own profile, shown as a pinned card atop the Partners list; opens the profile editor. */
+@Composable
+private fun YouCard(
+    profile: ProfileEntity?,
+    onLoadPhoto: suspend (String) -> ImageBitmap?,
+    onClick: () -> Unit,
+) {
+    val name = profile?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.profile_you)
+    Card(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            PartnerAvatar(profile?.photoMediaId, name, 48.dp, onLoadPhoto)
+            Column(Modifier.weight(1f).padding(start = 14.dp)) {
+                Text(name, style = MaterialTheme.typography.titleMedium)
+                val descriptor = listOfNotNull(
+                    profile?.gender?.label ?: profile?.sex?.label,
+                    profile?.birthDate?.let { Format.age(it) }?.let { stringResource(R.string.demo_age, it) },
+                ).joinToString(" · ")
+                Text(
+                    descriptor.ifEmpty { stringResource(R.string.profile_you_cta) },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (descriptor.isEmpty()) {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    } else {
+                        MaterialTheme.colorScheme.primary
+                    },
+                )
+            }
+        }
+    }
+}
 
 @Composable
 private fun PartnerRow(
@@ -153,6 +201,7 @@ private fun PartnerRow(
                 val descriptor = listOfNotNull(
                     partner.relationshipType?.label,
                     partner.gender?.label ?: partner.sex?.label,
+                    partner.birthDate?.let { Format.age(it) }?.let { stringResource(R.string.demo_age, it) },
                 ).joinToString(" · ")
                 if (descriptor.isNotEmpty()) {
                     Text(descriptor, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
@@ -204,17 +253,7 @@ private fun PartnerDialog(
     onLoadPhoto: suspend (String) -> ImageBitmap?,
     onSuppressAutoLock: () -> Unit,
     onDismiss: () -> Unit,
-    onSave: (
-        name: String,
-        anonymous: Boolean,
-        note: String,
-        sex: Sex?,
-        gender: Gender?,
-        rel: RelationshipType?,
-        photoUri: Uri?,
-        removePhoto: Boolean,
-        captureTempFile: File?,
-    ) -> Unit,
+    onSave: (PartnerDraft) -> Unit,
 ) {
     val context = LocalContext.current
     var name by remember { mutableStateOf(initial?.displayName ?: "") }
@@ -223,6 +262,11 @@ private fun PartnerDialog(
     var sex by remember { mutableStateOf(initial?.sex) }
     var gender by remember { mutableStateOf(initial?.gender) }
     var relationship by remember { mutableStateOf(initial?.relationshipType) }
+    var birthDate by remember { mutableStateOf(initial?.birthDate) }
+    var ethnicity by remember { mutableStateOf(initial?.ethnicity) }
+    var height by remember { mutableStateOf(initial?.height ?: "") }
+    var bodyType by remember { mutableStateOf(initial?.bodyType) }
+    var location by remember { mutableStateOf(initial?.location ?: "") }
     var photoUri by remember { mutableStateOf<Uri?>(null) }
     var photoRemoved by remember { mutableStateOf(false) }
     var captureTempFile by remember { mutableStateOf<File?>(null) }
@@ -256,6 +300,11 @@ private fun PartnerDialog(
         sex != initial?.sex ||
         gender != initial?.gender ||
         relationship != initial?.relationshipType ||
+        birthDate != initial?.birthDate ||
+        ethnicity != initial?.ethnicity ||
+        height != (initial?.height ?: "") ||
+        bodyType != initial?.bodyType ||
+        location != (initial?.location ?: "") ||
         photoUri != null ||
         photoRemoved
     val attemptDismiss = { if (isDirty) showDiscardConfirm = true else dismiss() }
@@ -346,6 +395,18 @@ private fun PartnerDialog(
                 OptionalChips(stringResource(R.string.partner_sex), Sex.entries, sex) { sex = it }
                 OptionalChips(stringResource(R.string.partner_gender), Gender.entries, gender) { gender = it }
                 OptionalChips(stringResource(R.string.partner_relationship), RelationshipType.entries, relationship) { relationship = it }
+                DemographicFields(
+                    birthDate = birthDate,
+                    onBirthDate = { birthDate = it },
+                    ethnicity = ethnicity,
+                    onEthnicity = { ethnicity = it },
+                    height = height,
+                    onHeight = { height = it },
+                    bodyType = bodyType,
+                    onBodyType = { bodyType = it },
+                    location = location,
+                    onLocation = { location = it },
+                )
                 OutlinedTextField(
                     value = note,
                     onValueChange = { note = it },
@@ -356,7 +417,26 @@ private fun PartnerDialog(
         },
         confirmButton = {
             TextButton(
-                onClick = { onSave(name, anonymous, note, sex, gender, relationship, photoUri, photoRemoved, captureTempFile) },
+                onClick = {
+                    onSave(
+                        PartnerDraft(
+                            name = name,
+                            anonymous = anonymous,
+                            note = note,
+                            sex = sex,
+                            gender = gender,
+                            relationshipType = relationship,
+                            birthDate = birthDate,
+                            ethnicity = ethnicity,
+                            height = height,
+                            bodyType = bodyType,
+                            location = location,
+                            newPhotoUri = photoUri,
+                            removePhoto = photoRemoved,
+                            captureTempFile = captureTempFile,
+                        ),
+                    )
+                },
                 enabled = anonymous || name.isNotBlank(),
             ) { Text(stringResource(R.string.action_save)) }
         },
@@ -376,28 +456,5 @@ private fun PartnerDialog(
             },
             dismissButton = { TextButton(onClick = { showDiscardConfirm = false }) { Text(stringResource(R.string.action_keep_editing)) } },
         )
-    }
-}
-
-/** A labelled optional single-select: tapping the selected chip again clears it. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun <T> OptionalChips(
-    label: String,
-    options: List<T>,
-    selected: T?,
-    onSelect: (T?) -> Unit,
-) where T : Enum<T>, T : DisplayLabel {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(label, style = MaterialTheme.typography.labelLarge)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            options.forEach { option ->
-                FilterChip(
-                    selected = option == selected,
-                    onClick = { onSelect(if (option == selected) null else option) },
-                    label = { Text(option.label) },
-                )
-            }
-        }
     }
 }

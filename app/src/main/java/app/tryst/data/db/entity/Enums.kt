@@ -68,6 +68,35 @@ enum class Gender(override val label: String) : DisplayLabel {
     OTHER("Other"),
 }
 
+/** Partner / self ethnicity (single-select demographic). */
+enum class Ethnicity(override val label: String) : DisplayLabel {
+    WHITE("White"),
+    BLACK("Black"),
+    LATINO("Latino / Hispanic"),
+    EAST_ASIAN("East Asian"),
+    SOUTH_ASIAN("South Asian"),
+    SOUTHEAST_ASIAN("Southeast Asian"),
+    MIDDLE_EASTERN("Middle Eastern"),
+    NATIVE_AMERICAN("Native American"),
+    PACIFIC_ISLANDER("Pacific Islander"),
+    MIXED("Mixed"),
+    OTHER("Other"),
+}
+
+/** Partner / self body type (single-select demographic). */
+enum class BodyType(override val label: String) : DisplayLabel {
+    SLIM("Slim"),
+    PETITE("Petite"),
+    ATHLETIC("Athletic / fit"),
+    AVERAGE("Average"),
+    CURVY("Curvy"),
+    MUSCULAR("Muscular"),
+    STOCKY("Stocky"),
+    PLUS_SIZE("Plus-size"),
+    TALL("Tall"),
+    OTHER("Other"),
+}
+
 /** How the user relates to a partner. */
 enum class RelationshipType(override val label: String) : DisplayLabel {
     SPOUSE("Spouse"),

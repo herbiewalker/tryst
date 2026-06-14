@@ -65,5 +65,34 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
     }
 }
 
+/**
+ * v6 → v7: partner **demographics** (birthDate / ethnicity / height / bodyType / location, additive
+ * nullable on `partners`) and a new single-row **`profile`** table for the user's own photo +
+ * demographics. All additive — existing rows keep their data; the `profile` table starts empty.
+ */
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE partners ADD COLUMN birthDate INTEGER")
+        db.execSQL("ALTER TABLE partners ADD COLUMN ethnicity TEXT")
+        db.execSQL("ALTER TABLE partners ADD COLUMN height TEXT")
+        db.execSQL("ALTER TABLE partners ADD COLUMN bodyType TEXT")
+        db.execSQL("ALTER TABLE partners ADD COLUMN location TEXT")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `profile` (" +
+                "`id` TEXT NOT NULL, `displayName` TEXT, `photoMediaId` TEXT, " +
+                "`sex` TEXT, `gender` TEXT, `birthDate` INTEGER, `ethnicity` TEXT, " +
+                "`height` TEXT, `bodyType` TEXT, `location` TEXT, `note` TEXT, " +
+                "`updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        )
+    }
+}
+
 /** All migrations, in order. */
-val ALL_MIGRATIONS = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+val ALL_MIGRATIONS = arrayOf(
+    MIGRATION_1_2,
+    MIGRATION_2_3,
+    MIGRATION_3_4,
+    MIGRATION_4_5,
+    MIGRATION_5_6,
+    MIGRATION_6_7,
+)

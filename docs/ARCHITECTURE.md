@@ -30,7 +30,7 @@ core/
   prefs/      ThemePreferences, InsightsPreferences, GeneralPreferences (auto-lock/haptics/week-start/last-seen-version)  (SharedPreferences, non-sensitive)
 data/
   db/         TrystDatabase, TrystDatabaseFactory, entities, DAOs, Converters, Migrations, SqlCipherLibrary
-  repository/ Encounter / Partner / Position / Act repositories (read DAOs from the unlocked session)
+  repository/ Encounter / Partner / Profile / Position / Act repositories (read DAOs from the unlocked session)
   media/      EncryptedMediaStore (encrypted blobs in app-internal storage)
   backup/     BackupManager (export/restore), Csv (importer)
   stats/      InsightsEngine + Insights model (pure Kotlin)
@@ -40,7 +40,8 @@ ui/
   lock/        SetupScreen, LockScreen, ChangePinScreen, LockViewModel, BiometricPromptHelper, PinPad
   history/     HistoryScreen (list + calendar), HistoryViewModel
   encounter/   EncounterEditScreen + ViewModel
-  partner/     PartnersScreen + ViewModel
+  partner/     PartnersScreen (+ "You" profile card) + ViewModel
+  profile/     ProfileScreen + ViewModel (the user's own photo + demographics; single self row)
   insights/    InsightsScreen, charts, StatTiles/InsightSections catalogs, TypeColors, ViewModel
   settings/    SettingsScreen (General/Security/Appearance/Insights/Categories/Backup/Danger/About) + ResetDataScreen (type-to-confirm wipe) + Appearance/General/Backup/CsvImport/CustomActs/CustomPositions VMs
   whatsnew/    ReleaseNotes (bundled notes), WhatsNewScreen + WhatsNewDialog (post-update popup)
@@ -66,8 +67,9 @@ Compose Navigation (adaptive: bottom bar on compact, nav rail on medium/expanded
 **Trysts** (history/calendar), **Insights**, **Partners**, **Settings**. Plus the encounter editor
 (`encounter/new`, `encounter/{id}`), the Insights customizer (`insights/customize`), the Achievements
 screen, the About screen, the **Change-PIN** flow (`change-pin`), the **reset-all** page
-(`settings/reset`), and the **What's-new** screen (`whats-new`) — the Settings sub-pages all reached
-from Settings. The whole graph is gated by the lock screen in `MainActivity` (which also provides
+(`settings/reset`), the **What's-new** screen (`whats-new`), and the **self-profile** editor
+(`profile`, reached from both Settings → Your profile and the "You" card on Partners) — the Settings
+sub-pages all reached from Settings. The whole graph is gated by the lock screen in `MainActivity` (which also provides
 `LocalHapticsEnabled` around setup/lock/unlocked). On entering the unlocked shell, `TrystApp` fires the
 one-time **post-update What's-new popup** (installed `versionCode` vs `GeneralPreferences.lastSeenVersionCode`).
 
@@ -75,7 +77,7 @@ one-time **post-update What's-new popup** (installed `versionCode` vs `GeneralPr
 - **JVM unit:** stats engine (`InsightsEngineTest`), Insights catalogs (`StatTilesTest`,
   `InsightSectionsTest`), CSV parser (`CsvParseTest`).
 - **Instrumented (emulator, real Keystore/SQLCipher):** vault, DB-encrypted-on-disk, media crypto,
-  session lifecycle, Room migrations (v1→v6), media attachment round-trip, backup round-trip, and
+  session lifecycle, Room migrations (v1→v7), media attachment round-trip, backup round-trip, and
   backup/restore regression edge cases (`BackupRestoreRegressionTest`: restore-over-existing,
   restore-after-delete-all-data, partner-avatar-survives — the paths that produced the Pass-12 data-loss
   bugs).
