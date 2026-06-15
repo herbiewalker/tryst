@@ -7,6 +7,7 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -568,6 +569,13 @@ private fun DayCell(
         shape = CircleShape,
         color = container,
         contentColor = content,
+        // Today gets an outline ring so it stands out from logged days (which also use primary);
+        // when today is the selected day, the filled selection pill takes over instead.
+        border = if (isToday && !selected) {
+            BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
+        } else {
+            null
+        },
         modifier = Modifier
             .fillMaxSize()
             .semantics(mergeDescendants = true) {
