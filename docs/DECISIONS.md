@@ -221,6 +221,19 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   set. Insights/Achievements `flatten()` the sets before tallying. Also added `IN_SHOWER` ("In the shower")
   for solo-in-the-shower, and renamed the kink label `Costume / dress-up` → `Lingerie / dress-up` (display
   label only; the persisted enum name `COSTUME_PLAY` is unchanged, so existing entries keep their data).
+- **D-38 (2026-06-14, post-v0.1.0) Calendar redesign — tonal chips + activity heatmap, fixed size, month/week.**
+  The month grid was bland (transparent cells, just a number). Reworked `DayCell` into a filled rounded
+  **tonal chip** (`surfaceContainerHigh`) that, on days with encounters, fills toward `primary` by the
+  day's **encounter count** — a heatmap (1/2/3+ → 42%/65%/85% blend; text/icon flip to `onPrimary` on the
+  2+ and selected fills). Intensities are deliberately strong because the typical day has exactly one
+  encounter, so even one must read clearly vs an empty day. Day number is bold `titleMedium`, the act icon
+  grew 18→30dp. The grid is now a **fixed height** (72dp rows) rather than filling the screen, so it stays
+  the same size whether or not a day is selected; the selected day's trysts occupy the flexible, scrolling
+  area below (the calendar screen itself doesn't scroll). Added a **Month/Week segmented toggle**
+  (`CalView`): week view is one tall row (116dp) over the day's trysts, with a "MMM d – d" range title and
+  ±1-week nav. **Swipe** left/right on the grid pages the period (D-/QOL-1). Today keeps its outline ring
+  (QOL-2), selected keeps the solid pill. No data/schema impact — purely presentational, driven by a new
+  per-day count derived from the existing log.
 - **D-25 (M6):** **No chart library** (resolves O-3). Insights charts are drawn with plain Compose
   layout (`VerticalBarChart`, `RankedBars`) instead of Vico/MPAndroidChart. Rationale: the app already
   hand-rolls its visuals (per-act vector icons, manual `BitmapFactory` downsampling, no third-party
