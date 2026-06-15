@@ -125,6 +125,10 @@
     <string name="cd_log_encounter">Log encounter</string>
     <string name="cd_prev_month">Previous month</string>
     <string name="cd_next_month">Next month</string>
+    <string name="cd_prev_week">Previous week</string>
+    <string name="cd_next_week">Next week</string>
+    <string name="cal_view_month">Month</string>
+    <string name="cal_view_week">Week</string>
     <string name="cd_day_today">today</string>
     <string name="cd_day_has_trysts">has trysts</string>
     <plurals name="cd_orgasm_count">
