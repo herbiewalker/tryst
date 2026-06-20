@@ -234,6 +234,15 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   ±1-week nav. **Swipe** left/right on the grid pages the period (D-/QOL-1). Today keeps its outline ring
   (QOL-2), selected keeps the solid pill. No data/schema impact — purely presentational, driven by a new
   per-day count derived from the existing log.
+- **D-39 (2026-06-15, F-Droid review) Reproducible builds DECLINED — F-Droid signs (permanent).** In the
+  first fdroiddata review the maintainer asked to add `Binaries` + `AllowedAPKSigningKeys` for reproducible
+  builds; we declined ("No, I don't want this." in the App-inclusion template). Tryst deliberately holds **no
+  signing key** (no committed keystore, no signing config — D-32, RELEASE.md "Why no signing config"); F-Droid
+  building **and signing** from source is the trust model, and F-Droid is the only channel, so there is no
+  separately self-signed APK to reconcile. For a solo maintainer, long-term custody of a release private key
+  is itself a liability against the threat model. **This is irreversible:** F-Droid now signs with its own key
+  and the app cannot be switched to developer-signed / reproducible later. Enabling it would have meant owning
+  a release keystore forever and publishing our own signed APK each release.
 - **D-25 (M6):** **No chart library** (resolves O-3). Insights charts are drawn with plain Compose
   layout (`VerticalBarChart`, `RankedBars`) instead of Vico/MPAndroidChart. Rationale: the app already
   hand-rolls its visuals (per-act vector icons, manual `BitmapFactory` downsampling, no third-party

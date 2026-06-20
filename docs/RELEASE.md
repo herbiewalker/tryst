@@ -67,9 +67,8 @@ SourceCode: https://github.com/herbiewalker/tryst
 IssueTracker: https://github.com/herbiewalker/tryst/issues
 
 AutoName: Tryst
-Description: |-
-    See fastlane/metadata/android/en-US/full_description.txt in the source repo;
-    F-Droid pulls the title, descriptions, and changelogs from there automatically.
+# No Description: — the source repo carries fastlane metadata, so F-Droid pulls the
+# title/description/changelogs from there. A "see fastlane" Description draws a review nit.
 
 RepoType: git
 Repo: https://github.com/herbiewalker/tryst.git
@@ -77,16 +76,17 @@ Repo: https://github.com/herbiewalker/tryst.git
 Builds:
   - versionName: 0.1.0
     versionCode: 1
-    commit: v0.1.0
+    commit: 7ba63acab7b044deccb615ef4215da96147d5a76   # FULL commit hash of the v0.1.0 tag — reviewers reject a tag/branch name here
     subdir: app
     gradle:
       - yes
 
-AutoUpdateMode: Version v%v
+AutoUpdateMode: Version    # NOT "Version v%v" — that fails schema validation; the leading "v" on tags is handled automatically
 UpdateCheckMode: Tags
 CurrentVersion: 0.1.0
 CurrentVersionCode: 1
 ```
+(The file **must** end with a trailing newline or `fdroid rewritemeta` fails.)
 
 Notes:
 - F-Droid reads the **fastlane metadata committed in this repo** (`fastlane/metadata/android/en-US/`) for
@@ -126,6 +126,25 @@ now unblocked; do it once, by hand:
    > https://github.com/herbiewalker/tryst, release tag `v0.1.0`. No anti-features.
 7. Respond to the F-Droid reviewers' feedback on the MR until it's merged; the first build then appears in
    the repo within a build cycle.
+
+### What the first submission actually required (2026-06-14/15, MR !40471)
+
+The plan above was mostly right; F-Droid's CI + reviewer (`@linsui`) surfaced these concrete fixes — they're
+now folded into the recipe above, but keep them in mind for any future recipe change:
+
+- **Full commit hash in `Builds.commit`**, never the `vX.Y.Z` tag (reviewer requirement).
+- **`AutoUpdateMode: Version`**, not `Version v%v` (the latter fails schema validation).
+- **Trailing newline** on `app.tryst.yml` or `fdroid rewritemeta` fails. Editing the file via the GitLab
+  API silently drops it — re-append every time.
+- **No `Description:`** — we have fastlane metadata, so F-Droid uses that.
+- **Removed the Gradle `org.gradle.toolchains.foojay-resolver-convention` plugin** from `settings.gradle.kts`
+  — F-Droid's build scanner flags it (network JDK-toolchain fetch). It was dead `gradle init` scaffolding;
+  this was a source fix, so **the `v0.1.0` tag was re-cut** onto the fix (`7ba63ac…`).
+- **Empty-pipeline gotcha:** the first fork push / MR pipeline showed "failed" with **zero jobs** (a benign
+  CI-rules artifact); one more commit on the open MR triggered the real multi-job pipeline.
+- **Reproducible builds were declined** (see DECISIONS **D-39**) — F-Droid signs; **permanent**, can't switch.
+- The whole MR (fork, branch, file commits, MR create/update, replies) was driven via the **GitLab REST API**
+  with a PAT (`api` scope); reading the public MR's status needs no auth.
 
 ## Why no signing config here
 
