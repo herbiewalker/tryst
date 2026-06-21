@@ -130,13 +130,16 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
             table = "positions",
             columns = listOf("positions"),
             byLabel = mapOf(
-                // Both spellings map to the same built-in so the promotion takes regardless of how the
-                // custom row is spelled (the display label may differ).
+                // Keys = the custom labels to promote,
+                // matched NOCASE/trim; the fuller display name lives on the enum. The originally-described
+                // names are kept as aliases so the promotion still takes if a live row was since renamed.
                 "Custom position 1" to "ANAL_TOY",
                 "Custom position 1b" to "ANAL_TOY",
+                "Custom position 2b" to "MODIFIED_MISSIONARY",
+                "Custom position 3b" to "ORAL_EDGE_OF_BED",
+                "Custom position 4b" to "MISSIONARY_STANDING_EDGE",
                 "Custom position 4" to "MISSIONARY_STANDING_EDGE",
-                "Custom position 2" to "MODIFIED_MISSIONARY",
-                "Custom position 3" to "ORAL_EDGE_OF_BED",
+                "Custom position 5b" to "REVERSE_COWGIRL_MODIFIED",
                 "Custom position 5" to "REVERSE_COWGIRL_MODIFIED",
             ),
         )
@@ -146,7 +149,8 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
             table = "acts",
             columns = listOf("practicesPerformed", "practicesReceived"),
             byLabel = mapOf(
-                "Custom act 1" to "EAT_OWN_CREAMPIE",
+                "Custom act 1b" to "EAT_OWN_CREAMPIE",
+                "Custom act 2b" to "LICK_PUSSY_AFTER",
                 "Custom act 2" to "LICK_PUSSY_AFTER",
             ),
         )

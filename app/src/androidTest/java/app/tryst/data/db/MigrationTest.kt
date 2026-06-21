@@ -91,10 +91,11 @@ class MigrationTest {
     @Test
     fun migrate7To8_rewritesMovedAndPromotedValues() {
         helper.createDatabase(dbName, 7).use { db ->
-            // Custom rows: one promoted (matches byLabel), one left alone (no match).
-            db.execSQL("INSERT INTO positions (id, label, isBuiltIn) VALUES ('posPromote', 'Custom position 2', 0)")
+            // Custom rows use labels that match the promotion map so this proves
+            // the actual mismatched names promote: one promoted, one left alone (no match).
+            db.execSQL("INSERT INTO positions (id, label, isBuiltIn) VALUES ('posPromote', 'Custom position 5b', 0)")
             db.execSQL("INSERT INTO positions (id, label, isBuiltIn) VALUES ('posKeep', 'Keepme Custom', 0)")
-            db.execSQL("INSERT INTO acts (id, label, isBuiltIn) VALUES ('actPromote', 'Custom act 2', 0)")
+            db.execSQL("INSERT INTO acts (id, label, isBuiltIn) VALUES ('actPromote', 'Custom act 2b', 0)")
 
             // e1 exercises every rewrite: deleted position, moved act (gave+received), promoted custom act+position.
             db.execSQL(
@@ -113,7 +114,7 @@ class MigrationTest {
                 "SELECT positions, practicesPerformed, practicesReceived, kinks FROM encounters WHERE id = 'e1'",
             ).use { c ->
                 assertTrue(c.moveToFirst())
-                assertEquals("LYING_ORAL,MODIFIED_MISSIONARY", c.getString(0)) // ORAL_69_SIDE→LYING_ORAL + custom→built-in
+                assertEquals("LYING_ORAL,REVERSE_COWGIRL_MODIFIED", c.getString(0)) // ORAL_69_SIDE→LYING_ORAL + custom→built-in
                 assertEquals("LICK_PUSSY_AFTER", c.getString(1)) // WATCHING_PORN stripped, custom act promoted
                 assertTrue("WATCHING_PORN should be stripped from received acts", c.isNull(2))
                 assertEquals("WATCHING_PORN", c.getString(3)) // moved into kinks
