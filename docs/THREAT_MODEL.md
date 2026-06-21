@@ -1,8 +1,8 @@
 # Tryst — Threat Model
 
 Status: **v1 (2026-06-13)** — aligned with the *implemented* security model (Keystore-only + distinct
-app PIN; see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §1, Option B). Covers schema v7 (partner
-demographics + the single-row self `profile`).
+app PIN; see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §1, Option B). Covers schema v8 (no new attack
+surface vs v7 — a data-only category migration; partner demographics + the single-row self `profile`).
 
 ## Assets to protect
 

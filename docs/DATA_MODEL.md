@@ -1,6 +1,6 @@
 # Tryst — Data Model
 
-Status: **Live — schema v7** (Room over SQLCipher). Matches the entities in
+Status: **Live — schema v8** (Room over SQLCipher). Matches the entities in
 `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change
 ships a non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 
@@ -16,8 +16,9 @@ Category values are stored as TEXT via Room `TypeConverters` (`data/db/Converter
   categories never crash older rows — they're dropped on read.
 - **String-id sets** (`positions`, `practicesPerformed`, `practicesReceived`): comma-joined IDs where
   each ID is a built-in enum `name` **or** `custom:<uuid>` for a user-defined entry.
-- **Maps**: `partnerOrgasms` = `partnerId=count` pairs; `ejaculationLocations` = `orgasmIndex=LOCATION`
-  pairs (one ejaculation location per self-orgasm).
+- **Maps**: `partnerOrgasms` = `partnerId=count` pairs; `ejaculationLocations` =
+  `orgasmIndex=LOC1|LOC2` pairs — **multi-select** locations per orgasm, joined on `|` (legacy
+  single-value rows parse as a one-element set; backward compatible).
 
 ## Encounter (table `encounters`)
 The central record.
@@ -34,7 +35,7 @@ The central record.
 | protectionUsed | Set\<Protection\> | multi |
 | orgasmCountSelf | Int? | times the user came |
 | partnerOrgasms | Map\<String,Int\>? | **per-partner** orgasm counts (partnerId → count) |
-| ejaculationLocations | Map\<Int,EjaculationLocation\>? | **per-orgasm** location (orgasm index → where) |
+| ejaculationLocations | Map\<Int,Set\<EjaculationLocation\>\>? | **per-orgasm** location(s) — multi-select per orgasm |
 | practicesPerformed / practicesReceived | Set\<String\>? | **Acts** gave/received (built-in `Practice` name or `custom:<uuid>`) |
 | positions | Set\<String\>? | built-in `Position` name or `custom:<uuid>` |
 | kinks | Set\<Kink\>? | Kink & BDSM |
@@ -119,6 +120,15 @@ storage — likely a small row in the encrypted DB.)
 
 ## Schema / migration rules
 - Versioned Room migrations; **never destructive**. Bump `TrystDatabase.version`, add a
-  `MIGRATION_x_y` (additive/nullable columns), extend `MigrationTest`.
+  `MIGRATION_x_y`, extend `MigrationTest`. Migrations are usually additive/nullable columns, but may
+  also be **data-only** value rewrites when category values move (see `MIGRATION_7_8`).
+- **v8 (`MIGRATION_7_8`, 0.2.0)** is data-only — no DDL. Because the DB stores enum `name`s (not
+  labels), pure label renames need no migration; this one rewrites stored *values* where category
+  members moved: deletes `Position.ORAL_69_SIDE` → remaps refs to `LYING_ORAL`; moves `WATCHING_PORN`
+  from `Practice` (acts) to `Kink`; and promotes 5 custom positions + 2 custom acts to built-ins
+  (matches the custom row by label, rewrites `custom:<uuid>` refs to the new enum `name`, deletes the
+  row; an unmatched label safely stays custom). Also additive enum values: `Setting.FRIENDS_FAMILY`,
+  new `Position`/`Practice` entries. ⚠️ Backup **restore inserts rows raw and does NOT replay
+  migrations** — re-export after upgrading so a future restore keeps the new values.
 - Export format (M5) is decoupled from the live schema and versioned independently
   (see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §4).

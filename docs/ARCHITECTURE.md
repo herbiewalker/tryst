@@ -77,7 +77,7 @@ one-time **post-update What's-new popup** (installed `versionCode` vs `GeneralPr
 - **JVM unit:** stats engine (`InsightsEngineTest`), Insights catalogs (`StatTilesTest`,
   `InsightSectionsTest`), CSV parser (`CsvParseTest`).
 - **Instrumented (emulator, real Keystore/SQLCipher):** vault, DB-encrypted-on-disk, media crypto,
-  session lifecycle, Room migrations (v1→v7), media attachment round-trip, backup round-trip, and
+  session lifecycle, Room migrations (v1→v8, incl. the v7→v8 data migration), media attachment round-trip, backup round-trip, and
   backup/restore regression edge cases (`BackupRestoreRegressionTest`: restore-over-existing,
   restore-after-delete-all-data, partner-avatar-survives — the paths that produced the Pass-12 data-loss
   bugs).

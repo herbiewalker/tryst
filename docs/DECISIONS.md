@@ -243,6 +243,30 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   is itself a liability against the threat model. **This is irreversible:** F-Droid now signs with its own key
   and the app cannot be switched to developer-signed / reproducible later. Enabling it would have meant owning
   a release keystore forever and publishing our own signed APK each release.
+- **D-40 (2026-06-21, 0.2.0 / schema v8) Category cleanup + first data-only migration; release-gap closed.**
+  Bundled a fix batch with the already-on-`main` post-tag features (D-37/D-38) into **0.2.0 / versionCode 2**
+  — the first release after 0.1.0, closing the gap where features sat on `main` undelivered (F-Droid pins the
+  tag). The fixes change **category membership**, which the enum-name storage model (D: `Converters` store
+  enum `name`s, not labels) makes safe: **pure label renames need no migration** ("Oral - Kneeling/Standing/
+  Laying down"; "Ball sucking / ball play"; `ANAL_TOY` displays "Anal - Toy"). Value moves need
+  **`MIGRATION_7_8`** — the first **data-only** migration (no DDL): delete `Position.ORAL_69_SIDE` → remap
+  refs to `LYING_ORAL`; move `WATCHING_PORN` from `Practice` (acts) → `Kink`; promote 5 custom positions + 2
+  custom acts to built-ins (match the `positions`/`acts` row by label NOCASE/trim → rewrite `custom:<uuid>`
+  refs to the new enum `name` → delete the row; **done in Kotlin not pure SQL** so a missing label can't
+  `REPLACE(col, NULL,…)` and wipe a column; an unmatched label safely stays custom). Plus additive enum
+  values incl. `Setting.FRIENDS_FAMILY` ("Friend / family's place"). **Haptics fix:** every
+  `performHapticFeedback` now passes `FLAG_IGNORE_VIEW_SETTING` — the bare call was silently swallowed by the
+  host View's haptic flag, so the in-app toggle did nothing (device-level "vibrate on touch" still wins).
+  **Gotcha that mattered:** promotion matches the *stored* custom label, and 3 of the user's 7 customs were
+  named differently than first described (`Reverse cowgirl - legs under`, `Missionary - standing edge`, `Lick
+  after sex`) — caught by **decrypting a real backup to read the live labels** before install, then matching
+  both the real and described spellings. ⚠️ Backup **restore inserts rows raw and does NOT replay
+  migrations** (`BackupManager`) — re-export after upgrading or old values return on a future restore.
+  **Bulk data edits (out-of-band):** for the user's own retroactive note-based tagging (e.g. add a kink to
+  every encounter whose note mentions X), the pattern is **decrypt backup → edit `data.json` (Gson,
+  `serializeNulls` for a faithful superset; deep-diff to prove only intended fields change) → repack →
+  restore in-app** — tooling in `IntimacyData/tools` (`Unpack/Repack/EditTrystBackup`). Not app code; a data
+  operation on the user's device.
 - **D-25 (M6):** **No chart library** (resolves O-3). Insights charts are drawn with plain Compose
   layout (`VerticalBarChart`, `RankedBars`) instead of Vico/MPAndroidChart. Rationale: the app already
   hand-rolls its visuals (per-act vector icons, manual `BitmapFactory` downsampling, no third-party
