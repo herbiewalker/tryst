@@ -130,13 +130,16 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
             table = "positions",
             columns = listOf("positions"),
             byLabel = mapOf(
-                // Both spellings map to the same built-in so the promotion takes regardless of how the
-                // user's live custom row is spelled (display label is the corrected "Anal - sex toy").
+                // Keys = the user's ACTUAL custom labels (verified against their decrypted backup),
+                // matched NOCASE/trim; the fuller display name lives on the enum. The originally-described
+                // names are kept as aliases so the promotion still takes if a live row was since renamed.
                 "Anal - sex toy" to "ANAL_TOY",
                 "Anal - sexy toy" to "ANAL_TOY",
+                "Modified missionary" to "MODIFIED_MISSIONARY",
+                "Oral - edge of bed" to "ORAL_EDGE_OF_BED",
+                "Missionary - standing edge" to "MISSIONARY_STANDING_EDGE",
                 "Missionary - Standing Edge of Bed" to "MISSIONARY_STANDING_EDGE",
-                "Modified Missionary" to "MODIFIED_MISSIONARY",
-                "Oral - Edge of Bed" to "ORAL_EDGE_OF_BED",
+                "Reverse cowgirl - legs under" to "REVERSE_COWGIRL_MODIFIED",
                 "Reverse Cowgirl - Modified" to "REVERSE_COWGIRL_MODIFIED",
             ),
         )
@@ -146,7 +149,8 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
             table = "acts",
             columns = listOf("practicesPerformed", "practicesReceived"),
             byLabel = mapOf(
-                "Eat own Creampie (EOC)" to "EAT_OWN_CREAMPIE",
+                "Eat own creampie (EOC)" to "EAT_OWN_CREAMPIE",
+                "Lick after sex" to "LICK_PUSSY_AFTER",
                 "Lick Pussy after Sex" to "LICK_PUSSY_AFTER",
             ),
         )
