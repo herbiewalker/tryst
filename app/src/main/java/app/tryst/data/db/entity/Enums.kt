@@ -394,7 +394,7 @@ enum class Position(override val label: String) : DisplayLabel {
     PRETZEL("Pretzel"),
     ANVIL("Anvil"),
     ANAL_MISSIONARY("Anal missionary"),
-    ANAL_TOY("Anal - sex toy"),
+    ANAL_TOY("Anal - Toy"),
     JOCKEY("Jockey"),
     LOTUS("Lotus"),
     BUTTERFLY("Butterfly"),
