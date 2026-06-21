@@ -1,0 +1,3 @@
+Redesigned calendar with tonal day chips, an activity heatmap, a month/week toggle and swipe to change month. Ejaculation location is now multi-select per orgasm (including "in the shower"). New "Friend / family's place" location, plus more built-in positions and acts. "Watching porn" moved from Acts to Kinks & BDSM and oral-position names are clearer — existing history is migrated automatically. Haptics now buzz when enabled in Settings.
+
+Tip: re-export your backup after updating so a future restore keeps the new naming.
