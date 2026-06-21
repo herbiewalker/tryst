@@ -246,24 +246,27 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
 - **D-40 (2026-06-21, 0.2.0 / schema v8) Category cleanup + first data-only migration; release-gap closed.**
   Bundled a fix batch with the already-on-`main` post-tag features (D-37/D-38) into **0.2.0 / versionCode 2**
   — the first release after 0.1.0, closing the gap where features sat on `main` undelivered (F-Droid pins the
-  tag). The fixes change **category membership**, which the enum-name storage model (D: `Converters` store
-  enum `name`s, not labels) makes safe: **pure label renames need no migration** ("Oral - Kneeling/Standing/
-  Laying down"; "Ball sucking / ball play"; `ANAL_TOY` displays "Anal - Toy"). Value moves need
-  **`MIGRATION_7_8`** — the first **data-only** migration (no DDL): delete `Position.ORAL_69_SIDE` → remap
-  refs to `LYING_ORAL`; move `WATCHING_PORN` from `Practice` (acts) → `Kink`; promote 5 custom positions + 2
-  custom acts to built-ins (match the `positions`/`acts` row by label NOCASE/trim → rewrite `custom:<uuid>`
-  refs to the new enum `name` → delete the row; **done in Kotlin not pure SQL** so a missing label can't
-  `REPLACE(col, NULL,…)` and wipe a column; an unmatched label safely stays custom). Plus additive enum
-  values incl. `Setting.FRIENDS_FAMILY` ("Friend / family's place"). **Haptics fix:** every
-  `performHapticFeedback` now passes `FLAG_IGNORE_VIEW_SETTING` — the bare call was silently swallowed by the
-  host View's haptic flag, so the in-app toggle did nothing (device-level "vibrate on touch" still wins).
-  **Gotcha that mattered:** promotion matches the *stored* custom label, and 3 of the user's 7 customs were
-  named differently than first described (`Reverse cowgirl - legs under`, `Missionary - standing edge`, `Lick
-  after sex`) — caught by **decrypting a real backup to read the live labels** before install, then matching
-  both the real and described spellings. ⚠️ Backup **restore inserts rows raw and does NOT replay
-  migrations** (`BackupManager`) — re-export after upgrading or old values return on a future restore.
-  **Bulk data edits (out-of-band):** for the user's own retroactive note-based tagging (e.g. add a kink to
-  every encounter whose note mentions X), the pattern is **decrypt backup → edit `data.json` (Gson,
+  tag). The fixes change **category membership**, which the enum-name storage model (`Converters` store enum
+  `name`s, not labels) makes safe: **pure label renames need no migration** ("Oral - Kneeling/Standing/Laying
+  down"; "Ball sucking / ball play"; `ANAL_TOY` displays "Anal - Toy"). Value moves need **`MIGRATION_7_8`** —
+  the first **data-only** migration (no DDL): delete `Position.ORAL_69_SIDE` → remap refs to `LYING_ORAL`;
+  move `WATCHING_PORN` from `Practice` (acts) → `Kink` (add to `kinks`, strip from both practice columns).
+  Plus additive enum values: new built-in `Position`/`Practice` options and `Setting.FRIENDS_FAMILY` ("Friend
+  / family's place") — additive, so any pre-existing custom entry with a similar name just stays custom.
+  **Haptics fix:** every `performHapticFeedback` now passes `FLAG_IGNORE_VIEW_SETTING` — the bare call was
+  silently swallowed by the host View's haptic flag, so the in-app toggle did nothing (device-level "vibrate
+  on touch" still wins). ⚠️ Backup **restore inserts rows raw and does NOT replay migrations**
+  (`BackupManager`) — re-export after upgrading or old values return on a future restore.
+  **Migration-safety verification:** because this rewrites stored values, the maintainer verified it against a
+  real **decrypted backup** before installing — confirming the live labels matched and the rewrite was a
+  faithful transform (deep-diff: only intended fields change). The same **decrypt → edit `data.json` (Gson,
+  `serializeNulls` for a faithful superset; deep-diff) → repack → restore** flow is the pattern for any
+  out-of-band bulk data fix on the user's own device — tooling lives outside the repo, not in app code.
+  *(An earlier draft of `MIGRATION_7_8` hard-coded the maintainer's own custom-entry labels to auto-promote
+  them to built-ins; that one-off ran once on the maintainer's device and was then removed from the code so
+  no personal labels ship in the public migration — the built-in options remain as generic app choices.)*
+  **Bulk data edits (out-of-band):** for retroactive note-based tagging (e.g. add a kink to every encounter
+  whose note mentions some keyword), the pattern is **decrypt backup → edit `data.json` (Gson,
   `serializeNulls` for a faithful superset; deep-diff to prove only intended fields change) → repack →
   restore in-app** — tooling in `IntimacyData/tools` (`Unpack/Repack/EditTrystBackup`). Not app code; a data
   operation on the user's device.
