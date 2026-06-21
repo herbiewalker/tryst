@@ -30,7 +30,12 @@ device or be trusted to anyone.
 
 ## Status
 
-🚧 **In development.** Kotlin + Jetpack Compose, `minSdk 31` / `targetSdk 36`. Builds and runs.
+✅ **Shipped — current release v0.2.0** (versionCode 2). Kotlin + Jetpack Compose, `minSdk 31` /
+`targetSdk 36`. **v0.1.0** was the first public release; **v0.2.0** adds a redesigned calendar
+(tonal heatmap + month/week + swipe), multi-select ejaculation locations, a category cleanup, and a
+haptics fix — full notes in [CHANGELOG.md](CHANGELOG.md). Distribution is **F-Droid** (builds and
+signs from source; the v0.1.0 submission is in review). Post-release plans live in
+[docs/ROADMAP_FUTURE.md](docs/ROADMAP_FUTURE.md).
 See [docs/FLOWCHARTS.md](docs/FLOWCHARTS.md) for how the core logic fits together.
 
 Progress against the [roadmap](docs/ROADMAP.md):
@@ -63,11 +68,15 @@ Progress against the [roadmap](docs/ROADMAP.md):
 - ✅ **M7** — **Achievements**: ~67 derived achievements (milestones, week streaks, variety, pleasure,
   occasions) with progress bars and unlock dates, on a dedicated screen (trophy icon in Insights) plus an
   Insights teaser card. Computed from the log — no extra storage.
-- 🚧 **M8** — release prep, in progress: ✅ i18n string extraction (~200 `strings.xml` entries); ✅ CI
-  **quality gates** (build-failing Detekt + ktlint); ✅ security self-review (+ a LOW backup-importer
-  SQL-injection fix); plus a **solo-aware editor** and a **Settings → General** section (app info, Change
-  PIN, configurable auto-lock timeout, haptics, calendar week start). Remaining: optional `UiState`
-  refactor, onboarding copy, and the license & **distribution** choice.
+- ✅ **M8** — release prep: i18n string extraction (~200 `strings.xml` entries); CI **quality gates**
+  (build-failing Detekt + ktlint); security self-review (+ a LOW backup-importer SQL-injection fix); a
+  **solo-aware editor** and a **Settings → General** section (app info, Change PIN, configurable auto-lock
+  timeout, haptics, calendar week start); the `UiState` refactor, onboarding copy, **GPLv3** license, and
+  **F-Droid** distribution — all done, leading into the v0.1.0 release.
+- ✅ **v0.2.0** *(post-1.0)* — redesigned calendar (tonal heatmap, month/week toggle, swipe), today-ring,
+  multi-select ejaculation locations (+ "in the shower"), and a **category cleanup** via the first data-only
+  migration (schema v8): clearer oral-position names, "Watching porn" moved to Kinks, several custom
+  positions/acts promoted to built-ins, a "Friend / family's place" location, and a haptics fix.
 
 ### Pre-release audit passes
 
@@ -109,7 +118,9 @@ New here? See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for scope and
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack & module layout |
 | [FLOWCHARTS.md](docs/FLOWCHARTS.md) | Visual maps of the core logic flows |
 | [ROADMAP.md](docs/ROADMAP.md) | Milestones |
+| [ROADMAP_FUTURE.md](docs/ROADMAP_FUTURE.md) | Post-1.0 roadmap (shipped + planned) |
 | [DECISIONS.md](docs/DECISIONS.md) | Decision log & open questions |
+| [CHANGELOG.md](CHANGELOG.md) | Per-release notes |
 | [SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) | Build & run on Windows |
 
 ## License
