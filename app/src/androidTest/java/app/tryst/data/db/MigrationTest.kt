@@ -81,4 +81,64 @@ class MigrationTest {
             }
         }
     }
+
+    /**
+     * v7 → v8 is a **data** migration (no DDL): renamed/moved/promoted category values must rewrite
+     * the stored string ids without losing any encounter data. Covers FIX-3 (ORAL_69_SIDE→LYING_ORAL),
+     * FIX-4 (WATCHING_PORN act→kink), and FIX-5/6 (custom→built-in promotion + non-promoted custom
+     * survival).
+     */
+    @Test
+    fun migrate7To8_rewritesMovedAndPromotedValues() {
+        helper.createDatabase(dbName, 7).use { db ->
+            // Custom rows: one promoted (matches byLabel), one left alone (no match).
+            db.execSQL("INSERT INTO positions (id, label, isBuiltIn) VALUES ('posPromote', 'Modified Missionary', 0)")
+            db.execSQL("INSERT INTO positions (id, label, isBuiltIn) VALUES ('posKeep', 'Keepme Custom', 0)")
+            db.execSQL("INSERT INTO acts (id, label, isBuiltIn) VALUES ('actPromote', 'Lick Pussy after Sex', 0)")
+
+            // e1 exercises every rewrite: deleted position, moved act (gave+received), promoted custom act+position.
+            db.execSQL(
+                "INSERT INTO encounters (id, startAt, protectionUsed, positions, practicesPerformed, practicesReceived, createdAt, updatedAt) " +
+                    "VALUES ('e1', 1000, '', 'ORAL_69_SIDE,custom:posPromote', 'WATCHING_PORN,custom:actPromote', 'WATCHING_PORN', 1, 1)",
+            )
+            // e2 is a control: built-in values + a non-promoted custom position must pass through untouched.
+            db.execSQL(
+                "INSERT INTO encounters (id, startAt, protectionUsed, positions, practicesPerformed, kinks, createdAt, updatedAt) " +
+                    "VALUES ('e2', 2000, '', 'MISSIONARY,custom:posKeep', 'ORAL', 'SPANKING', 1, 1)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(dbName, 8, true, MIGRATION_7_8).use { db ->
+            db.query(
+                "SELECT positions, practicesPerformed, practicesReceived, kinks FROM encounters WHERE id = 'e1'",
+            ).use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("LYING_ORAL,MODIFIED_MISSIONARY", c.getString(0)) // ORAL_69_SIDE→LYING_ORAL + custom→built-in
+                assertEquals("LICK_PUSSY_AFTER", c.getString(1)) // WATCHING_PORN stripped, custom act promoted
+                assertTrue("WATCHING_PORN should be stripped from received acts", c.isNull(2))
+                assertEquals("WATCHING_PORN", c.getString(3)) // moved into kinks
+            }
+            db.query(
+                "SELECT positions, practicesPerformed, kinks FROM encounters WHERE id = 'e2'",
+            ).use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("MISSIONARY,custom:posKeep", c.getString(0)) // non-promoted custom survives
+                assertEquals("ORAL", c.getString(1))
+                assertEquals("SPANKING", c.getString(2))
+            }
+            // The promoted custom rows are gone; the non-promoted one remains.
+            db.query("SELECT COUNT(*) FROM positions WHERE id = 'posPromote'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(0, c.getInt(0))
+            }
+            db.query("SELECT COUNT(*) FROM acts WHERE id = 'actPromote'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(0, c.getInt(0))
+            }
+            db.query("SELECT COUNT(*) FROM positions WHERE id = 'posKeep'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(1, c.getInt(0))
+            }
+        }
+    }
 }

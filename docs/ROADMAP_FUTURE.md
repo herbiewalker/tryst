@@ -40,6 +40,37 @@ v0.3.0 below is deliberately the filter layer, before the features that consume 
 > what ships to users. A whole theme ships as one minor release. Reserve `v0.2.1`/`.2` etc. for actual
 > post-release **fixes**, not planned features.
 
+### v0.2.0 — label cleanup, category fixes & haptics ✅ DONE (2026-06-21, bundled with the 4 post-tag features)
+
+**SHIPPED in 0.2.0 / versionCode 2** (schema **v8**, `MIGRATION_7_8` + `MigrationTest.migrate7To8…`
+verified on the emulator; assembleDebug/testDebugUnitTest/ktlint/detekt all green). FIX-1..8 below
+landed as written; the 4 already-on-`main` features (calendar redesign, today ring, multi-select
+ejaculation + shower, lingerie) were documented into CHANGELOG/ReleaseNotes/fastlane `2.txt`. *(Originally
+captured 2026-06-20 as a "v0.1.1" batch — promoted to 0.2.0 because `main` already carried features past
+the 0.1.0 tag.)* All items are
+**history-preserving**: the DB stores enum **names** (not labels — see `Converters.kt`) and custom items
+by `custom:<uuid>`, so wording edits are free, and the moves/promotions are handled by a single
+**`MIGRATION_7_8`** (schema **v7→v8**) plus a `7→8` migration test. There is **no built-in seeding** into
+the `acts`/`positions` tables (built-ins live only in the enums), so renames/promotions can't collide on
+the unique-label index. **Restore inserts raw rows and does *not* replay migrations** (`BackupManager`),
+so after upgrading on-device, **re-export to refresh the canonical TRYSTBK1 backup** or the old strings
+return on a future restore.
+
+| ID | Item | Mechanism / notes |
+|----|------|-------------------|
+| **FIX-1** | **Oral position wording** — Kneeling oral → **"Oral - Kneeling"**; Lying-back oral → **"Oral - Laying down"**; Standing oral → **"Oral - Standing"** | Label-string edit in `Enums.kt` `Position` only. Zero data change. |
+| **FIX-2** | **"Ball sucking / teabagging" → "Ball sucking / ball play"** | Label-string edit in `Enums.kt` `Practice` only. Zero data change. |
+| **FIX-3** | **Delete `ORAL_69_SIDE`** ("Oral, side-by-side"); remap existing encounters → `LYING_ORAL` | `MIGRATION_7_8`: `REPLACE(positions,'ORAL_69_SIDE','LYING_ORAL')` on `encounters` (set semantics dedupe on read). Remove the enum constant. Only other ref is the Python dataset generator. |
+| **FIX-4** | **Move `WATCHING_PORN` from `Practice` (acts) → `Kink`** | `MIGRATION_7_8`: add `WATCHING_PORN` to `encounters.kinks` where present in `practicesPerformed`/`practicesReceived`, then strip it from both practice columns (comma-list removal). Add `Kink.WATCHING_PORN`, remove `Practice.WATCHING_PORN`, remove its `PracticeVisuals` ordering/icon entry. |
+| **FIX-5** | **Promote 5 custom positions → built-in** `Position`: Anal – sex toy; Missionary – standing edge of bed; Modified missionary; Oral – edge of bed; Reverse cowgirl – modified | `MIGRATION_7_8`: for each, find the `positions` table custom row by label (**NOCASE + trimmed**), rewrite `custom:<uuid>` → new enum name in `encounters.positions`, delete the custom row. **No match = item safely stays custom; no stats lost.** Add the enum constants. *(Confirm exact labels against the live custom entries.)* |
+| **FIX-6** | **Promote 2 custom acts → built-in** `Practice`: Eat own creampie (EOC); Lick pussy after sex | Same mechanism as FIX-5, on the `acts` table and `practicesPerformed`/`practicesReceived`. |
+| **FIX-7** | **New location** `Setting` **"Friend / family's place"** (for sex at family/friends' homes) | Additive enum constant near HOME/HOTEL/AIRBNB. Decided 2026-06-20 (chosen over "Guest house"). No migration. |
+| **FIX-8** | **Haptics not firing when enabled** | `Haptics.kt`: call `view.performHapticFeedback(c, HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING)`. Wiring is correct (pref → `LocalHapticsEnabled` → call); the View's haptic flag silently suppresses the bare call on most devices. **Caveat:** if the device's system "vibrate on touch" is off, the OS overrides regardless — not app-fixable. Verify on device. |
+
+**Also part of this patch:** bump DB version 7→8 + add to `ALL_MIGRATIONS`; add the `7→8` `MigrationTest`;
+update `tools/dataset/generate_dataset.py` (drop `ORAL_69_SIDE`, move `WATCHING_PORN`); and update
+`CHANGELOG.md` + in-app "What's new" (`ReleaseNotes.kt`) + F-Droid changelog when the release is cut.
+
 ### v0.2.0 — QOL & polish *(small, low-risk, high-felt-value; no schema change)*
 | ID | Item | Current state | Proposed |
 |----|------|---------------|----------|
@@ -48,6 +79,8 @@ v0.3.0 below is deliberately the filter layer, before the features that consume 
 | **QOL-3** | **Partner editor → its own page** | Partner add/edit is an `AlertDialog` popout; the **self-profile is already a full-screen page** (`ProfileScreen`). | Convert the partner editor to a full-screen route to match. Reuse `DemographicFields`/`OptionalChips`; carry over the existing discard-changes guard (D-33). Net effect: "you" and "a partner" edit identically. |
 | **QOL-4** | **Updated icon set** | Launcher icon + per-act vector icons (`ic_act_*.xml`). | New launcher icon (adaptive + **themed/monochrome** for Material You), refreshed act icons. Largely a design/drawable swap — act icons are already a drawable-swap-only seam (`PracticeVisuals`). Design brief: [design/ICON_PROJECT_PROMPT.md](../design/ICON_PROJECT_PROMPT.md). Can land in any release. |
 | **QOL-5** | **App settings in the backup** (survive reinstall / new phone) | The encrypted backup restores DB + media but **deliberately excludes** the three settings stores — `tryst_appearance` (theme), `tryst_insights` (Insights customization), `tryst_general` (haptics/auto-lock/week-start) — the prefs classes' own comments say "excluded from backup/transfer". Note: a same-device **"Delete all data" does *not* clear these prefs** (`SessionManager.deleteAllData` wipes DB/keys/media only), so settings survive an in-app reset; they're lost on **reinstall / new phone / OS clear** (`allowBackup=false` → no cloud backup). | Add a non-sensitive `settings.json` (the three prefs as key→value) to the encrypted backup container so **theme + Insights layout + general prefs restore on a new device / reinstall**. The Insights customization (reorder/hide cards, per-card chart styles) is the highest-value thing to preserve — it's real user effort. Restore reapplies **known keys only** (skip-unknown, forward-compatible). Bump the export-format version (additive/optional section; older apps ignore it). **Never** include the PIN / vault / biometric config. Optional: an "include settings" toggle on export, and a separate *"Reset preferences to default"* action on the reset page (since data-reset currently leaves them). |
+| **BKP-1** | **Automatic local backups** *(added 2026-06-20)* | Today the only backup path is a **manual** encrypted export (`BackupManager.export`). | Scheduled on-device encrypted backups, **no network** (local files only — preserves the no-INTERNET invariant). Open design Qs: **unattended keying** — auto-backup can't prompt for the backup password each run, so either derive/store a dedicated key or reuse the vault DEK (security trade-off to settle); **retention/rotation** (keep last N, prune old); **storage location** — app-internal (lost on uninstall) vs a user-picked SAF folder (survives uninstall, but a folder handle is a small external surface); **trigger/cadence** (on app close / daily / after N new encounters). Pairs naturally with **QOL-5** (settings-in-backup). Must keep every hard constraint. |
+| **ENC-1** | **Most-used options auto-surface in the editor** *(added 2026-06-20)* | The inline "common" set per category is a **hardcoded curated list** (`ActOptions`/`PositionOptions` `COMMON_IDS`); everything else is hidden behind **"More"**, so frequent picks need an extra tap every time. | Surface the user's **most-frequently-picked** options inline so frequent choices (e.g. *Vasectomy* in Protection) appear without opening "More". **Read-side only** — frequency derived from the existing log; **no schema change**. Applies per category (acts, positions, protection, kinks, places, toys, occasions). Open Qs: **replace vs augment** the curated common set; **count cap** (how many inline); **frequency vs recency** weighting; and **ordering stability** so the inline row doesn't reshuffle distractingly between sessions (e.g. only re-rank on a threshold, or keep curated anchors + appended most-used). |
 
 ### v0.3.0 — Search & the filter foundation *(the enabling layer)*
 | ID | Item | Proposed |
@@ -86,10 +119,12 @@ v0.3.0 below is deliberately the filter layer, before the features that consume 
 - INS-2 shares the date primitive from **FILT-1** (v0.3.0) — same reason the filter layer is built
   first. It could even land in v0.3.0 if you want the scope before the full Explorer.
 
-### v0.5.0 — Photo gallery *(reuses decrypt-in-memory + the filter layer)*
+### v0.5.0 — Photo & video gallery *(reuses decrypt-in-memory + the filter layer)*
 | ID | Item | Proposed |
 |----|------|----------|
 | **GAL-1** | **Gallery by person / date** | A browsing view aggregating all encrypted photos (encounter photos, partner avatars, profile), grouped/filtered **by partner or by date** via the filter layer. Reuses `MediaImages` (decrypt in-memory only); `FLAG_SECURE` already protects it. Watch list-scroll performance with many photos (thumbnail sampling/caching). No schema change — photos already link to encounters/partners. |
+| **MED-1** | **Video attachments** *(added 2026-06-20)* | Let an encounter attach **video** alongside photos. The storage model already fits: `MediaEntity` carries a `mimeType` (the table is media-generic, not photo-specific), and `MediaCrypto` is Tink `AesGcmHkdfStreaming` — which **supports a *seekable* decrypting channel**, so video can be **decrypted-and-seeked on the fly** rather than decrypted fully into memory (photos can decrypt in-memory; videos can't). **Pieces:** (1) **capture/import** — extend `ImagePicker` to accept video MIME types, and add a video-record mode to the in-app camera (same FileProvider-temp → encrypt → delete pattern; temps already land in `cacheDir/captures`, already swept on unlock + `deleteAllData`); (2) **playback** — **Media3/ExoPlayer** with a **custom `DataSource`** backed by Tink's seekable channel over `EncryptedMediaStore` (no plaintext ever hits disk; `FLAG_SECURE` already blanks the surface + app-switcher); (3) **thumbnails** — extract a frame via `MediaMetadataRetriever` over the decrypting stream for the gallery grid + a play-badge overlay. **No schema change.** **Watch-outs:** Media3 ExoPlayer is a **new dependency** — must be **FOSS (Apache-2.0) and used local-only** (no DRM/network modules; the `checkNoNetwork*` guard + CI still apply); backup container **size balloons** (the ZIP holds decrypted bytes re-encrypted — consider a per-file size cap and an export size warning); larger temp files raise the orphaned-plaintext stakes (the sweep already covers it, re-verify). |
+| **GAL-2** | **Gallery includes video** *(added 2026-06-20)* | Once **MED-1** lands, the gallery (GAL-1) surfaces videos beside photos: frame thumbnails with a play badge, tap → inline encrypted playback. Pure UI on top of MED-1 + the filter layer; no schema change. |
 
 ### v0.6.0 — Granular data management *(privacy feature; reuses the filter layer)*
 | ID | Item | Current state | Proposed |
@@ -113,6 +148,12 @@ v0.3.0 below is deliberately the filter layer, before the features that consume 
   bump + additive migration + migration test).
 - **Privacy invariants:** all items stay local, no-network, encrypted, `FLAG_SECURE` — no new
   permissions, no new external surface.
+- **New dependency (MED-1 only):** video playback needs **Media3/ExoPlayer** — the first runtime
+  media/playback dep. Vet it like Pass 10: FOSS (Apache-2.0), pull **only** the core + UI playback
+  modules (no DRM, no cast, no network/HLS-DASH-Smooth-Streaming extensions), confirm the
+  `checkNoNetwork*` guard + CI still pass with it on the classpath, and add it to
+  `THIRD_PARTY_NOTICES.md` + the in-app About list. Everything else on this roadmap stays
+  dependency-free.
 - **Testability:** keep the filter/query logic pure-Kotlin (like `InsightsEngine`) so it's JVM-tested
   without Robolectric.
 

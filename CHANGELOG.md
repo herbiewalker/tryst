@@ -13,6 +13,32 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-06-21 (versionCode 2)
+
+### Added
+- Redesigned **Trysts calendar**: tonal day chips with an activity heatmap, a month/week toggle, and
+  swipe to change month/week.
+- A subtle outline ring marks **today** on the calendar.
+- **Ejaculation location** is now multi-select per orgasm, with an "in the shower" option.
+- New **location**: "Friend / family's place" (for time at someone else's home).
+- New built-in **positions**: Modified Missionary, Missionary - Standing Edge of Bed, Reverse Cowgirl -
+  Modified, Anal - sex toy, Oral - Edge of Bed.
+- New built-in **acts**: Eat own Creampie (EOC), Lick Pussy after Sex.
+
+### Changed
+- "Watching porn" moved from **Acts** to **Kinks & BDSM** (existing entries are migrated automatically).
+- Clearer oral-position names: "Oral - Kneeling", "Oral - Standing", "Oral - Laying down".
+- "Ball sucking / teabagging" is now "Ball sucking / ball play".
+- A "lingerie" label tidy-up in the editor.
+
+### Fixed
+- **Haptics** now actually buzz when enabled in Settings (the feedback was being silently suppressed on
+  many devices). If your phone's system "vibrate on touch" is off, that still takes precedence.
+
+### Notes
+- Your history is preserved across all of the above. After updating, **re-export your backup** so a
+  future restore keeps the new naming (restores don't re-run migrations).
+
 ## [0.1.0] — 2026-06-13 (versionCode 1)
 
 First public release.
