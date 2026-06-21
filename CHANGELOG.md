@@ -21,9 +21,7 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 - A subtle outline ring marks **today** on the calendar.
 - **Ejaculation location** is now multi-select per orgasm, with an "in the shower" option.
 - New **location**: "Friend / family's place" (for time at someone else's home).
-- New built-in **positions**: Modified Missionary, Missionary - Standing Edge of Bed, Reverse Cowgirl -
-  Modified, Anal - Toy, Oral - Edge of Bed.
-- New built-in **acts**: Eat own Creampie (EOC), Lick Pussy after Sex.
+- Several new built-in **positions** and **acts** to choose from.
 
 ### Changed
 - "Watching porn" moved from **Acts** to **Kinks & BDSM** (existing entries are migrated automatically).
