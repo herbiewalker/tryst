@@ -79,6 +79,7 @@ import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.db.entity.Setting
 import app.tryst.data.db.entity.ToyType
+import app.tryst.data.stats.mostUsedCommon
 import app.tryst.ui.common.ActOptions
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
@@ -115,6 +116,8 @@ fun EncounterEditScreen(
     val partners by viewModel.availablePartners.collectAsStateWithLifecycle()
     val customPositions by viewModel.customPositions.collectAsStateWithLifecycle()
     val customActs by viewModel.customActs.collectAsStateWithLifecycle()
+    // Per-category pick frequency, used to surface the user's most-used options inline (ENC-1).
+    val usage by viewModel.optionUsage.collectAsStateWithLifecycle()
     // Solo = no partner selected (matches the history "Solo" badge). Partner-only fields are hidden so
     // the editor reads cleanly as a solo entry; the per-partner orgasm counters already auto-hide.
     val solo = ui.solo
@@ -221,7 +224,7 @@ fun EncounterEditScreen(
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_protection),
                     all = Protection.entries,
-                    common = CommonOptions.PROTECTION,
+                    common = mostUsedCommon(CommonOptions.PROTECTION, Protection.entries) { usage.protection[it] ?: 0 },
                     selected = ui.protection,
                     labelOf = { it.label },
                     onToggle = { viewModel.toggleProtection(it) },
@@ -230,7 +233,7 @@ fun EncounterEditScreen(
                 SingleSelectField(
                     label = stringResource(R.string.encounter_field_mood),
                     all = Mood.entries,
-                    common = CommonOptions.MOOD,
+                    common = mostUsedCommon(CommonOptions.MOOD, Mood.entries) { usage.moods[it] ?: 0 },
                     selected = ui.mood,
                     labelOf = { it.label },
                     onSelect = { viewModel.setMood(it) },
@@ -249,7 +252,9 @@ fun EncounterEditScreen(
                             stringResource(R.string.encounter_ejaculation)
                         },
                         all = EjaculationLocation.entries,
-                        common = CommonOptions.EJACULATION,
+                        common = mostUsedCommon(CommonOptions.EJACULATION, EjaculationLocation.entries) {
+                            usage.ejaculation[it] ?: 0
+                        },
                         selected = ui.ejaculations[i] ?: emptySet(),
                         labelOf = { it.label },
                         onToggle = { viewModel.toggleEjaculation(i, it) },
@@ -270,20 +275,22 @@ fun EncounterEditScreen(
                     }
 
                 val positionOptions = PositionOptions.builtIns + PositionOptions.custom(customPositions)
+                val positionCommon = mostUsedCommon(PositionOptions.common, positionOptions) { usage.positions[it.id] ?: 0 }
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_positions),
                     all = positionOptions,
-                    common = PositionOptions.common,
+                    common = positionCommon,
                     selected = positionOptions.filter { it.id in ui.selectedPositionIds }.toSet(),
                     labelOf = { it.label },
                     onToggle = { viewModel.togglePosition(it.id) },
                 )
 
                 val actOptions = ActOptions.builtIns + ActOptions.custom(customActs)
+                val actCommon = mostUsedCommon(ActOptions.common, actOptions) { usage.acts[it.id] ?: 0 }
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_acts_gave),
                     all = actOptions,
-                    common = ActOptions.common,
+                    common = actCommon,
                     selected = actOptions.filter { it.id in ui.practicesPerformed }.toSet(),
                     labelOf = { it.label },
                     onToggle = { viewModel.togglePerformed(it.id) },
@@ -293,7 +300,7 @@ fun EncounterEditScreen(
                     MultiSelectField(
                         label = stringResource(R.string.encounter_field_acts_received),
                         all = actOptions,
-                        common = ActOptions.common,
+                        common = actCommon,
                         selected = actOptions.filter { it.id in ui.practicesReceived }.toSet(),
                         labelOf = { it.label },
                         onToggle = { viewModel.toggleReceived(it.id) },
@@ -303,7 +310,7 @@ fun EncounterEditScreen(
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_kink),
                     all = Kink.entries,
-                    common = CommonOptions.KINK,
+                    common = mostUsedCommon(CommonOptions.KINK, Kink.entries) { usage.kinks[it] ?: 0 },
                     selected = ui.kinks,
                     labelOf = { it.label },
                     onToggle = { viewModel.toggleKink(it) },
@@ -312,7 +319,7 @@ fun EncounterEditScreen(
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_setting),
                     all = Setting.entries,
-                    common = CommonOptions.SETTING,
+                    common = mostUsedCommon(CommonOptions.SETTING, Setting.entries) { usage.settings[it] ?: 0 },
                     selected = ui.contexts,
                     labelOf = { it.label },
                     onToggle = { viewModel.toggleContext(it) },
@@ -321,7 +328,7 @@ fun EncounterEditScreen(
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_occasion),
                     all = Occasion.entries,
-                    common = CommonOptions.OCCASION,
+                    common = mostUsedCommon(CommonOptions.OCCASION, Occasion.entries) { usage.occasions[it] ?: 0 },
                     selected = ui.occasions,
                     labelOf = { it.label },
                     onToggle = { viewModel.toggleOccasion(it) },
@@ -330,7 +337,7 @@ fun EncounterEditScreen(
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_toys),
                     all = ToyType.entries,
-                    common = CommonOptions.TOY,
+                    common = mostUsedCommon(CommonOptions.TOY, ToyType.entries) { usage.toys[it] ?: 0 },
                     selected = ui.toys,
                     labelOf = { it.label },
                     onToggle = { viewModel.toggleToy(it) },

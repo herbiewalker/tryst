@@ -16,6 +16,10 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 ### Added
 - **Setting: open Trysts in calendar view by default** (Settings → General). The per-session
   list/calendar toggle still works as before; this just sets which one you land on.
+- **Your most-used options surface inline** in the encounter editor. Each category (acts, positions,
+  protection, places, kinks, toys, occasions, mood, ejaculation) now shows the choices you pick most
+  often without opening "More…" — learned from your own history, no setup. Everything else stays one
+  tap away under "More…".
 
 ## [0.2.0] — 2026-06-21 (versionCode 2)
 
