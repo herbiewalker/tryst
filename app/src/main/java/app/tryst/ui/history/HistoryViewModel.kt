@@ -30,5 +30,8 @@ class HistoryViewModel @Inject constructor(
 
     val weekStart: StateFlow<WeekStart> = generalPreferences.weekStart
 
+    /** Whether the Trysts screen opens in calendar view by default (Settings → General). */
+    val defaultToCalendar: StateFlow<Boolean> = generalPreferences.defaultToCalendar
+
     suspend fun decode(media: MediaEntity, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { runCatching { repository.openMedia(media) }.getOrNull() }
 }

@@ -15,12 +15,15 @@ class GeneralSettingsViewModel @Inject constructor(
     val autoLockTimeoutMs: StateFlow<Long> = prefs.autoLockTimeoutMs
     val hapticsEnabled: StateFlow<Boolean> = prefs.hapticsEnabled
     val weekStart: StateFlow<WeekStart> = prefs.weekStart
+    val defaultToCalendar: StateFlow<Boolean> = prefs.defaultToCalendar
 
     fun setAutoLockTimeoutMs(ms: Long) = prefs.setAutoLockTimeoutMs(ms)
 
     fun setHapticsEnabled(enabled: Boolean) = prefs.setHapticsEnabled(enabled)
 
     fun setWeekStart(start: WeekStart) = prefs.setWeekStart(start)
+
+    fun setDefaultToCalendar(enabled: Boolean) = prefs.setDefaultToCalendar(enabled)
 
     /** versionCode the user last saw release notes for; 0 = never (fresh install / pre-feature upgrade). */
     fun lastSeenVersionCode(): Long = prefs.lastSeenVersionCode()

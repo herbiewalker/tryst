@@ -90,6 +90,7 @@ fun SettingsScreen(
     val generalViewModel: GeneralSettingsViewModel = hiltViewModel()
     val hapticsEnabled by generalViewModel.hapticsEnabled.collectAsStateWithLifecycle()
     val weekStart by generalViewModel.weekStart.collectAsStateWithLifecycle()
+    val defaultToCalendar by generalViewModel.defaultToCalendar.collectAsStateWithLifecycle()
     val autoLockMs by generalViewModel.autoLockTimeoutMs.collectAsStateWithLifecycle()
     val backupViewModel: BackupViewModel = hiltViewModel()
     var showExportPw by remember { mutableStateOf(false) }
@@ -190,6 +191,20 @@ fun SettingsScreen(
             ) {
                 Switch(checked = hapticsEnabled, onCheckedChange = null)
                 Text(stringResource(R.string.settings_haptics), style = MaterialTheme.typography.bodyMedium)
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .toggleable(
+                        value = defaultToCalendar,
+                        role = Role.Switch,
+                        onValueChange = { generalViewModel.setDefaultToCalendar(it) },
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Switch(checked = defaultToCalendar, onCheckedChange = null)
+                Text(stringResource(R.string.settings_default_calendar), style = MaterialTheme.typography.bodyMedium)
             }
 
             Text(stringResource(R.string.settings_week_start), style = MaterialTheme.typography.labelLarge)
