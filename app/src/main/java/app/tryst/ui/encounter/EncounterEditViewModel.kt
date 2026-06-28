@@ -26,6 +26,7 @@ import app.tryst.data.repository.ActRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.data.repository.PositionRepository
+import app.tryst.data.stats.OptionUsage
 import app.tryst.ui.common.MediaImages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -36,6 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -109,6 +111,17 @@ class EncounterEditViewModel @Inject constructor(
         acts.observeCustom()
             .catch { emit(emptyList()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /**
+     * How often each option has been picked across the log, so the editor can surface the user's
+     * most-used choices inline (ENC-1). Derived off the main thread; falls back to empty (the curated
+     * sets) if the DB is mid-teardown on lock.
+     */
+    val optionUsage: StateFlow<OptionUsage> =
+        encounters.observeAll()
+            .map { list -> withContext(Dispatchers.Default) { OptionUsage.from(list.map { it.encounter }) } }
+            .catch { emit(OptionUsage.EMPTY) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), OptionUsage.EMPTY)
 
     var uiState by mutableStateOf(EncounterEditUiState())
         private set
