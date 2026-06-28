@@ -100,8 +100,11 @@ fun HistoryScreen(
 ) {
     val encounters by viewModel.encounters.collectAsStateWithLifecycle()
     val weekStart by viewModel.weekStart.collectAsStateWithLifecycle()
+    val defaultToCalendar by viewModel.defaultToCalendar.collectAsStateWithLifecycle()
     val haptics = rememberHaptics()
-    var calendarMode by remember { mutableStateOf(false) }
+    // Initial view follows the user's "default to calendar" setting; keyed on it so changing the
+    // setting (then returning here) re-applies the default. The in-session toggle still overrides it.
+    var calendarMode by remember(defaultToCalendar) { mutableStateOf(defaultToCalendar) }
     // Already sorted by startAt DESC; groupBy keeps that order, one section per day.
     val grouped = remember(encounters) {
         encounters.groupBy { Format.relativeDay(it.encounter.startAt) }

@@ -33,6 +33,10 @@ class GeneralPreferences @Inject constructor(
     private val _weekStart = MutableStateFlow(loadWeekStart())
     val weekStart: StateFlow<WeekStart> = _weekStart.asStateFlow()
 
+    /** Whether the Trysts screen opens in calendar view by default (vs. the list). */
+    private val _defaultToCalendar = MutableStateFlow(prefs.getBoolean(KEY_DEFAULT_CALENDAR, false))
+    val defaultToCalendar: StateFlow<Boolean> = _defaultToCalendar.asStateFlow()
+
     fun setAutoLockTimeoutMs(ms: Long) {
         prefs.edit().putLong(KEY_AUTO_LOCK_MS, ms).apply()
         _autoLockTimeoutMs.value = ms
@@ -46,6 +50,11 @@ class GeneralPreferences @Inject constructor(
     fun setWeekStart(start: WeekStart) {
         prefs.edit().putString(KEY_WEEK_START, start.name).apply()
         _weekStart.value = start
+    }
+
+    fun setDefaultToCalendar(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_DEFAULT_CALENDAR, enabled).apply()
+        _defaultToCalendar.value = enabled
     }
 
     /**
@@ -67,6 +76,7 @@ class GeneralPreferences @Inject constructor(
         const val KEY_AUTO_LOCK_MS = "auto_lock_ms"
         const val KEY_HAPTICS = "haptics_enabled"
         const val KEY_WEEK_START = "week_start"
+        const val KEY_DEFAULT_CALENDAR = "default_to_calendar"
         const val KEY_LAST_SEEN_VERSION = "last_seen_version_code"
     }
 }

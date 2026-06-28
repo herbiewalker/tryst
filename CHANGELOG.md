@@ -13,6 +13,10 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+### Added
+- **Setting: open Trysts in calendar view by default** (Settings → General). The per-session
+  list/calendar toggle still works as before; this just sets which one you land on.
+
 ## [0.2.0] — 2026-06-21 (versionCode 2)
 
 ### Added
