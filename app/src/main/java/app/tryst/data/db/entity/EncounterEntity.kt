@@ -44,7 +44,8 @@ data class EncounterEntity(
     /** Selected position IDs: a built-in [Position] name, or "custom:<uuid>" for user-defined. */
     val positions: Set<String>? = null,
     // --- added in schema v4 ---
-    val kinks: Set<Kink>? = null,
+    /** Selected kink IDs: a built-in [Kink] name, or "custom:<uuid>" for user-defined (string ids since schema v9). */
+    val kinks: Set<String>? = null,
     /** Place (built-in [Setting]). */
     val contexts: Set<Setting>? = null,
     val toys: Set<ToyType>? = null,

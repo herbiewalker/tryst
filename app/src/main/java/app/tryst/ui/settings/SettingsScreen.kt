@@ -49,6 +49,7 @@ import app.tryst.R
 import app.tryst.core.prefs.ThemeMode
 import app.tryst.core.prefs.WeekStart
 import app.tryst.data.db.entity.ActEntity
+import app.tryst.data.db.entity.KinkEntity
 import app.tryst.data.db.entity.PositionEntity
 import app.tryst.ui.common.SingleSelectChips
 import app.tryst.ui.common.adaptiveContentWidth
@@ -82,8 +83,10 @@ fun SettingsScreen(
     var biometricEnabled by remember { mutableStateOf(viewModel.isBiometricEnabled()) }
     var showPositions by remember { mutableStateOf(false) }
     var showActs by remember { mutableStateOf(false) }
+    var showKinks by remember { mutableStateOf(false) }
     val positionsViewModel: CustomPositionsViewModel = hiltViewModel()
     val actsViewModel: CustomActsViewModel = hiltViewModel()
+    val kinksViewModel: CustomKinksViewModel = hiltViewModel()
     val appearanceViewModel: AppearanceViewModel = hiltViewModel()
     val themeMode by appearanceViewModel.themeMode.collectAsStateWithLifecycle()
     val dynamicColor by appearanceViewModel.dynamicColor.collectAsStateWithLifecycle()
@@ -333,6 +336,9 @@ fun SettingsScreen(
             OutlinedButton(onClick = { showActs = true }, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.settings_manage_acts))
             }
+            OutlinedButton(onClick = { showKinks = true }, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.settings_manage_kinks))
+            }
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
@@ -421,6 +427,10 @@ fun SettingsScreen(
 
     if (showActs) {
         CustomActsDialog(viewModel = actsViewModel, onDismiss = { showActs = false })
+    }
+
+    if (showKinks) {
+        CustomKinksDialog(viewModel = kinksViewModel, onDismiss = { showKinks = false })
     }
 
     if (showExportPw) {
@@ -651,6 +661,75 @@ private fun CustomActRow(act: ActEntity, onDelete: () -> Unit) {
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(act.label, style = MaterialTheme.typography.bodyLarge)
+        TextButton(onClick = onDelete) { Text(stringResource(R.string.action_remove)) }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CustomKinksDialog(viewModel: CustomKinksViewModel, onDismiss: () -> Unit) {
+    val kinks by viewModel.customKinks.collectAsStateWithLifecycle()
+    var newLabel by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.custom_kinks_title)) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    stringResource(R.string.custom_kinks_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    OutlinedTextField(
+                        value = newLabel,
+                        onValueChange = { newLabel = it },
+                        label = { Text(stringResource(R.string.custom_kinks_add_label)) },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(
+                        onClick = {
+                            viewModel.add(newLabel)
+                            newLabel = ""
+                        },
+                        enabled = newLabel.isNotBlank(),
+                    ) { Text(stringResource(R.string.action_add)) }
+                }
+                if (kinks.isEmpty()) {
+                    Text(
+                        stringResource(R.string.custom_kinks_empty),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    Column(
+                        modifier = Modifier.heightIn(max = 280.dp).verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        kinks.forEach { kink ->
+                            CustomKinkRow(kink, onDelete = { viewModel.delete(kink.id) })
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_done)) } },
+    )
+}
+
+@Composable
+private fun CustomKinkRow(kink: KinkEntity, onDelete: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(kink.label, style = MaterialTheme.typography.bodyLarge)
         TextButton(onClick = onDelete) { Text(stringResource(R.string.action_remove)) }
     }
 }

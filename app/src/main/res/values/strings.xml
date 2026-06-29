@@ -211,6 +211,7 @@
     <string name="settings_categories">Categories</string>
     <string name="settings_manage_positions">Manage custom positions</string>
     <string name="settings_manage_acts">Manage custom acts</string>
+    <string name="settings_manage_kinks">Manage custom kinks</string>
     <string name="settings_backup">Backup &amp; restore</string>
     <string name="settings_export">Export encrypted backup</string>
     <string name="settings_import">Import / restore backup</string>
@@ -252,6 +253,10 @@
     <string name="custom_acts_desc">Custom acts appear alongside the built-in ones (gave &amp; received) when logging a tryst.</string>
     <string name="custom_acts_add_label">Add an act</string>
     <string name="custom_acts_empty">No custom acts yet.</string>
+    <string name="custom_kinks_title">Custom kinks</string>
+    <string name="custom_kinks_desc">Custom kinks appear alongside the built-in ones when logging a tryst.</string>
+    <string name="custom_kinks_add_label">Add a kink</string>
+    <string name="custom_kinks_empty">No custom kinks yet.</string>
     <string name="custom_positions_title">Custom positions</string>
     <string name="custom_positions_desc">Custom positions appear alongside the built-in ones when logging a tryst.</string>
     <string name="custom_positions_add_label">Add a position</string>

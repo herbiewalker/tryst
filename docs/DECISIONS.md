@@ -270,6 +270,21 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   `serializeNulls` for a faithful superset; deep-diff to prove only intended fields change) → repack →
   restore in-app** — tooling in `IntimacyData/tools` (`Unpack/Repack/EditTrystBackup`). Not app code; a data
   operation on the user's device.
+- **D-41 (2026-06-29, F-Droid policy) Make acts & kinks user-configurable; ship F-Droid without a predefined
+  explicit catalog.** F-Droid reviewer (linsui) flagged the bundled explicit **acts/kinks** as non-compliant
+  and asked to "make them configurable instead." **Chosen path (Strategy 2):** one clean app — no build
+  flavors — where explicit content is **user data**, not compiled-in. The maintainer is fine running the
+  F-Droid build; the requirement is zero data loss + **full functionality** (search/insights/achievements) on
+  custom/explicit entries. Verified that's cheap: achievements already key off **raw stored ids** (distinctness,
+  not labels — so custom already counts; *no* "did [explicit thing]" achievement exists), and stats already
+  resolve acts via id→label. **Phase 1 (DONE, schema v9 / `MIGRATION_8_9`):** kinks brought up to the same
+  id-based, custom-capable model as acts/positions — new `KinkEntity`/`kinkDao`/`KinkRepository`, `kinks` column
+  `Set<Kink>`→`Set<String>` (ids == old enum names, so **no data rewrite**), Settings → Manage custom kinks,
+  Insights `resolveKink`, ENC-1 + achievements adapted. Behaviour is unchanged this phase (built-in catalogs
+  still full). **Phase 2 (planned):** trim the shipped built-in act/kink catalogs to a small non-explicit
+  starter set, and migrate existing users' explicit built-in ids → custom entries (labels via **generic
+  prettify** of the enum name, so the APK ships **zero** explicit strings). Scope = acts/kinks only (what was
+  flagged); positions/toys/etc. left as-is unless flagged later. See `ROADMAP_FUTURE.md`.
 - **D-25 (M6):** **No chart library** (resolves O-3). Insights charts are drawn with plain Compose
   layout (`VerticalBarChart`, `RankedBars`) instead of Vico/MPAndroidChart. Rationale: the app already
   hand-rolls its visuals (per-act vector icons, manual `BitmapFactory` downsampling, no third-party

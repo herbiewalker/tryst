@@ -135,4 +135,37 @@ class MigrationTest {
             }
         }
     }
+
+    /**
+     * v8 → v9 adds the custom `kinks` table (DDL only). The `encounters.kinks` column is unchanged, so
+     * existing comma-joined kink ids must pass through untouched, the new table starts empty (built-in
+     * kinks live in the enum), and a custom kink row can be inserted.
+     */
+    @Test
+    fun migrate8To9_addsKinkTableAndPreservesKinkRefs() {
+        helper.createDatabase(dbName, 8).use { db ->
+            db.execSQL(
+                "INSERT INTO encounters (id, startAt, protectionUsed, kinks, createdAt, updatedAt) " +
+                    "VALUES ('e1', 1000, '', 'SPANKING,CHOKING', 1, 1)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(dbName, 9, true, MIGRATION_8_9).use { db ->
+            db.query("SELECT kinks FROM encounters WHERE id = 'e1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("SPANKING,CHOKING", c.getString(0)) // unchanged
+            }
+            // The new kinks table exists and starts empty.
+            db.query("SELECT COUNT(*) FROM kinks").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(0, c.getInt(0))
+            }
+            // Custom kinks can be inserted (table writable; unique-label index present).
+            db.execSQL("INSERT INTO kinks (id, label, isBuiltIn) VALUES ('k1', 'My Custom Kink', 0)")
+            db.query("SELECT label FROM kinks WHERE id = 'k1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("My Custom Kink", c.getString(0))
+            }
+        }
+    }
 }

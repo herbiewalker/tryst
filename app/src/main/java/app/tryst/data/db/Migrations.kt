@@ -125,6 +125,23 @@ val MIGRATION_7_8 = object : Migration(7, 8) {
     }
 }
 
+/**
+ * v8 → v9: adds a custom **`kinks`** table (mirrors `acts`/`positions`), so kinks become
+ * user-configurable string ids instead of a fixed enum. The `encounters.kinks` column is unchanged
+ * (still TEXT) — only its app-side type moved from a `Kink`-set to string ids, and a built-in kink's
+ * id **is** its old enum name, so existing comma-joined values stay valid with no data rewrite. The
+ * table starts empty (built-in kinks live in the `Kink` enum; only user-defined kinks are stored here).
+ */
+val MIGRATION_8_9 = object : Migration(8, 9) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `kinks` " +
+                "(`id` TEXT NOT NULL, `label` TEXT NOT NULL, `isBuiltIn` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_kinks_label` ON `kinks` (`label`)")
+    }
+}
+
 /** All migrations, in order. */
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
@@ -134,4 +151,5 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_5_6,
     MIGRATION_6_7,
     MIGRATION_7_8,
+    MIGRATION_8_9,
 )

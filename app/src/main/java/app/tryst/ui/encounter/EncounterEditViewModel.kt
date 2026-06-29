@@ -13,7 +13,7 @@ import app.tryst.data.db.entity.ActEntity
 import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Initiator
-import app.tryst.data.db.entity.Kink
+import app.tryst.data.db.entity.KinkEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.Occasion
@@ -24,6 +24,7 @@ import app.tryst.data.db.entity.Setting
 import app.tryst.data.db.entity.ToyType
 import app.tryst.data.repository.ActRepository
 import app.tryst.data.repository.EncounterRepository
+import app.tryst.data.repository.KinkRepository
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.data.repository.PositionRepository
 import app.tryst.data.stats.OptionUsage
@@ -68,7 +69,7 @@ data class EncounterEditUiState(
     val practicesPerformed: Set<String> = emptySet(),
     val practicesReceived: Set<String> = emptySet(),
     val selectedPositionIds: Set<String> = emptySet(),
-    val kinks: Set<Kink> = emptySet(),
+    val kinks: Set<String> = emptySet(),
     val contexts: Set<Setting> = emptySet(),
     val occasions: Set<Occasion> = emptySet(),
     val toys: Set<ToyType> = emptySet(),
@@ -85,6 +86,7 @@ data class EncounterEditUiState(
 }
 
 @HiltViewModel
+@Suppress("LongParameterList") // Hilt-injected repositories; each is a distinct dependency.
 class EncounterEditViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val session: SessionManager,
@@ -92,6 +94,7 @@ class EncounterEditViewModel @Inject constructor(
     partners: PartnerRepository,
     positions: PositionRepository,
     acts: ActRepository,
+    kinks: KinkRepository,
 ) : ViewModel() {
 
     /** Keep the app unlocked across the photo-picker/camera handoff. */
@@ -109,6 +112,11 @@ class EncounterEditViewModel @Inject constructor(
 
     val customActs: StateFlow<List<ActEntity>> =
         acts.observeCustom()
+            .catch { emit(emptyList()) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val customKinks: StateFlow<List<KinkEntity>> =
+        kinks.observeCustom()
             .catch { emit(emptyList()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -263,8 +271,8 @@ class EncounterEditViewModel @Inject constructor(
         uiState = uiState.copy(selectedPositionIds = uiState.selectedPositionIds.toggle(id))
     }
 
-    fun toggleKink(value: Kink) {
-        uiState = uiState.copy(kinks = uiState.kinks.toggle(value))
+    fun toggleKink(id: String) {
+        uiState = uiState.copy(kinks = uiState.kinks.toggle(id))
     }
 
     fun toggleContext(value: Setting) {

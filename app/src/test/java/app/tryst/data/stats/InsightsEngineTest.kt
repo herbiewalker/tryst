@@ -3,6 +3,7 @@ package app.tryst.data.stats
 import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Initiator
+import app.tryst.data.db.entity.Kink
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.Practice
@@ -30,6 +31,7 @@ class InsightsEngineTest {
         orgasmCountSelf: Int? = null,
         partnerOrgasms: Map<String, Int>? = null,
         acts: Set<String>? = null,
+        kinks: Set<String>? = null,
         protection: Set<Protection> = emptySet(),
         ejaculation: Map<Int, Set<EjaculationLocation>>? = null,
         initiator: Initiator? = null,
@@ -47,6 +49,7 @@ class InsightsEngineTest {
             partnerOrgasms = partnerOrgasms,
             ejaculationLocations = ejaculation,
             practicesPerformed = acts,
+            kinks = kinks,
             createdAt = 0,
             updatedAt = 0,
         ),
@@ -187,6 +190,22 @@ class InsightsEngineTest {
         )
         assertEquals(Tally("Vaginal", 2), r.topActs.first())
         assertTrue(r.topActs.any { it.label == "My Custom Act" && it.count == 1 })
+    }
+
+    @Test
+    fun kinksResolveBuiltInAndCustomLabels() {
+        val log = listOf(
+            encounter("a", today, kinks = setOf(Kink.SPANKING.name, "custom:k1")),
+            encounter("b", today.minusDays(1), kinks = setOf(Kink.SPANKING.name)),
+        )
+        val r = InsightsEngine.compute(
+            log,
+            customKinkLabels = mapOf("k1" to "My Custom Kink"),
+            zone = zone,
+            today = today,
+        )
+        assertEquals(Tally("Spanking", 2), r.topKinks.first())
+        assertTrue(r.topKinks.any { it.label == "My Custom Kink" && it.count == 1 })
     }
 
     @Test

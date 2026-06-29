@@ -14,6 +14,10 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 ## [Unreleased]
 
 ### Added
+- **Custom kinks** — add your own kinks under **Settings → Manage custom kinks**, just like custom
+  acts and positions. They appear alongside the built-ins when logging, and count fully toward
+  insights and achievements. (Kinks are now stored the same id-based way as acts/positions —
+  schema v9, an additive migration; your existing kinks are untouched.)
 - **Setting: open Trysts in calendar view by default** (Settings → General). The per-session
   list/calendar toggle still works as before; this just sets which one you land on.
 - **Your most-used options surface inline** in the encounter editor. Each category (acts, positions,

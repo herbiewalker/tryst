@@ -1,6 +1,6 @@
 # Tryst — Data Model
 
-Status: **Live — schema v8** (Room over SQLCipher). Matches the entities in
+Status: **Live — schema v9** (Room over SQLCipher). Matches the entities in
 `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change
 ships a non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 
@@ -11,11 +11,13 @@ ships a non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 
 Category values are stored as TEXT via Room `TypeConverters` (`data/db/Converters.kt`):
 
-- **Enum-name sets** (e.g. `protectionUsed`, `kinks`, `contexts`, `occasions`, `toys`): comma-joined
+- **Enum-name sets** (e.g. `protectionUsed`, `contexts`, `occasions`, `toys`): comma-joined
   enum `name`s. Parsing **skips unknown names**, so values that are renamed or moved between
   categories never crash older rows — they're dropped on read.
-- **String-id sets** (`positions`, `practicesPerformed`, `practicesReceived`): comma-joined IDs where
-  each ID is a built-in enum `name` **or** `custom:<uuid>` for a user-defined entry.
+- **String-id sets** (`positions`, `practicesPerformed`, `practicesReceived`, `kinks`): comma-joined
+  IDs where each ID is a built-in enum `name` **or** `custom:<uuid>` for a user-defined entry.
+  (`kinks` joined this group in **v9** — a built-in kink's id is its old `Kink` enum name, so existing
+  values are unchanged; user-defined kinks live in the `kinks` table, mirroring `acts`/`positions`.)
 - **Maps**: `partnerOrgasms` = `partnerId=count` pairs; `ejaculationLocations` =
   `orgasmIndex=LOC1|LOC2` pairs — **multi-select** locations per orgasm, joined on `|` (legacy
   single-value rows parse as a one-element set; backward compatible).
@@ -38,7 +40,7 @@ The central record.
 | ejaculationLocations | Map\<Int,Set\<EjaculationLocation\>\>? | **per-orgasm** location(s) — multi-select per orgasm |
 | practicesPerformed / practicesReceived | Set\<String\>? | **Acts** gave/received (built-in `Practice` name or `custom:<uuid>`) |
 | positions | Set\<String\>? | built-in `Position` name or `custom:<uuid>` |
-| kinks | Set\<Kink\>? | Kink & BDSM |
+| kinks | Set\<String\>? | **Kink & BDSM** (built-in `Kink` name or `custom:<uuid>`) |
 | contexts | Set\<Setting\>? | **Setting & Location** (places) |
 | occasions | Set\<Occasion\>? | occasion / context |
 | toys | Set\<ToyType\>? | |
@@ -94,6 +96,8 @@ Partners.
   user-defined rows (`isBuiltIn=false`) are managed in Settings → Manage custom positions.
 - **Act** (`acts`): same shape; built-ins from the `Practice` enum, custom rows managed in
   Settings → Manage custom acts.
+- **Kink** (`kinks`, **v9**): same shape; built-ins from the `Kink` enum, custom rows managed in
+  Settings → Manage custom kinks.
 
 ## Location / Tag / Media
 - **Location** (`locations`): `id`, `label` — user-typed generic label. **No GPS / coarse location**
@@ -130,5 +134,10 @@ storage — likely a small row in the encrypted DB.)
   row; an unmatched label safely stays custom). Also additive enum values: `Setting.FRIENDS_FAMILY`,
   new `Position`/`Practice` entries. ⚠️ Backup **restore inserts rows raw and does NOT replay
   migrations** — re-export after upgrading so a future restore keeps the new values.
+- **v9 (`MIGRATION_8_9`)** adds the custom **`kinks`** table (DDL only, mirrors `acts`/`positions`),
+  making kinks user-configurable string ids instead of a fixed enum. The `encounters.kinks` column is
+  unchanged — a built-in kink's id **is** its old `Kink` enum `name`, so existing comma-joined values
+  stay valid with no data rewrite; the table starts empty (built-ins live in the enum). Foundation for
+  the F-Droid policy work (ship without a predefined explicit catalog — see DECISIONS D-41).
 - Export format (M5) is decoupled from the live schema and versioned independently
   (see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §4).
