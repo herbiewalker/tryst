@@ -1,5 +1,6 @@
 package app.tryst.data.stats
 
+import app.tryst.data.db.entity.Kink
 import app.tryst.data.db.entity.Position
 import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.relation.EncounterWithDetails
@@ -109,11 +110,12 @@ object InsightsEngine {
 
     // One cohesive, sequential aggregation that builds the whole Insights snapshot; splitting it
     // would scatter tightly-related accumulation with no real readability gain (it is JVM-tested).
-    @Suppress("LongMethod", "CyclomaticComplexMethod")
+    @Suppress("LongMethod", "CyclomaticComplexMethod", "LongParameterList")
     fun compute(
         encounters: List<EncounterWithDetails>,
         customActLabels: Map<String, String> = emptyMap(),
         customPositionLabels: Map<String, String> = emptyMap(),
+        customKinkLabels: Map<String, String> = emptyMap(),
         zone: ZoneId = ZoneId.systemDefault(),
         today: LocalDate = LocalDate.now(zone),
     ): Insights {
@@ -196,7 +198,9 @@ object InsightsEngine {
             },
         )
         val topMoods = tallyLabels(encounters.mapNotNull { it.encounter.mood?.label })
-        val topKinks = tallyLabels(encounters.flatMap { e -> (e.encounter.kinks ?: emptySet()).map { it.label } })
+        val topKinks = tallyLabels(
+            encounters.flatMap { e -> (e.encounter.kinks ?: emptySet()).map { resolveKink(it, customKinkLabels) } },
+        )
         val topSettings = tallyLabels(encounters.flatMap { e -> (e.encounter.contexts ?: emptySet()).map { it.label } })
         val topToys = tallyLabels(encounters.flatMap { e -> (e.encounter.toys ?: emptySet()).map { it.label } })
         val topOccasions = tallyLabels(encounters.flatMap { e -> (e.encounter.occasions ?: emptySet()).map { it.label } })
@@ -271,6 +275,12 @@ object InsightsEngine {
         custom[id.removePrefix(CUSTOM_PREFIX)] ?: "Custom position"
     } else {
         runCatching { Position.valueOf(id).label }.getOrDefault(id)
+    }
+
+    private fun resolveKink(id: String, custom: Map<String, String>): String = if (id.startsWith(CUSTOM_PREFIX)) {
+        custom[id.removePrefix(CUSTOM_PREFIX)] ?: "Custom kink"
+    } else {
+        runCatching { Kink.valueOf(id).label }.getOrDefault(id)
     }
 
     /** Tallies `(stableKey, label)` pairs by key, labelling each with its first-seen label. */

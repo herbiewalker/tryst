@@ -6,7 +6,6 @@ import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Ethnicity
 import app.tryst.data.db.entity.Gender
 import app.tryst.data.db.entity.Initiator
-import app.tryst.data.db.entity.Kink
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.Orgasm
@@ -97,12 +96,6 @@ class Converters {
         }?.toMap()
 
     @TypeConverter
-    fun kinkSetToString(value: Set<Kink>?): String? = value?.joinToString(SEP) { it.name }
-
-    @TypeConverter
-    fun stringToKinkSet(value: String?): Set<Kink>? = value?.toEnumSet { Kink.valueOf(it) }
-
-    @TypeConverter
     fun settingSetToString(value: Set<Setting>?): String? = value?.joinToString(SEP) { it.name }
 
     @TypeConverter
@@ -120,8 +113,9 @@ class Converters {
     @TypeConverter
     fun stringToToyTypeSet(value: String?): Set<ToyType>? = value?.toEnumSet { ToyType.valueOf(it) }
 
-    // Positions are stored as string IDs (built-in enum name, or "custom:<uuid>"); IDs never
-    // contain commas.
+    // Shared by every string-id set column — positions, acts (performed/received), and kinks. Each id
+    // is a built-in enum name or "custom:<uuid>", and ids never contain commas, so a plain comma-join
+    // round-trips. (Room selects one converter per type, so this single pair serves all of them.)
     @TypeConverter
     fun positionSetToString(value: Set<String>?): String? = value?.joinToString(SEP)
 

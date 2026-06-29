@@ -73,7 +73,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
 import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Initiator
-import app.tryst.data.db.entity.Kink
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.Protection
@@ -83,6 +82,7 @@ import app.tryst.data.stats.mostUsedCommon
 import app.tryst.ui.common.ActOptions
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
+import app.tryst.ui.common.KinkOptions
 import app.tryst.ui.common.MultiSelectChips
 import app.tryst.ui.common.MultiSelectField
 import app.tryst.ui.common.PositionOptions
@@ -116,6 +116,7 @@ fun EncounterEditScreen(
     val partners by viewModel.availablePartners.collectAsStateWithLifecycle()
     val customPositions by viewModel.customPositions.collectAsStateWithLifecycle()
     val customActs by viewModel.customActs.collectAsStateWithLifecycle()
+    val customKinks by viewModel.customKinks.collectAsStateWithLifecycle()
     // Per-category pick frequency, used to surface the user's most-used options inline (ENC-1).
     val usage by viewModel.optionUsage.collectAsStateWithLifecycle()
     // Solo = no partner selected (matches the history "Solo" badge). Partner-only fields are hidden so
@@ -307,13 +308,14 @@ fun EncounterEditScreen(
                     )
                 }
 
+                val kinkOptions = KinkOptions.builtIns + KinkOptions.custom(customKinks)
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_kink),
-                    all = Kink.entries,
-                    common = mostUsedCommon(CommonOptions.KINK, Kink.entries) { usage.kinks[it] ?: 0 },
-                    selected = ui.kinks,
+                    all = kinkOptions,
+                    common = mostUsedCommon(KinkOptions.common, kinkOptions) { usage.kinks[it.id] ?: 0 },
+                    selected = kinkOptions.filter { it.id in ui.kinks }.toSet(),
                     labelOf = { it.label },
-                    onToggle = { viewModel.toggleKink(it) },
+                    onToggle = { viewModel.toggleKink(it.id) },
                 )
 
                 MultiSelectField(
@@ -685,16 +687,6 @@ private object CommonOptions {
         EjaculationLocation.ON_CHEST,
         EjaculationLocation.ON_STOMACH,
         EjaculationLocation.IN_SHOWER,
-    )
-    val KINK = listOf(
-        Kink.DOMINATION,
-        Kink.SUBMISSION,
-        Kink.BONDAGE,
-        Kink.SPANKING,
-        Kink.CHOKING,
-        Kink.DIRTY_TALK,
-        Kink.ROLEPLAY,
-        Kink.EDGING,
     )
     val SETTING = listOf(
         Setting.HOME,

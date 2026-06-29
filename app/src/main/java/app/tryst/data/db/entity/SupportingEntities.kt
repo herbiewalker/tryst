@@ -33,6 +33,13 @@ data class ActEntity(
     val isBuiltIn: Boolean = false,
 )
 
+@Entity(tableName = "kinks", indices = [Index(value = ["label"], unique = true)])
+data class KinkEntity(
+    @PrimaryKey val id: String,
+    val label: String,
+    val isBuiltIn: Boolean = false,
+)
+
 @Entity(
     tableName = "media",
     foreignKeys = [

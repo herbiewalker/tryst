@@ -12,6 +12,25 @@ definition.
 
 ---
 
+## ⚡ ACTIVE: F-Droid policy compliance — configurable acts & kinks (decision [D-41](DECISIONS.md))
+
+F-Droid review (linsui, 2026-06-29) flagged the bundled explicit **acts/kinks** as non-compliant and
+asked to make them user-configurable. **Chosen path:** one clean app (no flavors) where explicit content
+is **user data**, not compiled-in; the maintainer runs the F-Droid build, with zero data loss and full
+search/insights/achievement functionality on custom entries (achievements already key off raw ids, so
+this is cheap). Distinct from the rest of this roadmap — it's distribution-driven and blocks the MR merge.
+
+| ID | Phase | Status |
+|----|-------|--------|
+| **FDP-1** | **Kinks → id-based & custom-capable** (parity with acts/positions): `KinkEntity`/`kinkDao`/`KinkRepository`, `kinks` column `Set<Kink>`→`Set<String>` (ids == old enum names → no data rewrite), Settings → Manage custom kinks, `resolveKink` in Insights, ENC-1 + achievements adapted. **schema v9 / `MIGRATION_8_9`.** | ✅ **DONE (2026-06-29).** Behaviour unchanged (built-ins still full); all gates + instrumented migration/backup tests green on emulator. |
+| **FDP-2** | **Ship clean:** trim built-in act/kink catalogs to a small non-explicit starter set; migrate existing users' explicit built-in ids → custom entries (labels via **generic prettify** of the enum name, so the APK ships **zero** explicit strings). New installs start clean. | ⏳ Planned (next). |
+| **FDP-3** | **Release & F-Droid:** version bump, CHANGELOG/ReleaseNotes/fastlane, reply to linsui, update MR after release. | ⏳ Planned. |
+
+*Scope = acts/kinks only (what was flagged). Positions/toys/ejaculation-locations left as-is unless a
+follow-up review flags them.*
+
+---
+
 ## The one architectural decision that shapes everything: a shared filter/query layer
 
 Most of the big asks — **Search**, the **page-wide Insights scope (INS-2)**, the **Insights Explorer**,
