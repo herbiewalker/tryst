@@ -1,8 +1,8 @@
 package app.tryst.data.stats
 
+import app.tryst.data.db.entity.Act
 import app.tryst.data.db.entity.Kink
 import app.tryst.data.db.entity.Position
-import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.relation.EncounterWithDetails
 import java.time.Instant
 import java.time.LocalDate
@@ -268,7 +268,7 @@ object InsightsEngine {
     private fun resolveAct(id: String, custom: Map<String, String>): String = if (id.startsWith(CUSTOM_PREFIX)) {
         custom[id.removePrefix(CUSTOM_PREFIX)] ?: "Custom act"
     } else {
-        runCatching { Practice.valueOf(id).label }.getOrDefault(id)
+        runCatching { Act.valueOf(id).label }.getOrDefault(id)
     }
 
     private fun resolvePosition(id: String, custom: Map<String, String>): String = if (id.startsWith(CUSTOM_PREFIX)) {

@@ -4,8 +4,8 @@ import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.Occasion
+import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.Protection
-import app.tryst.data.db.entity.Setting
 import app.tryst.data.db.entity.ToyType
 
 /**
@@ -24,7 +24,7 @@ data class OptionUsage(
     val moods: Map<Mood, Int> = emptyMap(),
     val ejaculation: Map<EjaculationLocation, Int> = emptyMap(),
     val kinks: Map<String, Int> = emptyMap(),
-    val settings: Map<Setting, Int> = emptyMap(),
+    val places: Map<Place, Int> = emptyMap(),
     val occasions: Map<Occasion, Int> = emptyMap(),
     val toys: Map<ToyType, Int> = emptyMap(),
 ) {
@@ -42,7 +42,7 @@ data class OptionUsage(
                 moods = tally { listOfNotNull(it.mood) },
                 ejaculation = tally { it.ejaculationLocations?.values?.flatten()?.toSet() ?: emptySet() },
                 kinks = tally { it.kinks ?: emptySet() },
-                settings = tally { it.contexts ?: emptySet() },
+                places = tally { it.contexts ?: emptySet() },
                 occasions = tally { it.occasions ?: emptySet() },
                 toys = tally { it.toys ?: emptySet() },
             )

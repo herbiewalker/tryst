@@ -1,12 +1,12 @@
 package app.tryst.data.stats
 
+import app.tryst.data.db.entity.Act
 import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Kink
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.PartnerEntity
-import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.db.relation.EncounterWithDetails
 import java.time.LocalDate
@@ -179,8 +179,8 @@ class InsightsEngineTest {
     @Test
     fun actsCountOncePerEncounterAndResolveLabels() {
         val log = listOf(
-            encounter("a", today, acts = setOf(Practice.VAGINAL.name, "custom:xyz")),
-            encounter("b", today.minusDays(1), acts = setOf(Practice.VAGINAL.name)),
+            encounter("a", today, acts = setOf(Act.VAGINAL.name, "custom:xyz")),
+            encounter("b", today.minusDays(1), acts = setOf(Act.VAGINAL.name)),
         )
         val r = InsightsEngine.compute(
             log,

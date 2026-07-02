@@ -7,7 +7,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 
-/** Manages user-defined (custom) acts. Built-in acts come from the [app.tryst.data.db.entity.Practice] enum. */
+/** Manages user-defined (custom) acts. Built-in acts come from the [app.tryst.data.db.entity.Act] enum. */
 @Singleton
 class ActRepository @Inject constructor(
     private val session: SessionManager,

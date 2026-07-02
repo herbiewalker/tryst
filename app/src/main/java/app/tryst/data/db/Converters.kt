@@ -9,9 +9,9 @@ import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.Orgasm
+import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.db.entity.RelationshipType
-import app.tryst.data.db.entity.Setting
 import app.tryst.data.db.entity.Sex
 import app.tryst.data.db.entity.ToyType
 
@@ -96,10 +96,10 @@ class Converters {
         }?.toMap()
 
     @TypeConverter
-    fun settingSetToString(value: Set<Setting>?): String? = value?.joinToString(SEP) { it.name }
+    fun placeSetToString(value: Set<Place>?): String? = value?.joinToString(SEP) { it.name }
 
     @TypeConverter
-    fun stringToSettingSet(value: String?): Set<Setting>? = value?.toEnumSet { Setting.valueOf(it) }
+    fun stringToPlaceSet(value: String?): Set<Place>? = value?.toEnumSet { Place.valueOf(it) }
 
     @TypeConverter
     fun occasionSetToString(value: Set<Occasion>?): String? = value?.joinToString(SEP) { it.name }

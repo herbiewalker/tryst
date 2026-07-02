@@ -74,12 +74,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
 import app.tryst.core.prefs.WeekStart
+import app.tryst.data.db.entity.Act
 import app.tryst.data.db.entity.MediaEntity
-import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.relation.EncounterWithDetails
+import app.tryst.ui.common.ActVisuals
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
-import app.tryst.ui.common.PracticeVisuals
 import app.tryst.ui.common.encounterSharedKey
 import app.tryst.ui.common.rememberHaptics
 import java.time.DayOfWeek
@@ -234,12 +234,12 @@ private fun EncounterCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    val primaryActId = PracticeVisuals.primaryPractice(e.practicesPerformed, e.practicesReceived)
+                    val primaryActId = ActVisuals.primaryAct(e.practicesPerformed, e.practicesReceived)
                     val primaryActLabel = primaryActId
-                        ?.let { id -> runCatching { Practice.valueOf(id) }.getOrNull() }
+                        ?.let { id -> runCatching { Act.valueOf(id) }.getOrNull() }
                         ?.let { Format.enumLabel(it) }
-                    PracticeBadge(
-                        icon = PracticeVisuals.icon(primaryActId),
+                    ActBadge(
+                        icon = ActVisuals.icon(primaryActId),
                         contentDescription = primaryActLabel,
                     )
                     Text(
@@ -316,7 +316,7 @@ private fun DateBadge(epochMillis: Long) {
 }
 
 @Composable
-private fun PracticeBadge(@DrawableRes icon: Int, contentDescription: String?) {
+private fun ActBadge(@DrawableRes icon: Int, contentDescription: String?) {
     Surface(
         color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -372,7 +372,7 @@ private fun CalendarView(
         byDay.mapValues { (_, list) ->
             val gave = list.flatMapTo(mutableSetOf()) { it.encounter.practicesPerformed ?: emptySet() }
             val received = list.flatMapTo(mutableSetOf()) { it.encounter.practicesReceived ?: emptySet() }
-            PracticeVisuals.icon(PracticeVisuals.primaryPractice(gave, received))
+            ActVisuals.icon(ActVisuals.primaryAct(gave, received))
         }
     }
     // Encounter count per day — drives the heatmap fill intensity.

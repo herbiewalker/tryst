@@ -3,8 +3,8 @@ package app.tryst.data.achievements
 import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Occasion
+import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.Protection
-import app.tryst.data.db.entity.Setting
 import app.tryst.data.db.relation.EncounterWithDetails
 
 /**
@@ -20,7 +20,7 @@ object Achievements {
 
     private fun hasOccasion(e: EncounterWithDetails, vararg occasions: Occasion): Boolean = e.encounter.occasions?.any { it in occasions } == true
 
-    private fun hasContext(e: EncounterWithDetails, vararg settings: Setting): Boolean = e.encounter.contexts?.any { it in settings } == true
+    private fun hasContext(e: EncounterWithDetails, vararg places: Place): Boolean = e.encounter.contexts?.any { it in places } == true
 
     val catalog: List<AchievementDef> = listOf(
         // --- Milestones: total trysts logged ---
@@ -85,10 +85,10 @@ object Achievements {
         AchievementDef("o_quickie", "In a Hurry", "Log a quickie.", AchievementCategory.OCCASIONS, 1, "⚡", Count { hasOccasion(it, Occasion.QUICKIE) }),
         AchievementDef("o_datenight", "Date Night", "Log a date-night tryst.", AchievementCategory.OCCASIONS, 1, "🍷", Count { hasOccasion(it, Occasion.DATE_NIGHT) }),
         AchievementDef("o_special", "Special Occasion", "Log an anniversary or birthday tryst.", AchievementCategory.OCCASIONS, 1, "🎉", Count { hasOccasion(it, Occasion.ANNIVERSARY, Occasion.BIRTHDAY) }),
-        AchievementDef("o_vacation", "Vacation Mode", "Get busy on vacation.", AchievementCategory.OCCASIONS, 1, "🏝️", Count { hasContext(it, Setting.VACATION) }),
-        AchievementDef("o_public", "Thrill Seeker", "Log a public or semi-public tryst.", AchievementCategory.OCCASIONS, 1, "😳", Count { hasContext(it, Setting.PUBLIC, Setting.SEMI_PUBLIC) }),
-        AchievementDef("o_outdoors", "Wild Side", "Get busy outdoors.", AchievementCategory.OCCASIONS, 1, "🌲", Count { hasContext(it, Setting.OUTDOORS, Setting.NATURE, Setting.BEACH) }),
-        AchievementDef("o_car", "Backseat", "Log a tryst in a car.", AchievementCategory.OCCASIONS, 1, "🚗", Count { hasContext(it, Setting.CAR) }),
+        AchievementDef("o_vacation", "Vacation Mode", "Get busy on vacation.", AchievementCategory.OCCASIONS, 1, "🏝️", Count { hasContext(it, Place.VACATION) }),
+        AchievementDef("o_public", "Thrill Seeker", "Log a public or semi-public tryst.", AchievementCategory.OCCASIONS, 1, "😳", Count { hasContext(it, Place.PUBLIC, Place.SEMI_PUBLIC) }),
+        AchievementDef("o_outdoors", "Wild Side", "Get busy outdoors.", AchievementCategory.OCCASIONS, 1, "🌲", Count { hasContext(it, Place.OUTDOORS, Place.NATURE, Place.BEACH) }),
+        AchievementDef("o_car", "Backseat", "Log a tryst in a car.", AchievementCategory.OCCASIONS, 1, "🚗", Count { hasContext(it, Place.CAR) }),
 
         // --- Odds and ends ---
         AchievementDef("x_photo", "Picture Perfect", "Attach a photo to a tryst.", AchievementCategory.MISC, 1, "📷", Count { it.media.isNotEmpty() }),
