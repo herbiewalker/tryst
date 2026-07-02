@@ -1,115 +1,108 @@
+<div align="center">
+
 # Tryst
 
-A **private, local-only, open-source** Android app for tracking intimate encounters.
-Inspired by the iOS app *Nice*. Built so your most personal data never has to leave your
-device or be trusted to anyone.
+### A private, local-only journal for your intimate life — encrypted, offline, and open source.
 
-## Privacy promises
+[![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![Platform](https://img.shields.io/badge/Android-12%2B-3DDC84?logo=android&logoColor=white)](#built-with)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?logo=kotlin&logoColor=white)](#built-with)
+[![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](#built-with)
+[![Offline only](https://img.shields.io/badge/network-none-critical)](#why-tryst)
+[![Release](https://img.shields.io/badge/release-v0.3.0-success)](CHANGELOG.md)
 
-- 🚫 **No network access at all** — the app declares no internet permission, so it
-  *cannot* send your data anywhere.
-- 🔒 **Encrypted on device** — database and photos are encrypted at rest.
-- 📵 **No analytics, no ads, no tracking** — zero third-party SDKs.
-- 📤 **You own your data** — the only way data leaves is a manual, password-encrypted
-  export that you control.
-- 🔍 **Open source** — so anyone can verify the above.
+Tryst keeps your most personal data on your phone and nowhere else — no account, no sync,
+and **no internet permission at all**, so the app *cannot* send your data anywhere.
+Inspired by the iOS app *Nice*, and built so privacy is the feature, not a footnote.
 
-## What it does
+<table>
+  <tr>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01_trysts_list.png" width="200"><br><sub><b>Trysts</b></sub></td>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02_calendar.png" width="200"><br><sub><b>Calendar heatmap</b></sub></td>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03_insights_overview.png" width="200"><br><sub><b>Insights</b></sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/04_insights_breakdowns.png" width="200"><br><sub><b>Breakdowns</b></sub></td>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/05_achievements.png" width="200"><br><sub><b>Achievements</b></sub></td>
+    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/06_partners.png" width="200"><br><sub><b>Partners</b></sub></td>
+  </tr>
+</table>
 
-- Log encounters with rich details and optional (encrypted) photos.
-- Track named or anonymous partners, with per-partner stats and demographics (age, ethnicity, height,
-  body type, location), plus your own profile with photo and the same details.
-- See insights: customizable stats, charts (bars/line/donut), streaks, and per-type breakdowns.
-- Earn achievements for milestones, streaks, variety, and more (all derived on-device).
-- Lock the app behind biometric/PIN; auto-lock when backgrounded (with a configurable delay) and a
-  Change-PIN flow.
-- Tune it in **Settings → General**: app info, change PIN, auto-lock timeout, haptics, calendar week start.
-- Never lose a half-finished entry: editing a partner or encounter prompts before discarding unsaved
-  changes (photos included), and **Delete all data** lives on its own page behind a type-to-confirm.
-- A **What's new** screen (Settings → About) plus a one-time release-notes popup after each update.
+</div>
+
+## Why Tryst
+
+Privacy isn't a setting here — it's the architecture.
+
+- 🚫 **No network, ever.** The app declares no `INTERNET` permission, and a build-time CI guard
+  fails the build if one ever sneaks in. Data physically cannot leak to a server.
+- 🔒 **Encrypted at rest.** Entries live in an encrypted **SQLCipher** database; photos are
+  **Tink AES-256-GCM** blobs in the app's private storage — never your gallery, MediaStore, or any cloud.
+- 🔑 **Locked to you.** A 6-digit app PIN (separate from your phone's), optional biometric unlock,
+  auto-lock the moment Tryst leaves the screen, and `FLAG_SECURE` to blank screenshots and the
+  app-switcher preview. The key is derived from your PIN and double-wrapped by a hardware-backed
+  Keystore key (StrongBox when available).
+- 📵 **Zero tracking.** No analytics, ads, or crash-reporting SDKs of any kind — none are in the build.
+- 📤 **Your data is yours.** The only way it leaves the device is a manual, password-encrypted
+  backup you control. There is no password recovery, because there is no server.
+- 🔍 **Verifiable.** GPLv3 and fully open source, so every promise above is auditable — and F-Droid
+  builds it from this source.
+
+## Features
+
+- **Rich encounter logging** — date, time, duration, partners, acts, positions, protection, mood,
+  place, occasion, toys, kinks, a 1–5 rating, orgasms, notes, and encrypted photo attachments.
+- **Categories you own** — Tryst ships a small, non-explicit starter set; **add or rename your own**
+  acts, kinks, and positions, and they count fully across Insights, search, and Achievements.
+- **Partners & a self profile** — named or anonymous partners with relationship type and optional
+  demographics (age, ethnicity, height, body type, location) and avatars, plus your own profile.
+- **Insights** — a pure-Kotlin stats engine: totals, week streaks, averages, monthly & weekday
+  trends, and per-attribute breakdowns. Reorder/hide tiles and cards, pick a chart style per card
+  (bars / line / donut), with stable per-type colors. Charts are **hand-drawn** — no chart dependency.
+- **Achievements** — dozens of milestones, streaks, and variety badges, derived from your log with
+  progress bars and unlock dates. No extra storage.
+- **Calendar** — a tonal activity heatmap with per-day act icons, month/week toggle, and swipe to
+  page. Land on it by default if you like.
+- **Backup & import** — full-fidelity password-encrypted export/restore (photos included), plus a
+  CSV importer with column mapping to bring history in from other apps.
+- **Thoughtful polish** — light/dark themes + Material You, tablet/foldable adaptive layouts, a
+  discard-changes guard so a stray tap never eats a half-finished entry, a type-to-confirm reset,
+  and an in-app *What's new*.
+
+## Built with
+
+Kotlin · Jetpack Compose + Material 3 · Room over **SQLCipher** · Google **Tink** (media crypto) ·
+Hilt · Coroutines/Flow. `minSdk 31` (Android 12) · `compileSdk`/`targetSdk 36`. **No networking
+libraries at all**, and charts are hand-drawn in Compose — the dependency surface stays tiny and
+fully FOSS. Architecture is MVVM + repository with a package-by-feature layout; the stats and
+achievements engines are stateless and JVM-unit-tested. See
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/FLOWCHARTS.md](docs/FLOWCHARTS.md).
+
+## Building
+
+Full toolchain notes are in [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md). The essentials:
+
+```powershell
+$env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"
+.\gradlew.bat assembleDebug            # build the debug APK
+.\gradlew.bat checkNoNetworkDebug      # anti-leak guard: fails if any network permission appears
+.\gradlew.bat testDebugUnitTest        # JVM unit tests
+.\gradlew.bat detekt ktlintCheck       # quality gates
+```
+
+Screenshots are black by design on-device (`FLAG_SECURE`).
 
 ## Status
 
-✅ **Shipped — current release v0.2.0** (versionCode 2). Kotlin + Jetpack Compose, `minSdk 31` /
-`targetSdk 36`. **v0.1.0** was the first public release; **v0.2.0** adds a redesigned calendar
-(tonal heatmap + month/week + swipe), multi-select ejaculation locations, a category cleanup, and a
-haptics fix — full notes in [CHANGELOG.md](CHANGELOG.md). Distribution is **F-Droid** (builds and
-signs from source; the submission is open and waiting on the next release). Unreleased on `main`
-ahead of the next version: the **F-Droid content-policy rework** — the shipped built-in acts/kinks
-catalogs are now a small non-explicit starter set, with existing users' entries losslessly converted
-to custom ones (schema v10) and custom entries renamable in place — plus most-used options surfacing
-inline in the editor and an "open Trysts in calendar view by default" setting. Post-release plans
-live in [docs/ROADMAP_FUTURE.md](docs/ROADMAP_FUTURE.md).
-See [docs/FLOWCHARTS.md](docs/FLOWCHARTS.md) for how the core logic fits together.
+✅ **Shipped.** Current release **v0.3.0** (versionCode 3). Distribution is **F-Droid**, which builds
+and signs from this source — Tryst ships no binary and commits no signing key. `v0.3.0` makes the
+built-in acts/kinks catalogs a small non-explicit starter set (existing entries convert losslessly to
+custom ones — schema v10), adds custom kinks and in-place renaming, surfaces your most-used options
+inline in the editor, and can open Trysts in calendar view by default.
 
-Progress against the [roadmap](docs/ROADMAP.md):
-
-- ✅ **M0** — Project scaffold; CI with an anti-leak guard (build fails if any network
-  permission appears); `allowBackup=false`, `FLAG_SECURE`.
-- ✅ **M1** — Encrypted storage: Room over SQLCipher, Tink-encrypted media store
-  (DB verified encrypted on disk).
-- ✅ **M2a** — Key vault: random data key double-wrapped by an Android Keystore key + a
-  distinct 6-digit app PIN, with failed-attempt self-wipe.
-- ✅ **M2b** — PIN setup/lock screens, post-unlock database session, auto-lock on background,
-  and biometric unlock (with PIN fallback).
-- ✅ **M3** — Navigation shell, encounter logging (add/edit/delete with rich fields), partner
-  management, history list, and a settings screen (biometric, lock, delete-all-data).
-- ✅ **M3.x** — Partner sex/gender/relationship; custom **acts** (alongside custom positions);
-  big category expansion; **Setting & Location** split out from **Occasion**; per-partner orgasm
-  counts + per-orgasm ejaculation; **theming** (purple/green palette, Light/Dark/System, optional
-  Material You); a **calendar** view on the Trysts screen with custom per-act icons.
-- ✅ **M4** — encrypted photo attachments UI: pick via the Android Photo Picker (no permission),
-  encrypted to app-internal storage, decrypted in-memory only; on encounters (editor + viewer +
-  history/calendar thumbnail) and partners (avatar).
-- ✅ **M5** — password-encrypted backup export + restore (full fidelity incl. photos; see
-  [EXPORT_FORMAT.md](docs/EXPORT_FORMAT.md)), plus **CSV import** from other apps/spreadsheets
-  with column mapping.
-- ✅ **M6** — **Insights**: a pure-Kotlin stats engine (totals, week streaks, averages, monthly &
-  weekday trends, ratings, and per-attribute breakdowns incl. partners, acts, positions, moods, kinks,
-  initiator, and an orgasm drill-down). Fully **customizable**: reorder/hide the stat tiles and section
-  cards, pick a chart style **per card** (bars / line / donut), and consistent **per-type colors**
-  across every chart. Hand-drawn charts (no chart dependency).
-- ✅ **M7** — **Achievements**: ~67 derived achievements (milestones, week streaks, variety, pleasure,
-  occasions) with progress bars and unlock dates, on a dedicated screen (trophy icon in Insights) plus an
-  Insights teaser card. Computed from the log — no extra storage.
-- ✅ **M8** — release prep: i18n string extraction (~200 `strings.xml` entries); CI **quality gates**
-  (build-failing Detekt + ktlint); security self-review (+ a LOW backup-importer SQL-injection fix); a
-  **solo-aware editor** and a **Settings → General** section (app info, Change PIN, configurable auto-lock
-  timeout, haptics, calendar week start); the `UiState` refactor, onboarding copy, **GPLv3** license, and
-  **F-Droid** distribution — all done, leading into the v0.1.0 release.
-- ✅ **v0.2.0** *(post-1.0)* — redesigned calendar (tonal heatmap, month/week toggle, swipe), today-ring,
-  multi-select ejaculation locations (+ "in the shower"), and a **category cleanup** via the first data-only
-  migration (schema v8): clearer oral-position names, "Watching porn" moved to Kinks, several custom
-  positions/acts promoted to built-ins, a "Friend / family's place" location, and a haptics fix.
-
-### Pre-release audit passes
-
-Separate from the milestones, a **12-pass pre-release audit program** runs each pass in a fresh session
-(full prompts in [docs/PRERELEASE_PROMPT_PACK.md](docs/PRERELEASE_PROMPT_PACK.md); status tracked in
-[docs/ROADMAP.md](docs/ROADMAP.md)). **All 12 done — final verdict: GO (conditional):**
-
-- ✅ 1 Material 3 / Modern UI · ✅ 2 Edge-to-edge & insets · ✅ 3 Motion & micro-interactions · ✅ 4 Accessibility
-  · ✅ 5 Adaptive layouts *(nav rail on medium+, two-pane Trysts/editor on expanded, width-capped screens)*
-  · ✅ 6 Manifest & exported components *(MASVS — clean: sole exported activity takes no intent input; no
-  dangerous perms; debuggable/tooling stripped from release)*
-  · ✅ 7 Secrets, storage & logging *(MASVS — no hardcoded secrets, zero sensitive logging, Keystore
-  double-wrapped DEK; one LOW fix: sweep orphaned plaintext camera temps on unlock + full-wipe)*
-- ✅ 8 Network security *(MASVS — zero network surface; no networking lib, no INTERNET perm)*
-  · ✅ 9 WebView & input *(no WebViews; fixed MED Zip-Slip + LOW KDF-DoS in backup import)*
-  · ✅ 10 Dependencies & license *(no CVEs, no version bumps needed; all deps GPLv3-compatible;
-  project licensed **GPLv3** — LICENSE + THIRD_PARTY_NOTICES.md + in-app Settings → About screen)*
-- ✅ 11 Release hardening (R8) *(release build verified end-to-end on emulator under R8: zero R8 warnings,
-  no app keep rules needed, full PIN→SQLCipher→unlock path works obfuscated; unsigned artifact = no leaked
-  signing creds; Play Integrity rejected as incompatible with no-network)*
-  · ✅ 12 Final go/no-go *(**GO** — regression re-scan clean, license artifacts current, R8 release build
-  launches end-to-end on the actual minified binary, zero TODO/FIXME. Included a **real-device pass on a
-  Pixel 9 Pro XL** that hard-proved StrongBox backs the vault key and **caught + fixed two backup
-  data-loss bugs** the emulator missed — wipe→restore dropped photos, and partner avatars were never
-  backed up (both fixed, regression-tested, user-confirmed). Remaining before a public build is
-  human-only: MobSF dynamic scan, broader real-device/OEM + TalkBack coverage.)*
-
-New here? See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for scope and
-[docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) to build it.
+Full release notes are in [CHANGELOG.md](CHANGELOG.md); the milestone history and pre-release audit
+program live in [docs/ROADMAP.md](docs/ROADMAP.md), and post-1.0 plans in
+[docs/ROADMAP_FUTURE.md](docs/ROADMAP_FUTURE.md).
 
 ## Documentation
 
@@ -118,19 +111,20 @@ New here? See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) for scope and
 | [REQUIREMENTS.md](docs/REQUIREMENTS.md) | Functional & non-functional requirements |
 | [THREAT_MODEL.md](docs/THREAT_MODEL.md) | Adversaries, mitigations, residual risk |
 | [SECURITY_DESIGN.md](docs/SECURITY_DESIGN.md) | Encryption & key management |
-| [DATA_MODEL.md](docs/DATA_MODEL.md) | Entities & fields |
+| [DATA_MODEL.md](docs/DATA_MODEL.md) | Entities & fields (schema v10) |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack & module layout |
 | [FLOWCHARTS.md](docs/FLOWCHARTS.md) | Visual maps of the core logic flows |
-| [ROADMAP.md](docs/ROADMAP.md) | Milestones |
+| [ROADMAP.md](docs/ROADMAP.md) | Milestones & the 12-pass pre-release audit |
 | [ROADMAP_FUTURE.md](docs/ROADMAP_FUTURE.md) | Post-1.0 roadmap (shipped + planned) |
 | [DECISIONS.md](docs/DECISIONS.md) | Decision log & open questions |
+| [RELEASE.md](docs/RELEASE.md) | Cut-a-release checklist + F-Droid submission |
 | [CHANGELOG.md](CHANGELOG.md) | Per-release notes |
 | [SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) | Build & run on Windows |
 
 ## License
 
-**GPLv3.** Tryst is free, open-source software licensed under the
-[GNU General Public License v3.0](LICENSE) — so anyone can verify the privacy promises above,
-and any redistributed version must also be GPLv3 with source available. Third-party components
-and their licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and in-app under
+**GPLv3.** Tryst is free, open-source software under the
+[GNU General Public License v3.0](LICENSE) — so anyone can verify the privacy promises above, and any
+redistributed version must also be GPLv3 with source available. Third-party components and their
+licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and in-app under
 **Settings → About** (all GPLv3-compatible).

@@ -3,8 +3,9 @@
 Status: **Live (2026-06-08)** — M0–M7 complete and verified on the emulator; **M8 (polish & release)**
 is the only milestone remaining. Each milestone ends runnable & tested.
 
-> **Update (2026-06-28):** M0–M8 are all **done** and the app has **shipped** (v0.1.0 → v0.2.0; v0.2.0
-> in F-Droid's test queue). This file is the milestone *history*; all forward work — post-1.0 features
+> **Update (2026-07-02):** M0–M8 are all **done** and the app has **shipped** (v0.1.0 → v0.2.0 →
+> v0.3.0; the F-Droid submission MR is open, waiting on the v0.3.0 content-policy rework). This file is
+> the milestone *history*; all forward work — post-1.0 features
 > **and** the engineering/infra/housekeeping backlog (CI instrumented tests, F-Droid screenshots, SPDX
 > headers, Argon2id export KDF, baseline profile, etc.) — now lives in
 > [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md). The legacy "deferred polish backlog" notes below (history
