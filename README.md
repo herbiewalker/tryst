@@ -34,10 +34,12 @@ device or be trusted to anyone.
 `targetSdk 36`. **v0.1.0** was the first public release; **v0.2.0** adds a redesigned calendar
 (tonal heatmap + month/week + swipe), multi-select ejaculation locations, a category cleanup, and a
 haptics fix — full notes in [CHANGELOG.md](CHANGELOG.md). Distribution is **F-Droid** (builds and
-signs from source; the v0.2.0 submission is in F-Droid's test/merge queue). A couple of features sit
-unreleased on `main` ahead of the next version (most-used options surface inline in the editor; a
-"open Trysts in calendar view by default" setting). Post-release plans live in
-[docs/ROADMAP_FUTURE.md](docs/ROADMAP_FUTURE.md).
+signs from source; the submission is open and waiting on the next release). Unreleased on `main`
+ahead of the next version: the **F-Droid content-policy rework** — the shipped built-in acts/kinks
+catalogs are now a small non-explicit starter set, with existing users' entries losslessly converted
+to custom ones (schema v10) and custom entries renamable in place — plus most-used options surfacing
+inline in the editor and an "open Trysts in calendar view by default" setting. Post-release plans
+live in [docs/ROADMAP_FUTURE.md](docs/ROADMAP_FUTURE.md).
 See [docs/FLOWCHARTS.md](docs/FLOWCHARTS.md) for how the core logic fits together.
 
 Progress against the [roadmap](docs/ROADMAP.md):

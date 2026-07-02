@@ -44,6 +44,9 @@ interface PositionDao {
     @Query("SELECT * FROM positions WHERE isBuiltIn = 0 ORDER BY label COLLATE NOCASE")
     fun observeCustom(): Flow<List<PositionEntity>>
 
+    @Query("UPDATE positions SET label = :label WHERE id = :id")
+    suspend fun rename(id: String, label: String)
+
     @Query("DELETE FROM positions WHERE id = :id")
     suspend fun deleteById(id: String)
 }
@@ -56,6 +59,9 @@ interface ActDao {
     @Query("SELECT * FROM acts WHERE isBuiltIn = 0 ORDER BY label COLLATE NOCASE")
     fun observeCustom(): Flow<List<ActEntity>>
 
+    @Query("UPDATE acts SET label = :label WHERE id = :id")
+    suspend fun rename(id: String, label: String)
+
     @Query("DELETE FROM acts WHERE id = :id")
     suspend fun deleteById(id: String)
 }
@@ -67,6 +73,9 @@ interface KinkDao {
 
     @Query("SELECT * FROM kinks WHERE isBuiltIn = 0 ORDER BY label COLLATE NOCASE")
     fun observeCustom(): Flow<List<KinkEntity>>
+
+    @Query("UPDATE kinks SET label = :label WHERE id = :id")
+    suspend fun rename(id: String, label: String)
 
     @Query("DELETE FROM kinks WHERE id = :id")
     suspend fun deleteById(id: String)

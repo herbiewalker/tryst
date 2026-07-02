@@ -40,7 +40,7 @@ import app.tryst.data.db.entity.TagEntity
         EncounterPositionCrossRef::class,
         EncounterTagCrossRef::class,
     ],
-    version = 9,
+    version = 10,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

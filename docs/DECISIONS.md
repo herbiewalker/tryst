@@ -281,10 +281,32 @@ Lightweight ADR log. Newest at top. "Open" items still need a call.
   id-based, custom-capable model as acts/positions — new `KinkEntity`/`kinkDao`/`KinkRepository`, `kinks` column
   `Set<Kink>`→`Set<String>` (ids == old enum names, so **no data rewrite**), Settings → Manage custom kinks,
   Insights `resolveKink`, ENC-1 + achievements adapted. Behaviour is unchanged this phase (built-in catalogs
-  still full). **Phase 2 (planned):** trim the shipped built-in act/kink catalogs to a small non-explicit
-  starter set, and migrate existing users' explicit built-in ids → custom entries (labels via **generic
-  prettify** of the enum name, so the APK ships **zero** explicit strings). Scope = acts/kinks only (what was
-  flagged); positions/toys/etc. left as-is unless flagged later. See `ROADMAP_FUTURE.md`.
+  still full). **Phase 2 (DONE 2026-07-02, schema v10 / `MIGRATION_9_10` — FDP-2):** the shipped built-in
+  catalogs were trimmed to maintainer-approved non-explicit starter sets — `Act` 16 of 40 (KISSING, MAKING_OUT,
+  ORAL, SIXTY_NINE, MANUAL, FINGERING, VAGINAL, ANAL, PROSTATE_MASSAGE, NIPPLE_PLAY, BREAST_PLAY, MASSAGE,
+  MUTUAL_MASTURBATION, MASTURBATION, CUDDLING, OTHER), `Kink` 17 of 53 (DOMINATION, SUBMISSION, BONDAGE,
+  RESTRAINTS, SPANKING, HAIR_PULLING, BITING, BLINDFOLD, SENSORY_PLAY, TEMPERATURE_PLAY, EDGING, PRAISE,
+  ROLEPLAY, COSTUME_PLAY, DIRTY_TALK, AFTERCARE, OTHER). The migration is **generic, not list-driven**:
+  `CatalogAdoption.adoptUnknownIds` scans the log for bare ids the current binary doesn't recognize and adopts
+  each **used** one into the custom `acts`/`kinks` tables (row id = the old enum name → refs rewritten to
+  `custom:<NAME>`; label = `prettify(name)`, e.g. "Anal creampie"; merge into an existing custom row on a
+  label collision). So **no removed-id list ships in the APK** (the ids are themselves explicit), unused
+  removed built-ins simply drop out of the picker, and the routine is idempotent. Ref rewriting is done
+  row-by-row in Kotlin (split→map→join), not SQL `REPLACE` — substring ids (`CREAMPIE` ⊂ `ANAL_CREAMPIE`)
+  make string surgery unsafe. **Restore self-heals:** `BackupManager.import` runs the same adoption after
+  inserting raw rows, so pre-v10 backups no longer resurrect removed ids (this class of migration no longer
+  needs the "re-export after upgrading" caveat). Unused explicit-named act icon drawables were deleted
+  (resource names ship in the APK's resource table), and the 0.2.0 in-app release note was reworded — an APK
+  string sweep then came back clean. *Known residual:* the `WATCHING_PORN` **id** remains inside
+  `MIGRATION_7_8`'s SQL (an internal all-caps token, not a UI label) — removing it would break the shipped
+  v7→v8 migration; accepted. Companion changes: custom acts/kinks/positions gained
+  **rename-in-place** (id — and so every encounter ref — untouched; unique-label collisions rejected), since
+  prettified labels may want polish ("Sixty nine"→"69") and delete+re-add would orphan refs; the three
+  manage-custom dialogs were unified into one `CustomCatalogDialog`; and the `Practice`→`Act` /
+  `Setting`→`Place` enum-class renames landed first as a pure refactor (DB stores constant names, not class
+  names — zero data impact). Scope = acts/kinks only (what was flagged); positions/toys/ejaculation-locations
+  left as-is unless flagged later. Verified by `MigrationTest.migrate9To10…` (incl. substring pair,
+  label-collision merge, idempotence) + `BackupRestoreRegressionTest.restoreOfPreTrimBackup…`.
 - **D-25 (M6):** **No chart library** (resolves O-3). Insights charts are drawn with plain Compose
   layout (`VerticalBarChart`, `RankedBars`) instead of Vico/MPAndroidChart. Rationale: the app already
   hand-rolls its visuals (per-act vector icons, manual `BitmapFactory` downsampling, no third-party

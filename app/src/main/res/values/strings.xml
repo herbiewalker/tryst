@@ -10,6 +10,7 @@
     <string name="action_delete">Delete</string>
     <string name="action_done">Done</string>
     <string name="action_remove">Remove</string>
+    <string name="action_rename">Rename</string>
     <string name="action_add">Add</string>
     <string name="action_close">Close</string>
     <string name="action_more">More…</string>

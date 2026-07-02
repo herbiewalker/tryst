@@ -26,6 +26,10 @@ class CustomPositionsViewModel @Inject constructor(
         viewModelScope.launch { repository.addCustom(label) }
     }
 
+    fun rename(id: String, label: String) {
+        viewModelScope.launch { repository.rename(id, label) }
+    }
+
     fun delete(id: String) {
         viewModelScope.launch { repository.delete(id) }
     }

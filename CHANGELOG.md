@@ -13,7 +13,22 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+### Changed
+- **The built-in acts and kinks catalogs are now a small, non-explicit starter set** (F-Droid
+  content policy — the app ships without predefined explicit labels). Nothing you logged is lost:
+  on first launch after the update, every entry you ever used from the old built-in lists is
+  converted into a **custom** act/kink with the same meaning (label derived from the internal id,
+  e.g. "Foot play"), still fully counted in insights, search, and achievements, and still pickable
+  when logging (schema v10, automatic migration). Built-ins you never used simply leave the picker —
+  re-add anything you miss under **Settings → Manage custom acts / kinks**.
+- Restoring an **older backup** now performs the same conversion automatically, so pre-update
+  backups keep working without resurrecting the old built-in ids.
+
 ### Added
+- **Rename custom entries** — custom acts, kinks, and positions can now be renamed in place
+  (Settings → Manage custom …). Renaming keeps the entry's identity, so every logged encounter
+  follows the new label. Handy for polishing the auto-derived labels from the catalog conversion
+  (e.g. turning "Sixty nine" back into "69").
 - **Custom kinks** — add your own kinks under **Settings → Manage custom kinks**, just like custom
   acts and positions. They appear alongside the built-ins when logging, and count fully toward
   insights and achievements. (Kinks are now stored the same id-based way as acts/positions —

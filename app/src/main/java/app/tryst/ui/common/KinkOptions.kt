@@ -15,7 +15,6 @@ object KinkOptions {
         Kink.SUBMISSION,
         Kink.BONDAGE,
         Kink.SPANKING,
-        Kink.CHOKING,
         Kink.DIRTY_TALK,
         Kink.ROLEPLAY,
         Kink.EDGING,
