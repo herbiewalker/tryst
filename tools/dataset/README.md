@@ -54,3 +54,16 @@ The build is two stages:
    `Verify.java` then decrypts it back (mirrors import) as a self-check.
 
 Format reference: [`docs/EXPORT_FORMAT.md`](../../docs/EXPORT_FORMAT.md).
+
+## Inspecting an existing backup
+
+`Extract.java` / `Dump.java` are the read side of the same container (handy for verifying a `.tryst`
+or diffing two backups). They use the same Tink jars `build.sh` fetches into `.tinklib/`:
+
+```bash
+CP="$(printf '%s:' .tinklib/*.jar)"
+javac -cp "$CP" Extract.java Dump.java
+java -cp "$CP:." Extract  backup.tryst  <password>  outdir   # -> outdir/data.json + media/<id>
+java -cp "$CP:." Dump     backup.tryst  <password>  data.json # just the data.json
+```
+
