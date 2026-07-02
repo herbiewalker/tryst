@@ -3,6 +3,7 @@ package app.tryst.ui.settings
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +34,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,9 +50,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
 import app.tryst.core.prefs.ThemeMode
 import app.tryst.core.prefs.WeekStart
-import app.tryst.data.db.entity.ActEntity
-import app.tryst.data.db.entity.KinkEntity
-import app.tryst.data.db.entity.PositionEntity
 import app.tryst.ui.common.SingleSelectChips
 import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.rememberHaptics
@@ -596,19 +595,47 @@ private fun BackupPasswordDialog(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CustomActsDialog(viewModel: CustomActsViewModel, onDismiss: () -> Unit) {
     val acts by viewModel.customActs.collectAsStateWithLifecycle()
+    CustomCatalogDialog(
+        title = R.string.custom_acts_title,
+        description = R.string.custom_acts_desc,
+        addLabel = R.string.custom_acts_add_label,
+        emptyText = R.string.custom_acts_empty,
+        entries = acts.map { it.id to it.label },
+        onAdd = viewModel::add,
+        onRename = viewModel::rename,
+        onDelete = viewModel::delete,
+        onDismiss = onDismiss,
+    )
+}
+
+/**
+ * One shared manage-custom-entries dialog for acts / kinks / positions: add, rename in place
+ * (the id — and so every encounter ref — is untouched), and remove. [entries] is id → label.
+ */
+@Composable
+private fun CustomCatalogDialog(
+    @StringRes title: Int,
+    @StringRes description: Int,
+    @StringRes addLabel: Int,
+    @StringRes emptyText: Int,
+    entries: List<Pair<String, String>>,
+    onAdd: (String) -> Unit,
+    onRename: (String, String) -> Unit,
+    onDelete: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
     var newLabel by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.custom_acts_title)) },
+        title = { Text(stringResource(title)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    stringResource(R.string.custom_acts_desc),
+                    stringResource(description),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -619,21 +646,21 @@ private fun CustomActsDialog(viewModel: CustomActsViewModel, onDismiss: () -> Un
                     OutlinedTextField(
                         value = newLabel,
                         onValueChange = { newLabel = it },
-                        label = { Text(stringResource(R.string.custom_acts_add_label)) },
+                        label = { Text(stringResource(addLabel)) },
                         singleLine = true,
                         modifier = Modifier.weight(1f),
                     )
                     TextButton(
                         onClick = {
-                            viewModel.add(newLabel)
+                            onAdd(newLabel)
                             newLabel = ""
                         },
                         enabled = newLabel.isNotBlank(),
                     ) { Text(stringResource(R.string.action_add)) }
                 }
-                if (acts.isEmpty()) {
+                if (entries.isEmpty()) {
                     Text(
-                        stringResource(R.string.custom_acts_empty),
+                        stringResource(emptyText),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -642,8 +669,14 @@ private fun CustomActsDialog(viewModel: CustomActsViewModel, onDismiss: () -> Un
                         modifier = Modifier.heightIn(max = 280.dp).verticalScroll(rememberScrollState()),
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        acts.forEach { act ->
-                            CustomActRow(act, onDelete = { viewModel.delete(act.id) })
+                        entries.forEach { (id, label) ->
+                            key(id) {
+                                CustomEntryRow(
+                                    label = label,
+                                    onRename = { onRename(id, it) },
+                                    onDelete = { onDelete(id) },
+                                )
+                            }
                         }
                     }
                 }
@@ -654,151 +687,74 @@ private fun CustomActsDialog(viewModel: CustomActsViewModel, onDismiss: () -> Un
 }
 
 @Composable
-private fun CustomActRow(act: ActEntity, onDelete: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(act.label, style = MaterialTheme.typography.bodyLarge)
-        TextButton(onClick = onDelete) { Text(stringResource(R.string.action_remove)) }
+private fun CustomEntryRow(label: String, onRename: (String) -> Unit, onDelete: () -> Unit) {
+    var editing by remember { mutableStateOf(false) }
+    var editLabel by remember { mutableStateOf("") }
+
+    if (editing) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            OutlinedTextField(
+                value = editLabel,
+                onValueChange = { editLabel = it },
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(
+                onClick = {
+                    onRename(editLabel)
+                    editing = false
+                },
+                enabled = editLabel.isNotBlank(),
+            ) { Text(stringResource(R.string.action_save)) }
+            TextButton(onClick = { editing = false }) { Text(stringResource(R.string.action_cancel)) }
+        }
+    } else {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+            TextButton(onClick = {
+                editLabel = label
+                editing = true
+            }) { Text(stringResource(R.string.action_rename)) }
+            TextButton(onClick = onDelete) { Text(stringResource(R.string.action_remove)) }
+        }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CustomKinksDialog(viewModel: CustomKinksViewModel, onDismiss: () -> Unit) {
     val kinks by viewModel.customKinks.collectAsStateWithLifecycle()
-    var newLabel by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.custom_kinks_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    stringResource(R.string.custom_kinks_desc),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    OutlinedTextField(
-                        value = newLabel,
-                        onValueChange = { newLabel = it },
-                        label = { Text(stringResource(R.string.custom_kinks_add_label)) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                    )
-                    TextButton(
-                        onClick = {
-                            viewModel.add(newLabel)
-                            newLabel = ""
-                        },
-                        enabled = newLabel.isNotBlank(),
-                    ) { Text(stringResource(R.string.action_add)) }
-                }
-                if (kinks.isEmpty()) {
-                    Text(
-                        stringResource(R.string.custom_kinks_empty),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                } else {
-                    Column(
-                        modifier = Modifier.heightIn(max = 280.dp).verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        kinks.forEach { kink ->
-                            CustomKinkRow(kink, onDelete = { viewModel.delete(kink.id) })
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_done)) } },
+    CustomCatalogDialog(
+        title = R.string.custom_kinks_title,
+        description = R.string.custom_kinks_desc,
+        addLabel = R.string.custom_kinks_add_label,
+        emptyText = R.string.custom_kinks_empty,
+        entries = kinks.map { it.id to it.label },
+        onAdd = viewModel::add,
+        onRename = viewModel::rename,
+        onDelete = viewModel::delete,
+        onDismiss = onDismiss,
     )
 }
 
-@Composable
-private fun CustomKinkRow(kink: KinkEntity, onDelete: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(kink.label, style = MaterialTheme.typography.bodyLarge)
-        TextButton(onClick = onDelete) { Text(stringResource(R.string.action_remove)) }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CustomPositionsDialog(viewModel: CustomPositionsViewModel, onDismiss: () -> Unit) {
     val positions by viewModel.customPositions.collectAsStateWithLifecycle()
-    var newLabel by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.custom_positions_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    stringResource(R.string.custom_positions_desc),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    OutlinedTextField(
-                        value = newLabel,
-                        onValueChange = { newLabel = it },
-                        label = { Text(stringResource(R.string.custom_positions_add_label)) },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                    )
-                    TextButton(
-                        onClick = {
-                            viewModel.add(newLabel)
-                            newLabel = ""
-                        },
-                        enabled = newLabel.isNotBlank(),
-                    ) { Text(stringResource(R.string.action_add)) }
-                }
-                if (positions.isEmpty()) {
-                    Text(
-                        stringResource(R.string.custom_positions_empty),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                } else {
-                    Column(
-                        modifier = Modifier.heightIn(max = 280.dp).verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        positions.forEach { position ->
-                            CustomPositionRow(position, onDelete = { viewModel.delete(position.id) })
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_done)) } },
+    CustomCatalogDialog(
+        title = R.string.custom_positions_title,
+        description = R.string.custom_positions_desc,
+        addLabel = R.string.custom_positions_add_label,
+        emptyText = R.string.custom_positions_empty,
+        entries = positions.map { it.id to it.label },
+        onAdd = viewModel::add,
+        onRename = viewModel::rename,
+        onDelete = viewModel::delete,
+        onDismiss = onDismiss,
     )
-}
-
-@Composable
-private fun CustomPositionRow(position: PositionEntity, onDelete: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text(position.label, style = MaterialTheme.typography.bodyLarge)
-        TextButton(onClick = onDelete) { Text(stringResource(R.string.action_remove)) }
-    }
 }

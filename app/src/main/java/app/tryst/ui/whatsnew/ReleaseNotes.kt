@@ -27,7 +27,7 @@ object ReleaseNotes {
                 "Redesigned calendar: tonal day chips with an activity heatmap, a month/week toggle, and swipe to change month.",
                 "Ejaculation location is now multi-select per orgasm, with an \"in the shower\" option.",
                 "New \"Friend / family's place\" location, plus more built-in positions and acts.",
-                "\"Watching porn\" moved to Kinks & BDSM, and clearer oral-position names — your history is migrated automatically.",
+                "One act moved to Kinks & BDSM, and clearer oral-position names — your history is migrated automatically.",
                 "Haptics now buzz when enabled in Settings.",
                 "Tip: re-export your backup after updating so a future restore keeps the new naming.",
             ),

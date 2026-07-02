@@ -23,8 +23,8 @@ this is cheap). Distinct from the rest of this roadmap — it's distribution-dri
 | ID | Phase | Status |
 |----|-------|--------|
 | **FDP-1** | **Kinks → id-based & custom-capable** (parity with acts/positions): `KinkEntity`/`kinkDao`/`KinkRepository`, `kinks` column `Set<Kink>`→`Set<String>` (ids == old enum names → no data rewrite), Settings → Manage custom kinks, `resolveKink` in Insights, ENC-1 + achievements adapted. **schema v9 / `MIGRATION_8_9`.** | ✅ **DONE (2026-06-29).** Behaviour unchanged (built-ins still full); all gates + instrumented migration/backup tests green on emulator. |
-| **FDP-2** | **Ship clean:** trim built-in act/kink catalogs to a small non-explicit starter set; migrate existing users' explicit built-in ids → custom entries (labels via **generic prettify** of the enum name, so the APK ships **zero** explicit strings). New installs start clean. | ⏳ Planned (next). |
-| **FDP-3** | **Release & F-Droid:** version bump, CHANGELOG/ReleaseNotes/fastlane, reply to linsui, update MR after release. | ⏳ Planned. |
+| **FDP-2** | **Ship clean:** trim built-in act/kink catalogs to a small non-explicit starter set; migrate existing users' explicit built-in ids → custom entries (labels via **generic prettify** of the enum name, so the APK ships **zero** explicit strings). New installs start clean. | ✅ **DONE (2026-07-02).** **schema v10 / `MIGRATION_9_10`** — generic `CatalogAdoption` (no removed-id list in the APK; used-only adoption; restore self-heals via the same routine in `BackupManager.import`). Catalogs: Act 16/40, Kink 17/53 kept. Bonus: custom entries **renamable in place**; explicit-named icon drawables deleted; `Practice`→`Act` / `Setting`→`Place` uniformity renames. Full record in D-41. |
+| **FDP-3** | **Release & F-Droid:** version bump, CHANGELOG/ReleaseNotes/fastlane, reply to linsui, update MR after release. | ⏳ Planned (next). |
 
 *Scope = acts/kinks only (what was flagged). Positions/toys/ejaculation-locations left as-is unless a
 follow-up review flags them.*

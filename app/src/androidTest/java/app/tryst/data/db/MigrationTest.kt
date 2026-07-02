@@ -168,4 +168,84 @@ class MigrationTest {
             }
         }
     }
+
+    /**
+     * v9 → v10 is a **data** migration (no DDL): the built-in Act/Kink catalogs were trimmed (FDP-2)
+     * and every ref to a removed built-in must be adopted into the custom tables (prettified label)
+     * with the ref rewritten to `custom:<id>`. Covers: multiple removed ids in one column — including
+     * a pair where one id is a substring of the other (`CREAMPIE` ⊂ `ANAL_CREAMPIE`), the classic
+     * SQL-REPLACE corruption case; merge into a pre-existing custom entry whose label collides;
+     * surviving built-ins and `custom:` refs passing through untouched; and idempotence of the
+     * underlying [CatalogAdoption] (also run post-restore by BackupManager).
+     */
+    @Test
+    fun migrate9To10_adoptsRemovedBuiltInsAsCustom() {
+        helper.createDatabase(dbName, 9).use { db ->
+            db.execSQL("INSERT INTO acts (id, label, isBuiltIn) VALUES ('actCustom', 'My Custom Act', 0)")
+            // Label collides with prettify("FOOT_PLAY") → refs must merge into this row, no new row.
+            db.execSQL("INSERT INTO acts (id, label, isBuiltIn) VALUES ('preexisting', 'Foot play', 0)")
+
+            // e1: removed ids (incl. the substring pair) + a kept built-in + a custom ref.
+            db.execSQL(
+                "INSERT INTO encounters (id, startAt, protectionUsed, practicesPerformed, practicesReceived, createdAt, updatedAt) " +
+                    "VALUES ('e1', 1000, '', 'CREAMPIE,ANAL_CREAMPIE,ORAL,custom:actCustom', 'FOOT_PLAY', 1, 1)",
+            )
+            // e2: control row with only surviving ids — must pass through untouched.
+            db.execSQL(
+                "INSERT INTO encounters (id, startAt, protectionUsed, practicesPerformed, kinks, createdAt, updatedAt) " +
+                    "VALUES ('e2', 2000, '', 'ORAL', 'SPANKING', 1, 1)",
+            )
+            // e3: removed kinks beside a surviving one.
+            db.execSQL(
+                "INSERT INTO encounters (id, startAt, protectionUsed, kinks, createdAt, updatedAt) " +
+                    "VALUES ('e3', 3000, '', 'CHOKING,GAGGING,SPANKING', 1, 1)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(dbName, 10, true, MIGRATION_9_10).use { db ->
+            db.query("SELECT practicesPerformed, practicesReceived FROM encounters WHERE id = 'e1'").use { c ->
+                assertTrue(c.moveToFirst())
+                // Order preserved; each removed id independently rewritten (no substring bleed).
+                assertEquals("custom:CREAMPIE,custom:ANAL_CREAMPIE,ORAL,custom:actCustom", c.getString(0))
+                assertEquals("custom:preexisting", c.getString(1)) // merged into the colliding label's row
+            }
+            db.query("SELECT practicesPerformed, kinks FROM encounters WHERE id = 'e2'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("ORAL", c.getString(0))
+                assertEquals("SPANKING", c.getString(1))
+            }
+            db.query("SELECT kinks FROM encounters WHERE id = 'e3'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("custom:CHOKING,custom:GAGGING,SPANKING", c.getString(0))
+            }
+            // Adopted rows exist with prettified labels; the merged id did NOT create a new row.
+            db.query("SELECT label, isBuiltIn FROM acts WHERE id = 'CREAMPIE'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("Creampie", c.getString(0))
+                assertEquals(0, c.getInt(1))
+            }
+            db.query("SELECT label FROM acts WHERE id = 'ANAL_CREAMPIE'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("Anal creampie", c.getString(0))
+            }
+            db.query("SELECT COUNT(*) FROM acts WHERE id = 'FOOT_PLAY'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(0, c.getInt(0))
+            }
+            db.query("SELECT label FROM kinks WHERE id = 'CHOKING'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("Choking", c.getString(0))
+            }
+            // Idempotence: a second adoption pass finds nothing bare/unknown and changes nothing.
+            CatalogAdoption.adoptUnknownIds(db)
+            db.query("SELECT practicesPerformed FROM encounters WHERE id = 'e1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("custom:CREAMPIE,custom:ANAL_CREAMPIE,ORAL,custom:actCustom", c.getString(0))
+            }
+            db.query("SELECT COUNT(*) FROM acts").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(4, c.getInt(0)) // actCustom, preexisting, CREAMPIE, ANAL_CREAMPIE
+            }
+        }
+    }
 }

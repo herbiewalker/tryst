@@ -38,10 +38,10 @@ The central record.
 | orgasmCountSelf | Int? | times the user came |
 | partnerOrgasms | Map\<String,Int\>? | **per-partner** orgasm counts (partnerId → count) |
 | ejaculationLocations | Map\<Int,Set\<EjaculationLocation\>\>? | **per-orgasm** location(s) — multi-select per orgasm |
-| practicesPerformed / practicesReceived | Set\<String\>? | **Acts** gave/received (built-in `Practice` name or `custom:<uuid>`) |
+| practicesPerformed / practicesReceived | Set\<String\>? | **Acts** gave/received (built-in `Act` name, or `custom:<id>`) |
 | positions | Set\<String\>? | built-in `Position` name or `custom:<uuid>` |
-| kinks | Set\<String\>? | **Kink & BDSM** (built-in `Kink` name or `custom:<uuid>`) |
-| contexts | Set\<Setting\>? | **Setting & Location** (places) |
+| kinks | Set\<String\>? | **Kink & BDSM** (built-in `Kink` name, or `custom:<id>`) |
+| contexts | Set\<Place\>? | **Setting & Location** (places) |
 | occasions | Set\<Occasion\>? | occasion / context |
 | toys | Set\<ToyType\>? | |
 | locationId | FK? | → Location (legacy; UI uses `contexts`) |
@@ -94,10 +94,14 @@ Partners.
 ## Custom-option tables
 - **Position** (`positions`): `id`, `label`, `isBuiltIn`. Built-ins come from the `Position` enum;
   user-defined rows (`isBuiltIn=false`) are managed in Settings → Manage custom positions.
-- **Act** (`acts`): same shape; built-ins from the `Practice` enum, custom rows managed in
+- **Act** (`acts`): same shape; built-ins from the `Act` enum, custom rows managed in
   Settings → Manage custom acts.
 - **Kink** (`kinks`, **v9**): same shape; built-ins from the `Kink` enum, custom rows managed in
   Settings → Manage custom kinks.
+- Custom rows can be **renamed in place** (v10): the row id — and so every encounter ref — is
+  untouched; a label that collides with an existing entry is rejected (unique-label index).
+- **v10 adopted rows:** ids of built-ins removed in the v10 catalog trim live here as custom rows
+  whose `id` is the old enum `name` (not a uuid) — refs are `custom:<NAME>`. See D-41 / v10 below.
 
 ## Location / Tag / Media
 - **Location** (`locations`): `id`, `label` — user-typed generic label. **No GPS / coarse location**
@@ -111,9 +115,12 @@ Partners.
 
 ## Category enums (`data/db/entity/Enums.kt`)
 All implement `DisplayLabel` (human-written `label` shown in the UI): `Initiator`, `Mood`,
-`Protection`, `EjaculationLocation`, `Practice` (acts), `Kink`, `Setting` (places),
-`Occasion`, `ToyType`, `Position`, plus partner/profile enums `Sex`, `Gender`, `RelationshipType`,
-and the **v7 demographic** enums `Ethnicity`, `BodyType`. `Orgasm` is a legacy enum kept for migration.
+`Protection`, `EjaculationLocation`, `Act` (acts; named `Practice` before v10), `Kink`,
+`Place` (places; named `Setting` before v10), `Occasion`, `ToyType`, `Position`, plus partner/profile
+enums `Sex`, `Gender`, `RelationshipType`, and the **v7 demographic** enums `Ethnicity`, `BodyType`.
+`Orgasm` is a legacy enum kept for migration. (The class renames are code-only — the DB stores enum
+*constant* names, never class names.) Since **v10** the `Act`/`Kink` catalogs are a small non-explicit
+starter set (F-Droid policy, D-41); everything beyond it is user data in the custom tables.
 
 ## Achievements (M7 — derived, **no tables**)
 Achievements are **not persisted**. The catalog is static code (`data/achievements/Achievements.kt`)
@@ -139,5 +146,13 @@ storage — likely a small row in the encrypted DB.)
   unchanged — a built-in kink's id **is** its old `Kink` enum `name`, so existing comma-joined values
   stay valid with no data rewrite; the table starts empty (built-ins live in the enum). Foundation for
   the F-Droid policy work (ship without a predefined explicit catalog — see DECISIONS D-41).
+- **v10 (`MIGRATION_9_10`, FDP-2)** is data-only — no DDL. The shipped `Act`/`Kink` catalogs were
+  trimmed to a non-explicit starter set, and `CatalogAdoption.adoptUnknownIds` adopts every **used**
+  bare id the current binary doesn't recognize into the custom `acts`/`kinks` tables (row id = the old
+  enum `name`, label = generic prettify of it; label collisions merge into the existing custom row) and
+  rewrites refs to `custom:<NAME>` — row-by-row in code, not SQL `REPLACE` (substring-id hazard). The
+  routine is generic (no removed-id list ships in the APK) and idempotent, and **`BackupManager.import`
+  runs it after every restore**, so pre-v10 backups self-heal instead of resurrecting removed ids —
+  the v8 "re-export after upgrading" caveat no longer applies to catalog trims.
 - Export format (M5) is decoupled from the live schema and versioned independently
   (see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §4).

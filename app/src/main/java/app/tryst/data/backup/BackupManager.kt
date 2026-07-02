@@ -6,6 +6,7 @@ import android.database.sqlite.SQLiteDatabase
 import app.tryst.core.crypto.BackupCrypto
 import app.tryst.core.security.Pbkdf2
 import app.tryst.core.session.SessionManager
+import app.tryst.data.db.CatalogAdoption
 import app.tryst.data.media.EncryptedMediaStore
 import java.io.IOException
 import java.io.InputStream
@@ -97,6 +98,10 @@ class BackupManager @Inject constructor(
                 entry = zip.nextEntry
             }
         }
+        // Restore inserts rows raw — it does NOT replay migrations — so a backup made before a
+        // catalog trim can reintroduce since-removed built-in act/kink ids. Adopt them into the
+        // custom tables exactly like MIGRATION_9_10 does; no-op for current backups (idempotent).
+        CatalogAdoption.adoptUnknownIds(db)
     }
 
     @Suppress("NestedBlockDepth")

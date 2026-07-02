@@ -22,5 +22,12 @@ class KinkRepository @Inject constructor(
         dao.upsert(KinkEntity(id = UUID.randomUUID().toString(), label = trimmed, isBuiltIn = false))
     }
 
+    /** Renames a custom kink in place (id — and so every encounter ref — is untouched). A label that collides with an existing entry (unique index) is silently rejected. */
+    suspend fun rename(id: String, label: String) {
+        val trimmed = label.trim()
+        if (trimmed.isEmpty()) return
+        runCatching { dao.rename(id, trimmed) }
+    }
+
     suspend fun delete(id: String) = dao.deleteById(id)
 }

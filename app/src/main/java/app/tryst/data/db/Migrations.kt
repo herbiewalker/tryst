@@ -142,6 +142,27 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
     }
 }
 
+/**
+ * v9 → v10: **data-only** (no DDL; the v10 schema is structurally identical to v9) — the shipped
+ * built-in `Act`/`Kink` catalogs were trimmed to a small non-explicit starter set (FDP-2 / D-41
+ * phase 2, F-Droid policy), and every encounter ref to a removed built-in is adopted into the
+ * custom `acts`/`kinks` tables via [CatalogAdoption]: a custom row per removed-but-used id (label
+ * generically prettified from the id, e.g. `SOME_ACT` → "Some act") and refs rewritten to
+ * `custom:<id>`. Zero data loss; removed built-ins the user never logged simply drop out of the
+ * picker.
+ *
+ * [CatalogAdoption] binds to the enums at **run time** on purpose: it adopts whatever the current
+ * binary doesn't recognize, so this migration needs no hardcoded removed-id list (those id strings
+ * are themselves explicit and must not ship in the APK), and a later trim is healed by the same
+ * routine. Restore is covered too — `BackupManager.import` runs the same adoption after inserting
+ * raw rows, so pre-v10 backups no longer resurrect removed ids.
+ */
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        CatalogAdoption.adoptUnknownIds(db)
+    }
+}
+
 /** All migrations, in order. */
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
@@ -152,4 +173,5 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_6_7,
     MIGRATION_7_8,
     MIGRATION_8_9,
+    MIGRATION_9_10,
 )

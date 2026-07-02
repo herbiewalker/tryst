@@ -21,6 +21,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -143,5 +144,47 @@ class BackupRestoreRegressionTest {
 
         assertEquals(photoId, manager.database().partnerDao().getById("p1")?.photoMediaId)
         assertArrayEquals("partner avatar must survive backup", avatar, store.open(photoId).use { it.readBytes() })
+    }
+
+    /**
+     * Restore inserts rows raw (no migrations), so a backup made before the v10 catalog trim carries
+     * bare ids of since-removed built-in acts/kinks. Import must run the same CatalogAdoption pass as
+     * MIGRATION_9_10: adopt them as custom rows and rewrite the refs — or the removed ids would
+     * resurface unlabeled and unpickable.
+     */
+    @Test
+    fun restoreOfPreTrimBackup_adoptsRemovedIds() = runBlocking<Unit> {
+        val now = System.currentTimeMillis()
+        // Emulate the old backup's content via raw SQL (the app can no longer produce these ids).
+        val db = manager.database().openHelper.writableDatabase
+        db.execSQL(
+            "INSERT INTO encounters (id, startAt, protectionUsed, practicesPerformed, kinks, createdAt, updatedAt) " +
+                "VALUES ('e1', $now, '', 'FOOT_PLAY,ORAL', 'CHOKING,SPANKING', $now, $now)",
+        )
+
+        val out = ByteArrayOutputStream()
+        backup.export(password, out)
+
+        // Wipe, then restore the "old" backup.
+        db.execSQL("DELETE FROM encounters")
+        db.execSQL("DELETE FROM acts")
+        db.execSQL("DELETE FROM kinks")
+
+        backup.import(password, ByteArrayInputStream(out.toByteArray()))
+
+        db.query("SELECT practicesPerformed, kinks FROM encounters WHERE id = 'e1'").use { c ->
+            assertTrue("restored encounter missing", c.moveToFirst())
+            assertEquals("custom:FOOT_PLAY,ORAL", c.getString(0))
+            assertEquals("custom:CHOKING,SPANKING", c.getString(1))
+        }
+        db.query("SELECT label, isBuiltIn FROM acts WHERE id = 'FOOT_PLAY'").use { c ->
+            assertTrue("adopted act row missing", c.moveToFirst())
+            assertEquals("Foot play", c.getString(0))
+            assertEquals(0, c.getInt(1))
+        }
+        db.query("SELECT label FROM kinks WHERE id = 'CHOKING'").use { c ->
+            assertTrue("adopted kink row missing", c.moveToFirst())
+            assertEquals("Choking", c.getString(0))
+        }
     }
 }
