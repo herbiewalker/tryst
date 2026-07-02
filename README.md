@@ -13,7 +13,7 @@
 
 Tryst keeps your most personal data on your phone and nowhere else — no account, no sync,
 and **no internet permission at all**, so the app *cannot* send your data anywhere.
-Inspired by the iOS app *Nice*, and built so privacy is the feature, not a footnote.
+Inspired by other tracking apps you need to pay for, and built so privacy is the feature, not a footnote.
 
 <table>
   <tr>
