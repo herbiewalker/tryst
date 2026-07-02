@@ -24,10 +24,27 @@ this is cheap). Distinct from the rest of this roadmap — it's distribution-dri
 |----|-------|--------|
 | **FDP-1** | **Kinks → id-based & custom-capable** (parity with acts/positions): `KinkEntity`/`kinkDao`/`KinkRepository`, `kinks` column `Set<Kink>`→`Set<String>` (ids == old enum names → no data rewrite), Settings → Manage custom kinks, `resolveKink` in Insights, ENC-1 + achievements adapted. **schema v9 / `MIGRATION_8_9`.** | ✅ **DONE (2026-06-29).** Behaviour unchanged (built-ins still full); all gates + instrumented migration/backup tests green on emulator. |
 | **FDP-2** | **Ship clean:** trim built-in act/kink catalogs to a small non-explicit starter set; migrate existing users' explicit built-in ids → custom entries (labels via **generic prettify** of the enum name, so the APK ships **zero** explicit strings). New installs start clean. | ✅ **DONE (2026-07-02).** **schema v10 / `MIGRATION_9_10`** — generic `CatalogAdoption` (no removed-id list in the APK; used-only adoption; restore self-heals via the same routine in `BackupManager.import`). Catalogs: Act 16/40, Kink 17/53 kept. Bonus: custom entries **renamable in place**; explicit-named icon drawables deleted; `Practice`→`Act` / `Setting`→`Place` uniformity renames. Full record in D-41. |
-| **FDP-3** | **Release & F-Droid:** version bump, CHANGELOG/ReleaseNotes/fastlane, reply to linsui, update MR after release. | ⏳ Planned (next). |
+| **FDP-3** | **Release & F-Droid:** version bump, CHANGELOG/ReleaseNotes/fastlane, tag, reply to linsui, update MR to build the compliant version. | ⏳ Planned (next). Concrete checklist below. |
 
 *Scope = acts/kinks only (what was flagged). Positions/toys/ejaculation-locations left as-is unless a
 follow-up review flags them.*
+
+**FDP-3 concrete checklist** *(verified against the tree 2026-07-02 — everything below is still `versionCode 2`/`0.2.0`, so all four release-metadata spots are stale; the changes are already drafted in `CHANGELOG.md`'s `[Unreleased]` section, so this is transcription + a version stamp, not new authoring):*
+
+*In-repo release metadata (the four synced spots — D-35):*
+- [ ] **Version bump** — `app/build.gradle.kts`: `versionCode 2 → 3`, `versionName "0.2.0" → "0.3.0"`.
+- [ ] **In-app What's-new** — prepend a `0.3.0` / code `3` `ReleaseNote` to `ui/whatsnew/ReleaseNotes.kt` (derive highlights from the `[Unreleased]` text).
+- [ ] **F-Droid changelog** — add `fastlane/metadata/android/en-US/changelogs/3.txt` (only `1.txt`/`2.txt` exist).
+- [ ] **CHANGELOG.md** — promote `[Unreleased]` → `[0.3.0] — <date> (versionCode 3)`.
+- [ ] Sanity-build `assembleRelease checkNoNetworkRelease`, then commit + `git tag -a v0.3.0` + push tag (needs explicit user OK to push `main`).
+
+*No action needed (verified):* the **About screen** reads its version dynamically via `AppVersion.name()` (package `versionName`), so it updates for free on the bump; its license/OSS content doesn't reference catalogs. The unreleased **calendar-default-view** (`625b0a3`) + **ENC-1** (`75b535b`) already have their CHANGELOG `[Unreleased]` entries — they ship as part of 0.3.0, no separate write-up.
+
+*F-Droid MR side (fdroiddata !40471, still OPEN / `waiting-for-upstream`):* F-Droid is waiting on exactly this rework. **0.1.0/0.2.0 are NOT buildable by F-Droid** (they contain the flagged explicit catalogs), so the recipe's first build target must be **0.3.0**, not 0.1.0. After the tag is pushed:
+- [ ] Update `metadata/app.tryst.yml` in the MR: `Builds` entry → `versionName: 0.3.0`, `versionCode: 3`, `commit:` = **full 40-char hash** of the `v0.3.0` tag (never the tag name); `CurrentVersion: 0.3.0`, `CurrentVersionCode: 3`. Re-append the **trailing newline** (GitLab-API edits drop it).
+- [ ] Reply to **linsui** on the MR that the content-policy rework shipped in 0.3.0, linking the tag/commit.
+- [ ] Respond to any further reviewer feedback until merged. All driven via the GitLab REST API + PAT (`E:\ClaudeFolder\Git\GetLab\getlab.txt`), per RELEASE.md.
+- [ ] *(Optional, non-blocking)* **STORE-1** screenshots — the F-Droid gallery is empty; add `images/phoneScreenshots/` via the FLAG_SECURE-off procedure.
 
 ---
 
