@@ -29,21 +29,21 @@ core/
   crypto/     MediaCrypto (Tink streaming), BackupCrypto (password KDF + AEAD container)
   prefs/      ThemePreferences, InsightsPreferences, GeneralPreferences (auto-lock/haptics/week-start/last-seen-version)  (SharedPreferences, non-sensitive)
 data/
-  db/         TrystDatabase, TrystDatabaseFactory, entities, DAOs, Converters, Migrations, SqlCipherLibrary
+  db/         TrystDatabase, TrystDatabaseFactory, entities, DAOs, Converters, Migrations, CatalogAdoption (v10 removed-id → custom adoption; also run post-restore), SqlCipherLibrary
   repository/ Encounter / Partner / Profile / Position / Act repositories (read DAOs from the unlocked session)
   media/      EncryptedMediaStore (encrypted blobs in app-internal storage)
   backup/     BackupManager (export/restore), Csv (importer)
   stats/      InsightsEngine + Insights model (pure Kotlin)
 di/           Hilt wiring (most types use @Inject constructors; module is minimal)
 ui/
-  common/     SelectionField/Chips, MediaImages, ImagePicker, Format, Position/Act options, PracticeVisuals, Haptics (LocalHapticsEnabled), WindowSize, AppVersion (PackageManager version code/name)
+  common/     SelectionField/Chips, MediaImages, ImagePicker, Format, Position/Act/Kink options, ActVisuals, Haptics (LocalHapticsEnabled), WindowSize, AppVersion (PackageManager version code/name)
   lock/        SetupScreen, LockScreen, ChangePinScreen, LockViewModel, BiometricPromptHelper, PinPad
   history/     HistoryScreen (list + calendar), HistoryViewModel
   encounter/   EncounterEditScreen + ViewModel
   partner/     PartnersScreen (+ "You" profile card) + ViewModel
   profile/     ProfileScreen + ViewModel (the user's own photo + demographics; single self row)
   insights/    InsightsScreen, charts, StatTiles/InsightSections catalogs, TypeColors, ViewModel
-  settings/    SettingsScreen (General/Security/Appearance/Insights/Categories/Backup/Danger/About) + ResetDataScreen (type-to-confirm wipe) + Appearance/General/Backup/CsvImport/CustomActs/CustomPositions VMs
+  settings/    SettingsScreen (General/Security/Appearance/Insights/Categories/Backup/Danger/About) + ResetDataScreen (type-to-confirm wipe) + Appearance/General/Backup/CsvImport/CustomActs/CustomKinks/CustomPositions VMs
   whatsnew/    ReleaseNotes (bundled notes), WhatsNewScreen + WhatsNewDialog (post-update popup)
   theme/       Color, Theme, Type, Shape (brand purple/green; sleek-dark default)
 MainActivity   FragmentActivity; FLAG_SECURE; renders by LockState (Setup / Lock / Unlocked → TrystApp)
