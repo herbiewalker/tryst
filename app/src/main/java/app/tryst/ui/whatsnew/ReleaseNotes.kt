@@ -20,6 +20,19 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.3.0",
+            versionCode = 3,
+            date = "2026-07-02",
+            highlights = listOf(
+                "Acts and kinks are now yours to customize — Tryst ships a small, non-explicit starter set and you add or rename your own. Anything you'd already logged is kept and converted automatically.",
+                "Add your own kinks, just like custom acts and positions — they count fully in Insights and Achievements.",
+                "Rename any custom act, kink, or position in place, and the change follows every logged tryst.",
+                "New setting: open Trysts in calendar view by default.",
+                "Your most-used options now surface right in the editor, so frequent picks are one tap away.",
+                "Tip: re-export your backup after updating so a future restore keeps the new naming.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.2.0",
             versionCode = 2,
             date = "2026-06-21",

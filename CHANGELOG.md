@@ -13,6 +13,8 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-07-02 (versionCode 3)
+
 ### Changed
 - **The built-in acts and kinks catalogs are now a small, non-explicit starter set** (F-Droid
   content policy — the app ships without predefined explicit labels). Nothing you logged is lost:

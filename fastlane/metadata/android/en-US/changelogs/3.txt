@@ -1,0 +1,9 @@
+Acts and kinks are now yours to customize. Tryst ships a small, non-explicit starter set, and you add or rename your own acts, kinks, and positions — they count fully in Insights and Achievements. Anything you'd already logged is kept and converted to a custom entry automatically, and restoring an older backup does the same.
+
+Also new:
+* Add your own kinks, just like custom acts and positions.
+* Rename any custom act, kink, or position in place — the change follows every logged tryst.
+* New setting: open Trysts in calendar view by default.
+* Your most-used options surface right in the editor, so frequent picks are one tap away.
+
+Tip: re-export your backup after updating so a future restore keeps the new naming.
