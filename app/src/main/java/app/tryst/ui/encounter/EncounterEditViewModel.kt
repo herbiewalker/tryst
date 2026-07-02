@@ -18,9 +18,9 @@ import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.PartnerEntity
+import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.PositionEntity
 import app.tryst.data.db.entity.Protection
-import app.tryst.data.db.entity.Setting
 import app.tryst.data.db.entity.ToyType
 import app.tryst.data.repository.ActRepository
 import app.tryst.data.repository.EncounterRepository
@@ -70,7 +70,7 @@ data class EncounterEditUiState(
     val practicesReceived: Set<String> = emptySet(),
     val selectedPositionIds: Set<String> = emptySet(),
     val kinks: Set<String> = emptySet(),
-    val contexts: Set<Setting> = emptySet(),
+    val contexts: Set<Place> = emptySet(),
     val occasions: Set<Occasion> = emptySet(),
     val toys: Set<ToyType> = emptySet(),
     val note: String = "",
@@ -275,7 +275,7 @@ class EncounterEditViewModel @Inject constructor(
         uiState = uiState.copy(kinks = uiState.kinks.toggle(id))
     }
 
-    fun toggleContext(value: Setting) {
+    fun toggleContext(value: Place) {
         uiState = uiState.copy(contexts = uiState.contexts.toggle(value))
     }
 

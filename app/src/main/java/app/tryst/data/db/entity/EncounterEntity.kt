@@ -37,7 +37,7 @@ data class EncounterEntity(
     val orgasmCountPartner: Int? = null,
     /** Per-orgasm ejaculation: orgasm index (0-based) -> location(s). Multi-select since schema v7.x. */
     val ejaculationLocations: Map<Int, Set<EjaculationLocation>>? = null,
-    /** Act IDs gave/received: a built-in [Practice] name, or "custom:<uuid>" for user-defined. */
+    /** Act IDs gave/received: a built-in [Act] name, or "custom:<uuid>" for user-defined. */
     val practicesPerformed: Set<String>? = null,
     val practicesReceived: Set<String>? = null,
     // --- added in schema v3 ---
@@ -46,8 +46,8 @@ data class EncounterEntity(
     // --- added in schema v4 ---
     /** Selected kink IDs: a built-in [Kink] name, or "custom:<uuid>" for user-defined (string ids since schema v9). */
     val kinks: Set<String>? = null,
-    /** Place (built-in [Setting]). */
-    val contexts: Set<Setting>? = null,
+    /** Place (built-in [Place]). */
+    val contexts: Set<Place>? = null,
     val toys: Set<ToyType>? = null,
     // --- added in schema v5 ---
     val occasions: Set<Occasion>? = null,

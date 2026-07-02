@@ -37,7 +37,7 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
  * v4 → v5: partner sex/gender/relationship/photo (M4 hook); an `occasions` column on encounters;
  * and a custom `acts` table (mirrors `positions`). All additive — existing rows keep their data.
  * The practicesPerformed/Received columns are unchanged (TEXT); only their app-side type moved
- * from a Practice-set to string ids, which the same TEXT storage already holds.
+ * from a Act-set to string ids, which the same TEXT storage already holds.
  */
 val MIGRATION_4_5 = object : Migration(4, 5) {
     override fun migrate(db: SupportSQLiteDatabase) {
@@ -92,10 +92,10 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
  * exported v8 schema is structurally identical to v7. A few category members moved, so the stored ids
  * are rewritten to match:
  *  - delete Position `ORAL_69_SIDE` → remap its stored refs to `LYING_ORAL`.
- *  - move `WATCHING_PORN` from acts (`Practice`) to kinks (`Kink`): add it to `kinks` where it appears
+ *  - move `WATCHING_PORN` from acts (`Act`) to kinks (`Kink`): add it to `kinks` where it appears
  *    in either practice column, then strip it from both practice columns.
  *
- * v8 also adds several built-in `Position`/`Practice`/`Setting` values in `Enums.kt` — additive, no
+ * v8 also adds several built-in `Position`/`Act`/`Place` values in `Enums.kt` — additive, no
  * migration needed; any pre-existing custom entry with a similar name simply stays a custom entry.
  *
  * Refs are comma-joined string-id sets; ids never contain commas, so substring `REPLACE` is safe and

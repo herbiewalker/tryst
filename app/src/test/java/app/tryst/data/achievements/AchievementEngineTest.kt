@@ -1,10 +1,10 @@
 package app.tryst.data.achievements
 
+import app.tryst.data.db.entity.Act
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.PartnerEntity
-import app.tryst.data.db.entity.Practice
 import app.tryst.data.db.relation.EncounterWithDetails
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -118,8 +118,8 @@ class AchievementEngineTest {
         // 5 distinct acts: first 4 on day1, the 5th on day2 → unlock date = day2.
         val r = AchievementEngine.evaluate(
             listOf(
-                enc("a", LocalDate.of(2026, 2, 1), acts = setOf(Practice.KISSING.name, Practice.ORAL.name, Practice.VAGINAL.name, Practice.MANUAL.name)),
-                enc("b", LocalDate.of(2026, 2, 2), acts = setOf(Practice.KISSING.name, Practice.ANAL.name)),
+                enc("a", LocalDate.of(2026, 2, 1), acts = setOf(Act.KISSING.name, Act.ORAL.name, Act.VAGINAL.name, Act.MANUAL.name)),
+                enc("b", LocalDate.of(2026, 2, 2), acts = setOf(Act.KISSING.name, Act.ANAL.name)),
             ),
             zone,
             today,

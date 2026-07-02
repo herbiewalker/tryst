@@ -174,7 +174,7 @@ enum class EjaculationLocation(override val label: String) : DisplayLabel {
  * Physical sex acts (built-in set). Tracked as two sets per encounter: gave and received.
  * Custom acts are stored separately as ActEntity rows; both are referenced by string id.
  */
-enum class Practice(override val label: String) : DisplayLabel {
+enum class Act(override val label: String) : DisplayLabel {
     KISSING("Kissing"),
     MAKING_OUT("Making out"),
     ORAL("Oral"),
@@ -275,7 +275,7 @@ enum class Kink(override val label: String) : DisplayLabel {
 }
 
 /** Place where the encounter happened (single multi-select). */
-enum class Setting(override val label: String) : DisplayLabel {
+enum class Place(override val label: String) : DisplayLabel {
     HOME("Home"),
     BEDROOM("Bedroom"),
     LIVING_ROOM("Living room"),

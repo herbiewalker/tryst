@@ -75,8 +75,8 @@ import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.Occasion
+import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.Protection
-import app.tryst.data.db.entity.Setting
 import app.tryst.data.db.entity.ToyType
 import app.tryst.data.stats.mostUsedCommon
 import app.tryst.ui.common.ActOptions
@@ -320,8 +320,8 @@ fun EncounterEditScreen(
 
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_setting),
-                    all = Setting.entries,
-                    common = mostUsedCommon(CommonOptions.SETTING, Setting.entries) { usage.settings[it] ?: 0 },
+                    all = Place.entries,
+                    common = mostUsedCommon(CommonOptions.PLACE, Place.entries) { usage.places[it] ?: 0 },
                     selected = ui.contexts,
                     labelOf = { it.label },
                     onToggle = { viewModel.toggleContext(it) },
@@ -688,15 +688,15 @@ private object CommonOptions {
         EjaculationLocation.ON_STOMACH,
         EjaculationLocation.IN_SHOWER,
     )
-    val SETTING = listOf(
-        Setting.HOME,
-        Setting.BEDROOM,
-        Setting.SHOWER,
-        Setting.CAR,
-        Setting.HOTEL,
-        Setting.OUTDOORS,
-        Setting.LIVING_ROOM,
-        Setting.HOT_TUB,
+    val PLACE = listOf(
+        Place.HOME,
+        Place.BEDROOM,
+        Place.SHOWER,
+        Place.CAR,
+        Place.HOTEL,
+        Place.OUTDOORS,
+        Place.LIVING_ROOM,
+        Place.HOT_TUB,
     )
     val OCCASION = listOf(
         Occasion.REGULAR,
