@@ -40,6 +40,13 @@ data class KinkEntity(
     val isBuiltIn: Boolean = false,
 )
 
+@Entity(tableName = "toys", indices = [Index(value = ["label"], unique = true)])
+data class ToyEntity(
+    @PrimaryKey val id: String,
+    val label: String,
+    val isBuiltIn: Boolean = false,
+)
+
 @Entity(
     tableName = "media",
     foreignKeys = [

@@ -286,7 +286,12 @@ enum class Occasion(override val label: String) : DisplayLabel {
     OTHER("Other"),
 }
 
-/** Toys used (multi-select). */
+/**
+ * Toys used (multi-select). Like [Act]/[Kink], the shipped catalog is a small, non-explicit starter
+ * set (F-Droid content policy, D-41 / FDP-4); everything else is user data via Settings → Manage
+ * custom toys, and previously-built-in ids are adopted as custom rows by `CatalogAdoption`
+ * (MIGRATION_10_11), so trimming here never loses logged data.
+ */
 enum class ToyType(override val label: String) : DisplayLabel {
     NONE("None"),
     VIBRATOR("Vibrator"),
@@ -298,27 +303,22 @@ enum class ToyType(override val label: String) : DisplayLabel {
     LOVE_EGG("Love egg / bullet"),
     REMOTE_VIBE("Remote / app-controlled"),
     KEGEL_BALLS("Kegel balls"),
-    BUTT_PLUG("Butt plug"),
-    ANAL_BEADS("Anal beads"),
     PROSTATE_MASSAGER("Prostate massager"),
-    COCK_RING("Cock ring"),
     PENIS_PUMP("Penis pump"),
-    CHASTITY_CAGE("Chastity cage"),
     STRAP_ON("Strap-on"),
     HARNESS("Harness"),
-    NIPPLE_CLAMPS("Nipple clamps"),
     RESTRAINTS("Restraints"),
-    SPREADER_BAR("Spreader bar"),
     BLINDFOLD("Blindfold"),
-    GAG("Gag"),
-    PADDLE("Paddle"),
-    FLOGGER("Flogger / whip"),
     FEATHER("Feather tickler"),
     MASSAGE_CANDLE("Massage candle"),
     OTHER("Other"),
 }
 
-/** Sex positions (built-in set; custom ones are stored separately as PositionEntity rows). */
+/**
+ * Sex positions (built-in starter set; custom ones are stored separately as PositionEntity rows).
+ * Trimmed to a non-explicit set in FDP-4 (D-41); removed built-ins a user had logged are adopted as
+ * custom rows by `CatalogAdoption` (MIGRATION_10_11), so nothing logged is lost.
+ */
 enum class Position(override val label: String) : DisplayLabel {
     MISSIONARY("Missionary"),
     MODIFIED_MISSIONARY("Modified Missionary"),
@@ -338,14 +338,11 @@ enum class Position(override val label: String) : DisplayLabel {
     EDGE_OF_BED("Edge of bed"),
     AGAINST_WALL("Against the wall"),
     BENT_OVER("Bent over"),
-    PRONE_BONE("Prone bone"),
     LEGS_ON_SHOULDERS("Legs on shoulders"),
     COITAL_ALIGNMENT("Coital alignment (CAT)"),
     ANKLES_BACK("Ankles back"),
     PRETZEL("Pretzel"),
     ANVIL("Anvil"),
-    ANAL_MISSIONARY("Anal missionary"),
-    ANAL_TOY("Anal - Toy"),
     JOCKEY("Jockey"),
     LOTUS("Lotus"),
     BUTTERFLY("Butterfly"),
@@ -356,19 +353,11 @@ enum class Position(override val label: String) : DisplayLabel {
     CRAB("Crab"),
     FROG("Frog"),
     FLATIRON("Flatiron"),
-    PILEDRIVER("Piledriver"),
     WHEELBARROW("Wheelbarrow"),
-    SCISSORING("Scissoring"),
-    FACE_SITTING("Face-sitting"),
     KNEELING_ORAL("Oral - Kneeling"),
     STANDING_ORAL("Oral - Standing"),
     LYING_ORAL("Oral - Laying down"),
     ORAL_EDGE_OF_BED("Oral - Edge of Bed"),
-    ORAL_THRONE("Oral throne"),
-    SPIT_ROAST("Spit roast"),
-    SANDWICH("Sandwich (DP)"),
-    DAISY_CHAIN("Daisy chain"),
-    EIFFEL_TOWER("Eiffel tower"),
     TABLE_TOP("Table top"),
     CHAIR("Chair"),
     OTHER("Other"),

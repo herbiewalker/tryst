@@ -21,12 +21,13 @@ import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.PositionEntity
 import app.tryst.data.db.entity.Protection
-import app.tryst.data.db.entity.ToyType
+import app.tryst.data.db.entity.ToyEntity
 import app.tryst.data.repository.ActRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.KinkRepository
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.data.repository.PositionRepository
+import app.tryst.data.repository.ToyRepository
 import app.tryst.data.stats.OptionUsage
 import app.tryst.ui.common.MediaImages
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -72,7 +73,7 @@ data class EncounterEditUiState(
     val kinks: Set<String> = emptySet(),
     val contexts: Set<Place> = emptySet(),
     val occasions: Set<Occasion> = emptySet(),
-    val toys: Set<ToyType> = emptySet(),
+    val toys: Set<String> = emptySet(),
     val note: String = "",
     val selectedPartnerIds: Set<String> = emptySet(),
     /** Photos already saved on this encounter (minus any the user removed this session). */
@@ -95,6 +96,7 @@ class EncounterEditViewModel @Inject constructor(
     positions: PositionRepository,
     acts: ActRepository,
     kinks: KinkRepository,
+    toys: ToyRepository,
 ) : ViewModel() {
 
     /** Keep the app unlocked across the photo-picker/camera handoff. */
@@ -117,6 +119,11 @@ class EncounterEditViewModel @Inject constructor(
 
     val customKinks: StateFlow<List<KinkEntity>> =
         kinks.observeCustom()
+            .catch { emit(emptyList()) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val customToys: StateFlow<List<ToyEntity>> =
+        toys.observeCustom()
             .catch { emit(emptyList()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -283,7 +290,7 @@ class EncounterEditViewModel @Inject constructor(
         uiState = uiState.copy(occasions = uiState.occasions.toggle(value))
     }
 
-    fun toggleToy(value: ToyType) {
+    fun toggleToy(value: String) {
         uiState = uiState.copy(toys = uiState.toys.toggle(value))
     }
 

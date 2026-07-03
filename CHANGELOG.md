@@ -13,6 +13,24 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-07-03 (versionCode 4)
+
+### Changed
+- **The built-in positions and toys are now a small, non-explicit starter set** (F-Droid content
+  policy — the same rework already done for acts and kinks in 0.3.0). Nothing you logged is lost: on
+  first launch after the update, every position or toy you used from the old built-in lists is
+  converted into a **custom** entry with the same meaning (schema v11, automatic migration), still
+  fully counted in insights and achievements and still pickable when logging. Built-ins you never used
+  simply leave the picker — re-add anything you miss under **Settings → Manage custom positions / toys**.
+- Restoring an **older backup** performs the same conversion automatically, so pre-update backups keep
+  working without resurrecting the old built-in ids.
+
+### Added
+- **Custom toys** — add your own toys under **Settings → Manage custom toys**, just like custom acts,
+  kinks, and positions. They appear alongside the built-ins when logging and count fully toward
+  insights and achievements. (Toys are now stored the same id-based way as acts/kinks/positions —
+  schema v11.)
+
 ## [0.3.0] — 2026-07-02 (versionCode 3)
 
 ### Changed

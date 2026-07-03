@@ -12,6 +12,7 @@ import app.tryst.data.db.dao.PartnerDao
 import app.tryst.data.db.dao.PositionDao
 import app.tryst.data.db.dao.ProfileDao
 import app.tryst.data.db.dao.TagDao
+import app.tryst.data.db.dao.ToyDao
 import app.tryst.data.db.entity.ActEntity
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.EncounterPartnerCrossRef
@@ -24,6 +25,7 @@ import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.PositionEntity
 import app.tryst.data.db.entity.ProfileEntity
 import app.tryst.data.db.entity.TagEntity
+import app.tryst.data.db.entity.ToyEntity
 
 @Database(
     entities = [
@@ -35,12 +37,13 @@ import app.tryst.data.db.entity.TagEntity
         PositionEntity::class,
         ActEntity::class,
         KinkEntity::class,
+        ToyEntity::class,
         MediaEntity::class,
         EncounterPartnerCrossRef::class,
         EncounterPositionCrossRef::class,
         EncounterTagCrossRef::class,
     ],
-    version = 10,
+    version = 11,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -53,6 +56,7 @@ abstract class TrystDatabase : RoomDatabase() {
     abstract fun positionDao(): PositionDao
     abstract fun actDao(): ActDao
     abstract fun kinkDao(): KinkDao
+    abstract fun toyDao(): ToyDao
     abstract fun locationDao(): LocationDao
 
     companion object {

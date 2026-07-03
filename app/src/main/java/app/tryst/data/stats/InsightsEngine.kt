@@ -3,6 +3,7 @@ package app.tryst.data.stats
 import app.tryst.data.db.entity.Act
 import app.tryst.data.db.entity.Kink
 import app.tryst.data.db.entity.Position
+import app.tryst.data.db.entity.ToyType
 import app.tryst.data.db.relation.EncounterWithDetails
 import java.time.Instant
 import java.time.LocalDate
@@ -116,6 +117,7 @@ object InsightsEngine {
         customActLabels: Map<String, String> = emptyMap(),
         customPositionLabels: Map<String, String> = emptyMap(),
         customKinkLabels: Map<String, String> = emptyMap(),
+        customToyLabels: Map<String, String> = emptyMap(),
         zone: ZoneId = ZoneId.systemDefault(),
         today: LocalDate = LocalDate.now(zone),
     ): Insights {
@@ -202,7 +204,7 @@ object InsightsEngine {
             encounters.flatMap { e -> (e.encounter.kinks ?: emptySet()).map { resolveKink(it, customKinkLabels) } },
         )
         val topSettings = tallyLabels(encounters.flatMap { e -> (e.encounter.contexts ?: emptySet()).map { it.label } })
-        val topToys = tallyLabels(encounters.flatMap { e -> (e.encounter.toys ?: emptySet()).map { it.label } })
+        val topToys = tallyLabels(encounters.flatMap { e -> (e.encounter.toys ?: emptySet()).map { resolveToy(it, customToyLabels) } })
         val topOccasions = tallyLabels(encounters.flatMap { e -> (e.encounter.occasions ?: emptySet()).map { it.label } })
         val topProtection = tallyLabels(encounters.flatMap { e -> e.encounter.protectionUsed.map { it.label } })
         val topEjaculation = tallyLabels(
@@ -281,6 +283,12 @@ object InsightsEngine {
         custom[id.removePrefix(CUSTOM_PREFIX)] ?: "Custom kink"
     } else {
         runCatching { Kink.valueOf(id).label }.getOrDefault(id)
+    }
+
+    private fun resolveToy(id: String, custom: Map<String, String>): String = if (id.startsWith(CUSTOM_PREFIX)) {
+        custom[id.removePrefix(CUSTOM_PREFIX)] ?: "Custom toy"
+    } else {
+        runCatching { ToyType.valueOf(id).label }.getOrDefault(id)
     }
 
     /** Tallies `(stableKey, label)` pairs by key, labelling each with its first-seen label. */
