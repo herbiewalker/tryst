@@ -248,4 +248,50 @@ class MigrationTest {
             }
         }
     }
+
+    /**
+     * v10 → v11 (FDP-4): creates the `toys` table and adopts removed built-in position and toy
+     * ids into custom rows, mirroring the v9→v10 acts/kinks adoption. Surviving ids pass through
+     * untouched, so nothing logged is lost when the built-in catalogs are trimmed.
+     */
+    @Test
+    fun migrate10To11_addsToyTableAndAdoptsRemovedPositionsAndToys() {
+        helper.createDatabase(dbName, 10).use { db ->
+            // e1: a removed position (FACE_SITTING) + a surviving one (MISSIONARY); a removed toy
+            // (BUTT_PLUG) + a surviving one (VIBRATOR).
+            db.execSQL(
+                "INSERT INTO encounters (id, startAt, protectionUsed, positions, toys, createdAt, updatedAt) " +
+                    "VALUES ('e1', 1000, '', 'FACE_SITTING,MISSIONARY', 'BUTT_PLUG,VIBRATOR', 1, 1)",
+            )
+            // e2: control — only surviving ids, must pass through untouched.
+            db.execSQL(
+                "INSERT INTO encounters (id, startAt, protectionUsed, positions, toys, createdAt, updatedAt) " +
+                    "VALUES ('e2', 2000, '', 'DOGGY_STYLE', 'WAND', 1, 1)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(dbName, 11, true, MIGRATION_10_11).use { db ->
+            db.query("SELECT positions, toys FROM encounters WHERE id = 'e1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("custom:FACE_SITTING,MISSIONARY", c.getString(0))
+                assertEquals("custom:BUTT_PLUG,VIBRATOR", c.getString(1))
+            }
+            db.query("SELECT positions, toys FROM encounters WHERE id = 'e2'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("DOGGY_STYLE", c.getString(0))
+                assertEquals("WAND", c.getString(1))
+            }
+            // Adopted custom rows exist with generically prettified labels.
+            db.query("SELECT label, isBuiltIn FROM positions WHERE id = 'FACE_SITTING'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("Face sitting", c.getString(0))
+                assertEquals(0, c.getInt(1))
+            }
+            db.query("SELECT label, isBuiltIn FROM toys WHERE id = 'BUTT_PLUG'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("Butt plug", c.getString(0))
+                assertEquals(0, c.getInt(1))
+            }
+        }
+    }
 }

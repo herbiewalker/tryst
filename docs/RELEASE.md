@@ -21,8 +21,8 @@ signing key. This document is the checklist for cutting a release and getting it
 ## Per-release steps
 
 1. **Bump the version** in [`app/build.gradle.kts`](../app/build.gradle.kts):
-   - `versionCode` — integer, +1 every release (currently `3`).
-   - `versionName` — human string (currently `0.3.0`).
+   - `versionCode` — integer, +1 every release (currently `4`).
+   - `versionName` — human string (currently `0.3.1`).
 2. **Add the release notes in all three synced places** (kept in lock-step on purpose — see D-35):
    - `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` (e.g. `2.txt`) — F-Droid's "What's New"
      text. Keep the existing `1.txt` for the first release.
@@ -74,22 +74,23 @@ RepoType: git
 Repo: https://github.com/herbiewalker/tryst.git
 
 Builds:
-  - versionName: 0.3.0
-    versionCode: 3
-    commit: <FULL 40-char commit hash of the v0.3.0 tag>   # FULL commit hash — reviewers reject a tag/branch name here
+  - versionName: 0.3.1
+    versionCode: 4
+    commit: <FULL 40-char commit hash of the v0.3.1 tag>   # FULL commit hash — reviewers reject a tag/branch name here
     subdir: app
     gradle:
       - yes
 
 AutoUpdateMode: Version    # NOT "Version v%v" — that fails schema validation; the leading "v" on tags is handled automatically
 UpdateCheckMode: Tags
-CurrentVersion: 0.3.0
-CurrentVersionCode: 3
+CurrentVersion: 0.3.1
+CurrentVersionCode: 4
 ```
 
-> **First-buildable version = 0.3.0, not 0.1.0.** v0.1.0/v0.2.0 shipped the explicit built-in
-> acts/kinks catalogs that F-Droid flagged (D-41); those versions are **not** F-Droid-buildable. The
-> content-policy rework lands in **0.3.0**, so that is the first (and only) `Builds` entry in the recipe.
+> **First-buildable version = 0.3.1.** v0.1.0/v0.2.0 shipped explicit built-in acts/kinks, and even
+> v0.3.0 still shipped explicit built-in **positions/toys** (D-41); the full content-policy rework
+> across all four taxonomies only completes in **0.3.1**, so that is the first (and only) `Builds`
+> entry in the recipe.
 (The file **must** end with a trailing newline or `fdroid rewritemeta` fails.)
 
 Notes:

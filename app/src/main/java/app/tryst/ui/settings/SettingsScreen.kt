@@ -83,9 +83,11 @@ fun SettingsScreen(
     var showPositions by remember { mutableStateOf(false) }
     var showActs by remember { mutableStateOf(false) }
     var showKinks by remember { mutableStateOf(false) }
+    var showToys by remember { mutableStateOf(false) }
     val positionsViewModel: CustomPositionsViewModel = hiltViewModel()
     val actsViewModel: CustomActsViewModel = hiltViewModel()
     val kinksViewModel: CustomKinksViewModel = hiltViewModel()
+    val toysViewModel: CustomToysViewModel = hiltViewModel()
     val appearanceViewModel: AppearanceViewModel = hiltViewModel()
     val themeMode by appearanceViewModel.themeMode.collectAsStateWithLifecycle()
     val dynamicColor by appearanceViewModel.dynamicColor.collectAsStateWithLifecycle()
@@ -338,6 +340,9 @@ fun SettingsScreen(
             OutlinedButton(onClick = { showKinks = true }, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.settings_manage_kinks))
             }
+            OutlinedButton(onClick = { showToys = true }, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.settings_manage_toys))
+            }
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
@@ -430,6 +435,9 @@ fun SettingsScreen(
 
     if (showKinks) {
         CustomKinksDialog(viewModel = kinksViewModel, onDismiss = { showKinks = false })
+    }
+    if (showToys) {
+        CustomToysDialog(viewModel = toysViewModel, onDismiss = { showToys = false })
     }
 
     if (showExportPw) {
@@ -736,6 +744,22 @@ private fun CustomKinksDialog(viewModel: CustomKinksViewModel, onDismiss: () -> 
         addLabel = R.string.custom_kinks_add_label,
         emptyText = R.string.custom_kinks_empty,
         entries = kinks.map { it.id to it.label },
+        onAdd = viewModel::add,
+        onRename = viewModel::rename,
+        onDelete = viewModel::delete,
+        onDismiss = onDismiss,
+    )
+}
+
+@Composable
+private fun CustomToysDialog(viewModel: CustomToysViewModel, onDismiss: () -> Unit) {
+    val toys by viewModel.customToys.collectAsStateWithLifecycle()
+    CustomCatalogDialog(
+        title = R.string.custom_toys_title,
+        description = R.string.custom_toys_desc,
+        addLabel = R.string.custom_toys_add_label,
+        emptyText = R.string.custom_toys_empty,
+        entries = toys.map { it.id to it.label },
         onAdd = viewModel::add,
         onRename = viewModel::rename,
         onDelete = viewModel::delete,

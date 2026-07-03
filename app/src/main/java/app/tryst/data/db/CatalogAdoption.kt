@@ -3,11 +3,13 @@ package app.tryst.data.db
 import androidx.sqlite.db.SupportSQLiteDatabase
 import app.tryst.data.db.entity.Act
 import app.tryst.data.db.entity.Kink
+import app.tryst.data.db.entity.Position
+import app.tryst.data.db.entity.ToyType
 import java.util.Locale
 
 /**
- * Adopts **unknown built-in-style ids** found in the encounter log into the custom `acts`/`kinks`
- * tables (FDP-2 / D-41 phase 2). When a built-in catalog entry is removed from the shipped enums,
+ * Adopts **unknown built-in-style ids** found in the encounter log into the matching custom catalog
+ * table — `acts`, `kinks`, `positions`, or `toys` (FDP-2 then FDP-4 / D-41). When a built-in catalog entry is removed from the shipped enums,
  * any encounter still referencing its bare enum name would resolve to nothing; this routine turns
  * each such id into a user-owned custom entry and rewrites the refs to `custom:<id>`, so the data
  * keeps its label and stays pickable/searchable — zero data loss.
@@ -29,9 +31,11 @@ object CatalogAdoption {
     fun adoptUnknownIds(db: SupportSQLiteDatabase) {
         adopt(db, table = "acts", columns = listOf("practicesPerformed", "practicesReceived"), known = Act.entries.mapTo(HashSet()) { it.name })
         adopt(db, table = "kinks", columns = listOf("kinks"), known = Kink.entries.mapTo(HashSet()) { it.name })
+        adopt(db, table = "positions", columns = listOf("positions"), known = Position.entries.mapTo(HashSet()) { it.name })
+        adopt(db, table = "toys", columns = listOf("toys"), known = ToyType.entries.mapTo(HashSet()) { it.name })
     }
 
-    /** Generic label for an adopted id: `DEEP_THROAT` → `"Deep throat"`. */
+    /** Generic label for an adopted id: `TABLE_TOP` → `"Table top"`. */
     fun prettify(id: String): String = id.lowercase(Locale.US).replace('_', ' ').trim().replaceFirstChar { it.uppercaseChar() }
 
     private fun adopt(db: SupportSQLiteDatabase, table: String, columns: List<String>, known: Set<String>) {

@@ -8,6 +8,7 @@ import app.tryst.data.repository.ActRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.KinkRepository
 import app.tryst.data.repository.PositionRepository
+import app.tryst.data.repository.ToyRepository
 import app.tryst.data.stats.Insights
 import app.tryst.data.stats.InsightsEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,6 +27,7 @@ class InsightsViewModel @Inject constructor(
     actRepository: ActRepository,
     positionRepository: PositionRepository,
     kinkRepository: KinkRepository,
+    toyRepository: ToyRepository,
     private val prefs: InsightsPreferences,
 ) : ViewModel() {
 
@@ -35,7 +37,8 @@ class InsightsViewModel @Inject constructor(
             actRepository.observeCustom(),
             positionRepository.observeCustom(),
             kinkRepository.observeCustom(),
-        ) { encounters, acts, positions, kinks ->
+            toyRepository.observeCustom(),
+        ) { encounters, acts, positions, kinks, toys ->
             // Tallying the whole log can be non-trivial; keep it off the main thread.
             withContext(Dispatchers.Default) {
                 InsightsEngine.compute(
@@ -43,6 +46,7 @@ class InsightsViewModel @Inject constructor(
                     customActLabels = acts.associate { it.id to it.label },
                     customPositionLabels = positions.associate { it.id to it.label },
                     customKinkLabels = kinks.associate { it.id to it.label },
+                    customToyLabels = toys.associate { it.id to it.label },
                 )
             }
         }

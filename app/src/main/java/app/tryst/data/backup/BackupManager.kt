@@ -199,7 +199,7 @@ class BackupManager @Inject constructor(
         // Insert order respects foreign keys (parents first); defer_foreign_keys also guards it.
         // `profile` has no FKs (single self row) — order is irrelevant for it.
         val TABLES = listOf(
-            "partners", "profile", "locations", "tags", "positions", "acts", "kinks",
+            "partners", "profile", "locations", "tags", "positions", "acts", "kinks", "toys",
             "encounters", "media", "encounter_partner", "encounter_position", "encounter_tag",
         )
     }
