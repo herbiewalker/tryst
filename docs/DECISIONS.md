@@ -1,8 +1,8 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **v0.3.0 / schema v10** (latest: **D-41**, the F-Droid
-> acts/kinks content-policy rework). Lightweight ADR log; entries are numbered D-1… ascending, so the
-> **newest are at the bottom**. "Open" items still need a call.
+> **Status:** Live — decisions through **v0.3.1 / schema v11** (latest: **D-41**, the F-Droid
+> content-policy rework — acts/kinks in 0.3.0, then positions/toys in 0.3.1). Lightweight ADR log;
+> entries are numbered D-1… ascending, so the **newest are at the bottom**. "Open" items still need a call.
 
 ## Decided (from scoping conversation, 2026-06-04)
 
@@ -306,9 +306,17 @@
   prettified labels may want polish ("Sixty nine"→"69") and delete+re-add would orphan refs; the three
   manage-custom dialogs were unified into one `CustomCatalogDialog`; and the `Practice`→`Act` /
   `Setting`→`Place` enum-class renames landed first as a pure refactor (DB stores constant names, not class
-  names — zero data impact). Scope = acts/kinks only (what was flagged); positions/toys/ejaculation-locations
-  left as-is unless flagged later. Verified by `MigrationTest.migrate9To10…` (incl. substring pair,
+  names — zero data impact). Phase-2 scope = acts/kinks only (what was first flagged); positions/toys
+  left as-is initially. Verified by `MigrationTest.migrate9To10…` (incl. substring pair,
   label-collision merge, idempotence) + `BackupRestoreRegressionTest.restoreOfPreTrimBackup…`.
+  **Phase 3 (DONE 2026-07-03, schema v11 / `MIGRATION_10_11` — FDP-4):** on re-review linsui reported the
+  labels were "still hardcoded" — the app still shipped explicit **positions** and **toys** (out of
+  Phase-2 scope). The same rework was extended to both: `Position` trimmed (11 explicit/slang/group
+  entries removed; it was already custom-capable) and `ToyType` made **id-based & custom-capable** (new
+  `toys` table + `ToyRepository` + Manage-custom-toys, `encounters.toys` `Set<ToyType>`→`Set<String>`)
+  then trimmed (9 removed). `CatalogAdoption` now also adopts removed position/toy ids (migrate +
+  restore), and the `"Deep throat"` doc-comment example was scrubbed. Shipped as **v0.3.1** (kept in the
+  0.3 range). Verified by `MigrationTest.migrate10To11…` + the full instrumented suite (25/25).
 - **D-25 (M6):** **No chart library** (resolves O-3). Insights charts are drawn with plain Compose
   layout (`VerticalBarChart`, `RankedBars`) instead of Vico/MPAndroidChart. Rationale: the app already
   hand-rolls its visuals (per-act vector icons, manual `BitmapFactory` downsampling, no third-party

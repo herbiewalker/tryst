@@ -33,10 +33,10 @@ short, anniversaries long; the spouse skews vanilla/romantic, casual partners sp
 Ejaculation location (22), Acts/Practice (39), Kink (51), Setting (34), Occasion (18), Toy (28),
 Position (48), Initiator (3). Verified by the generator's coverage report.
 
-> **v10 note (FDP-2/D-41):** the generator's act/kink pools were trimmed to the non-explicit v10
-> starter catalogs (Act 16, Kink 16 — counts above describe the committed pre-v10 samples). The old
-> samples still restore fine: import adopts their removed ids into custom entries automatically.
-> Regenerate to get samples that exercise the trimmed catalogs.
+> **v10–v11 note (FDP-2/FDP-4 / D-41):** the generator's act/kink (v10) and position/toy (v11) pools
+> were trimmed to the non-explicit shipped starter catalogs (the counts above describe the committed
+> pre-trim samples). The old samples still restore fine: import adopts their removed ids into custom
+> entries automatically. Regenerate to get samples that exercise the trimmed catalogs.
 
 ## Rebuilding
 

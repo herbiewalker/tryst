@@ -1,12 +1,13 @@
 # Tryst — Roadmap / Milestones
 
-> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.3.0**. Each
+> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.3.1**. Each
 > milestone ended runnable & tested. This file is the milestone *history* (see the dated note below);
 > forward work lives in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
 
-> **Update (2026-07-02):** M0–M8 are all **done** and the app has **shipped** (v0.1.0 → v0.2.0 →
-> v0.3.0; the F-Droid submission MR is open, waiting on the v0.3.0 content-policy rework). This file is
-> the milestone *history*; all forward work — post-1.0 features
+> **Update (2026-07-03):** M0–M8 are all **done** and the app has **shipped** (v0.1.0 → v0.2.0 →
+> v0.3.0 → v0.3.1; the F-Droid submission MR is open — the content-policy rework spans acts/kinks
+> (0.3.0) and positions/toys (0.3.1)). This file is the milestone *history*; all forward work — post-1.0
+> features
 > **and** the engineering/infra/housekeeping backlog (CI instrumented tests, F-Droid screenshots, SPDX
 > headers, Argon2id export KDF, baseline profile, etc.) — now lives in
 > [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md). The legacy "deferred polish backlog" notes below (history

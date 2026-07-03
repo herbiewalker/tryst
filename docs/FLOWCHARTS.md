@@ -1,6 +1,6 @@
 # Tryst — Logic Flowcharts
 
-> **Status:** Live — v0.3.0. Visual maps of how the app's core logic works, so a change can be
+> **Status:** Live — v0.3.1. Visual maps of how the app's core logic works, so a change can be
 > reasoned about before touching code. Diagrams are [Mermaid](https://mermaid.js.org/) — they render on
 > GitHub and in most Markdown viewers. Keep these in sync when the corresponding code changes.
 
@@ -142,7 +142,7 @@ flowchart TD
 
 ## 6. Insights pipeline
 
-Four reactive sources are combined and folded into an immutable `Insights` off the main thread; the
+Five reactive sources are combined and folded into an immutable `Insights` off the main thread; the
 screen layers user customization (order/hidden/per-card chart style) on top, with stable per-type
 colors. The engine is pure Kotlin (JVM-unit-tested, no Android).
 
@@ -152,6 +152,7 @@ flowchart LR
     R2["ActRepository.observeCustom()"] --> CMB
     R3["PositionRepository.observeCustom()"] --> CMB
     R4["KinkRepository.observeCustom()"] --> CMB
+    R5["ToyRepository.observeCustom()"] --> CMB
     CMB -->|"map on Dispatchers.Default"| ENG["InsightsEngine.compute()"]
     ENG --> INS["Insights (totals, streaks, tallies, trends)"]
     INS --> SCR["InsightsScreen"]
