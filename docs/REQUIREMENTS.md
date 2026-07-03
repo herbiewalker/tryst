@@ -1,6 +1,7 @@
 # Tryst — Requirements
 
-Status: **v1 (2026-06-08)** — scope largely implemented through M7; M8 (polish & release) remaining.
+> **Status:** Live — shipped through **v0.3.0** (schema v10). The v1 scope below is fully
+> implemented; post-1.0 work is tracked in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
 
 ## 1. Vision
 

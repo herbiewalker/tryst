@@ -1,8 +1,8 @@
 # Tryst — Logic Flowcharts
 
-Status: **Live (v1, 2026-06-08).** Visual maps of how the app's core logic works, so a change
-can be reasoned about before touching code. Diagrams are [Mermaid](https://mermaid.js.org/) — they
-render on GitHub and in most Markdown viewers. Keep these in sync when the corresponding code changes.
+> **Status:** Live — v0.3.0. Visual maps of how the app's core logic works, so a change can be
+> reasoned about before touching code. Diagrams are [Mermaid](https://mermaid.js.org/) — they render on
+> GitHub and in most Markdown viewers. Keep these in sync when the corresponding code changes.
 
 Contents: [Lock lifecycle](#1-app-lock-lifecycle-state-machine) ·
 [Key model](#2-key-model-dek-double-wrap) · [Unlock sequence](#3-unlock-sequence) ·
@@ -142,7 +142,7 @@ flowchart TD
 
 ## 6. Insights pipeline
 
-Three reactive sources are combined and folded into an immutable `Insights` off the main thread; the
+Four reactive sources are combined and folded into an immutable `Insights` off the main thread; the
 screen layers user customization (order/hidden/per-card chart style) on top, with stable per-type
 colors. The engine is pure Kotlin (JVM-unit-tested, no Android).
 
@@ -151,6 +151,7 @@ flowchart LR
     R1["EncounterRepository.observeAll()"] --> CMB["combine"]
     R2["ActRepository.observeCustom()"] --> CMB
     R3["PositionRepository.observeCustom()"] --> CMB
+    R4["KinkRepository.observeCustom()"] --> CMB
     CMB -->|"map on Dispatchers.Default"| ENG["InsightsEngine.compute()"]
     ENG --> INS["Insights (totals, streaks, tallies, trends)"]
     INS --> SCR["InsightsScreen"]
@@ -208,7 +209,7 @@ screen shows a teaser; the trophy icon opens the full screen.
 ```mermaid
 flowchart LR
     LOG["EncounterRepository.observeAll()"] -->|"map on Dispatchers.Default"| EV["AchievementEngine.evaluate()<br/>(sort by date, replay)"]
-    CAT["Achievements.catalog (~35 static defs)"] --> EV
+    CAT["Achievements.catalog (~67 static defs)"] --> EV
     EV -->|"per def, by Rule"| RULES["Count / Sum / Distinct / Streak"]
     RULES --> ST["AchievementStatus<br/>(current · unlocked · unlockedAt)"]
     ST --> SUM["summarize() → teaser rollup"]
