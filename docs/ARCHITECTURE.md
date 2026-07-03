@@ -1,6 +1,6 @@
 # Tryst — Architecture
 
-> **Status:** Live — v0.3.0. Reflects the actual code. See [FLOWCHARTS.md](FLOWCHARTS.md) for visual
+> **Status:** Live — v0.3.1. Reflects the actual code. See [FLOWCHARTS.md](FLOWCHARTS.md) for visual
 > flows and [CLAUDE.md](../CLAUDE.md) for the stack rationale and hard constraints.
 
 ## Stack
@@ -29,21 +29,21 @@ core/
   crypto/     MediaCrypto (Tink streaming), BackupCrypto (password KDF + AEAD container)
   prefs/      ThemePreferences, InsightsPreferences, GeneralPreferences (auto-lock/haptics/week-start/last-seen-version)  (SharedPreferences, non-sensitive)
 data/
-  db/         TrystDatabase, TrystDatabaseFactory, entities, DAOs, Converters, Migrations, CatalogAdoption (v10 removed-id → custom adoption; also run post-restore), SqlCipherLibrary
-  repository/ Encounter / Partner / Profile / Position / Act / Kink repositories (read DAOs from the unlocked session)
+  db/         TrystDatabase, TrystDatabaseFactory, entities, DAOs, Converters, Migrations, CatalogAdoption (v10–v11 removed-id → custom adoption for acts/kinks/positions/toys; also run post-restore), SqlCipherLibrary
+  repository/ Encounter / Partner / Profile / Position / Act / Kink / Toy repositories (read DAOs from the unlocked session)
   media/      EncryptedMediaStore (encrypted blobs in app-internal storage)
   backup/     BackupManager (export/restore), Csv (importer)
   stats/      InsightsEngine + Insights model (pure Kotlin)
 di/           Hilt wiring (most types use @Inject constructors; module is minimal)
 ui/
-  common/     SelectionField/Chips, MediaImages, ImagePicker, Format, Position/Act/Kink options, ActVisuals, Haptics (LocalHapticsEnabled), WindowSize, AppVersion (PackageManager version code/name)
+  common/     SelectionField/Chips, MediaImages, ImagePicker, Format, Position/Act/Kink/Toy options, ActVisuals, Haptics (LocalHapticsEnabled), WindowSize, AppVersion (PackageManager version code/name)
   lock/        SetupScreen, LockScreen, ChangePinScreen, LockViewModel, BiometricPromptHelper, PinPad
   history/     HistoryScreen (list + calendar), HistoryViewModel
   encounter/   EncounterEditScreen + ViewModel
   partner/     PartnersScreen (+ "You" profile card) + ViewModel
   profile/     ProfileScreen + ViewModel (the user's own photo + demographics; single self row)
   insights/    InsightsScreen, charts, StatTiles/InsightSections catalogs, TypeColors, ViewModel
-  settings/    SettingsScreen (General/Security/Appearance/Insights/Categories/Backup/Danger/About) + ResetDataScreen (type-to-confirm wipe) + Appearance/General/Backup/CsvImport/CustomActs/CustomKinks/CustomPositions VMs
+  settings/    SettingsScreen (General/Security/Appearance/Insights/Categories/Backup/Danger/About) + ResetDataScreen (type-to-confirm wipe) + Appearance/General/Backup/CsvImport/CustomActs/CustomKinks/CustomPositions/CustomToys VMs
   whatsnew/    ReleaseNotes (bundled notes), WhatsNewScreen + WhatsNewDialog (post-update popup)
   theme/       Color, Theme, Type, Shape (brand purple/green; sleek-dark default)
 MainActivity   FragmentActivity; FLAG_SECURE; renders by LockState (Setup / Lock / Unlocked → TrystApp)
@@ -77,7 +77,7 @@ one-time **post-update What's-new popup** (installed `versionCode` vs `GeneralPr
 - **JVM unit:** stats engine (`InsightsEngineTest`), Insights catalogs (`StatTilesTest`,
   `InsightSectionsTest`), CSV parser (`CsvParseTest`).
 - **Instrumented (emulator, real Keystore/SQLCipher):** vault, DB-encrypted-on-disk, media crypto,
-  session lifecycle, Room migrations (v1→v10, incl. the v7→v8/v9→v10 data migrations), media attachment round-trip, backup round-trip, and
+  session lifecycle, Room migrations (v1→v11, incl. the v7→v8/v9→v10/v10→v11 data migrations), media attachment round-trip, backup round-trip, and
   backup/restore regression edge cases (`BackupRestoreRegressionTest`: restore-over-existing,
   restore-after-delete-all-data, partner-avatar-survives — the paths that produced the Pass-12 data-loss
   bugs).

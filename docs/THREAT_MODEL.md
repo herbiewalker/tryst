@@ -1,9 +1,10 @@
 # Tryst — Threat Model
 
-> **Status:** Live — **v0.3.0 / schema v10**, aligned with the *implemented* security model
+> **Status:** Live — **v0.3.1 / schema v11**, aligned with the *implemented* security model
 > (Keystore-only + distinct app PIN; see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §1, Option B). The
-> v9–v10 changes (kinks made id-based, then the acts/kinks catalog trim — FDP-2/D-41) are category-data
-> only and add **no new attack surface** over the v7 demographics + single-row self `profile` baseline.
+> v9–v11 changes (kinks then toys made id-based, and the acts/kinks then positions/toys catalog trims —
+> FDP-2/FDP-4, D-41) are category-data only and add **no new attack surface** over the v7 demographics +
+> single-row self `profile` baseline.
 
 ## Assets to protect
 

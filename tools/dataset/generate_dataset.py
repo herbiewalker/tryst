@@ -53,8 +53,8 @@ PROTECTION = ["NONE", "CONDOM", "INTERNAL_CONDOM", "DENTAL_DAM", "PILL", "IUD", 
 EJAC = ["NONE", "IN_CONDOM", "VAGINAL", "ON_VAGINA", "ANAL", "ORAL", "SWALLOWED", "ON_FACE",
         "ON_CHEST", "ON_BREASTS", "ON_STOMACH", "ON_BACK", "ON_BUTT", "ON_THIGHS",
         "ON_HANDS", "ON_HAIR", "ON_SELF", "ON_SHEETS", "ON_FLOOR", "ON_BODY", "IN_TOY", "OTHER"]
-# v10 trimmed the shipped Act/Kink catalogs to a non-explicit starter set (FDP-2 / D-41);
-# these pools mirror the surviving built-ins. Explicit entries are user-custom now.
+# v10 (Act/Kink) and v11 (Position/Toy) trimmed the shipped catalogs to non-explicit starter sets
+# (FDP-2 / FDP-4 / D-41); these pools mirror the surviving built-ins. Explicit entries are user-custom now.
 PRACTICE = ["KISSING", "MAKING_OUT", "ORAL", "SIXTY_NINE", "MANUAL",
             "FINGERING", "VAGINAL", "ANAL", "PROSTATE_MASSAGE",
             "NIPPLE_PLAY", "BREAST_PLAY",
@@ -75,20 +75,19 @@ OCCASION = ["NONE", "REGULAR", "QUICKIE", "MORNING_SEX", "WAKE_UP_SEX", "MAKEUP_
             "ANGRY_SEX", "PERIOD_SEX", "DRUNK_HIGH", "SPONTANEOUS", "DATE_NIGHT",
             "ANNIVERSARY", "BIRTHDAY", "REUNION", "PHONE_SEX", "SEXTING", "VIDEO_SEX", "OTHER"]
 TOY = ["NONE", "VIBRATOR", "WAND", "AIR_PULSE", "DILDO", "DOUBLE_DILDO", "STROKER",
-       "LOVE_EGG", "REMOTE_VIBE", "KEGEL_BALLS", "BUTT_PLUG", "ANAL_BEADS",
-       "PROSTATE_MASSAGER", "COCK_RING", "PENIS_PUMP", "CHASTITY_CAGE", "STRAP_ON",
-       "HARNESS", "NIPPLE_CLAMPS", "RESTRAINTS", "SPREADER_BAR", "BLINDFOLD", "GAG",
-       "PADDLE", "FLOGGER", "FEATHER", "MASSAGE_CANDLE", "OTHER"]
+       "LOVE_EGG", "REMOTE_VIBE", "KEGEL_BALLS",
+       "PROSTATE_MASSAGER", "PENIS_PUMP", "STRAP_ON",
+       "HARNESS", "RESTRAINTS", "BLINDFOLD",
+       "FEATHER", "MASSAGE_CANDLE", "OTHER"]
 POSITION = ["MISSIONARY", "DOGGY_STYLE", "COWGIRL", "REVERSE_COWGIRL", "SPOONING",
             "SIXTY_NINE", "STANDING", "STANDING_DOGGY", "SIDE_BY_SIDE", "SEATED", "STRADDLE",
-            "LAP", "EDGE_OF_BED", "AGAINST_WALL", "BENT_OVER", "PRONE_BONE",
+            "LAP", "EDGE_OF_BED", "AGAINST_WALL", "BENT_OVER",
             "LEGS_ON_SHOULDERS", "COITAL_ALIGNMENT", "ANKLES_BACK", "PRETZEL", "ANVIL",
-            "ANAL_MISSIONARY", "JOCKEY", "LOTUS", "BUTTERFLY", "BRIDGE", "EAGLE", "AMAZON",
-            "CRADLE", "CRAB", "FROG", "FLATIRON", "PILEDRIVER", "WHEELBARROW", "SCISSORING",
-            "FACE_SITTING", "KNEELING_ORAL", "STANDING_ORAL", "LYING_ORAL", "ORAL_EDGE_OF_BED",
-            "ORAL_THRONE", "SPIT_ROAST", "SANDWICH", "DAISY_CHAIN", "EIFFEL_TOWER",
+            "JOCKEY", "LOTUS", "BUTTERFLY", "BRIDGE", "EAGLE", "AMAZON",
+            "CRADLE", "CRAB", "FROG", "FLATIRON", "WHEELBARROW",
+            "KNEELING_ORAL", "STANDING_ORAL", "LYING_ORAL", "ORAL_EDGE_OF_BED",
             "TABLE_TOP", "CHAIR", "MODIFIED_MISSIONARY", "MISSIONARY_STANDING_EDGE",
-            "REVERSE_COWGIRL_MODIFIED", "ANAL_TOY", "OTHER"]
+            "REVERSE_COWGIRL_MODIFIED", "OTHER"]
 
 # "Spice tier" classification (1 vanilla .. 3 heavy). Used to keep combos plausible: a value
 # is only placed on an encounter whose tier >= its own. Anything unclassified defaults to 1.
