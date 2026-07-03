@@ -40,7 +40,7 @@ on an emulator or phone. Do these roughly in order; check each box as you go.
       redacted — that's intentional, so screen captures of the running app appear black.
 
 ## 6. Sanity checks (optional but recommended)
-- [ ] `.\gradlew testDebugUnitTest` → the placeholder unit test passes.
+- [ ] `.\gradlew testDebugUnitTest` → the JVM unit tests pass (stats/achievements engines, CSV parser, Insights catalogs).
 - [ ] `.\gradlew checkNoNetworkDebug` → prints "Anti-leak guard OK". Try temporarily adding
       `<uses-permission android:name="android.permission.INTERNET"/>` to the manifest and
       re-running — the build should **fail**. (Then remove it.)
@@ -48,6 +48,6 @@ on an emulator or phone. Do these roughly in order; check each box as you go.
 ## Notes / gotchas
 - **Don't add a network permission.** The anti-leak guard (and CI) will fail the build by design.
 - First Gradle sync downloads a lot (Gradle dist, AGP, SDK bits) — give it time on first run.
-- The launcher icon is a placeholder flame; a real one is planned for M8.
+- The launcher icon is a placeholder flame; a refreshed icon set is tracked as **QOL-4** in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
 - Running from a plain terminal (no Studio env): set `JAVA_HOME` to the bundled JBR first, e.g.
   `$env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"`, then `.\gradlew.bat assembleDebug`.

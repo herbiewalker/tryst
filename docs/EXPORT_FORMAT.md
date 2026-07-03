@@ -1,9 +1,11 @@
 # Tryst — Backup / Export Format
 
-Status: **v1** (M5). Produced/consumed by `data/backup/BackupManager.kt` + `core/crypto/BackupCrypto.kt`.
+> **Status:** Live — container format **v1** (`TRYSTBK1`). Produced/consumed by
+> `data/backup/BackupManager.kt` + `core/crypto/BackupCrypto.kt`.
 
 A Tryst backup is a single **password-encrypted** file (suggested name `tryst-backup-<date>.tryst`).
-It contains everything — all encounters, partners, custom positions/acts, and photos — so it can
+It contains everything — all encounters, partners, your self profile, custom positions/acts/kinks, and
+photos — so it can
 restore the app on a new phone. The only secret needed to open it is the **backup password the user
 chose at export** (independent of the app PIN). There is no recovery if it's lost.
 
@@ -40,8 +42,8 @@ associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, i
   otherwise freeze the app deriving the key (DoS).
 - **Wrong password** ⇒ the AEAD stream fails authentication on first read (import aborts cleanly).
 - **Tables** (insert order respects FKs; `PRAGMA defer_foreign_keys` also guards it): partners,
-  locations, tags, positions, acts, encounters, media, encounter_partner, encounter_position,
-  encounter_tag. Rows are inserted with `INSERT OR REPLACE` (idempotent re-import).
+  profile, locations, tags, positions, acts, kinks, encounters, media, encounter_partner,
+  encounter_position, encounter_tag. Rows are inserted with `INSERT OR REPLACE` (idempotent re-import).
 - **Media blobs:** export gathers ids from **both** `media` rows (encounter photos) **and**
   `partners.photoMediaId` (avatars) — avatars have no media-table row, so dumping the table alone would
   silently drop them from the backup. On import, `encFilePath` is device-specific, so it's repointed at

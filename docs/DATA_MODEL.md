@@ -1,8 +1,8 @@
 # Tryst — Data Model
 
-Status: **Live — schema v10** (Room over SQLCipher). Matches the entities in
-`app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change
-ships a non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
+> **Status:** Live — **schema v10** (v0.3.0), Room over SQLCipher. Matches the entities in
+> `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change ships a
+> non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 
 > All tables live in the encrypted SQLCipher DB. IDs are app-local UUID strings. Nothing here
 > leaves the device except via the user's encrypted export (M5).

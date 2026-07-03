@@ -1,7 +1,7 @@
 # Tryst — Architecture
 
-Status: **Live (v1, 2026-06-08)** — reflects the actual code. See [FLOWCHARTS.md](FLOWCHARTS.md) for
-visual flows and [CLAUDE.md](../CLAUDE.md) for the stack rationale and hard constraints.
+> **Status:** Live — v0.3.0. Reflects the actual code. See [FLOWCHARTS.md](FLOWCHARTS.md) for visual
+> flows and [CLAUDE.md](../CLAUDE.md) for the stack rationale and hard constraints.
 
 ## Stack
 Kotlin (JDK 17) · Jetpack Compose + Material 3 · Room + **SQLCipher** · Hilt · Coroutines/Flow ·
@@ -15,9 +15,9 @@ Single `:app` module, **package-by-feature**.
 - **MVVM + Repository**, unidirectional data flow: Compose screen → ViewModel → Repository → DAO /
   crypto / file source.
 - **State exposure:** list/derived screens (History, Insights, Partners) expose `StateFlow` via
-  `stateIn(...).catch { }` so they survive the DB closing on auto-lock. The encounter editor VM uses
-  per-field `mutableStateOf` (idiomatic for a large form; a single immutable `UiState` refactor is the
-  deferred "chunk 6", M8).
+  `stateIn(...).catch { }` so they survive the DB closing on auto-lock. The encounter editor VM exposes
+  a single immutable `EncounterEditUiState` (`var uiState by mutableStateOf(...)`, `private set`; all
+  edits go through `copy()`-ing update methods).
 - **Domain logic is pure Kotlin and unit-tested** off the UI thread — notably the stats engine
   (`data/stats/InsightsEngine`) and the CSV parser, both JVM-tested without Robolectric.
 
@@ -30,7 +30,7 @@ core/
   prefs/      ThemePreferences, InsightsPreferences, GeneralPreferences (auto-lock/haptics/week-start/last-seen-version)  (SharedPreferences, non-sensitive)
 data/
   db/         TrystDatabase, TrystDatabaseFactory, entities, DAOs, Converters, Migrations, CatalogAdoption (v10 removed-id → custom adoption; also run post-restore), SqlCipherLibrary
-  repository/ Encounter / Partner / Profile / Position / Act repositories (read DAOs from the unlocked session)
+  repository/ Encounter / Partner / Profile / Position / Act / Kink repositories (read DAOs from the unlocked session)
   media/      EncryptedMediaStore (encrypted blobs in app-internal storage)
   backup/     BackupManager (export/restore), Csv (importer)
   stats/      InsightsEngine + Insights model (pure Kotlin)

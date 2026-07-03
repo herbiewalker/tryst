@@ -1,7 +1,7 @@
 # Tryst — Security & Encryption Design
 
-Status: **Draft v0.2** — key model decided at M2: **Keystore-only** with a distinct app PIN
-(see §1 Decision). Everything else is the working design.
+> **Status:** Live — v0.3.0. The implemented security design. Key model = **Keystore-only** with a
+> distinct app PIN (§1 Decision); the rest of this doc describes what ships.
 
 ---
 
