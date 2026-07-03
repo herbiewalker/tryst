@@ -6,13 +6,12 @@ import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.Protection
-import app.tryst.data.db.entity.ToyType
 
 /**
  * How often each option has been picked across the whole log, per editor category (ENC-1). Pure
  * data — no Android types — so it's derived and unit-tested on the JVM, the same way [InsightsEngine]
- * is. Acts and positions are keyed by their stored id (a built-in enum name, or `custom:<uuid>`);
- * the enum categories are keyed by the enum value itself.
+ * is. Acts, positions, kinks, and toys are keyed by their stored id (a built-in enum name, or
+ * `custom:<uuid>`); the remaining enum categories are keyed by the enum value itself.
  *
  * A count is "encounters that include the option", so an act logged as both given *and* received in
  * one encounter counts once (matching how [InsightsEngine] tallies acts).
@@ -26,7 +25,7 @@ data class OptionUsage(
     val kinks: Map<String, Int> = emptyMap(),
     val places: Map<Place, Int> = emptyMap(),
     val occasions: Map<Occasion, Int> = emptyMap(),
-    val toys: Map<ToyType, Int> = emptyMap(),
+    val toys: Map<String, Int> = emptyMap(),
 ) {
     companion object {
         val EMPTY = OptionUsage()

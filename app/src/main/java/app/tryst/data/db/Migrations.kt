@@ -163,6 +163,31 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
     }
 }
 
+/**
+ * v10 → v11: makes **toys** user-configurable and trims the built-in `Position`/`ToyType` catalogs to
+ * non-explicit starter sets (FDP-4 / D-41, F-Droid policy — extends the acts/kinks rework to the two
+ * remaining explicit taxonomies).
+ *
+ *  - DDL: adds a custom **`toys`** table (mirrors `acts`/`kinks`/`positions`). The `encounters.toys`
+ *    column is unchanged (still TEXT) — only its app-side type moved from a `ToyType`-set to string
+ *    ids, and a built-in toy's id **is** its old enum name, so existing values stay valid with no data
+ *    rewrite. The table starts empty (built-ins live in the `ToyType` enum).
+ *  - Data: [CatalogAdoption] now also covers `positions` and `toys`, so any encounter ref to a
+ *    now-removed built-in position/toy is adopted into the custom table (label generically prettified
+ *    from the id) and the ref rewritten to `custom:<id>` — zero data loss. (Acts/kinks re-run
+ *    idempotently.) Restore is covered too: `BackupManager.import` runs the same adoption.
+ */
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `toys` " +
+                "(`id` TEXT NOT NULL, `label` TEXT NOT NULL, `isBuiltIn` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_toys_label` ON `toys` (`label`)")
+        CatalogAdoption.adoptUnknownIds(db)
+    }
+}
+
 /** All migrations, in order. */
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
@@ -174,4 +199,5 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_7_8,
     MIGRATION_8_9,
     MIGRATION_9_10,
+    MIGRATION_10_11,
 )

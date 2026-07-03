@@ -10,6 +10,7 @@ import app.tryst.data.db.entity.LocationEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.PositionEntity
 import app.tryst.data.db.entity.TagEntity
+import app.tryst.data.db.entity.ToyEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -78,6 +79,21 @@ interface KinkDao {
     suspend fun rename(id: String, label: String)
 
     @Query("DELETE FROM kinks WHERE id = :id")
+    suspend fun deleteById(id: String)
+}
+
+@Dao
+interface ToyDao {
+    @Upsert
+    suspend fun upsert(toy: ToyEntity)
+
+    @Query("SELECT * FROM toys WHERE isBuiltIn = 0 ORDER BY label COLLATE NOCASE")
+    fun observeCustom(): Flow<List<ToyEntity>>
+
+    @Query("UPDATE toys SET label = :label WHERE id = :id")
+    suspend fun rename(id: String, label: String)
+
+    @Query("DELETE FROM toys WHERE id = :id")
     suspend fun deleteById(id: String)
 }
 

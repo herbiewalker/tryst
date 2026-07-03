@@ -77,7 +77,6 @@ import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.Protection
-import app.tryst.data.db.entity.ToyType
 import app.tryst.data.stats.mostUsedCommon
 import app.tryst.ui.common.ActOptions
 import app.tryst.ui.common.DecodedImage
@@ -88,6 +87,7 @@ import app.tryst.ui.common.MultiSelectField
 import app.tryst.ui.common.PositionOptions
 import app.tryst.ui.common.SingleSelectChips
 import app.tryst.ui.common.SingleSelectField
+import app.tryst.ui.common.ToyOptions
 import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.encounterSharedKey
 import app.tryst.ui.common.rememberCameraCapture
@@ -117,6 +117,7 @@ fun EncounterEditScreen(
     val customPositions by viewModel.customPositions.collectAsStateWithLifecycle()
     val customActs by viewModel.customActs.collectAsStateWithLifecycle()
     val customKinks by viewModel.customKinks.collectAsStateWithLifecycle()
+    val customToys by viewModel.customToys.collectAsStateWithLifecycle()
     // Per-category pick frequency, used to surface the user's most-used options inline (ENC-1).
     val usage by viewModel.optionUsage.collectAsStateWithLifecycle()
     // Solo = no partner selected (matches the history "Solo" badge). Partner-only fields are hidden so
@@ -336,13 +337,14 @@ fun EncounterEditScreen(
                     onToggle = { viewModel.toggleOccasion(it) },
                 )
 
+                val toyOptions = ToyOptions.builtIns + ToyOptions.custom(customToys)
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_toys),
-                    all = ToyType.entries,
-                    common = mostUsedCommon(CommonOptions.TOY, ToyType.entries) { usage.toys[it] ?: 0 },
-                    selected = ui.toys,
+                    all = toyOptions,
+                    common = mostUsedCommon(ToyOptions.common, toyOptions) { usage.toys[it.id] ?: 0 },
+                    selected = toyOptions.filter { it.id in ui.toys }.toSet(),
                     labelOf = { it.label },
-                    onToggle = { viewModel.toggleToy(it) },
+                    onToggle = { viewModel.toggleToy(it.id) },
                 )
 
                 if (!solo) {
@@ -707,15 +709,5 @@ private object CommonOptions {
         Occasion.SPONTANEOUS,
         Occasion.DATE_NIGHT,
         Occasion.DRUNK_HIGH,
-    )
-    val TOY = listOf(
-        ToyType.NONE,
-        ToyType.VIBRATOR,
-        ToyType.DILDO,
-        ToyType.BUTT_PLUG,
-        ToyType.COCK_RING,
-        ToyType.STRAP_ON,
-        ToyType.WAND,
-        ToyType.ANAL_BEADS,
     )
 }

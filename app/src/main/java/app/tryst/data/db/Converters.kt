@@ -13,7 +13,6 @@ import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.db.entity.RelationshipType
 import app.tryst.data.db.entity.Sex
-import app.tryst.data.db.entity.ToyType
 
 /**
  * Room type converters. Enum-set parsing skips unrecognized names so values that move between
@@ -107,13 +106,7 @@ class Converters {
     @TypeConverter
     fun stringToOccasionSet(value: String?): Set<Occasion>? = value?.toEnumSet { Occasion.valueOf(it) }
 
-    @TypeConverter
-    fun toyTypeSetToString(value: Set<ToyType>?): String? = value?.joinToString(SEP) { it.name }
-
-    @TypeConverter
-    fun stringToToyTypeSet(value: String?): Set<ToyType>? = value?.toEnumSet { ToyType.valueOf(it) }
-
-    // Shared by every string-id set column — positions, acts (performed/received), and kinks. Each id
+    // Shared by every string-id set column — positions, acts (performed/received), kinks, and toys. Each id
     // is a built-in enum name or "custom:<uuid>", and ids never contain commas, so a plain comma-join
     // round-trips. (Room selects one converter per type, so this single pair serves all of them.)
     @TypeConverter

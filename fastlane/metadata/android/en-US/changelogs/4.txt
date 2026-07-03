@@ -1,0 +1,6 @@
+Positions and toys are now yours to customize too. Tryst ships a small, non-explicit starter set, and you add or rename your own positions and toys — the same rework already done for acts and kinks. Anything you'd already logged is kept and converted to a custom entry automatically (schema v11), still counted in insights and achievements and still pickable when logging. Built-ins you never used simply leave the picker.
+
+Also new:
+* Add your own toys under Settings → Manage custom toys.
+
+Tip: re-export your backup after updating so a future restore keeps the new naming.

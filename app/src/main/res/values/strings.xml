@@ -213,6 +213,7 @@
     <string name="settings_manage_positions">Manage custom positions</string>
     <string name="settings_manage_acts">Manage custom acts</string>
     <string name="settings_manage_kinks">Manage custom kinks</string>
+    <string name="settings_manage_toys">Manage custom toys</string>
     <string name="settings_backup">Backup &amp; restore</string>
     <string name="settings_export">Export encrypted backup</string>
     <string name="settings_import">Import / restore backup</string>
@@ -258,6 +259,10 @@
     <string name="custom_kinks_desc">Custom kinks appear alongside the built-in ones when logging a tryst.</string>
     <string name="custom_kinks_add_label">Add a kink</string>
     <string name="custom_kinks_empty">No custom kinks yet.</string>
+    <string name="custom_toys_title">Custom toys</string>
+    <string name="custom_toys_desc">Custom toys appear alongside the built-in ones when logging a tryst.</string>
+    <string name="custom_toys_add_label">Add a toy</string>
+    <string name="custom_toys_empty">No custom toys yet.</string>
     <string name="custom_positions_title">Custom positions</string>
     <string name="custom_positions_desc">Custom positions appear alongside the built-in ones when logging a tryst.</string>
     <string name="custom_positions_add_label">Add a position</string>
