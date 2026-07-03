@@ -1,6 +1,6 @@
 # Tryst — Data Model
 
-> **Status:** Live — **schema v10** (v0.3.0), Room over SQLCipher. Matches the entities in
+> **Status:** Live — **schema v11** (v0.3.1), Room over SQLCipher. Matches the entities in
 > `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change ships a
 > non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 
@@ -11,13 +11,14 @@
 
 Category values are stored as TEXT via Room `TypeConverters` (`data/db/Converters.kt`):
 
-- **Enum-name sets** (e.g. `protectionUsed`, `contexts`, `occasions`, `toys`): comma-joined
+- **Enum-name sets** (e.g. `protectionUsed`, `contexts`, `occasions`): comma-joined
   enum `name`s. Parsing **skips unknown names**, so values that are renamed or moved between
   categories never crash older rows — they're dropped on read.
-- **String-id sets** (`positions`, `practicesPerformed`, `practicesReceived`, `kinks`): comma-joined
-  IDs where each ID is a built-in enum `name` **or** `custom:<uuid>` for a user-defined entry.
-  (`kinks` joined this group in **v9** — a built-in kink's id is its old `Kink` enum name, so existing
-  values are unchanged; user-defined kinks live in the `kinks` table, mirroring `acts`/`positions`.)
+- **String-id sets** (`positions`, `practicesPerformed`, `practicesReceived`, `kinks`, `toys`):
+  comma-joined IDs where each ID is a built-in enum `name` **or** `custom:<uuid>` for a user-defined
+  entry. (`kinks` joined this group in **v9** and `toys` in **v11** — a built-in id **is** its old enum
+  name, so existing values are unchanged; user-defined entries live in the matching custom table,
+  mirroring `acts`/`positions`.)
 - **Maps**: `partnerOrgasms` = `partnerId=count` pairs; `ejaculationLocations` =
   `orgasmIndex=LOC1|LOC2` pairs — **multi-select** locations per orgasm, joined on `|` (legacy
   single-value rows parse as a one-element set; backward compatible).
@@ -43,7 +44,7 @@ The central record.
 | kinks | Set\<String\>? | **Kink & BDSM** (built-in `Kink` name, or `custom:<id>`) |
 | contexts | Set\<Place\>? | **Setting & Location** (places) |
 | occasions | Set\<Occasion\>? | occasion / context |
-| toys | Set\<ToyType\>? | |
+| toys | Set\<String\>? | **Toys** (built-in `ToyType` name, or `custom:<id>` — string ids since v11) |
 | locationId | FK? | → Location (legacy; UI uses `contexts`) |
 | createdAt / updatedAt | Long | audit |
 | orgasm, orgasmCountPartner | legacy | superseded; kept for migration safety |
@@ -98,10 +99,13 @@ Partners.
   Settings → Manage custom acts.
 - **Kink** (`kinks`, **v9**): same shape; built-ins from the `Kink` enum, custom rows managed in
   Settings → Manage custom kinks.
+- **Toy** (`toys`, **v11**): same shape; built-ins from the `ToyType` enum, custom rows managed in
+  Settings → Manage custom toys.
 - Custom rows can be **renamed in place** (v10): the row id — and so every encounter ref — is
   untouched; a label that collides with an existing entry is rejected (unique-label index).
-- **v10 adopted rows:** ids of built-ins removed in the v10 catalog trim live here as custom rows
-  whose `id` is the old enum `name` (not a uuid) — refs are `custom:<NAME>`. See D-41 / v10 below.
+- **Adopted rows:** ids of built-ins removed in a catalog trim live here as custom rows whose `id` is
+  the old enum `name` (not a uuid) — refs are `custom:<NAME>`. Acts/kinks in **v10**, positions/toys in
+  **v11**. See D-41 / v10–v11 below.
 
 ## Location / Tag / Media
 - **Location** (`locations`): `id`, `label` — user-typed generic label. **No GPS / coarse location**
@@ -119,8 +123,9 @@ All implement `DisplayLabel` (human-written `label` shown in the UI): `Initiator
 `Place` (places; named `Setting` before v10), `Occasion`, `ToyType`, `Position`, plus partner/profile
 enums `Sex`, `Gender`, `RelationshipType`, and the **v7 demographic** enums `Ethnicity`, `BodyType`.
 `Orgasm` is a legacy enum kept for migration. (The class renames are code-only — the DB stores enum
-*constant* names, never class names.) Since **v10** the `Act`/`Kink` catalogs are a small non-explicit
-starter set (F-Droid policy, D-41); everything beyond it is user data in the custom tables.
+*constant* names, never class names.) Since **v10** (`Act`/`Kink`) and **v11** (`Position`/`ToyType`)
+those built-in catalogs are a small non-explicit starter set (F-Droid policy, D-41); everything beyond
+it is user data in the custom tables.
 
 ## Achievements (M7 — derived, **no tables**)
 Achievements are **not persisted**. The catalog is static code (`data/achievements/Achievements.kt`)
@@ -154,5 +159,12 @@ storage — likely a small row in the encrypted DB.)
   routine is generic (no removed-id list ships in the APK) and idempotent, and **`BackupManager.import`
   runs it after every restore**, so pre-v10 backups self-heal instead of resurrecting removed ids —
   the v8 "re-export after upgrading" caveat no longer applies to catalog trims.
+- **v11 (`MIGRATION_10_11`, FDP-4 / 0.3.1)** adds the custom **`toys`** table (DDL, mirrors
+  `acts`/`kinks`) — making toys id-based/custom-capable — **and** trims the built-in `Position`/`ToyType`
+  catalogs to non-explicit starter sets, running the same `CatalogAdoption` (now also covering
+  `positions` and `toys`) to adopt every removed-but-used id into a custom row. `encounters.toys` is
+  unchanged TEXT (a built-in toy's id **is** its old enum name), so no data rewrite. Extends the
+  acts/kinks rework (v9–v10) to the two remaining explicit taxonomies; restore self-heals via the same
+  routine.
 - Export format (M5) is decoupled from the live schema and versioned independently
   (see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §4).
