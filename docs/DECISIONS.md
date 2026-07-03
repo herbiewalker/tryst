@@ -1,6 +1,8 @@
 # Tryst — Decision Log
 
-Lightweight ADR log. Newest at top. "Open" items still need a call.
+> **Status:** Live — decisions through **v0.3.0 / schema v10** (latest: **D-41**, the F-Droid
+> acts/kinks content-policy rework). Lightweight ADR log; entries are numbered D-1… ascending, so the
+> **newest are at the bottom**. "Open" items still need a call.
 
 ## Decided (from scoping conversation, 2026-06-04)
 
