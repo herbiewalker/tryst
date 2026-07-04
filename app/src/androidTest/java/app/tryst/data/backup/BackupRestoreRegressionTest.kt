@@ -159,7 +159,7 @@ class BackupRestoreRegressionTest {
         val db = manager.database().openHelper.writableDatabase
         db.execSQL(
             "INSERT INTO encounters (id, startAt, protectionUsed, practicesPerformed, kinks, createdAt, updatedAt) " +
-                "VALUES ('e1', $now, '', 'FOOT_PLAY,ORAL', 'CHOKING,SPANKING', $now, $now)",
+                "VALUES ('e1', $now, '', 'FOOT_PLAY,KISSING', 'CHOKING,SPANKING', $now, $now)",
         )
 
         val out = ByteArrayOutputStream()
@@ -174,8 +174,8 @@ class BackupRestoreRegressionTest {
 
         db.query("SELECT practicesPerformed, kinks FROM encounters WHERE id = 'e1'").use { c ->
             assertTrue("restored encounter missing", c.moveToFirst())
-            assertEquals("custom:FOOT_PLAY,ORAL", c.getString(0))
-            assertEquals("custom:CHOKING,SPANKING", c.getString(1))
+            assertEquals("custom:FOOT_PLAY,custom:KISSING", c.getString(0)) // all ids are custom-prefixed rows now
+            assertEquals("custom:CHOKING,custom:SPANKING", c.getString(1))
         }
         db.query("SELECT label, isBuiltIn FROM acts WHERE id = 'FOOT_PLAY'").use { c ->
             assertTrue("adopted act row missing", c.moveToFirst())

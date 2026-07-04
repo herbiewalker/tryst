@@ -9,22 +9,12 @@ data class ActOption(val id: String, val label: String)
 object ActOptions {
     const val CUSTOM_PREFIX = "custom:"
 
-    /** Built-in act ids shown inline before any selection (the curated "common" set). */
-    private val COMMON_IDS = setOf(
-        Act.KISSING,
-        Act.ORAL,
-        Act.SIXTY_NINE,
-        Act.VAGINAL,
-        Act.ANAL,
-        Act.MANUAL,
-        Act.FINGERING,
-        Act.MUTUAL_MASTURBATION,
-    ).map { it.name }.toSet()
-
+    // Only a minimal non-explicit safe seed ships (F-Droid content policy, FDP-5); the rest are
+    // user-added custom entries. built-in == common (the whole seed shows inline).
     val builtIns: List<ActOption> =
         Act.entries.map { ActOption(it.name, it.label) }
 
-    val common: List<ActOption> = builtIns.filter { it.id in COMMON_IDS }
+    val common: List<ActOption> = builtIns
 
     fun custom(rows: List<ActEntity>): List<ActOption> = rows.map { ActOption(CUSTOM_PREFIX + it.id, it.label) }
 }

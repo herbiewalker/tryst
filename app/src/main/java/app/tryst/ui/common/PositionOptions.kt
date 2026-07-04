@@ -9,22 +9,12 @@ data class PositionOption(val id: String, val label: String)
 object PositionOptions {
     const val CUSTOM_PREFIX = "custom:"
 
-    /** Built-in position ids shown inline before any selection (the curated "common" set). */
-    private val COMMON_IDS = setOf(
-        Position.MISSIONARY,
-        Position.DOGGY_STYLE,
-        Position.COWGIRL,
-        Position.REVERSE_COWGIRL,
-        Position.SPOONING,
-        Position.SIXTY_NINE,
-        Position.STANDING,
-        Position.SIDE_BY_SIDE,
-    ).map { it.name }.toSet()
-
+    // No predefined positions ship (F-Droid content policy, FDP-5); built-in/common are empty and every
+    // position is a user-added custom entry.
     val builtIns: List<PositionOption> =
         Position.entries.map { PositionOption(it.name, it.label) }
 
-    val common: List<PositionOption> = builtIns.filter { it.id in COMMON_IDS }
+    val common: List<PositionOption> = builtIns
 
     fun custom(rows: List<PositionEntity>): List<PositionOption> = rows.map { PositionOption(CUSTOM_PREFIX + it.id, it.label) }
 }

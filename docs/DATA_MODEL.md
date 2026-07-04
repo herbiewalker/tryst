@@ -1,6 +1,6 @@
 # Tryst — Data Model
 
-> **Status:** Live — **schema v11** (v0.3.1), Room over SQLCipher. Matches the entities in
+> **Status:** Live — **schema v12** (v0.3.2), Room over SQLCipher. Matches the entities in
 > `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change ships a
 > non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 
@@ -166,5 +166,15 @@ storage — likely a small row in the encrypted DB.)
   unchanged TEXT (a built-in toy's id **is** its old enum name), so no data rewrite. Extends the
   acts/kinks rework (v9–v10) to the two remaining explicit taxonomies; restore self-heals via the same
   routine.
+- **v12 (`MIGRATION_11_12`, FDP-5 / 0.3.2)** adds the custom **`occasions`** and **`ejaculation_locations`**
+  tables (DDL, mirror `acts`/`kinks`) — making occasions and finish locations id-based/custom-capable —
+  and **empties every category enum**: nothing is compiled in, and the few neutral starters (acts:
+  Kissing/Cuddling; occasions: Date night/Anniversary; finish: Didn't finish/In condom; kinks/positions/
+  toys: none) are inserted as ordinary **editable rows** by `CatalogSeeds`. Seeding runs on fresh install
+  (`TrystDatabaseFactory` `onCreate`) and here in the migration **before** adoption (so a used starter
+  keeps its nice label). The same `CatalogAdoption` now covers all six categories and adopts every
+  remaining bare id into a row; a dedicated adopter handles the **map-encoded** `encounters.ejaculationLocations`
+  column (`idx=ID1|ID2,…`). Both columns stay unchanged TEXT. Adoption is guarded by table-existence so
+  earlier migrations that call it don't touch these v12 tables.
 - Export format (M5) is decoupled from the live schema and versioned independently
   (see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §4).

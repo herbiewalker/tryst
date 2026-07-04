@@ -210,10 +210,13 @@
     <string name="settings_customize_insights">Customize Insights</string>
     <string name="settings_insights_desc">Reorder or hide the stat boxes and pick a chart style on the Insights tab.</string>
     <string name="settings_categories">Categories</string>
-    <string name="settings_manage_positions">Manage custom positions</string>
-    <string name="settings_manage_acts">Manage custom acts</string>
-    <string name="settings_manage_kinks">Manage custom kinks</string>
-    <string name="settings_manage_toys">Manage custom toys</string>
+    <string name="settings_categories_desc">Tryst ships almost no built-in categories — add your own acts, kinks, positions, toys, occasions, and finish locations, and rename or remove them any time.</string>
+    <string name="settings_manage_acts">Manage acts</string>
+    <string name="settings_manage_kinks">Manage kinks</string>
+    <string name="settings_manage_positions">Manage positions</string>
+    <string name="settings_manage_toys">Manage toys</string>
+    <string name="settings_manage_occasions">Manage occasions</string>
+    <string name="settings_manage_ejaculation">Manage finish locations</string>
     <string name="settings_backup">Backup &amp; restore</string>
     <string name="settings_export">Export encrypted backup</string>
     <string name="settings_import">Import / restore backup</string>
@@ -250,23 +253,31 @@
     <string name="csv_column_n">Column %1$d</string>
     <string name="csv_none">— (none)</string>
 
-    <!-- Custom acts / positions dialogs -->
-    <string name="custom_acts_title">Custom acts</string>
-    <string name="custom_acts_desc">Custom acts appear alongside the built-in ones (gave &amp; received) when logging a tryst.</string>
+    <!-- Category management pages -->
+    <string name="custom_acts_title">Acts</string>
+    <string name="custom_acts_desc">Add your own acts — they show up (gave &amp; received) when logging a tryst. Tap an entry to rename it, or remove ones you don\'t use.</string>
     <string name="custom_acts_add_label">Add an act</string>
-    <string name="custom_acts_empty">No custom acts yet.</string>
-    <string name="custom_kinks_title">Custom kinks</string>
-    <string name="custom_kinks_desc">Custom kinks appear alongside the built-in ones when logging a tryst.</string>
+    <string name="custom_acts_empty">No acts yet — add your first one above.</string>
+    <string name="custom_kinks_title">Kinks</string>
+    <string name="custom_kinks_desc">Add your own kinks — they show up when logging a tryst. Tap an entry to rename it, or remove ones you don\'t use.</string>
     <string name="custom_kinks_add_label">Add a kink</string>
-    <string name="custom_kinks_empty">No custom kinks yet.</string>
-    <string name="custom_toys_title">Custom toys</string>
-    <string name="custom_toys_desc">Custom toys appear alongside the built-in ones when logging a tryst.</string>
+    <string name="custom_kinks_empty">No kinks yet — add your first one above.</string>
+    <string name="custom_toys_title">Toys</string>
+    <string name="custom_toys_desc">Add your own toys — they show up when logging a tryst. Tap an entry to rename it, or remove ones you don\'t use.</string>
     <string name="custom_toys_add_label">Add a toy</string>
-    <string name="custom_toys_empty">No custom toys yet.</string>
-    <string name="custom_positions_title">Custom positions</string>
-    <string name="custom_positions_desc">Custom positions appear alongside the built-in ones when logging a tryst.</string>
+    <string name="custom_toys_empty">No toys yet — add your first one above.</string>
+    <string name="custom_positions_title">Positions</string>
+    <string name="custom_positions_desc">Add your own positions — they show up when logging a tryst. Tap an entry to rename it, or remove ones you don\'t use.</string>
     <string name="custom_positions_add_label">Add a position</string>
-    <string name="custom_positions_empty">No custom positions yet.</string>
+    <string name="custom_positions_empty">No positions yet — add your first one above.</string>
+    <string name="custom_occasions_title">Occasions</string>
+    <string name="custom_occasions_desc">Add your own occasions — they show up when logging a tryst. Tap an entry to rename it, or remove ones you don\'t use.</string>
+    <string name="custom_occasions_add_label">Add an occasion</string>
+    <string name="custom_occasions_empty">No occasions yet — add your first one above.</string>
+    <string name="custom_ejaculation_title">Finish locations</string>
+    <string name="custom_ejaculation_desc">Add your own finish locations — they show up per orgasm when logging a tryst. Tap an entry to rename it, or remove ones you don\'t use.</string>
+    <string name="custom_ejaculation_add_label">Add a finish location</string>
+    <string name="custom_ejaculation_empty">No finish locations yet — add your first one above.</string>
 
     <!-- ============================================================= -->
     <!-- Insights (InsightsScreen, InsightsCharts)                     -->
@@ -331,6 +342,8 @@
     <!-- proper nouns / SPDX identifiers — not translated.             -->
     <!-- ============================================================= -->
     <string name="about_version">Version %1$s</string>
+    <string name="about_app_summary_title">What Tryst is</string>
+    <string name="about_app_summary">Tryst is a private, local-only journal for your intimate life. Log encounters in as much detail as you like — partners, acts, positions, protection, mood, place, occasion, toys, kinks, a rating, orgasms, notes, and encrypted photos — then explore on-device Insights and Achievements built entirely from your own history.\n\nEvery category is yours. Tryst ships almost nothing predefined: it starts you off with a few neutral entries (like Kissing or Date night) that are just editable rows, and you add, rename, or remove your own acts, kinks, positions, toys, occasions, and finish locations under Settings → Categories. Everything you add counts fully across Insights and Achievements.\n\nNothing ever leaves your phone — no account, no sync, no internet access at all.</string>
     <string name="about_license_body">Tryst is free, open-source software, licensed under the GNU General Public License v3.0 (GPLv3). You may use, study, share, and modify it; redistributed versions must also be GPLv3 and ship their source. The full license text is in the LICENSE file of the source repository.</string>
     <string name="about_oss_title">Open-source licenses</string>
     <string name="about_oss_intro">Tryst is built with these open-source components. Each is used under its own license, all of which are compatible with GPLv3.</string>

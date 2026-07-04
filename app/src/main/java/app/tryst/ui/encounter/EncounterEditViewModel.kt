@@ -10,21 +10,23 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tryst.core.session.SessionManager
 import app.tryst.data.db.entity.ActEntity
-import app.tryst.data.db.entity.EjaculationLocation
+import app.tryst.data.db.entity.EjaculationLocationEntity
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.KinkEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.Mood
-import app.tryst.data.db.entity.Occasion
+import app.tryst.data.db.entity.OccasionEntity
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.PositionEntity
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.db.entity.ToyEntity
 import app.tryst.data.repository.ActRepository
+import app.tryst.data.repository.EjaculationLocationRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.KinkRepository
+import app.tryst.data.repository.OccasionRepository
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.data.repository.PositionRepository
 import app.tryst.data.repository.ToyRepository
@@ -63,8 +65,8 @@ data class EncounterEditUiState(
     val initiator: Initiator? = null,
     val protection: Set<Protection> = emptySet(),
     val orgasmCountSelf: Int = 0,
-    /** Per-orgasm ejaculation location(s): orgasm index (0-based) -> locations (multi-select). */
-    val ejaculations: Map<Int, Set<EjaculationLocation>> = emptyMap(),
+    /** Per-orgasm ejaculation location(s): orgasm index (0-based) -> finish-location ids (multi-select). */
+    val ejaculations: Map<Int, Set<String>> = emptyMap(),
     /** Per-partner orgasm counts: partnerId -> count. */
     val partnerOrgasms: Map<String, Int> = emptyMap(),
     val practicesPerformed: Set<String> = emptySet(),
@@ -72,7 +74,7 @@ data class EncounterEditUiState(
     val selectedPositionIds: Set<String> = emptySet(),
     val kinks: Set<String> = emptySet(),
     val contexts: Set<Place> = emptySet(),
-    val occasions: Set<Occasion> = emptySet(),
+    val occasions: Set<String> = emptySet(),
     val toys: Set<String> = emptySet(),
     val note: String = "",
     val selectedPartnerIds: Set<String> = emptySet(),
@@ -97,6 +99,8 @@ class EncounterEditViewModel @Inject constructor(
     acts: ActRepository,
     kinks: KinkRepository,
     toys: ToyRepository,
+    occasions: OccasionRepository,
+    ejaculationLocations: EjaculationLocationRepository,
 ) : ViewModel() {
 
     /** Keep the app unlocked across the photo-picker/camera handoff. */
@@ -124,6 +128,16 @@ class EncounterEditViewModel @Inject constructor(
 
     val customToys: StateFlow<List<ToyEntity>> =
         toys.observeCustom()
+            .catch { emit(emptyList()) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val customOccasions: StateFlow<List<OccasionEntity>> =
+        occasions.observeCustom()
+            .catch { emit(emptyList()) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val customEjaculations: StateFlow<List<EjaculationLocationEntity>> =
+        ejaculationLocations.observeCustom()
             .catch { emit(emptyList()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -250,9 +264,9 @@ class EncounterEditViewModel @Inject constructor(
         )
     }
 
-    fun toggleEjaculation(index: Int, value: EjaculationLocation) {
+    fun toggleEjaculation(index: Int, id: String) {
         val current = uiState.ejaculations[index] ?: emptySet()
-        val updated = if (value in current) current - value else current + value
+        val updated = if (id in current) current - id else current + id
         uiState = uiState.copy(ejaculations = uiState.ejaculations + (index to updated))
     }
 
@@ -286,8 +300,8 @@ class EncounterEditViewModel @Inject constructor(
         uiState = uiState.copy(contexts = uiState.contexts.toggle(value))
     }
 
-    fun toggleOccasion(value: Occasion) {
-        uiState = uiState.copy(occasions = uiState.occasions.toggle(value))
+    fun toggleOccasion(id: String) {
+        uiState = uiState.copy(occasions = uiState.occasions.toggle(id))
     }
 
     fun toggleToy(value: String) {

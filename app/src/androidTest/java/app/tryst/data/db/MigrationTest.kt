@@ -184,21 +184,23 @@ class MigrationTest {
             db.execSQL("INSERT INTO acts (id, label, isBuiltIn) VALUES ('actCustom', 'My Custom Act', 0)")
             // Label collides with prettify("FOOT_PLAY") → refs must merge into this row, no new row.
             db.execSQL("INSERT INTO acts (id, label, isBuiltIn) VALUES ('preexisting', 'Foot play', 0)")
+            db.execSQL("INSERT INTO kinks (id, label, isBuiltIn) VALUES ('kCustom', 'My Custom Kink', 0)")
 
-            // e1: removed ids (incl. the substring pair) + a kept built-in + a custom ref.
+            // e1: removed ids (incl. the substring pair CREAMPIE ⊂ ANAL_CREAMPIE) + a custom ref, each
+            // handled independently. No built-ins ship any more (FDP-5), so bare ids all adopt.
             db.execSQL(
                 "INSERT INTO encounters (id, startAt, protectionUsed, practicesPerformed, practicesReceived, createdAt, updatedAt) " +
-                    "VALUES ('e1', 1000, '', 'CREAMPIE,ANAL_CREAMPIE,ORAL,custom:actCustom', 'FOOT_PLAY', 1, 1)",
+                    "VALUES ('e1', 1000, '', 'CREAMPIE,ANAL_CREAMPIE,custom:actCustom', 'FOOT_PLAY', 1, 1)",
             )
-            // e2: control row with only surviving ids — must pass through untouched.
+            // e2: control — a custom ref must pass through untouched.
             db.execSQL(
-                "INSERT INTO encounters (id, startAt, protectionUsed, practicesPerformed, kinks, createdAt, updatedAt) " +
-                    "VALUES ('e2', 2000, '', 'ORAL', 'SPANKING', 1, 1)",
+                "INSERT INTO encounters (id, startAt, protectionUsed, practicesPerformed, createdAt, updatedAt) " +
+                    "VALUES ('e2', 2000, '', 'custom:actCustom', 1, 1)",
             )
-            // e3: removed kinks beside a surviving one.
+            // e3: removed kinks beside a custom ref.
             db.execSQL(
                 "INSERT INTO encounters (id, startAt, protectionUsed, kinks, createdAt, updatedAt) " +
-                    "VALUES ('e3', 3000, '', 'CHOKING,GAGGING,SPANKING', 1, 1)",
+                    "VALUES ('e3', 3000, '', 'CHOKING,GAGGING,custom:kCustom', 1, 1)",
             )
         }
 
@@ -206,17 +208,16 @@ class MigrationTest {
             db.query("SELECT practicesPerformed, practicesReceived FROM encounters WHERE id = 'e1'").use { c ->
                 assertTrue(c.moveToFirst())
                 // Order preserved; each removed id independently rewritten (no substring bleed).
-                assertEquals("custom:CREAMPIE,custom:ANAL_CREAMPIE,ORAL,custom:actCustom", c.getString(0))
+                assertEquals("custom:CREAMPIE,custom:ANAL_CREAMPIE,custom:actCustom", c.getString(0))
                 assertEquals("custom:preexisting", c.getString(1)) // merged into the colliding label's row
             }
-            db.query("SELECT practicesPerformed, kinks FROM encounters WHERE id = 'e2'").use { c ->
+            db.query("SELECT practicesPerformed FROM encounters WHERE id = 'e2'").use { c ->
                 assertTrue(c.moveToFirst())
-                assertEquals("ORAL", c.getString(0))
-                assertEquals("SPANKING", c.getString(1))
+                assertEquals("custom:actCustom", c.getString(0)) // custom untouched
             }
             db.query("SELECT kinks FROM encounters WHERE id = 'e3'").use { c ->
                 assertTrue(c.moveToFirst())
-                assertEquals("custom:CHOKING,custom:GAGGING,SPANKING", c.getString(0))
+                assertEquals("custom:CHOKING,custom:GAGGING,custom:kCustom", c.getString(0))
             }
             // Adopted rows exist with prettified labels; the merged id did NOT create a new row.
             db.query("SELECT label, isBuiltIn FROM acts WHERE id = 'CREAMPIE'").use { c ->
@@ -240,7 +241,7 @@ class MigrationTest {
             CatalogAdoption.adoptUnknownIds(db)
             db.query("SELECT practicesPerformed FROM encounters WHERE id = 'e1'").use { c ->
                 assertTrue(c.moveToFirst())
-                assertEquals("custom:CREAMPIE,custom:ANAL_CREAMPIE,ORAL,custom:actCustom", c.getString(0))
+                assertEquals("custom:CREAMPIE,custom:ANAL_CREAMPIE,custom:actCustom", c.getString(0))
             }
             db.query("SELECT COUNT(*) FROM acts").use { c ->
                 assertTrue(c.moveToFirst())
@@ -257,29 +258,30 @@ class MigrationTest {
     @Test
     fun migrate10To11_addsToyTableAndAdoptsRemovedPositionsAndToys() {
         helper.createDatabase(dbName, 10).use { db ->
-            // e1: a removed position (FACE_SITTING) + a surviving one (MISSIONARY); a removed toy
-            // (BUTT_PLUG) + a surviving one (VIBRATOR).
+            db.execSQL("INSERT INTO positions (id, label, isBuiltIn) VALUES ('posCtrl', 'My Position', 0)")
+
+            // e1: removed built-in positions/toys (none of these ship any more) → all adopt.
             db.execSQL(
                 "INSERT INTO encounters (id, startAt, protectionUsed, positions, toys, createdAt, updatedAt) " +
                     "VALUES ('e1', 1000, '', 'FACE_SITTING,MISSIONARY', 'BUTT_PLUG,VIBRATOR', 1, 1)",
             )
-            // e2: control — only surviving ids, must pass through untouched.
+            // e2: control — a custom position ref passes through untouched (toys table is created by
+            // this migration, so a bare toy id here would adopt; the custom ref is the stable control).
             db.execSQL(
-                "INSERT INTO encounters (id, startAt, protectionUsed, positions, toys, createdAt, updatedAt) " +
-                    "VALUES ('e2', 2000, '', 'DOGGY_STYLE', 'WAND', 1, 1)",
+                "INSERT INTO encounters (id, startAt, protectionUsed, positions, createdAt, updatedAt) " +
+                    "VALUES ('e2', 2000, '', 'custom:posCtrl', 1, 1)",
             )
         }
 
         helper.runMigrationsAndValidate(dbName, 11, true, MIGRATION_10_11).use { db ->
             db.query("SELECT positions, toys FROM encounters WHERE id = 'e1'").use { c ->
                 assertTrue(c.moveToFirst())
-                assertEquals("custom:FACE_SITTING,MISSIONARY", c.getString(0))
-                assertEquals("custom:BUTT_PLUG,VIBRATOR", c.getString(1))
+                assertEquals("custom:FACE_SITTING,custom:MISSIONARY", c.getString(0))
+                assertEquals("custom:BUTT_PLUG,custom:VIBRATOR", c.getString(1))
             }
-            db.query("SELECT positions, toys FROM encounters WHERE id = 'e2'").use { c ->
+            db.query("SELECT positions FROM encounters WHERE id = 'e2'").use { c ->
                 assertTrue(c.moveToFirst())
-                assertEquals("DOGGY_STYLE", c.getString(0))
-                assertEquals("WAND", c.getString(1))
+                assertEquals("custom:posCtrl", c.getString(0)) // custom ref untouched
             }
             // Adopted custom rows exist with generically prettified labels.
             db.query("SELECT label, isBuiltIn FROM positions WHERE id = 'FACE_SITTING'").use { c ->
@@ -291,6 +293,70 @@ class MigrationTest {
                 assertTrue(c.moveToFirst())
                 assertEquals("Butt plug", c.getString(0))
                 assertEquals(0, c.getInt(1))
+            }
+        }
+    }
+
+    /**
+     * v11 → v12 (FDP-5): creates the `occasions` and `ejaculation_locations` tables, **seeds** the
+     * neutral starter rows, then adopts every ref (including the per-orgasm **map-encoded**
+     * `ejaculationLocations` column `idx=ID1|ID2,…`, which the generic comma-set adopter can't handle)
+     * into a custom row. Since no built-ins ship any more, seed ids (DATE_NIGHT, NONE) also become
+     * `custom:` refs — but they resolve to the **seed** row (seeding runs first), so a used starter keeps
+     * its nice label rather than a generic prettified one. `custom:` refs pass through untouched.
+     */
+    @Test
+    fun migrate11To12_addsTablesSeedsAndAdopts() {
+        helper.createDatabase(dbName, 11).use { db ->
+            // e1: a removed occasion (QUICKIE) + a seed id (DATE_NIGHT); a map-encoded finish column with
+            // a removed id (ON_CHEST) + a seed id (NONE = "Didn't finish") across two orgasm rows.
+            db.execSQL(
+                "INSERT INTO encounters (id, startAt, protectionUsed, occasions, ejaculationLocations, createdAt, updatedAt) " +
+                    "VALUES ('e1', 1000, '', 'QUICKIE,DATE_NIGHT', '0=ON_CHEST|NONE,1=ON_CHEST', 1, 1)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(dbName, 12, true, MIGRATION_11_12).use { db ->
+            db.query("SELECT occasions, ejaculationLocations FROM encounters WHERE id = 'e1'").use { c ->
+                assertTrue(c.moveToFirst())
+                // Every id is now custom-prefixed (seed ids reuse the seeded row; QUICKIE/ON_CHEST adopt).
+                assertEquals("custom:QUICKIE,custom:DATE_NIGHT", c.getString(0))
+                assertEquals("0=custom:ON_CHEST|custom:NONE,1=custom:ON_CHEST", c.getString(1))
+            }
+            // Adopted rows get a generically prettified label.
+            db.query("SELECT label, isBuiltIn FROM occasions WHERE id = 'QUICKIE'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("Quickie", c.getString(0))
+                assertEquals(0, c.getInt(1))
+            }
+            db.query("SELECT label FROM ejaculation_locations WHERE id = 'ON_CHEST'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("On chest", c.getString(0))
+            }
+            // Seed rows exist with their nice labels (seeded, editable, isBuiltIn = 0); the used NONE seed
+            // kept "Didn't finish" (seeding-before-adoption), not the prettified "None".
+            db.query("SELECT label, isBuiltIn FROM occasions WHERE id = 'DATE_NIGHT'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("Date night", c.getString(0))
+                assertEquals(0, c.getInt(1))
+            }
+            db.query("SELECT label FROM occasions WHERE id = 'ANNIVERSARY'").use { c ->
+                assertTrue("ANNIVERSARY seed row missing", c.moveToFirst())
+                assertEquals("Anniversary", c.getString(0))
+            }
+            db.query("SELECT label FROM ejaculation_locations WHERE id = 'NONE'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("Didn't finish", c.getString(0))
+            }
+            db.query("SELECT COUNT(*) FROM ejaculation_locations WHERE id = 'IN_CONDOM'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(1, c.getInt(0)) // seeded even though unused
+            }
+            // Idempotence: a second pass finds nothing bare/unknown and changes nothing.
+            CatalogAdoption.adoptUnknownIds(db)
+            db.query("SELECT ejaculationLocations FROM encounters WHERE id = 'e1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("0=custom:ON_CHEST|custom:NONE,1=custom:ON_CHEST", c.getString(0))
             }
         }
     }

@@ -71,19 +71,19 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
-import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
-import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.stats.mostUsedCommon
 import app.tryst.ui.common.ActOptions
 import app.tryst.ui.common.DecodedImage
+import app.tryst.ui.common.EjaculationOptions
 import app.tryst.ui.common.Format
 import app.tryst.ui.common.KinkOptions
 import app.tryst.ui.common.MultiSelectChips
 import app.tryst.ui.common.MultiSelectField
+import app.tryst.ui.common.OccasionOptions
 import app.tryst.ui.common.PositionOptions
 import app.tryst.ui.common.SingleSelectChips
 import app.tryst.ui.common.SingleSelectField
@@ -118,6 +118,8 @@ fun EncounterEditScreen(
     val customActs by viewModel.customActs.collectAsStateWithLifecycle()
     val customKinks by viewModel.customKinks.collectAsStateWithLifecycle()
     val customToys by viewModel.customToys.collectAsStateWithLifecycle()
+    val customOccasions by viewModel.customOccasions.collectAsStateWithLifecycle()
+    val customEjaculations by viewModel.customEjaculations.collectAsStateWithLifecycle()
     // Per-category pick frequency, used to surface the user's most-used options inline (ENC-1).
     val usage by viewModel.optionUsage.collectAsStateWithLifecycle()
     // Solo = no partner selected (matches the history "Solo" badge). Partner-only fields are hidden so
@@ -246,6 +248,8 @@ fun EncounterEditScreen(
                 }
 
                 // Ejaculation location(s) per orgasm you had — multi-select (e.g. chest + stomach).
+                val ejaculationOptions = EjaculationOptions.builtIns + EjaculationOptions.custom(customEjaculations)
+                val ejaculationCommon = mostUsedCommon(ejaculationOptions, ejaculationOptions) { usage.ejaculation[it.id] ?: 0 }
                 repeat(ui.orgasmCountSelf) { i ->
                     MultiSelectField(
                         label = if (ui.orgasmCountSelf > 1) {
@@ -253,13 +257,11 @@ fun EncounterEditScreen(
                         } else {
                             stringResource(R.string.encounter_ejaculation)
                         },
-                        all = EjaculationLocation.entries,
-                        common = mostUsedCommon(CommonOptions.EJACULATION, EjaculationLocation.entries) {
-                            usage.ejaculation[it] ?: 0
-                        },
-                        selected = ui.ejaculations[i] ?: emptySet(),
+                        all = ejaculationOptions,
+                        common = ejaculationCommon,
+                        selected = ejaculationOptions.filter { it.id in (ui.ejaculations[i] ?: emptySet()) }.toSet(),
                         labelOf = { it.label },
-                        onToggle = { viewModel.toggleEjaculation(i, it) },
+                        onToggle = { viewModel.toggleEjaculation(i, it.id) },
                     )
                 }
 
@@ -277,7 +279,7 @@ fun EncounterEditScreen(
                     }
 
                 val positionOptions = PositionOptions.builtIns + PositionOptions.custom(customPositions)
-                val positionCommon = mostUsedCommon(PositionOptions.common, positionOptions) { usage.positions[it.id] ?: 0 }
+                val positionCommon = mostUsedCommon(positionOptions, positionOptions) { usage.positions[it.id] ?: 0 }
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_positions),
                     all = positionOptions,
@@ -288,7 +290,7 @@ fun EncounterEditScreen(
                 )
 
                 val actOptions = ActOptions.builtIns + ActOptions.custom(customActs)
-                val actCommon = mostUsedCommon(ActOptions.common, actOptions) { usage.acts[it.id] ?: 0 }
+                val actCommon = mostUsedCommon(actOptions, actOptions) { usage.acts[it.id] ?: 0 }
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_acts_gave),
                     all = actOptions,
@@ -313,7 +315,7 @@ fun EncounterEditScreen(
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_kink),
                     all = kinkOptions,
-                    common = mostUsedCommon(KinkOptions.common, kinkOptions) { usage.kinks[it.id] ?: 0 },
+                    common = mostUsedCommon(kinkOptions, kinkOptions) { usage.kinks[it.id] ?: 0 },
                     selected = kinkOptions.filter { it.id in ui.kinks }.toSet(),
                     labelOf = { it.label },
                     onToggle = { viewModel.toggleKink(it.id) },
@@ -328,20 +330,21 @@ fun EncounterEditScreen(
                     onToggle = { viewModel.toggleContext(it) },
                 )
 
+                val occasionOptions = OccasionOptions.builtIns + OccasionOptions.custom(customOccasions)
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_occasion),
-                    all = Occasion.entries,
-                    common = mostUsedCommon(CommonOptions.OCCASION, Occasion.entries) { usage.occasions[it] ?: 0 },
-                    selected = ui.occasions,
+                    all = occasionOptions,
+                    common = mostUsedCommon(occasionOptions, occasionOptions) { usage.occasions[it.id] ?: 0 },
+                    selected = occasionOptions.filter { it.id in ui.occasions }.toSet(),
                     labelOf = { it.label },
-                    onToggle = { viewModel.toggleOccasion(it) },
+                    onToggle = { viewModel.toggleOccasion(it.id) },
                 )
 
                 val toyOptions = ToyOptions.builtIns + ToyOptions.custom(customToys)
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_toys),
                     all = toyOptions,
-                    common = mostUsedCommon(ToyOptions.common, toyOptions) { usage.toys[it.id] ?: 0 },
+                    common = mostUsedCommon(toyOptions, toyOptions) { usage.toys[it.id] ?: 0 },
                     selected = toyOptions.filter { it.id in ui.toys }.toSet(),
                     labelOf = { it.label },
                     onToggle = { viewModel.toggleToy(it.id) },
@@ -678,18 +681,6 @@ private object CommonOptions {
         Mood.RELAXED,
         Mood.GOOD,
     )
-    val EJACULATION = listOf(
-        EjaculationLocation.NONE,
-        EjaculationLocation.IN_CONDOM,
-        EjaculationLocation.VAGINAL,
-        EjaculationLocation.ANAL,
-        EjaculationLocation.ORAL,
-        EjaculationLocation.SWALLOWED,
-        EjaculationLocation.ON_FACE,
-        EjaculationLocation.ON_CHEST,
-        EjaculationLocation.ON_STOMACH,
-        EjaculationLocation.IN_SHOWER,
-    )
     val PLACE = listOf(
         Place.HOME,
         Place.BEDROOM,
@@ -699,15 +690,5 @@ private object CommonOptions {
         Place.OUTDOORS,
         Place.LIVING_ROOM,
         Place.HOT_TUB,
-    )
-    val OCCASION = listOf(
-        Occasion.REGULAR,
-        Occasion.NONE,
-        Occasion.QUICKIE,
-        Occasion.MORNING_SEX,
-        Occasion.MAKEUP_SEX,
-        Occasion.SPONTANEOUS,
-        Occasion.DATE_NIGHT,
-        Occasion.DRUNK_HIGH,
     )
 }

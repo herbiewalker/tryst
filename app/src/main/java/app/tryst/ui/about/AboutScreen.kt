@@ -70,6 +70,14 @@ fun AboutScreen(onBack: () -> Unit = {}) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            Text(stringResource(R.string.about_app_summary_title), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(R.string.about_app_summary),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+
+            HorizontalDivider(Modifier.padding(vertical = 4.dp))
+
             Text(
                 stringResource(R.string.about_license_body),
                 style = MaterialTheme.typography.bodyMedium,

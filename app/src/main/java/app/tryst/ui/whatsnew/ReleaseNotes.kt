@@ -20,6 +20,18 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.3.2",
+            versionCode = 5,
+            date = "2026-07-03",
+            highlights = listOf(
+                "Categories are now fully yours. Tryst ships only a couple of neutral starters and you build the rest — acts, kinks, positions, toys, occasions, and finish locations are all your own entries now.",
+                "Occasions and finish locations joined the customizable set, so you can name them however you like.",
+                "Each category gets its own polished management page under Settings → Categories: add, rename, or remove entries with room to breathe.",
+                "Everything you'd already logged is kept and converted automatically — nothing is lost.",
+                "Tip: re-export your backup after updating so a future restore keeps the new naming.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.3.1",
             versionCode = 4,
             date = "2026-07-03",

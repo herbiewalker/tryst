@@ -143,87 +143,31 @@ enum class Protection(override val label: String) : DisplayLabel {
     OTHER("Other"),
 }
 
-/** Where ejaculation happened (multi-select; an encounter can have more than one). */
-enum class EjaculationLocation(override val label: String) : DisplayLabel {
-    NONE("Didn't finish"),
-    IN_CONDOM("In condom"),
-    VAGINAL("Inside vagina"),
-    ON_VAGINA("On vagina"),
-    ANAL("Inside bootyhole"),
-    ORAL("Inside mouth"),
-    SWALLOWED("Swallowed"),
-    ON_FACE("On face"),
-    ON_CHEST("On chest"),
-    ON_BREASTS("On breasts"),
-    ON_STOMACH("On stomach"),
-    ON_BACK("On back"),
-    ON_BUTT("On butt"),
-    ON_THIGHS("On thighs"),
-    ON_HANDS("On hands"),
-    ON_HAIR("On hair"),
-    ON_SELF("On self"),
-    ON_SHEETS("On sheets"),
-    ON_FLOOR("On floor"),
-    IN_SHOWER("In the shower"),
-    ON_BODY("On body"),
-    IN_TOY("In toy"),
-    OTHER("Other"),
-}
+/**
+ * Where ejaculation happened (per-orgasm multi-select). User-configurable & id-based (FDP-5) —
+ * **intentionally empty** enum; every finish location, including the two neutral starters, is a
+ * user-owned [EjaculationLocationEntity] row seeded by [CatalogSeeds] and fully editable/removable.
+ */
+enum class EjaculationLocation(override val label: String) : DisplayLabel
 
 /**
- * Physical sex acts (built-in set). Tracked as two sets per encounter: gave and received.
- * Custom acts are stored separately as ActEntity rows; both are referenced by string id.
+ * Physical sex acts. Tracked as two sets per encounter: gave and received; every act is a string id.
  *
- * The shipped catalog is deliberately a small, neutral/clinical starter set (F-Droid content
- * policy, D-41): anything more explicit is user data, added via Settings → Manage custom acts.
- * Ids of previously-built-in entries are adopted as custom rows by `CatalogAdoption`
- * (MIGRATION_9_10), so trimming here never loses logged data.
+ * **Intentionally empty** — Tryst ships **no compiled-in acts** (F-Droid content policy, D-41 / FDP-5).
+ * Every act, including the couple of neutral starters, is a user-owned [ActEntity] row (`custom:<id>`)
+ * seeded by [CatalogSeeds] and fully editable/removable. The enum type is kept only as the (now empty)
+ * built-in id namespace so `.entries` and [app.tryst.data.db.CatalogAdoption] keep compiling.
  */
-enum class Act(override val label: String) : DisplayLabel {
-    KISSING("Kissing"),
-    MAKING_OUT("Making out"),
-    ORAL("Oral"),
-    SIXTY_NINE("69"),
-    MANUAL("Manual / handjob"),
-    FINGERING("Fingering"),
-    VAGINAL("Vaginal"),
-    ANAL("Anal"),
-    PROSTATE_MASSAGE("Prostate massage"),
-    NIPPLE_PLAY("Nipple play"),
-    BREAST_PLAY("Breast play"),
-    MASSAGE("Massage"),
-    MUTUAL_MASTURBATION("Mutual masturbation"),
-    MASTURBATION("Masturbation"),
-    CUDDLING("Cuddling"),
-    OTHER("Other"),
-}
+enum class Act(override val label: String) : DisplayLabel
 
 /**
  * Kink / BDSM (single multi-select; gave/received doesn't meaningfully apply).
  *
- * Like [Act], the shipped catalog is a small mainstream starter set (F-Droid content policy,
- * D-41); everything else is user data via Settings → Manage custom kinks, and previously-built-in
- * ids are adopted as custom rows by `CatalogAdoption` (MIGRATION_9_10).
+ * Like [Act], **intentionally empty** — Tryst ships **no predefined kinks** (F-Droid content policy,
+ * D-41 / FDP-5). Every kink is user data via Settings → Manage kinks (a [KinkEntity] custom row);
+ * previously-built-in ids a user logged are adopted as custom rows by `MIGRATION_11_12`.
  */
-enum class Kink(override val label: String) : DisplayLabel {
-    DOMINATION("Domination"),
-    SUBMISSION("Submission"),
-    BONDAGE("Bondage"),
-    RESTRAINTS("Restraints"),
-    SPANKING("Spanking"),
-    HAIR_PULLING("Hair pulling"),
-    BITING("Biting"),
-    BLINDFOLD("Blindfold"),
-    SENSORY_PLAY("Sensory play"),
-    TEMPERATURE_PLAY("Temperature play"),
-    EDGING("Edging"),
-    PRAISE("Praise"),
-    ROLEPLAY("Roleplay"),
-    COSTUME_PLAY("Lingerie / dress-up"),
-    DIRTY_TALK("Dirty talk"),
-    AFTERCARE("Aftercare"),
-    OTHER("Other"),
-}
+enum class Kink(override val label: String) : DisplayLabel
 
 /** Place where the encounter happened (single multi-select). */
 enum class Place(override val label: String) : DisplayLabel {
@@ -264,101 +208,23 @@ enum class Place(override val label: String) : DisplayLabel {
     OTHER("Other"),
 }
 
-/** Occasion / context of the encounter (single multi-select). */
-enum class Occasion(override val label: String) : DisplayLabel {
-    NONE("None"),
-    REGULAR("Regular"),
-    QUICKIE("Quickie"),
-    MORNING_SEX("Morning sex"),
-    WAKE_UP_SEX("Wake-up sex"),
-    MAKEUP_SEX("Makeup sex"),
-    ANGRY_SEX("Angry sex"),
-    PERIOD_SEX("Period sex"),
-    DRUNK_HIGH("Drunk / high"),
-    SPONTANEOUS("Spontaneous"),
-    DATE_NIGHT("Date night"),
-    ANNIVERSARY("Anniversary"),
-    BIRTHDAY("Birthday"),
-    REUNION("Reunion"),
-    PHONE_SEX("Phone sex"),
-    SEXTING("Sexting"),
-    VIDEO_SEX("Video sex"),
-    OTHER("Other"),
-}
+/**
+ * Occasion / context of the encounter (multi-select). User-configurable & id-based (FDP-5) —
+ * **intentionally empty** enum; every occasion, including the two neutral calendar starters, is a
+ * user-owned [OccasionEntity] row seeded by [CatalogSeeds] and fully editable/removable.
+ */
+enum class Occasion(override val label: String) : DisplayLabel
 
 /**
- * Toys used (multi-select). Like [Act]/[Kink], the shipped catalog is a small, non-explicit starter
- * set (F-Droid content policy, D-41 / FDP-4); everything else is user data via Settings → Manage
- * custom toys, and previously-built-in ids are adopted as custom rows by `CatalogAdoption`
- * (MIGRATION_10_11), so trimming here never loses logged data.
+ * Toys used (multi-select). Like [Act]/[Kink], **intentionally empty** — Tryst ships **no predefined
+ * toys** (F-Droid content policy, D-41 / FDP-5). Every toy is user data via Settings → Manage toys (a
+ * [ToyEntity] custom row); previously-built-in ids a user logged are adopted by `MIGRATION_11_12`.
  */
-enum class ToyType(override val label: String) : DisplayLabel {
-    NONE("None"),
-    VIBRATOR("Vibrator"),
-    WAND("Wand"),
-    AIR_PULSE("Air-pulse / suction"),
-    DILDO("Dildo"),
-    DOUBLE_DILDO("Double-ended dildo"),
-    STROKER("Stroker / masturbator"),
-    LOVE_EGG("Love egg / bullet"),
-    REMOTE_VIBE("Remote / app-controlled"),
-    KEGEL_BALLS("Kegel balls"),
-    PROSTATE_MASSAGER("Prostate massager"),
-    PENIS_PUMP("Penis pump"),
-    STRAP_ON("Strap-on"),
-    HARNESS("Harness"),
-    RESTRAINTS("Restraints"),
-    BLINDFOLD("Blindfold"),
-    FEATHER("Feather tickler"),
-    MASSAGE_CANDLE("Massage candle"),
-    OTHER("Other"),
-}
+enum class ToyType(override val label: String) : DisplayLabel
 
 /**
- * Sex positions (built-in starter set; custom ones are stored separately as PositionEntity rows).
- * Trimmed to a non-explicit set in FDP-4 (D-41); removed built-ins a user had logged are adopted as
- * custom rows by `CatalogAdoption` (MIGRATION_10_11), so nothing logged is lost.
+ * Sex positions. **Intentionally empty** — Tryst ships **no predefined positions** (F-Droid content
+ * policy, D-41 / FDP-5). Every position is user data via Settings → Manage positions (a
+ * [PositionEntity] custom row); previously-built-in ids a user logged are adopted by `MIGRATION_11_12`.
  */
-enum class Position(override val label: String) : DisplayLabel {
-    MISSIONARY("Missionary"),
-    MODIFIED_MISSIONARY("Modified Missionary"),
-    MISSIONARY_STANDING_EDGE("Missionary - Standing Edge of Bed"),
-    DOGGY_STYLE("Doggy style"),
-    COWGIRL("Cowgirl"),
-    REVERSE_COWGIRL("Reverse cowgirl"),
-    REVERSE_COWGIRL_MODIFIED("Reverse Cowgirl - Modified"),
-    SPOONING("Spooning"),
-    SIXTY_NINE("69"),
-    STANDING("Standing"),
-    STANDING_DOGGY("Standing doggy"),
-    SIDE_BY_SIDE("Side by side"),
-    SEATED("Seated"),
-    STRADDLE("Straddle"),
-    LAP("Lap"),
-    EDGE_OF_BED("Edge of bed"),
-    AGAINST_WALL("Against the wall"),
-    BENT_OVER("Bent over"),
-    LEGS_ON_SHOULDERS("Legs on shoulders"),
-    COITAL_ALIGNMENT("Coital alignment (CAT)"),
-    ANKLES_BACK("Ankles back"),
-    PRETZEL("Pretzel"),
-    ANVIL("Anvil"),
-    JOCKEY("Jockey"),
-    LOTUS("Lotus"),
-    BUTTERFLY("Butterfly"),
-    BRIDGE("Bridge"),
-    EAGLE("Eagle"),
-    AMAZON("Amazon"),
-    CRADLE("Cradle"),
-    CRAB("Crab"),
-    FROG("Frog"),
-    FLATIRON("Flatiron"),
-    WHEELBARROW("Wheelbarrow"),
-    KNEELING_ORAL("Oral - Kneeling"),
-    STANDING_ORAL("Oral - Standing"),
-    LYING_ORAL("Oral - Laying down"),
-    ORAL_EDGE_OF_BED("Oral - Edge of Bed"),
-    TABLE_TOP("Table top"),
-    CHAIR("Chair"),
-    OTHER("Other"),
-}
+enum class Position(override val label: String) : DisplayLabel

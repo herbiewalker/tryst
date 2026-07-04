@@ -5,9 +5,11 @@ import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
 import app.tryst.data.db.entity.ActEntity
+import app.tryst.data.db.entity.EjaculationLocationEntity
 import app.tryst.data.db.entity.KinkEntity
 import app.tryst.data.db.entity.LocationEntity
 import app.tryst.data.db.entity.MediaEntity
+import app.tryst.data.db.entity.OccasionEntity
 import app.tryst.data.db.entity.PositionEntity
 import app.tryst.data.db.entity.TagEntity
 import app.tryst.data.db.entity.ToyEntity
@@ -94,6 +96,36 @@ interface ToyDao {
     suspend fun rename(id: String, label: String)
 
     @Query("DELETE FROM toys WHERE id = :id")
+    suspend fun deleteById(id: String)
+}
+
+@Dao
+interface OccasionDao {
+    @Upsert
+    suspend fun upsert(occasion: OccasionEntity)
+
+    @Query("SELECT * FROM occasions WHERE isBuiltIn = 0 ORDER BY label COLLATE NOCASE")
+    fun observeCustom(): Flow<List<OccasionEntity>>
+
+    @Query("UPDATE occasions SET label = :label WHERE id = :id")
+    suspend fun rename(id: String, label: String)
+
+    @Query("DELETE FROM occasions WHERE id = :id")
+    suspend fun deleteById(id: String)
+}
+
+@Dao
+interface EjaculationLocationDao {
+    @Upsert
+    suspend fun upsert(location: EjaculationLocationEntity)
+
+    @Query("SELECT * FROM ejaculation_locations WHERE isBuiltIn = 0 ORDER BY label COLLATE NOCASE")
+    fun observeCustom(): Flow<List<EjaculationLocationEntity>>
+
+    @Query("UPDATE ejaculation_locations SET label = :label WHERE id = :id")
+    suspend fun rename(id: String, label: String)
+
+    @Query("DELETE FROM ejaculation_locations WHERE id = :id")
     suspend fun deleteById(id: String)
 }
 

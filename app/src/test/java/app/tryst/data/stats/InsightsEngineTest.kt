@@ -1,10 +1,7 @@
 package app.tryst.data.stats
 
-import app.tryst.data.db.entity.Act
-import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Initiator
-import app.tryst.data.db.entity.Kink
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.Protection
@@ -33,7 +30,7 @@ class InsightsEngineTest {
         acts: Set<String>? = null,
         kinks: Set<String>? = null,
         protection: Set<Protection> = emptySet(),
-        ejaculation: Map<Int, Set<EjaculationLocation>>? = null,
+        ejaculation: Map<Int, Set<String>>? = null,
         initiator: Initiator? = null,
         partners: List<PartnerEntity> = emptyList(),
     ) = EncounterWithDetails(
@@ -178,34 +175,36 @@ class InsightsEngineTest {
 
     @Test
     fun actsCountOncePerEncounterAndResolveLabels() {
+        // Acts are all user-owned rows now (FDP-5); resolve by the custom label map.
         val log = listOf(
-            encounter("a", today, acts = setOf(Act.VAGINAL.name, "custom:xyz")),
-            encounter("b", today.minusDays(1), acts = setOf(Act.VAGINAL.name)),
+            encounter("a", today, acts = setOf("custom:a1", "custom:xyz")),
+            encounter("b", today.minusDays(1), acts = setOf("custom:a1")),
         )
         val r = InsightsEngine.compute(
             log,
-            customActLabels = mapOf("xyz" to "My Custom Act"),
+            customActLabels = mapOf("a1" to "Kissing", "xyz" to "My Custom Act"),
             zone = zone,
             today = today,
         )
-        assertEquals(Tally("Vaginal", 2), r.topActs.first())
+        assertEquals(Tally("Kissing", 2), r.topActs.first())
         assertTrue(r.topActs.any { it.label == "My Custom Act" && it.count == 1 })
     }
 
     @Test
-    fun kinksResolveBuiltInAndCustomLabels() {
+    fun kinksResolveCustomLabels() {
+        // Kinks ship with no built-ins (FDP-5); every kink is a custom entry resolved by its label map.
         val log = listOf(
-            encounter("a", today, kinks = setOf(Kink.SPANKING.name, "custom:k1")),
-            encounter("b", today.minusDays(1), kinks = setOf(Kink.SPANKING.name)),
+            encounter("a", today, kinks = setOf("custom:k1", "custom:k2")),
+            encounter("b", today.minusDays(1), kinks = setOf("custom:k1")),
         )
         val r = InsightsEngine.compute(
             log,
-            customKinkLabels = mapOf("k1" to "My Custom Kink"),
+            customKinkLabels = mapOf("k1" to "My Custom Kink", "k2" to "Another Kink"),
             zone = zone,
             today = today,
         )
-        assertEquals(Tally("Spanking", 2), r.topKinks.first())
-        assertTrue(r.topKinks.any { it.label == "My Custom Kink" && it.count == 1 })
+        assertEquals(Tally("My Custom Kink", 2), r.topKinks.first())
+        assertTrue(r.topKinks.any { it.label == "Another Kink" && it.count == 1 })
     }
 
     @Test
@@ -223,15 +222,21 @@ class InsightsEngineTest {
                 "a",
                 today,
                 ejaculation = mapOf(
-                    0 to setOf(EjaculationLocation.VAGINAL, EjaculationLocation.ON_STOMACH),
-                    1 to setOf(EjaculationLocation.ON_FACE),
+                    // Custom finish-location ids resolve to their labels via customEjaculationLabels.
+                    0 to setOf("custom:v", "custom:s"),
+                    1 to setOf("custom:f"),
                 ),
             ),
         )
-        val r = InsightsEngine.compute(log, zone = zone, today = today)
-        assertTrue(r.topEjaculation.any { it.label == EjaculationLocation.VAGINAL.label })
-        assertTrue(r.topEjaculation.any { it.label == EjaculationLocation.ON_FACE.label })
+        val r = InsightsEngine.compute(
+            log,
+            customEjaculationLabels = mapOf("v" to "Inside vagina", "s" to "On stomach", "f" to "On face"),
+            zone = zone,
+            today = today,
+        )
+        assertTrue(r.topEjaculation.any { it.label == "Inside vagina" })
+        assertTrue(r.topEjaculation.any { it.label == "On face" })
         // multi-select: both locations of a single orgasm are counted
-        assertTrue(r.topEjaculation.any { it.label == EjaculationLocation.ON_STOMACH.label })
+        assertTrue(r.topEjaculation.any { it.label == "On stomach" })
     }
 }
