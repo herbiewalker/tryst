@@ -1,8 +1,6 @@
 package app.tryst.data.achievements
 
-import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Initiator
-import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.db.relation.EncounterWithDetails
@@ -18,7 +16,7 @@ object Achievements {
 
     private fun partnerOrgasms(e: EncounterWithDetails): Int = (e.encounter.partnerOrgasms?.values?.sum() ?: 0) + (e.encounter.orgasmCountPartner ?: 0)
 
-    private fun hasOccasion(e: EncounterWithDetails, vararg occasions: Occasion): Boolean = e.encounter.occasions?.any { it in occasions } == true
+    private fun hasOccasion(e: EncounterWithDetails, vararg occasionIds: String): Boolean = e.encounter.occasions?.any { it in occasionIds } == true
 
     private fun hasContext(e: EncounterWithDetails, vararg places: Place): Boolean = e.encounter.contexts?.any { it in places } == true
 
@@ -61,7 +59,7 @@ object Achievements {
         AchievementDef("v_toys10", "Toy Collector", "Use 10 different toys.", AchievementCategory.VARIETY, 10, "🪀", Distinct { e, _ -> e.encounter.toys ?: emptySet() }),
         AchievementDef("v_moods10", "Mood Ring", "Log 10 different moods.", AchievementCategory.VARIETY, 10, "🎭", Distinct { e, _ -> e.encounter.mood?.let { setOf(it.name) } ?: emptySet() }),
         AchievementDef("v_protection4", "Safety First Class", "Use 4 different kinds of protection.", AchievementCategory.VARIETY, 4, "🛡️", Distinct { e, _ -> e.encounter.protectionUsed.filter { it != Protection.NONE }.map { it.name }.toSet() }),
-        AchievementDef("v_finish6", "Sharpshooter", "Finish in 6 different places.", AchievementCategory.VARIETY, 6, "🎯", Distinct { e, _ -> e.encounter.ejaculationLocations?.values?.flatten()?.filter { it != EjaculationLocation.NONE }?.map { it.name }?.toSet() ?: emptySet() }),
+        AchievementDef("v_finish6", "Sharpshooter", "Finish in 6 different places.", AchievementCategory.VARIETY, 6, "🎯", Distinct { e, _ -> e.encounter.ejaculationLocations?.values?.flatten()?.filter { it != "custom:NONE" }?.toSet() ?: emptySet() }),
         AchievementDef("v_week", "Week Complete", "Log on all 7 days of the week.", AchievementCategory.VARIETY, 7, "🗓️", Distinct { _, d -> setOf(d.dayOfWeek.name) }),
         AchievementDef("v_year", "All Year Round", "Log in all 12 months.", AchievementCategory.VARIETY, 12, "🎆", Distinct { _, d -> setOf(d.month.name) }),
 
@@ -80,11 +78,12 @@ object Achievements {
         AchievementDef("p_5star25", "Critic's Choice", "Rate 25 trysts 5 stars.", AchievementCategory.PLEASURE, 25, "🏵️", Count { it.encounter.satisfactionRating == 5 }),
 
         // --- Occasions & places ---
-        AchievementDef("o_morning", "Early Bird", "Log morning or wake-up sex.", AchievementCategory.OCCASIONS, 1, "🌅", Count { hasOccasion(it, Occasion.MORNING_SEX, Occasion.WAKE_UP_SEX) }),
-        AchievementDef("o_makeup", "Kiss & Makeup", "Log makeup sex.", AchievementCategory.OCCASIONS, 1, "💋", Count { hasOccasion(it, Occasion.MAKEUP_SEX) }),
-        AchievementDef("o_quickie", "In a Hurry", "Log a quickie.", AchievementCategory.OCCASIONS, 1, "⚡", Count { hasOccasion(it, Occasion.QUICKIE) }),
-        AchievementDef("o_datenight", "Date Night", "Log a date-night tryst.", AchievementCategory.OCCASIONS, 1, "🍷", Count { hasOccasion(it, Occasion.DATE_NIGHT) }),
-        AchievementDef("o_special", "Special Occasion", "Log an anniversary or birthday tryst.", AchievementCategory.OCCASIONS, 1, "🎉", Count { hasOccasion(it, Occasion.ANNIVERSARY, Occasion.BIRTHDAY) }),
+        // Occasions are user-owned rows (FDP-5); the two flavor badges key off the shipped seed ids
+        // (stored custom-prefixed like any row), and the rest reward tagging a variety of your own.
+        AchievementDef("o_datenight", "Date Night", "Log a date-night tryst.", AchievementCategory.OCCASIONS, 1, "🍷", Count { hasOccasion(it, "custom:DATE_NIGHT") }),
+        AchievementDef("o_special", "Special Occasion", "Log an anniversary tryst.", AchievementCategory.OCCASIONS, 1, "🎉", Count { hasOccasion(it, "custom:ANNIVERSARY") }),
+        AchievementDef("o_occasions3", "Occasion Explorer", "Tag 3 different occasions.", AchievementCategory.OCCASIONS, 3, "🗓️", Distinct { e, _ -> e.encounter.occasions ?: emptySet() }),
+        AchievementDef("o_occasions6", "Occasion Collector", "Tag 6 different occasions.", AchievementCategory.OCCASIONS, 6, "🎊", Distinct { e, _ -> e.encounter.occasions ?: emptySet() }),
         AchievementDef("o_vacation", "Vacation Mode", "Get busy on vacation.", AchievementCategory.OCCASIONS, 1, "🏝️", Count { hasContext(it, Place.VACATION) }),
         AchievementDef("o_public", "Thrill Seeker", "Log a public or semi-public tryst.", AchievementCategory.OCCASIONS, 1, "😳", Count { hasContext(it, Place.PUBLIC, Place.SEMI_PUBLIC) }),
         AchievementDef("o_outdoors", "Wild Side", "Get busy outdoors.", AchievementCategory.OCCASIONS, 1, "🌲", Count { hasContext(it, Place.OUTDOORS, Place.NATURE, Place.BEACH) }),

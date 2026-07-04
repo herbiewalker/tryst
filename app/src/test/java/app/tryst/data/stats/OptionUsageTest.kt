@@ -1,6 +1,5 @@
 package app.tryst.data.stats
 
-import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Protection
 import org.junit.Assert.assertEquals
@@ -13,7 +12,7 @@ class OptionUsageTest {
         performed: Set<String>? = null,
         received: Set<String>? = null,
         protection: Set<Protection> = emptySet(),
-        ejaculation: Map<Int, Set<EjaculationLocation>>? = null,
+        ejaculation: Map<Int, Set<String>>? = null,
     ) = EncounterEntity(
         id = id,
         startAt = 0,
@@ -60,14 +59,14 @@ class OptionUsageTest {
                 encounter(
                     "a",
                     ejaculation = mapOf(
-                        0 to setOf(EjaculationLocation.ON_CHEST),
-                        1 to setOf(EjaculationLocation.ON_CHEST, EjaculationLocation.SWALLOWED),
+                        0 to setOf("ON_CHEST"),
+                        1 to setOf("ON_CHEST", "SWALLOWED"),
                     ),
                 ),
             ),
         )
-        assertEquals(1, usage.ejaculation[EjaculationLocation.ON_CHEST])
-        assertEquals(1, usage.ejaculation[EjaculationLocation.SWALLOWED])
+        assertEquals(1, usage.ejaculation["ON_CHEST"])
+        assertEquals(1, usage.ejaculation["SWALLOWED"])
     }
 
     @Test

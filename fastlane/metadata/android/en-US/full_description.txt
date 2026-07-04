@@ -10,7 +10,7 @@ Privacy is the whole point, not an add-on:
 What you can do:
 
 * Log encounters in as much or as little detail as you like — date and time, duration, partners, acts, positions, protection, mood, setting, occasion, toys, satisfaction rating, orgasms, notes, and encrypted photo attachments.
-* Make the categories your own. Tryst ships a small, non-explicit starter set, and you add or rename your own acts, kinks, positions, and toys — they count fully in Insights and Achievements.
+* Make the categories your own. Tryst ships almost no predefined categories — you build your own acts, kinks, positions, toys, occasions, and finish locations on a dedicated management page for each, and everything you add counts fully in Insights and Achievements.
 * Track partners (named or anonymous) with per-partner stats.
 * Explore Insights: streaks, trends, and per-attribute breakdowns, all computed on-device with hand-drawn charts.
 * Earn Achievements derived from your own log.

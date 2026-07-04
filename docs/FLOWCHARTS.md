@@ -1,6 +1,6 @@
 # Tryst — Logic Flowcharts
 
-> **Status:** Live — v0.3.1. Visual maps of how the app's core logic works, so a change can be
+> **Status:** Live — v0.3.2. Visual maps of how the app's core logic works, so a change can be
 > reasoned about before touching code. Diagrams are [Mermaid](https://mermaid.js.org/) — they render on
 > GitHub and in most Markdown viewers. Keep these in sync when the corresponding code changes.
 

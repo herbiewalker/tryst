@@ -1,7 +1,8 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **v0.3.1 / schema v11** (latest: **D-41**, the F-Droid
-> content-policy rework — acts/kinks in 0.3.0, then positions/toys in 0.3.1). Lightweight ADR log;
+> **Status:** Live — decisions through **v0.3.2 / schema v12** (latest: **D-41**, the F-Droid
+> content-policy rework — acts/kinks in 0.3.0, positions/toys in 0.3.1, then empty predefined lists +
+> custom occasions/finish-locations in 0.3.2). Lightweight ADR log;
 > entries are numbered D-1… ascending, so the **newest are at the bottom**. "Open" items still need a call.
 
 ## Decided (from scoping conversation, 2026-06-04)
@@ -317,6 +318,25 @@
   then trimmed (9 removed). `CatalogAdoption` now also adopts removed position/toy ids (migrate +
   restore), and the `"Deep throat"` doc-comment example was scrubbed. Shipped as **v0.3.1** (kept in the
   0.3 range). Verified by `MigrationTest.migrate10To11…` + the full instrumented suite (25/25).
+  **Phase 4 (DONE 2026-07-03, schema v12 / `MIGRATION_11_12` — FDP-5):** on further re-review linsui still
+  saw explicit entries (e.g. "69", "Anal") among the *kept* mainstream acts and asked to "just use an
+  empty pre-defined list to be safe." Decision: **empty the predefined lists entirely — no category is
+  compiled in.** All six category enums are now empty; the couple of neutral starters ship instead as
+  ordinary **user-owned rows** seeded by `CatalogSeeds` (acts: Kissing/Cuddling; occasions:
+  Date night/Anniversary; finish: Didn't finish/In condom; kinks/positions/toys: nothing) — so even the
+  starters appear on the management pages and are renamable/removable like any entry. Seeding runs on
+  fresh install (Room `onCreate`) and on upgrade (`MIGRATION_11_12`, **before** adoption so a used
+  starter keeps its nice label). **Occasion** and **EjaculationLocation** were made id-based &
+  custom-capable too (new `occasions`/`ejaculation_locations` tables + repos; `encounters.occasions`
+  `Set<Occasion>`→`Set<String>`, `encounters.ejaculationLocations` `Map<Int,Set<EjaculationLocation>>`→
+  `Map<Int,Set<String>>`) and trimmed to two neutral seeds each (occasions: Date night/Anniversary;
+  finish: Didn't finish/In condom). `CatalogAdoption` now covers all six categories — with a dedicated
+  adopter for ejaculation's **map-encoded** column and a **table-existence guard** so migrations that
+  predate a table don't touch it. The five occasion-specific achievements were reworked to be
+  occasion-agnostic (the two seed-anchored ones kept). The per-category **Manage** dialogs were replaced
+  by dedicated full-screen **management pages** (one nav route per category). Shipped as **v0.3.2** (kept
+  in the 0.3 range). Verified by `MigrationTest.migrate11To12…` + the full instrumented suite (26/26) and
+  a clean release-APK explicit-string sweep.
 - **D-25 (M6):** **No chart library** (resolves O-3). Insights charts are drawn with plain Compose
   layout (`VerticalBarChart`, `RankedBars`) instead of Vico/MPAndroidChart. Rationale: the app already
   hand-rolls its visuals (per-act vector icons, manual `BitmapFactory` downsampling, no third-party

@@ -60,6 +60,7 @@ import app.tryst.ui.insights.InsightsScreen
 import app.tryst.ui.lock.ChangePinScreen
 import app.tryst.ui.partner.PartnersScreen
 import app.tryst.ui.profile.ProfileScreen
+import app.tryst.ui.settings.CatalogManageRoute
 import app.tryst.ui.settings.GeneralSettingsViewModel
 import app.tryst.ui.settings.ResetDataScreen
 import app.tryst.ui.settings.SettingsScreen
@@ -78,6 +79,8 @@ private object Routes {
     const val ABOUT = "about"
     const val CHANGE_PIN = "change-pin"
     const val RESET = "settings/reset"
+    const val MANAGE_CATEGORY = "settings/category/{category}"
+    fun manageCategory(category: String) = "settings/category/$category"
     const val WHATS_NEW = "whats-new"
     const val PROFILE = "profile"
     const val ENCOUNTER_NEW = "encounter/new"
@@ -224,6 +227,13 @@ fun TrystApp() {
                             onOpenReset = { navController.navigate(Routes.RESET) },
                             onOpenWhatsNew = { navController.navigate(Routes.WHATS_NEW) },
                             onOpenProfile = { navController.navigate(Routes.PROFILE) },
+                            onManageCategory = { category -> navController.navigate(Routes.manageCategory(category)) },
+                        )
+                    }
+                    composable(Routes.MANAGE_CATEGORY) { entry ->
+                        CatalogManageRoute(
+                            category = entry.arguments?.getString("category"),
+                            onBack = { navController.popBackStack() },
                         )
                     }
                     composable(Routes.ABOUT) {

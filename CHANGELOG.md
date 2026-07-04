@@ -13,6 +13,28 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.3.2] — 2026-07-03 (versionCode 5)
+
+### Changed
+- **Every category is now fully yours — nothing ships as a compiled-in catalog** (F-Droid content
+  policy — the maintainer asked for empty predefined lists). Tryst no longer bakes any category into
+  the app; instead it **pre-populates a few neutral starter entries as ordinary, editable rows** you
+  can rename or remove like anything else: acts start with *Kissing* and *Cuddling*, occasions with
+  *Date night* and *Anniversary*, finish locations with *Didn't finish* and *In condom*; kinks,
+  positions, and toys start empty. Occasions and finish (ejaculation) locations became
+  **customizable too** this release. Nothing you logged is lost: on first launch after the update,
+  every entry you used from the old built-in lists is converted into your own entry with the same
+  meaning (schema v12, automatic migration — including the per-orgasm finish-location data), still
+  fully counted in insights and achievements and still pickable when logging.
+- Restoring an **older backup** performs the same conversion automatically.
+
+### Added
+- **A dedicated management page for every category** — Settings → Categories now opens a full,
+  polished page per category (acts, kinks, positions, toys, occasions, finish locations) where you can
+  add, rename in place, or remove your entries, replacing the old pop-up dialogs.
+- **Custom occasions and finish locations** — add your own under Settings → Categories, stored the same
+  id-based way as acts/kinks/positions/toys (schema v12).
+
 ## [0.3.1] — 2026-07-03 (versionCode 4)
 
 ### Changed

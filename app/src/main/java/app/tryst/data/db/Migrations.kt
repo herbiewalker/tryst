@@ -188,6 +188,42 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
     }
 }
 
+/**
+ * v11 → v12: makes **occasions** and **finish (ejaculation) locations** user-configurable and empties
+ * the shipped catalogs down to a minimal non-explicit safe seed (FDP-5 / D-41, F-Droid policy — extends
+ * the acts/kinks/positions/toys rework to the last two explicit taxonomies). This is also where the
+ * now-emptied acts/kinks/positions/toys built-ins are healed.
+ *
+ *  - DDL: adds custom **`occasions`** and **`ejaculation_locations`** tables (mirror `acts`/`kinks`/…).
+ *    The `encounters.occasions` and `encounters.ejaculationLocations` columns are unchanged (still TEXT)
+ *    — only their app-side types moved to string ids; a built-in id **is** its old enum name, so existing
+ *    values stay valid with no data rewrite. Both tables start empty (built-ins live in the enums).
+ *  - Data: [CatalogAdoption] now covers all six catalogs, so any encounter ref to a now-removed built-in
+ *    (act/kink/position/toy/occasion/finish-location) is adopted into its custom table (label generically
+ *    prettified) and the ref rewritten to `custom:<id>` — zero data loss. Ejaculation's map-encoded column
+ *    is handled by a dedicated adopter. Restore is covered too: `BackupManager.import` runs the same routine.
+ */
+val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `occasions` " +
+                "(`id` TEXT NOT NULL, `label` TEXT NOT NULL, `isBuiltIn` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_occasions_label` ON `occasions` (`label`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `ejaculation_locations` " +
+                "(`id` TEXT NOT NULL, `label` TEXT NOT NULL, `isBuiltIn` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_ejaculation_locations_label` ON `ejaculation_locations` (`label`)")
+        // Seed the neutral starter entries as ordinary editable rows *before* adoption: a starter id a
+        // user had logged (e.g. the "Didn't finish" finish location, id NONE) then keeps its nice seed
+        // label rather than the generic prettified one adoption would mint. Idempotent (INSERT OR IGNORE).
+        // Fresh installs seed via the [TrystDatabaseFactory] onCreate callback instead (no data to adopt).
+        CatalogSeeds.seed(db)
+        CatalogAdoption.adoptUnknownIds(db)
+    }
+}
+
 /** All migrations, in order. */
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
@@ -200,4 +236,5 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_8_9,
     MIGRATION_9_10,
     MIGRATION_10_11,
+    MIGRATION_11_12,
 )

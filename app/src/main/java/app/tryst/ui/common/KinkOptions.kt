@@ -9,21 +9,12 @@ data class KinkOption(val id: String, val label: String)
 object KinkOptions {
     const val CUSTOM_PREFIX = "custom:"
 
-    /** Built-in kink ids shown inline before any selection (the curated "common" set). */
-    private val COMMON_IDS = setOf(
-        Kink.DOMINATION,
-        Kink.SUBMISSION,
-        Kink.BONDAGE,
-        Kink.SPANKING,
-        Kink.DIRTY_TALK,
-        Kink.ROLEPLAY,
-        Kink.EDGING,
-    ).map { it.name }.toSet()
-
+    // No predefined kinks ship (F-Droid content policy, FDP-5); built-in/common are empty and every
+    // kink is a user-added custom entry.
     val builtIns: List<KinkOption> =
         Kink.entries.map { KinkOption(it.name, it.label) }
 
-    val common: List<KinkOption> = builtIns.filter { it.id in COMMON_IDS }
+    val common: List<KinkOption> = builtIns
 
     fun custom(rows: List<KinkEntity>): List<KinkOption> = rows.map { KinkOption(CUSTOM_PREFIX + it.id, it.label) }
 }

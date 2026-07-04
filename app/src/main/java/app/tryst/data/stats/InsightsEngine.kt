@@ -1,7 +1,9 @@
 package app.tryst.data.stats
 
 import app.tryst.data.db.entity.Act
+import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Kink
+import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.Position
 import app.tryst.data.db.entity.ToyType
 import app.tryst.data.db.relation.EncounterWithDetails
@@ -118,6 +120,8 @@ object InsightsEngine {
         customPositionLabels: Map<String, String> = emptyMap(),
         customKinkLabels: Map<String, String> = emptyMap(),
         customToyLabels: Map<String, String> = emptyMap(),
+        customOccasionLabels: Map<String, String> = emptyMap(),
+        customEjaculationLabels: Map<String, String> = emptyMap(),
         zone: ZoneId = ZoneId.systemDefault(),
         today: LocalDate = LocalDate.now(zone),
     ): Insights {
@@ -205,10 +209,14 @@ object InsightsEngine {
         )
         val topSettings = tallyLabels(encounters.flatMap { e -> (e.encounter.contexts ?: emptySet()).map { it.label } })
         val topToys = tallyLabels(encounters.flatMap { e -> (e.encounter.toys ?: emptySet()).map { resolveToy(it, customToyLabels) } })
-        val topOccasions = tallyLabels(encounters.flatMap { e -> (e.encounter.occasions ?: emptySet()).map { it.label } })
+        val topOccasions = tallyLabels(
+            encounters.flatMap { e -> (e.encounter.occasions ?: emptySet()).map { resolveOccasion(it, customOccasionLabels) } },
+        )
         val topProtection = tallyLabels(encounters.flatMap { e -> e.encounter.protectionUsed.map { it.label } })
         val topEjaculation = tallyLabels(
-            encounters.flatMap { e -> (e.encounter.ejaculationLocations?.values?.flatten() ?: emptyList()).map { it.label } },
+            encounters.flatMap { e ->
+                (e.encounter.ejaculationLocations?.values?.flatten() ?: emptyList()).map { resolveEjaculation(it, customEjaculationLabels) }
+            },
         )
         val topInitiators = tallyLabels(encounters.mapNotNull { it.encounter.initiator?.label })
 
@@ -289,6 +297,18 @@ object InsightsEngine {
         custom[id.removePrefix(CUSTOM_PREFIX)] ?: "Custom toy"
     } else {
         runCatching { ToyType.valueOf(id).label }.getOrDefault(id)
+    }
+
+    private fun resolveOccasion(id: String, custom: Map<String, String>): String = if (id.startsWith(CUSTOM_PREFIX)) {
+        custom[id.removePrefix(CUSTOM_PREFIX)] ?: "Custom occasion"
+    } else {
+        runCatching { Occasion.valueOf(id).label }.getOrDefault(id)
+    }
+
+    private fun resolveEjaculation(id: String, custom: Map<String, String>): String = if (id.startsWith(CUSTOM_PREFIX)) {
+        custom[id.removePrefix(CUSTOM_PREFIX)] ?: "Custom finish"
+    } else {
+        runCatching { EjaculationLocation.valueOf(id).label }.getOrDefault(id)
     }
 
     /** Tallies `(stableKey, label)` pairs by key, labelling each with its first-seen label. */

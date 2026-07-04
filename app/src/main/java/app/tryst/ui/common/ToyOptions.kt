@@ -9,19 +9,12 @@ data class ToyOption(val id: String, val label: String)
 object ToyOptions {
     const val CUSTOM_PREFIX = "custom:"
 
-    /** Built-in toy ids shown inline before any selection (the curated "common" set). */
-    private val COMMON_IDS = setOf(
-        ToyType.NONE,
-        ToyType.VIBRATOR,
-        ToyType.WAND,
-        ToyType.DILDO,
-        ToyType.STRAP_ON,
-    ).map { it.name }.toSet()
-
+    // No predefined toys ship (F-Droid content policy, FDP-5); built-in/common are empty and every toy
+    // is a user-added custom entry.
     val builtIns: List<ToyOption> =
         ToyType.entries.map { ToyOption(it.name, it.label) }
 
-    val common: List<ToyOption> = builtIns.filter { it.id in COMMON_IDS }
+    val common: List<ToyOption> = builtIns
 
     fun custom(rows: List<ToyEntity>): List<ToyOption> = rows.map { ToyOption(CUSTOM_PREFIX + it.id, it.label) }
 }

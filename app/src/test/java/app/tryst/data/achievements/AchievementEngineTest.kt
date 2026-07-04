@@ -1,9 +1,7 @@
 package app.tryst.data.achievements
 
-import app.tryst.data.db.entity.Act
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.MediaEntity
-import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.relation.EncounterWithDetails
 import java.time.LocalDate
@@ -30,7 +28,7 @@ class AchievementEngineTest {
         partnerOrgasms: Map<String, Int>? = null,
         acts: Set<String>? = null,
         positions: Set<String>? = null,
-        occasions: Set<Occasion>? = null,
+        occasions: Set<String>? = null,
         media: List<MediaEntity> = emptyList(),
         partners: List<PartnerEntity> = emptyList(),
     ) = EncounterWithDetails(
@@ -118,8 +116,9 @@ class AchievementEngineTest {
         // 5 distinct acts: first 4 on day1, the 5th on day2 → unlock date = day2.
         val r = AchievementEngine.evaluate(
             listOf(
-                enc("a", LocalDate.of(2026, 2, 1), acts = setOf(Act.KISSING.name, Act.ORAL.name, Act.VAGINAL.name, Act.MANUAL.name)),
-                enc("b", LocalDate.of(2026, 2, 2), acts = setOf(Act.KISSING.name, Act.ANAL.name)),
+                // Acts are plain string ids (custom entries since FDP-5) — 4 distinct on day1, a 5th on day2.
+                enc("a", LocalDate.of(2026, 2, 1), acts = setOf("custom:a1", "custom:a2", "custom:a3", "custom:a4")),
+                enc("b", LocalDate.of(2026, 2, 2), acts = setOf("custom:a1", "custom:a5")),
             ),
             zone,
             today,
@@ -166,17 +165,17 @@ class AchievementEngineTest {
     fun countTargetOneOccasionAndPhotoAndMarathon() {
         val r = AchievementEngine.evaluate(
             listOf(
-                enc("a", LocalDate.of(2026, 3, 1), occasions = setOf(Occasion.MORNING_SEX), media = listOf(media("m1")), durationMin = 75),
+                enc("a", LocalDate.of(2026, 3, 1), occasions = setOf("custom:DATE_NIGHT"), media = listOf(media("m1")), durationMin = 75),
             ),
             zone,
             today,
         )
-        assertTrue(r.byId("o_morning").unlocked)
+        assertTrue(r.byId("o_datenight").unlocked)
         assertTrue(r.byId("x_photo").unlocked)
         assertTrue(r.byId("x_marathon").unlocked)
         // A short, photo-less, plain encounter would not have unlocked these.
         val none = AchievementEngine.evaluate(listOf(enc("b", LocalDate.of(2026, 3, 2), durationMin = 20)), zone, today)
-        assertFalse(none.byId("o_morning").unlocked)
+        assertFalse(none.byId("o_datenight").unlocked)
         assertFalse(none.byId("x_photo").unlocked)
         assertFalse(none.byId("x_marathon").unlocked)
     }

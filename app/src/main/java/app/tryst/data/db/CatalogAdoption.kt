@@ -2,7 +2,9 @@ package app.tryst.data.db
 
 import androidx.sqlite.db.SupportSQLiteDatabase
 import app.tryst.data.db.entity.Act
+import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Kink
+import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.Position
 import app.tryst.data.db.entity.ToyType
 import java.util.Locale
@@ -29,11 +31,20 @@ object CatalogAdoption {
     private const val CUSTOM_PREFIX = "custom:"
 
     fun adoptUnknownIds(db: SupportSQLiteDatabase) {
-        adopt(db, table = "acts", columns = listOf("practicesPerformed", "practicesReceived"), known = Act.entries.mapTo(HashSet()) { it.name })
-        adopt(db, table = "kinks", columns = listOf("kinks"), known = Kink.entries.mapTo(HashSet()) { it.name })
-        adopt(db, table = "positions", columns = listOf("positions"), known = Position.entries.mapTo(HashSet()) { it.name })
-        adopt(db, table = "toys", columns = listOf("toys"), known = ToyType.entries.mapTo(HashSet()) { it.name })
+        // Guard by table existence: this routine is called from several migrations (v9→10, v10→11,
+        // v11→12) and a category's custom table only exists from the migration that created it, so a
+        // pre-existing category's ids stay bare until their table lands, then adopt then (or on restore,
+        // where every table exists). Without the guard, adopting an id into a not-yet-created table
+        // (e.g. `occasions`/`ejaculation_locations` during v9→10) would crash the upgrade.
+        if (tableExists(db, "acts")) adopt(db, "acts", listOf("practicesPerformed", "practicesReceived"), Act.entries.mapTo(HashSet()) { it.name })
+        if (tableExists(db, "kinks")) adopt(db, "kinks", listOf("kinks"), Kink.entries.mapTo(HashSet()) { it.name })
+        if (tableExists(db, "positions")) adopt(db, "positions", listOf("positions"), Position.entries.mapTo(HashSet()) { it.name })
+        if (tableExists(db, "toys")) adopt(db, "toys", listOf("toys"), ToyType.entries.mapTo(HashSet()) { it.name })
+        if (tableExists(db, "occasions")) adopt(db, "occasions", listOf("occasions"), Occasion.entries.mapTo(HashSet()) { it.name })
+        if (tableExists(db, "ejaculation_locations")) adoptEjaculation(db, EjaculationLocation.entries.mapTo(HashSet()) { it.name })
     }
+
+    private fun tableExists(db: SupportSQLiteDatabase, name: String): Boolean = db.query("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", arrayOf(name)).use { it.moveToFirst() }
 
     /** Generic label for an adopted id: `TABLE_TOP` → `"Table top"`. */
     fun prettify(id: String): String = id.lowercase(Locale.US).replace('_', ' ').trim().replaceFirstChar { it.uppercaseChar() }
@@ -44,6 +55,51 @@ object CatalogAdoption {
         if (unknown.isEmpty()) return
         val rowIdFor = ensureRows(db, table, unknown)
         for (col in columns) rewriteRefs(db, col, isUnknown) { CUSTOM_PREFIX + rowIdFor.getValue(it) }
+    }
+
+    /**
+     * Ejaculation is stored as a per-orgasm map column (`idx=ID1|ID2,idx2=ID3`), not a flat comma set,
+     * so the generic [adopt] can't scan it. Same idea though: collect unknown finish-location ids across
+     * the map, adopt each into the `ejaculation_locations` table, and rewrite refs to `custom:<id>` while
+     * preserving the `idx=` structure. Idempotent.
+     */
+    private fun adoptEjaculation(db: SupportSQLiteDatabase, known: Set<String>) {
+        val col = "ejaculationLocations"
+        val isUnknown = { id: String -> id.isNotBlank() && !id.startsWith(CUSTOM_PREFIX) && id !in known }
+        val unknown = sortedSetOf<String>()
+        db.query("SELECT $col FROM encounters WHERE $col IS NOT NULL AND $col != ''").use { c ->
+            while (c.moveToNext()) ejaculationIds(c.getString(0)).filterTo(unknown) { isUnknown(it) }
+        }
+        if (unknown.isEmpty()) return
+        val rowIdFor = ensureRows(db, "ejaculation_locations", unknown)
+        val updates = ArrayList<Pair<String, String>>()
+        db.query("SELECT id, $col FROM encounters WHERE $col IS NOT NULL AND $col != ''").use { c ->
+            while (c.moveToNext()) {
+                val old = c.getString(1)
+                val new = remapEjaculation(old) { id -> if (isUnknown(id)) CUSTOM_PREFIX + rowIdFor.getValue(id) else id }
+                if (new != old) updates.add(c.getString(0) to new)
+            }
+        }
+        for ((encounterId, value) in updates) {
+            db.execSQL("UPDATE encounters SET $col = ? WHERE id = ?", arrayOf(value, encounterId))
+        }
+    }
+
+    /** Every finish-location id in a map-encoded value (`idx=ID1|ID2,...`). */
+    private fun ejaculationIds(value: String): List<String> = value.split(',').flatMap { token ->
+        val eq = token.indexOf('=')
+        if (eq < 0) emptyList() else token.substring(eq + 1).split('|').filter { it.isNotBlank() }
+    }
+
+    /** Rewrites each id in a map-encoded value, keeping the `idx=` structure intact. */
+    private fun remapEjaculation(value: String, map: (String) -> String): String = value.split(',').joinToString(",") { token ->
+        val eq = token.indexOf('=')
+        if (eq < 0) {
+            token
+        } else {
+            val ids = token.substring(eq + 1).split('|').filter { it.isNotBlank() }.joinToString("|") { map(it) }
+            token.substring(0, eq) + "=" + ids
+        }
     }
 
     /** Every unknown bare id referenced anywhere in the log (sorted → deterministic). */
