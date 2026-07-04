@@ -37,24 +37,24 @@ data class EncounterEntity(
     val orgasmCountPartner: Int? = null,
     /**
      * Per-orgasm ejaculation: orgasm index (0-based) -> finish-location IDs (multi-select). Each id is
-     * a built-in [EjaculationLocation] name, or "custom:<uuid>" for user-defined (id-based since v12).
+     * each a "custom:<id>" ref to an [EjaculationLocationEntity] row (id-based & user-owned since v12).
      */
     val ejaculationLocations: Map<Int, Set<String>>? = null,
-    /** Act IDs gave/received: a built-in [Act] name, or "custom:<uuid>" for user-defined. */
+    /** Act ids gave/received — each a "custom:<id>" ref to an [ActEntity] row (categories are user-owned since v12). */
     val practicesPerformed: Set<String>? = null,
     val practicesReceived: Set<String>? = null,
     // --- added in schema v3 ---
-    /** Selected position IDs: a built-in [Position] name, or "custom:<uuid>" for user-defined. */
+    /** Selected position ids — each a "custom:<id>" ref to a [PositionEntity] row (user-owned since v12). */
     val positions: Set<String>? = null,
     // --- added in schema v4 ---
-    /** Selected kink IDs: a built-in [Kink] name, or "custom:<uuid>" for user-defined (string ids since schema v9). */
+    /** Selected kink ids — each a "custom:<id>" ref to a [KinkEntity] row (id-based since v9; user-owned since v12). */
     val kinks: Set<String>? = null,
     /** Place (built-in [Place]). */
     val contexts: Set<Place>? = null,
-    /** Selected toy IDs: a built-in [ToyType] name, or "custom:<uuid>" for user-defined (string ids since schema v11). */
+    /** Selected toy ids — each a "custom:<id>" ref to a [ToyEntity] row (id-based since v11; user-owned since v12). */
     val toys: Set<String>? = null,
     // --- added in schema v5 ---
-    /** Selected occasion IDs: a built-in [Occasion] name, or "custom:<uuid>" for user-defined (string ids since schema v12). */
+    /** Selected occasion ids — each a "custom:<id>" ref to an [OccasionEntity] row (id-based & user-owned since v12). */
     val occasions: Set<String>? = null,
     // --- added in schema v6 ---
     /** Per-partner orgasm counts: partnerId -> count. */
