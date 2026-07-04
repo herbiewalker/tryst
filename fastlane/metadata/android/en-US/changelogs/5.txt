@@ -1,0 +1,6 @@
+Categories are now fully yours. Tryst ships only a couple of neutral starters and you build the rest — acts, kinks, positions, toys, occasions, and finish locations are all your own entries now. Occasions and finish locations became customizable this release (schema v12), joining the acts/kinks/positions/toys rework. Anything you'd already logged is kept and converted to a custom entry automatically, still counted in insights and achievements and still pickable when logging.
+
+Also new:
+* Each category has its own management page under Settings → Categories: add, rename, or remove entries.
+
+Tip: re-export your backup after updating so a future restore keeps the new naming.

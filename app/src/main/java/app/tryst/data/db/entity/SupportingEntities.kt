@@ -47,6 +47,20 @@ data class ToyEntity(
     val isBuiltIn: Boolean = false,
 )
 
+@Entity(tableName = "occasions", indices = [Index(value = ["label"], unique = true)])
+data class OccasionEntity(
+    @PrimaryKey val id: String,
+    val label: String,
+    val isBuiltIn: Boolean = false,
+)
+
+@Entity(tableName = "ejaculation_locations", indices = [Index(value = ["label"], unique = true)])
+data class EjaculationLocationEntity(
+    @PrimaryKey val id: String,
+    val label: String,
+    val isBuiltIn: Boolean = false,
+)
+
 @Entity(
     tableName = "media",
     foreignKeys = [

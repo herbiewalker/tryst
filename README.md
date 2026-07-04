@@ -9,7 +9,7 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?logo=kotlin&logoColor=white)](#built-with)
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](#built-with)
 [![Offline only](https://img.shields.io/badge/network-none-critical)](#why-tryst)
-[![Release](https://img.shields.io/badge/release-v0.3.1-success)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-v0.3.2-success)](CHANGELOG.md)
 
 Tryst keeps your most personal data on your phone and nowhere else — no account, no sync,
 and **no internet permission at all**, so the app *cannot* send your data anywhere.
@@ -52,8 +52,10 @@ Privacy isn't a setting here — it's the architecture.
 
 - **Rich encounter logging** — date, time, duration, partners, acts, positions, protection, mood,
   place, occasion, toys, kinks, a 1–5 rating, orgasms, notes, and encrypted photo attachments.
-- **Categories you own** — Tryst ships a small, non-explicit starter set; **add or rename your own**
-  acts, kinks, positions, and toys, and they count fully across Insights, search, and Achievements.
+- **Every category is yours** — Tryst ships **no predefined catalogs**; the handful of neutral starter
+  entries (Kissing, Date night, …) are just editable rows, and you **add, rename, or remove your own**
+  acts, kinks, positions, toys, occasions, and finish locations on a dedicated management page per
+  category. Everything you add — or had already logged — counts fully across Insights and Achievements.
 - **Partners & a self profile** — named or anonymous partners with relationship type and optional
   demographics (age, ethnicity, height, body type, location) and avatars, plus your own profile.
 - **Insights** — a pure-Kotlin stats engine: totals, week streaks, averages, monthly & weekday
@@ -61,7 +63,7 @@ Privacy isn't a setting here — it's the architecture.
   (bars / line / donut), with stable per-type colors. Charts are **hand-drawn** — no chart dependency.
 - **Achievements** — dozens of milestones, streaks, and variety badges, derived from your log with
   progress bars and unlock dates. No extra storage.
-- **Calendar** — a tonal activity heatmap with per-day act icons, month/week toggle, and swipe to
+- **Calendar** — a tonal activity heatmap with per-day markers, month/week toggle, and swipe to
   page. Land on it by default if you like.
 - **Backup & import** — full-fidelity password-encrypted export/restore (photos included), plus a
   CSV importer with column mapping to bring history in from other apps.
@@ -94,12 +96,12 @@ Screenshots are black by design on-device (`FLAG_SECURE`).
 
 ## Status
 
-✅ **Shipped.** Current release **v0.3.1** (versionCode 4). Distribution is **F-Droid**, which builds
-and signs from this source — Tryst ships no binary and commits no signing key. The **0.3.x** line makes
-every built-in catalog a small, non-explicit starter set — acts and kinks in 0.3.0, positions and toys
-in 0.3.1 — with everything you add (or had already logged) kept as a fully-functional **custom** entry
-(schema v11, lossless migration). It also adds in-place renaming, most-used options inline in the
-editor, and an option to open Trysts in calendar view by default.
+✅ **Shipped.** Current release **v0.3.2** (versionCode 5). Distribution is **F-Droid**, which builds
+and signs from this source — Tryst ships no binary and commits no signing key. The **0.3.x** line turns
+every category into **your own data**: acts, kinks, positions, toys, occasions, and finish locations
+ship with no explicit built-ins (just a couple of neutral seeds), and you add, rename, or remove your
+own entries on a dedicated page per category. Everything you add — or had already logged — is kept as a
+fully-functional **custom** entry (schema v12, lossless migration), counted in Insights and Achievements.
 
 Full release notes are in [CHANGELOG.md](CHANGELOG.md); the milestone history and pre-release audit
 program live in [docs/ROADMAP.md](docs/ROADMAP.md), and post-1.0 plans in
@@ -112,7 +114,7 @@ program live in [docs/ROADMAP.md](docs/ROADMAP.md), and post-1.0 plans in
 | [REQUIREMENTS.md](docs/REQUIREMENTS.md) | Functional & non-functional requirements |
 | [THREAT_MODEL.md](docs/THREAT_MODEL.md) | Adversaries, mitigations, residual risk |
 | [SECURITY_DESIGN.md](docs/SECURITY_DESIGN.md) | Encryption & key management |
-| [DATA_MODEL.md](docs/DATA_MODEL.md) | Entities & fields (schema v11) |
+| [DATA_MODEL.md](docs/DATA_MODEL.md) | Entities & fields (schema v12) |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack & module layout |
 | [FLOWCHARTS.md](docs/FLOWCHARTS.md) | Visual maps of the core logic flows |
 | [ROADMAP.md](docs/ROADMAP.md) | Milestones & the 12-pass pre-release audit |

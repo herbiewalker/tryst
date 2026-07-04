@@ -200,6 +200,7 @@ class BackupManager @Inject constructor(
         // `profile` has no FKs (single self row) — order is irrelevant for it.
         val TABLES = listOf(
             "partners", "profile", "locations", "tags", "positions", "acts", "kinks", "toys",
+            "occasions", "ejaculation_locations",
             "encounters", "media", "encounter_partner", "encounter_position", "encounter_tag",
         )
     }

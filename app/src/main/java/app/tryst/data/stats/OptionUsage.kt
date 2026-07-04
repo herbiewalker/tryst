@@ -1,9 +1,7 @@
 package app.tryst.data.stats
 
-import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Mood
-import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.Protection
 
@@ -21,10 +19,10 @@ data class OptionUsage(
     val positions: Map<String, Int> = emptyMap(),
     val protection: Map<Protection, Int> = emptyMap(),
     val moods: Map<Mood, Int> = emptyMap(),
-    val ejaculation: Map<EjaculationLocation, Int> = emptyMap(),
+    val ejaculation: Map<String, Int> = emptyMap(),
     val kinks: Map<String, Int> = emptyMap(),
     val places: Map<Place, Int> = emptyMap(),
-    val occasions: Map<Occasion, Int> = emptyMap(),
+    val occasions: Map<String, Int> = emptyMap(),
     val toys: Map<String, Int> = emptyMap(),
 ) {
     companion object {

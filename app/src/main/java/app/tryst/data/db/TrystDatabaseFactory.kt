@@ -2,6 +2,8 @@ package app.tryst.data.db
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -23,6 +25,11 @@ class TrystDatabaseFactory @Inject constructor(
         return Room.databaseBuilder(context, TrystDatabase::class.java, TrystDatabase.NAME)
             .openHelperFactory(factory)
             .addMigrations(*ALL_MIGRATIONS)
+            // Fresh install only (onCreate fires when the DB is first created, not on upgrade — upgrades
+            // seed via MIGRATION_11_12): pre-populate the neutral starter entries as editable rows.
+            .addCallback(object : RoomDatabase.Callback() {
+                override fun onCreate(db: SupportSQLiteDatabase) = CatalogSeeds.seed(db)
+            })
             .build()
     }
 

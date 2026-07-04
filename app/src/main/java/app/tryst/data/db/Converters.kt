@@ -2,12 +2,10 @@ package app.tryst.data.db
 
 import androidx.room.TypeConverter
 import app.tryst.data.db.entity.BodyType
-import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.Ethnicity
 import app.tryst.data.db.entity.Gender
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
-import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.Orgasm
 import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.Protection
@@ -58,28 +56,24 @@ class Converters {
     @TypeConverter
     fun stringToProtectionSet(value: String): Set<Protection> = value.split(SEP).mapNotNull { runCatching { Protection.valueOf(it) }.getOrNull() }.toSet()
 
-    // orgasm-index -> location(s), encoded as "idx=LOC1|LOC2,idx=LOC3" in the same TEXT column.
-    // Locations within one orgasm join on '|' (SEP=',' separates entries). Legacy single-value
-    // rows ("idx=LOC", no '|') parse straight into singleton sets — backward compatible.
+    // orgasm-index -> finish-location id(s), encoded as "idx=ID1|ID2,idx=ID3" in the same TEXT column.
+    // Ids within one orgasm join on '|' (SEP=',' separates entries); each id is a built-in
+    // EjaculationLocation name or "custom:<uuid>". Ids never contain '|' or ',', so this round-trips.
     @TypeConverter
-    fun ejaculationMapToString(value: Map<Int, Set<EjaculationLocation>>?): String? = value?.entries
+    fun ejaculationMapToString(value: Map<Int, Set<String>>?): String? = value?.entries
         ?.filter { it.value.isNotEmpty() }
         ?.takeIf { it.isNotEmpty() }
-        ?.joinToString(SEP) { (idx, locs) -> "$idx=${locs.joinToString("|") { it.name }}" }
+        ?.joinToString(SEP) { (idx, ids) -> "$idx=${ids.joinToString("|")}" }
 
     @TypeConverter
-    fun stringToEjaculationMap(value: String?): Map<Int, Set<EjaculationLocation>>? = value?.takeIf { it.isNotBlank() }
+    fun stringToEjaculationMap(value: String?): Map<Int, Set<String>>? = value?.takeIf { it.isNotBlank() }
         ?.split(SEP)
         ?.mapNotNull { token ->
             val parts = token.split("=", limit = 2)
             val idx = parts.getOrNull(0)?.toIntOrNull() ?: return@mapNotNull null
-            val locs = parts.getOrNull(1)
-                ?.split("|")
-                ?.mapNotNull { runCatching { EjaculationLocation.valueOf(it) }.getOrNull() }
-                ?.toSet()
-                .orEmpty()
-            if (locs.isEmpty()) return@mapNotNull null
-            idx to locs
+            val ids = parts.getOrNull(1)?.split("|")?.filter { it.isNotBlank() }?.toSet().orEmpty()
+            if (ids.isEmpty()) return@mapNotNull null
+            idx to ids
         }?.toMap()
 
     @TypeConverter
@@ -100,13 +94,8 @@ class Converters {
     @TypeConverter
     fun stringToPlaceSet(value: String?): Set<Place>? = value?.toEnumSet { Place.valueOf(it) }
 
-    @TypeConverter
-    fun occasionSetToString(value: Set<Occasion>?): String? = value?.joinToString(SEP) { it.name }
-
-    @TypeConverter
-    fun stringToOccasionSet(value: String?): Set<Occasion>? = value?.toEnumSet { Occasion.valueOf(it) }
-
-    // Shared by every string-id set column — positions, acts (performed/received), kinks, and toys. Each id
+    // Shared by every string-id set column — positions, acts (performed/received), kinks, toys, and
+    // occasions (id-based since schema v12). Each id
     // is a built-in enum name or "custom:<uuid>", and ids never contain commas, so a plain comma-join
     // round-trips. (Room selects one converter per type, so this single pair serves all of them.)
     @TypeConverter
