@@ -92,20 +92,21 @@ Partners.
 | note | String? | "about you" |
 | updatedAt | Long | |
 
-## Custom-option tables
-- **Position** (`positions`): `id`, `label`, `isBuiltIn`. Built-ins come from the `Position` enum;
-  user-defined rows (`isBuiltIn=false`) are managed in Settings → Manage custom positions.
-- **Act** (`acts`): same shape; built-ins from the `Act` enum, custom rows managed in
-  Settings → Manage custom acts.
-- **Kink** (`kinks`, **v9**): same shape; built-ins from the `Kink` enum, custom rows managed in
-  Settings → Manage custom kinks.
-- **Toy** (`toys`, **v11**): same shape; built-ins from the `ToyType` enum, custom rows managed in
-  Settings → Manage custom toys.
-- Custom rows can be **renamed in place** (v10): the row id — and so every encounter ref — is
-  untouched; a label that collides with an existing entry is rejected (unique-label index).
-- **Adopted rows:** ids of built-ins removed in a catalog trim live here as custom rows whose `id` is
-  the old enum `name` (not a uuid) — refs are `custom:<NAME>`. Acts/kinks in **v10**, positions/toys in
-  **v11**. See D-41 / v10–v11 below.
+## Category tables (fully user-owned)
+Six categories are user-owned id/label tables, all the same shape (`id`, `label`, `isBuiltIn`):
+**`positions`**, **`acts`**, **`kinks`** (v9), **`toys`** (v11), and **`occasions`** +
+**`ejaculation_locations`** (v12). Since **v12** (FDP-5, D-41) the built-in enums are **empty** —
+nothing ships compiled-in; every entry is a user row. A few neutral starters (Kissing, Cuddling, Date
+night, Anniversary, Didn't finish, In condom) are seeded as ordinary editable rows by
+`data/db/CatalogSeeds`, on fresh install (`TrystDatabaseFactory` `onCreate`) and on upgrade
+(`MIGRATION_11_12`); `isBuiltIn` is retained but is now always `0`.
+- Each category is managed on its own full-screen page (Settings → Categories → Manage …):
+  add, **rename in place** (the row id — and so every encounter ref — is untouched; a colliding label
+  is rejected by the unique-label index), and remove.
+- **Adopted rows:** a user's previously-logged built-in (from before a catalog was trimmed/emptied)
+  lands here as a row whose `id` is the old enum `name` (not a uuid) — refs are `custom:<NAME>`.
+  Adoption spans acts/kinks (**v10**), positions/toys (**v11**), and occasions/finish-locations
+  (**v12**), and also runs on restore (`CatalogAdoption`). See D-41 / v10–v12 below.
 
 ## Location / Tag / Media
 - **Location** (`locations`): `id`, `label` — user-typed generic label. **No GPS / coarse location**
@@ -123,9 +124,12 @@ All implement `DisplayLabel` (human-written `label` shown in the UI): `Initiator
 `Place` (places; named `Setting` before v10), `Occasion`, `ToyType`, `Position`, plus partner/profile
 enums `Sex`, `Gender`, `RelationshipType`, and the **v7 demographic** enums `Ethnicity`, `BodyType`.
 `Orgasm` is a legacy enum kept for migration. (The class renames are code-only — the DB stores enum
-*constant* names, never class names.) Since **v10** (`Act`/`Kink`) and **v11** (`Position`/`ToyType`)
-those built-in catalogs are a small non-explicit starter set (F-Droid policy, D-41); everything beyond
-it is user data in the custom tables.
+*constant* names, never class names.) The six **category** enums — `Act`, `Kink`, `Position`,
+`ToyType`, `Occasion`, `EjaculationLocation` — are **empty since v12** (FDP-5, D-41): the app ships no
+compiled-in catalog, so every entry is a user row in the category tables above. The enum types are
+kept only as the (now empty) built-in id namespace so `.entries` and `CatalogAdoption` keep compiling.
+The remaining enums (`Initiator`, `Mood`, `Protection`, `Place`, and the partner/profile/demographic
+ones) stay fixed.
 
 ## Achievements (M7 — derived, **no tables**)
 Achievements are **not persisted**. The catalog is static code (`data/achievements/Achievements.kt`)
