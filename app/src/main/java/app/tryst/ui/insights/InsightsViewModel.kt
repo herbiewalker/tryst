@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tryst.core.prefs.ChartStyle
 import app.tryst.core.prefs.InsightsPreferences
+import app.tryst.data.filter.DateScope
 import app.tryst.data.repository.ActRepository
 import app.tryst.data.repository.EjaculationLocationRepository
 import app.tryst.data.repository.EncounterRepository
@@ -14,6 +15,8 @@ import app.tryst.data.repository.ToyRepository
 import app.tryst.data.stats.Insights
 import app.tryst.data.stats.InsightsEngine
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.Instant
+import java.time.ZoneId
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -37,6 +40,26 @@ class InsightsViewModel @Inject constructor(
     private val prefs: InsightsPreferences,
 ) : ViewModel() {
 
+    /** The INS-2 time window. Remembered across visits (`InsightsPreferences`). */
+    val scope: StateFlow<DateScope> = prefs.scope
+
+    private val encounters = encounterRepository.observeAll()
+
+    /**
+     * Years the log actually covers, newest first — the scope picker offers exactly these, so it can
+     * never propose a year with nothing in it.
+     */
+    val availableYears: StateFlow<List<Int>> = encounters
+        .map { list ->
+            withContext(Dispatchers.Default) {
+                list.map { Instant.ofEpochMilli(it.encounter.startAt).atZone(ZoneId.systemDefault()).year }
+                    .distinct()
+                    .sortedDescending()
+            }
+        }
+        .catch { emit(emptyList()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     val insights: StateFlow<Insights> =
         // Each custom catalog → its id→label map, then combined into one array so we stay within
         // combine's typed arity (all six are Flow<Map<String, String>>); order matches the compute() call.
@@ -49,7 +72,7 @@ class InsightsViewModel @Inject constructor(
             ejaculationLocationRepository.observeCustom().map { rows -> rows.associate { it.id to it.label } },
         ) { maps -> maps.toList() }
             .let { labelMaps ->
-                combine(encounterRepository.observeAll(), labelMaps) { encounters, maps ->
+                combine(encounters, labelMaps, prefs.scope) { encounters, maps, scope ->
                     // Tallying the whole log can be non-trivial; keep it off the main thread.
                     withContext(Dispatchers.Default) {
                         InsightsEngine.compute(
@@ -60,6 +83,7 @@ class InsightsViewModel @Inject constructor(
                             customToyLabels = maps[3],
                             customOccasionLabels = maps[4],
                             customEjaculationLabels = maps[5],
+                            scope = scope.range(),
                         )
                     }
                 }
@@ -67,6 +91,8 @@ class InsightsViewModel @Inject constructor(
             // The DB closes on lock; swallow the resulting error so we don't crash mid-teardown.
             .catch { emit(Insights.EMPTY) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Insights.EMPTY)
+
+    fun setScope(scope: DateScope) = prefs.setScope(scope)
 
     // --- Customization (persisted via InsightsPreferences) ---
     val statOrder: StateFlow<List<String>> = prefs.statOrder

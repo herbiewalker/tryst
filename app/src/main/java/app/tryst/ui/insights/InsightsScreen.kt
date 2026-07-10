@@ -3,6 +3,8 @@ package app.tryst.ui.insights
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,11 +54,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
 import app.tryst.core.prefs.ChartStyle
+import app.tryst.data.filter.DateRange
+import app.tryst.data.filter.DateScope
 import app.tryst.data.stats.Bucket
 import app.tryst.data.stats.Insights
 import app.tryst.data.stats.Tally
 import app.tryst.ui.achievements.AchievementsTeaser
+import app.tryst.ui.common.DateRangePickerDialog
+import app.tryst.ui.common.DateScopeChips
 import app.tryst.ui.common.adaptiveContentWidth
+import app.tryst.ui.common.dateScopeDescription
 import app.tryst.ui.common.rememberHaptics
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -75,8 +82,12 @@ fun InsightsScreen(
     val sectionOrder by viewModel.sectionOrder.collectAsStateWithLifecycle()
     val hiddenSections by viewModel.hiddenSections.collectAsStateWithLifecycle()
     val sectionStyles by viewModel.sectionStyles.collectAsStateWithLifecycle()
+    val scope by viewModel.scope.collectAsStateWithLifecycle()
+    val availableYears by viewModel.availableYears.collectAsStateWithLifecycle()
     val haptics = rememberHaptics()
     var editMode by remember { mutableStateOf(startInEditMode) }
+    var showRangePicker by remember { mutableStateOf(false) }
+    val scopeLabel = dateScopeDescription(scope)
 
     Scaffold(
         topBar = {
@@ -109,60 +120,170 @@ fun InsightsScreen(
             )
         },
     ) { padding ->
-        if (insights.isEmpty && !editMode) {
-            EmptyState(Modifier.padding(padding))
-            return@Scaffold
+        Column(Modifier.fillMaxSize().padding(padding)) {
+            // The scope chip lives above the stats and outside the empty states, so a window with no
+            // trysts is still escapable — and so it visibly does not govern the Achievements card.
+            if (!editMode) {
+                ScopeRow(
+                    scope = scope,
+                    availableYears = availableYears,
+                    onSelect = viewModel::setScope,
+                    onCustomRange = { showRangePicker = true },
+                )
+            }
+
+            when {
+                // A scoped window with nothing in it is a real answer, not the "no trysts yet" state.
+                insights.isEmpty && !editMode && insights.isScoped ->
+                    CenteredNote(stringResource(R.string.insights_scope_empty, scopeLabel))
+
+                insights.isEmpty && !editMode -> EmptyState()
+
+                else -> InsightsList(
+                    insights = insights,
+                    editMode = editMode,
+                    scopeLabel = scopeLabel,
+                    statOrder = statOrder,
+                    hiddenStats = hiddenStats,
+                    sectionOrder = sectionOrder,
+                    hiddenSections = hiddenSections,
+                    sectionStyles = sectionStyles,
+                    onOpenAchievements = onOpenAchievements,
+                    viewModel = viewModel,
+                )
+            }
         }
-        LazyColumn(
-            // Cap + centre on wide windows so the stacked cards don't stretch (Pass 5); no-op on phones.
-            modifier = Modifier.fillMaxSize().padding(padding).wrapContentWidth().adaptiveContentWidth(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            if (editMode) {
-                item(key = "sections-editor") {
-                    SectionsEditor(
-                        order = InsightSections.ordered(sectionOrder).map { it.id },
-                        hidden = hiddenSections,
-                        styles = sectionStyles,
-                        onMove = viewModel::moveSection,
-                        onToggleHidden = viewModel::setSectionHidden,
-                        onSetStyle = viewModel::setSectionStyle,
-                    )
+    }
+
+    if (showRangePicker) {
+        DateRangePickerDialog(
+            initial = (scope as? DateScope.Custom)?.range,
+            onDismiss = { showRangePicker = false },
+            onConfirm = { start, end ->
+                val range = if (start <= end) DateRange(start, end) else DateRange(end, start)
+                viewModel.setScope(DateScope.Custom(range))
+                showRangePicker = false
+            },
+        )
+    }
+}
+
+/** Insights' scope selector: the shared year -> quarter -> custom chips, in a row that wraps. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ScopeRow(
+    scope: DateScope,
+    availableYears: List<Int>,
+    onSelect: (DateScope) -> Unit,
+    onCustomRange: () -> Unit,
+) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        DateScopeChips(
+            scope = scope,
+            availableYears = availableYears,
+            onSelect = onSelect,
+            onCustomRange = onCustomRange,
+        )
+    }
+}
+
+@Suppress("LongParameterList")
+@Composable
+private fun InsightsList(
+    insights: Insights,
+    editMode: Boolean,
+    scopeLabel: String,
+    statOrder: List<String>,
+    hiddenStats: Set<String>,
+    sectionOrder: List<String>,
+    hiddenSections: Set<String>,
+    sectionStyles: Map<String, ChartStyle>,
+    onOpenAchievements: () -> Unit,
+    viewModel: InsightsViewModel,
+) {
+    LazyColumn(
+        // Cap + centre on wide windows so the stacked cards don't stretch (Pass 5); no-op on phones.
+        modifier = Modifier.fillMaxSize().wrapContentWidth().adaptiveContentWidth(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        if (editMode) {
+            item(key = "sections-editor") {
+                SectionsEditor(
+                    order = InsightSections.ordered(sectionOrder).map { it.id },
+                    hidden = hiddenSections,
+                    styles = sectionStyles,
+                    onMove = viewModel::moveSection,
+                    onToggleHidden = viewModel::setSectionHidden,
+                    onSetStyle = viewModel::setSectionStyle,
+                )
+            }
+            item(key = "stats-editor") {
+                StatEditor(
+                    insights = insights,
+                    order = StatTiles.ordered(statOrder).map { it.id },
+                    hidden = hiddenStats,
+                    onMove = viewModel::moveStat,
+                    onToggleHidden = viewModel::setStatHidden,
+                )
+            }
+            item(key = "reset") {
+                Column {
+                    TextButton(onClick = viewModel::resetLayout) { Text(stringResource(R.string.insights_reset)) }
+                    Box(Modifier.height(48.dp))
                 }
-                item(key = "stats-editor") {
-                    StatEditor(
-                        insights = insights,
-                        order = StatTiles.ordered(statOrder).map { it.id },
-                        hidden = hiddenStats,
-                        onMove = viewModel::moveStat,
-                        onToggleHidden = viewModel::setStatHidden,
-                    )
-                }
-                item(key = "reset") {
-                    Column {
-                        TextButton(onClick = viewModel::resetLayout) { Text(stringResource(R.string.insights_reset)) }
-                        Box(Modifier.height(48.dp))
-                    }
-                }
-            } else {
-                val sections = InsightSections.ordered(sectionOrder)
-                    .filter { it.id !in hiddenSections && it.hasData(insights) }
-                items(sections, key = { it.id }) { section ->
-                    Box(Modifier.animateItem()) {
-                        when (section.id) {
-                            InsightSections.OVERVIEW -> OverviewGrid(insights, statOrder, hiddenStats)
-                            // Self-contained summary card (its own header + ViewModel), not a chart section.
-                            InsightSections.ACHIEVEMENTS -> AchievementsTeaser(onSeeAll = onOpenAchievements)
-                            else -> SectionCard(section.title) {
-                                SectionContent(section.id, insights, sectionStyles[section.id] ?: ChartStyle.BARS)
+            }
+        } else {
+            // Unscoped, a card with no data is just noise and is dropped. Scoped, that same card is
+            // the answer — "nothing logged in 2024" — and dropping it would silently reflow the page
+            // as the window changes. So under a scope every visible card stays put.
+            val sections = InsightSections.ordered(sectionOrder)
+                .filter { it.id !in hiddenSections && (insights.isScoped || it.hasData(insights)) }
+            items(sections, key = { it.id }) { section ->
+                Box(Modifier.animateItem()) {
+                    when {
+                        section.id == InsightSections.OVERVIEW -> OverviewGrid(insights, statOrder, hiddenStats)
+                        // Self-contained summary card (its own header + ViewModel), not a chart section.
+                        // It reads the full log, so say so plainly while a scope is active.
+                        section.id == InsightSections.ACHIEVEMENTS -> Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            if (insights.isScoped) {
+                                Text(
+                                    stringResource(R.string.insights_achievements_lifetime),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
                             }
+                            AchievementsTeaser(onSeeAll = onOpenAchievements)
+                        }
+                        !section.hasData(insights) -> SectionCard(section.title) {
+                            Text(
+                                stringResource(R.string.insights_section_empty, scopeLabel),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        else -> SectionCard(section.title) {
+                            SectionContent(section.id, insights, sectionStyles[section.id] ?: ChartStyle.BARS)
                         }
                     }
                 }
-                item(key = "footer-space") { Box(Modifier.height(64.dp)) }
             }
+            item(key = "footer-space") { Box(Modifier.height(64.dp)) }
         }
+    }
+}
+
+@Composable
+private fun CenteredNote(text: String) {
+    Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+        Text(
+            text = text,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

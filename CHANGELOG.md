@@ -27,10 +27,23 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
   settings files, and deliberately **never included in an exported backup**. Only searches you actually
   submit are remembered, the last 8 are kept, and you can remove them individually or clear them all.
 
+- **An Insights time range.** Controls at the top of Insights recompute every stat and chart for the
+  window you pick — **year, then quarter, then a custom date range** if you need one. Your choice is
+  remembered. Charts now show the window's own months rather than always the last twelve.
+  - **Search narrows dates exactly the same way**, with the same three controls.
+  - **Achievements are never scoped** — they always count your whole history, and say so.
+  - Tiles that can only mean "as of today" (*This month*, *This year*, *Current streak*, *Days since
+    last*) step aside while a range is selected, instead of quietly reporting something else.
+  - A range with no trysts says so ("No trysts in 2021") rather than looking like an empty app, and a
+    section with nothing in it keeps its card ("Nothing logged in 2024") instead of vanishing.
+
 ### Internal
 - New shared `EncounterFilter` query layer (`data/filter`) — one reusable, JVM-tested way to select a
-  subset of the log by date/partner/category/rating/duration/photo/note. Search is its first consumer;
-  the Insights time scope, the photo gallery, and selective erase are next.
+  subset of the log by date/partner/category/rating/duration/photo/note. Search and the Insights scope
+  are its first consumers; the photo gallery and selective erase are next.
+- `InsightsEngine.compute()` takes a `scope: DateRange?`. Several figures were computed against *today*
+  rather than against their input (trailing-12 month buckets, per-month average, streak, days-since), so
+  a scope had to reach the engine rather than merely filter what was handed to it.
 - Schema **v13** (`MIGRATION_12_13`): adds the `recent_searches` table. Additive DDL only; no existing
   row is touched.
 
