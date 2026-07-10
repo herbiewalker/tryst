@@ -1,6 +1,7 @@
 package app.tryst.core.prefs
 
 import android.content.Context
+import app.tryst.data.filter.DateScope
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -44,6 +45,17 @@ class InsightsPreferences @Inject constructor(
     /** sectionId -> chosen [ChartStyle]; sections absent here use [DEFAULT_STYLE]. */
     val sectionStyles: StateFlow<Map<String, ChartStyle>> = _sectionStyles.asStateFlow()
 
+    // --- Time scope (INS-2) ---
+    private val _scope = MutableStateFlow(DateScope.decode(prefs.getString(KEY_SCOPE, null)))
+
+    /** The window Insights is computed over. Remembered across visits, like the layout customization. */
+    val scope: StateFlow<DateScope> = _scope.asStateFlow()
+
+    fun setScope(scope: DateScope) {
+        prefs.edit().putString(KEY_SCOPE, DateScope.encode(scope)).apply()
+        _scope.value = scope
+    }
+
     fun setStatOrder(order: List<String>) = saveList(KEY_STAT_ORDER, order, _statOrder)
 
     fun moveStat(order: List<String>, from: Int, to: Int) = move(order, from, to)?.let { setStatOrder(it) }
@@ -68,12 +80,14 @@ class InsightsPreferences @Inject constructor(
         prefs.edit()
             .remove(KEY_STAT_ORDER).remove(KEY_STAT_HIDDEN)
             .remove(KEY_SECTION_ORDER).remove(KEY_SECTION_HIDDEN).remove(KEY_SECTION_STYLES)
+            .remove(KEY_SCOPE)
             .apply()
         _statOrder.value = emptyList()
         _hiddenStats.value = emptySet()
         _sectionOrder.value = emptyList()
         _hiddenSections.value = emptySet()
         _sectionStyles.value = emptyMap()
+        _scope.value = DateScope.AllTime
     }
 
     // --- helpers ---
@@ -114,6 +128,7 @@ class InsightsPreferences @Inject constructor(
         const val KEY_SECTION_ORDER = "section_order"
         const val KEY_SECTION_HIDDEN = "section_hidden"
         const val KEY_SECTION_STYLES = "section_styles"
+        const val KEY_SCOPE = "scope"
         const val DELIM = ","
         const val KV = ":"
     }

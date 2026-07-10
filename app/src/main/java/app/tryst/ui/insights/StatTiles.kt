@@ -7,6 +7,11 @@ import java.util.Locale
  * One customizable Overview tile. [value] returns the formatted figure, or null when it doesn't
  * apply yet (e.g. no rating recorded) — null tiles are skipped in view mode. Ids are stable and
  * persisted (order + hidden set), so don't rename them.
+ *
+ * A few tiles are "as of today" by nature and return null while a time scope is active (INS-2):
+ * *This month* / *This year* would count against the real calendar rather than the window, and
+ * *Current streak* / *Days since last* describe a moment that has already passed. Rather than
+ * silently mean something other than their label, they drop out of the grid.
  */
 data class StatTile(
     val id: String,
@@ -19,13 +24,14 @@ object StatTiles {
     /** Catalog order = the default layout for a fresh install. */
     val catalog: List<StatTile> = listOf(
         StatTile("total", "Total trysts") { it.totalCount.toString() },
-        StatTile("month", "This month") { it.thisMonthCount.toString() },
-        StatTile("year", "This year") { it.thisYearCount.toString() },
+        StatTile("month", "This month") { i -> i.thisMonthCount.toString().takeUnless { i.isScoped } },
+        StatTile("year", "This year") { i -> i.thisYearCount.toString().takeUnless { i.isScoped } },
+        // The engine already nulls daysSinceLast under a scope; this is the same rule, stated once.
         StatTile("days_since", "Days since last") { i ->
             i.daysSinceLast?.let { if (it == 0L) "Today" else it.toString() }
         },
         StatTile("avg_month", "Trysts / month") { decimal(it.avgPerMonth) },
-        StatTile("streak_current", "Current streak") { weeks(it.currentStreakWeeks) },
+        StatTile("streak_current", "Current streak") { i -> weeks(i.currentStreakWeeks).takeUnless { i.isScoped } },
         StatTile("streak_longest", "Longest streak") { weeks(it.longestStreakWeeks) },
         StatTile("avg_rating", "Avg rating") { i -> i.avgRating?.let { "★ ${decimal(it)}" } },
         StatTile("avg_duration", "Avg duration") { i -> i.avgDurationMin?.let { "${it.toInt()} min" } },

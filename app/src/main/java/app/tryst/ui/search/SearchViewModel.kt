@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.filter.DateRange
+import app.tryst.data.filter.DateScope
 import app.tryst.data.filter.EncounterFilter
 import app.tryst.data.repository.ActRepository
 import app.tryst.data.repository.EncounterRepository
@@ -21,7 +22,9 @@ import app.tryst.data.search.SearchHit
 import app.tryst.data.search.SearchableEncounter
 import app.tryst.ui.common.MediaImages
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -36,25 +39,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-/** The date-window shortcuts. Each maps to a [DateRange] ending today; [ALL_TIME] means no date constraint. */
-enum class DatePreset(val label: String) {
-    ALL_TIME("Any time"),
-    LAST_7("Last 7 days"),
-    LAST_30("Last 30 days"),
-    LAST_90("Last 90 days"),
-    THIS_YEAR("This year"),
-    ;
-
-    /** The window this preset selects, relative to [today]; null for [ALL_TIME]. */
-    fun range(today: LocalDate = LocalDate.now()): DateRange? = when (this) {
-        ALL_TIME -> null
-        LAST_7 -> DateRange(today.minusDays(6), today)
-        LAST_30 -> DateRange(today.minusDays(29), today)
-        LAST_90 -> DateRange(today.minusDays(89), today)
-        THIS_YEAR -> DateRange(today.withDayOfYear(1), today)
-    }
-}
 
 /** The rating shortcuts. [ANY] means no rating constraint. */
 enum class RatingFilter(val label: String, val range: IntRange?) {
@@ -126,12 +110,9 @@ class SearchViewModel @Inject constructor(
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query.asStateFlow()
 
-    private val _datePreset = MutableStateFlow(DatePreset.ALL_TIME)
-    val datePreset: StateFlow<DatePreset> = _datePreset.asStateFlow()
-
-    /** A user-picked window. When set it overrides [datePreset]. */
-    private val _customRange = MutableStateFlow<DateRange?>(null)
-    val customRange: StateFlow<DateRange?> = _customRange.asStateFlow()
+    /** The date window, using the same year → quarter → custom vocabulary as the Insights scope. */
+    private val _dateScope = MutableStateFlow<DateScope>(DateScope.AllTime)
+    val dateScope: StateFlow<DateScope> = _dateScope.asStateFlow()
 
     private val _rating = MutableStateFlow(RatingFilter.ANY)
     val rating: StateFlow<RatingFilter> = _rating.asStateFlow()
@@ -150,17 +131,29 @@ class SearchViewModel @Inject constructor(
         .catch { emit(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    /** Years the log covers, newest first — the year chip offers exactly these. */
+    val availableYears: StateFlow<List<Int>> = encounterRepository.observeAll()
+        .map { list ->
+            withContext(Dispatchers.Default) {
+                list.map { Instant.ofEpochMilli(it.encounter.startAt).atZone(ZoneId.systemDefault()).year }
+                    .distinct()
+                    .sortedDescending()
+            }
+        }
+        .catch { emit(emptyList()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     /** Previously submitted queries, newest first. */
     val recentSearches: StateFlow<List<String>> = recentSearchRepository.observeRecent()
         .map { rows -> rows.map { it.query } }
         .catch { emit(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    /** The chips, assembled into the shared filter model. A custom range wins over the preset. */
+    /** The chips, assembled into the shared filter model. */
     private val filter: Flow<EncounterFilter> =
-        combine(_datePreset, _customRange, _rating, _partnerIds, _photosOnly) { preset, custom, rating, partnerIds, photosOnly ->
+        combine(_dateScope, _rating, _partnerIds, _photosOnly) { scope, rating, partnerIds, photosOnly ->
             EncounterFilter(
-                dateRanges = listOfNotNull(custom ?: preset.range()),
+                dateRanges = listOfNotNull(scope.range()),
                 partnerIds = partnerIds,
                 ratingRange = rating.range,
                 hasPhoto = true.takeIf { photosOnly },
@@ -233,15 +226,11 @@ class SearchViewModel @Inject constructor(
         viewModelScope.launch { runCatching { recentSearchRepository.clear() } }
     }
 
-    /** Picking a preset drops any custom window, and vice versa — the date chip holds one selection. */
-    fun setDatePreset(value: DatePreset) {
-        _customRange.value = null
-        _datePreset.value = value
-    }
+    fun setDateScope(value: DateScope) = _dateScope.update { value }
 
     fun setCustomRange(start: LocalDate, end: LocalDate) {
-        _datePreset.value = DatePreset.ALL_TIME
-        _customRange.value = if (start <= end) DateRange(start, end) else DateRange(end, start)
+        val range = if (start <= end) DateRange(start, end) else DateRange(end, start)
+        _dateScope.value = DateScope.Custom(range)
     }
 
     fun setRating(value: RatingFilter) = _rating.update { value }
@@ -254,8 +243,7 @@ class SearchViewModel @Inject constructor(
 
     fun clearAll() {
         _query.value = ""
-        _datePreset.value = DatePreset.ALL_TIME
-        _customRange.value = null
+        _dateScope.value = DateScope.AllTime
         _rating.value = RatingFilter.ANY
         _partnerIds.value = emptySet()
         _photosOnly.value = false

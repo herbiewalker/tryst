@@ -1,7 +1,9 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v13** (latest: **D-42**, storing the search history in
-> the encrypted DB rather than prefs). D-41 covers the F-Droid content-policy rework — acts/kinks in
+> **Status:** Live — decisions through **schema v13** (latest: **D-44…D-48**, the Insights time scope
+> and the shared Insights/Search date vocabulary).
+> D-42 records storing the search history in the encrypted DB rather than prefs.
+> D-41 covers the F-Droid content-policy rework — acts/kinks in
 > 0.3.0, positions/toys in 0.3.1, then empty predefined lists + custom occasions/finish-locations in
 > 0.3.2. Lightweight ADR log;
 > entries are numbered D-1… ascending, so the **newest are at the bottom**. "Open" items still need a call.
@@ -412,6 +414,57 @@
   expands **in place** to show every field (rather than forcing a round trip through the editor), and
   bolds the matched text. Matching is case- **and accent-insensitive** via a length-preserving fold, which
   is what lets the highlight offsets map straight back onto the original string.
+
+## Insights time scope (INS-2, 2026-07-10)
+
+- **D-44 (2026-07-10) The scope must reach the engine, not just filter its input.** The roadmap assumed
+  INS-2 was "feed a date-bounded subset into `InsightsEngine.compute()`; everything downstream already
+  reflects its input." That is false for every figure computed against *today* rather than against the
+  input list: the month buckets were the trailing 12 ending **this** month (so a 2023 scope produced
+  twelve buckets for the wrong year, all zero), `avgPerMonth` divided by months since the *first ever*
+  encounter, and `thisMonthCount`/`thisYearCount`/`currentStreakWeeks`/`daysSinceLast` all read the real
+  calendar. `compute()` therefore takes a `scope: DateRange?` (FILT-1's primitive, shared with Search) and:
+  - buckets months **across the scope** — one bucket per month in the window, capped at the most recent
+    24; unscoped keeps the historical trailing-12. Labels gain a `'yy` suffix only when the window spans
+    more than one year, since "Jan" is otherwise ambiguous.
+  - divides `avgPerMonth` by the **window's** months.
+  - **withholds** rather than fakes the two "as of today" figures: `daysSinceLast` → null,
+    `currentStreakWeeks` → 0. `longestStreakWeeks` is a property of the window, so it survives.
+
+- **D-45 (2026-07-10) Tiles that can't be honest under a scope disappear.** *This month*, *This year*,
+  *Current streak* and *Days since last* return null while `Insights.isScoped`, and the existing
+  "null tiles are skipped" rule removes them from the Overview grid. Rejected: reinterpreting them to
+  the window (they'd quietly mean something other than their label) and greying them out (dead grid
+  space). **Achievements are exempt from the scope entirely** — they are lifetime progress, they read
+  the full log through their own ViewModel, and the card says so plainly while a scope is active.
+
+- **D-46 (2026-07-10) An empty window is an answer, not an empty app.** Scoped to a year with no data,
+  Insights says *"No trysts in 2021"* and **keeps the scope chip reachable** (it sits above the empty
+  state, or you'd be trapped). Within a window that *does* have data, a section with nothing to show
+  keeps its card and reports *"Nothing logged in 2024"* rather than vanishing — cards popping in and out
+  as the window changes loses the reader's place, and a zero is signal in a tracker. Unscoped behaviour
+  is unchanged: an empty card there is just noise and is still dropped.
+
+- **D-47 (2026-07-10) The scope is remembered.** Persisted in `InsightsPreferences` (plain prefs,
+  alongside card order/style — a date range is not sensitive the way a search query is, cf. **D-42**),
+  so Insights opens where you left it. `resetLayout()` clears it back to all-time. `DateScope.decode`
+  falls back to `AllTime` on any unrecognized value, so a corrupt or future-format pref can never crash.
+
+- **D-48 (2026-07-10) One date vocabulary for Insights and Search.** Both screens narrow time, so both
+  narrow it the *same way*: **year → quarter → custom range**, left to right, widest to narrowest. The
+  model therefore lives in `data/filter/DateScope` next to `DateRange` (it is not an Insights concept),
+  and the controls live in one `ui/common/DateScopeChips` so the two screens cannot drift.
+  - The three chips are **one selection**, not three. Changing the year **keeps the quarter**, so you can
+    step 2025 Q2 → 2024 Q2 to compare a season across years. The quarter chip is **disabled until a year
+    anchors it** — "Q2 of all time" is not a window. The custom chip opens the picker directly; picking a
+    year or *All time* is how you leave it.
+  - `Quarter(year, q)` is a first-class variant rather than sugar over a custom range, so "Q2 2025" is
+    something the labels, the persisted pref, and the empty states can all name. Its `init` rejects
+    `q ∉ 1..4`, and `decode` swallows that — a corrupt `quarter:2025:9` degrades to `AllTime`.
+  - **Cost, accepted:** Search lost its relative presets (*Last 7 / 30 / 90 days*), which have no
+    equivalent in a year/quarter model. Re-add them as extra entries in the year dropdown if they're missed.
+  - Chips show the locale's *short* date form to stay narrow; sentences ("No trysts in …") use the
+    *medium* form, which has room.
 
 > Still tracked elsewhere (not re-listed): user-configurable **auto-lock timeout** & **change-PIN UI**
 > and **history filters/search** (deferred features, ROADMAP M3); **VACUUM on delete-all** for

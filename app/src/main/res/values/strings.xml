@@ -137,8 +137,6 @@
     <string name="search_chip_partners">Partners</string>
     <string name="search_chip_partners_count">%1$d partners</string>
     <string name="search_chip_photos">Has photo</string>
-    <string name="search_date_custom">Custom range…</string>
-    <string name="search_date_range">%1$s – %2$s</string>
     <string name="search_matched_in">Matched in %1$s</string>
     <string name="search_open">Open</string>
     <string name="search_recent_title">Recent searches</string>
@@ -321,6 +319,23 @@
     <string name="insights_overview_header">Overview stats</string>
     <string name="insights_stats_desc">Drag to reorder. Tap the eye to show or hide a stat on the overview.</string>
     <string name="insights_empty">No insights yet.\nLog a few trysts to see your stats.</string>
+    <string name="insights_scope_empty">No trysts in %1$s.</string>
+    <string name="insights_section_empty">Nothing logged in %1$s.</string>
+    <string name="insights_achievements_lifetime">Achievements always count your whole history, not the selected window.</string>
+
+    <!-- ============================================================= -->
+    <!-- Shared date-window selector (Insights scope + Search filter)  -->
+    <!-- ============================================================= -->
+    <string name="date_scope_all_time">All time</string>
+    <string name="date_scope_this_year">This year</string>
+    <string name="date_scope_all_year">All year</string>
+    <string name="date_scope_quarter">Q%1$d</string>
+    <string name="date_scope_quarter_year">Q%1$d %2$d</string>
+    <string name="date_scope_custom">Custom</string>
+    <string name="date_scope_range">%1$s – %2$s</string>
+    <string name="cd_date_scope_year">Year</string>
+    <string name="cd_date_scope_quarter">Quarter</string>
+    <string name="cd_date_scope_custom">Custom date range</string>
     <string name="cd_drag_reorder">Drag to reorder</string>
     <string name="cd_show">Show</string>
     <string name="cd_hide">Hide</string>
