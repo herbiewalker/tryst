@@ -224,6 +224,25 @@ val MIGRATION_11_12 = object : Migration(11, 12) {
     }
 }
 
+/**
+ * v12 → v13: adds the **`recent_searches`** table backing Search's recent-query chips (SRCH-1).
+ *
+ * Pure DDL, additive — no existing row is touched and the table starts empty. It lives in the
+ * encrypted DB rather than a `SharedPreferences` store on purpose: a search history is among the most
+ * sensitive text in the app, and the prefs files are the only user-facing state Tryst does *not*
+ * encrypt at rest (D-42). It is also deliberately left out of `BackupManager.TABLES`, so queries never
+ * ride along inside an exported backup.
+ */
+val MIGRATION_12_13 = object : Migration(12, 13) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `recent_searches` " +
+                "(`query` TEXT NOT NULL, `lastUsedAt` INTEGER NOT NULL, PRIMARY KEY(`query`))",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_recent_searches_lastUsedAt` ON `recent_searches` (`lastUsedAt`)")
+    }
+}
+
 /** All migrations, in order. */
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
@@ -237,4 +256,5 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_9_10,
     MIGRATION_10_11,
     MIGRATION_11_12,
+    MIGRATION_12_13,
 )

@@ -11,6 +11,7 @@ import app.tryst.data.db.entity.LocationEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.OccasionEntity
 import app.tryst.data.db.entity.PositionEntity
+import app.tryst.data.db.entity.RecentSearchEntity
 import app.tryst.data.db.entity.TagEntity
 import app.tryst.data.db.entity.ToyEntity
 import kotlinx.coroutines.flow.Flow
@@ -136,4 +137,24 @@ interface LocationDao {
 
     @Query("SELECT * FROM locations ORDER BY label COLLATE NOCASE")
     fun observeAll(): Flow<List<LocationEntity>>
+}
+
+@Dao
+interface RecentSearchDao {
+    /** Re-searching an existing term bumps its timestamp rather than adding a duplicate (query is the PK). */
+    @Upsert
+    suspend fun upsert(search: RecentSearchEntity)
+
+    @Query("SELECT * FROM recent_searches ORDER BY lastUsedAt DESC LIMIT :limit")
+    fun observeRecent(limit: Int): Flow<List<RecentSearchEntity>>
+
+    @Query("DELETE FROM recent_searches WHERE `query` = :query")
+    suspend fun delete(query: String)
+
+    @Query("DELETE FROM recent_searches")
+    suspend fun clear()
+
+    /** Keeps the table bounded: drops everything outside the newest [keep] rows. */
+    @Query("DELETE FROM recent_searches WHERE `query` NOT IN (SELECT `query` FROM recent_searches ORDER BY lastUsedAt DESC LIMIT :keep)")
+    suspend fun trimTo(keep: Int)
 }

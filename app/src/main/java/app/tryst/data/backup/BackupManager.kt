@@ -198,6 +198,10 @@ class BackupManager @Inject constructor(
 
         // Insert order respects foreign keys (parents first); defer_foreign_keys also guards it.
         // `profile` has no FKs (single self row) — order is irrelevant for it.
+        //
+        // `recent_searches` is deliberately ABSENT (D-42): a backup is the one artefact that leaves the
+        // device, and the user's search terms have no business travelling in it. Because this list also
+        // drives restore, an import leaves the local search history untouched rather than wiping it.
         val TABLES = listOf(
             "partners", "profile", "locations", "tags", "positions", "acts", "kinks", "toys",
             "occasions", "ejaculation_locations",

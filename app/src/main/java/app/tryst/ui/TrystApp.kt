@@ -60,6 +60,7 @@ import app.tryst.ui.insights.InsightsScreen
 import app.tryst.ui.lock.ChangePinScreen
 import app.tryst.ui.partner.PartnersScreen
 import app.tryst.ui.profile.ProfileScreen
+import app.tryst.ui.search.SearchScreen
 import app.tryst.ui.settings.CatalogManageRoute
 import app.tryst.ui.settings.GeneralSettingsViewModel
 import app.tryst.ui.settings.ResetDataScreen
@@ -71,6 +72,7 @@ import app.tryst.ui.whatsnew.WhatsNewScreen
 
 private object Routes {
     const val HISTORY = "history"
+    const val SEARCH = "search"
     const val INSIGHTS = "insights"
     const val INSIGHTS_CUSTOMIZE = "insights/customize"
     const val ACHIEVEMENTS = "achievements"
@@ -192,6 +194,7 @@ fun TrystApp() {
                     composable(Routes.HISTORY) {
                         if (width == WidthClass.EXPANDED) {
                             HistoryTwoPane(
+                                onOpenSearch = { navController.navigate(Routes.SEARCH) },
                                 sharedScope = this@SharedTransitionLayout,
                                 animatedScope = this,
                             )
@@ -199,10 +202,17 @@ fun TrystApp() {
                             HistoryScreen(
                                 onAddEncounter = { navController.navigate(Routes.ENCOUNTER_NEW) },
                                 onOpenEncounter = { id -> navController.navigate(Routes.encounterEdit(id)) },
+                                onOpenSearch = { navController.navigate(Routes.SEARCH) },
                                 sharedScope = this@SharedTransitionLayout,
                                 animatedScope = this,
                             )
                         }
+                    }
+                    composable(Routes.SEARCH) {
+                        SearchScreen(
+                            onBack = { navController.popBackStack() },
+                            onOpenEncounter = { id -> navController.navigate(Routes.encounterEdit(id)) },
+                        )
                     }
                     composable(Routes.INSIGHTS) {
                         InsightsScreen(onOpenAchievements = { navController.navigate(Routes.ACHIEVEMENTS) })
@@ -285,6 +295,7 @@ fun TrystApp() {
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun HistoryTwoPane(
+    onOpenSearch: () -> Unit,
     sharedScope: SharedTransitionScope,
     animatedScope: AnimatedVisibilityScope,
 ) {
@@ -303,6 +314,7 @@ private fun HistoryTwoPane(
                     detailId = it
                     detailNew = false
                 },
+                onOpenSearch = onOpenSearch,
                 sharedScope = sharedScope,
                 animatedScope = animatedScope,
             )

@@ -360,4 +360,31 @@ class MigrationTest {
             }
         }
     }
+
+    @Test
+    fun migrate12To13_addsRecentSearchesAndPreservesData() {
+        helper.createDatabase(dbName, 12).use { db ->
+            db.execSQL("INSERT INTO encounters (id, startAt, protectionUsed, note, createdAt, updatedAt) VALUES ('e1', 1000, '', 'keep me', 1, 1)")
+        }
+
+        helper.runMigrationsAndValidate(dbName, 13, true, MIGRATION_12_13).use { db ->
+            // The new table exists and starts empty (additive, pure DDL).
+            db.query("SELECT COUNT(*) FROM recent_searches").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(0, c.getInt(0))
+            }
+            // It round-trips a query (`query` is both PK and a reserved word — must stay quoted).
+            db.execSQL("INSERT INTO recent_searches (`query`, lastUsedAt) VALUES ('hotel', 42)")
+            db.query("SELECT `query`, lastUsedAt FROM recent_searches").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("hotel", c.getString(0))
+                assertEquals(42, c.getInt(1))
+            }
+            // Existing rows are untouched.
+            db.query("SELECT note FROM encounters WHERE id = 'e1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("keep me", c.getString(0))
+            }
+        }
+    }
 }

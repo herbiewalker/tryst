@@ -1,8 +1,9 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **v0.3.2 / schema v12** (latest: **D-41**, the F-Droid
-> content-policy rework — acts/kinks in 0.3.0, positions/toys in 0.3.1, then empty predefined lists +
-> custom occasions/finish-locations in 0.3.2). Lightweight ADR log;
+> **Status:** Live — decisions through **schema v13** (latest: **D-42**, storing the search history in
+> the encrypted DB rather than prefs). D-41 covers the F-Droid content-policy rework — acts/kinks in
+> 0.3.0, positions/toys in 0.3.1, then empty predefined lists + custom occasions/finish-locations in
+> 0.3.2. Lightweight ADR log;
 > entries are numbered D-1… ascending, so the **newest are at the bottom**. "Open" items still need a call.
 
 ## Decided (from scoping conversation, 2026-06-04)
@@ -382,6 +383,35 @@
 - **O-7 Stacked activity-by-category chart** (the layered monthly bars in the reference app) needs an
   **act → high-level-category taxonomy** (e.g. Intercourse / Oral / Manual / Solo) that Tryst doesn't
   have. Deferred pending the user's grouping. Until then, monthly/weekday trends stay single-series.
+
+## Search (SRCH-1, 2026-07-09)
+
+- **D-42 (2026-07-09) Recent searches live in the encrypted DB, never in prefs and never in a backup.**
+  Search history is a standard convenience, and in most apps it lands in `SharedPreferences`. In Tryst
+  that would be a **new plaintext-at-rest surface for the most sensitive strings in the product**: the
+  three prefs stores (`tryst_appearance`, `tryst_insights`, `tryst_general`) are the only user-facing
+  state *not* inside the SQLCipher database. A list of what the user searched for — partner names, acts,
+  kinks — is exactly the sort of thing the threat model exists to protect, so prefs was rejected outright.
+  **Chosen:** a `recent_searches` table (`query` PK, `lastUsedAt`) in the encrypted DB — schema **v13 /
+  `MIGRATION_12_13`** (pure additive DDL). Consequences and deliberate choices:
+  - **Excluded from `BackupManager.TABLES`.** The backup is the one artefact that leaves the device;
+    the user's queries have no business travelling in it. Because that list also drives restore, an
+    import leaves the local history alone rather than overwriting it with someone else's.
+  - **Only submitted queries are recorded** (the IME "Search" action), never each keystroke — otherwise
+    every prefix of every word would be persisted.
+  - Capped at `RecentSearchRepository.MAX_RECENTS` (8), pruned on write; re-searching a term bumps its
+    timestamp rather than duplicating it (`query` is the primary key).
+  - `SessionManager.deleteAllData` drops the DB, so a wipe clears the history with everything else.
+  - **Rejected outright:** voice search (needs the microphone permission — no new permissions, ever) and
+    saved/synced searches. Fuzzy matching was rejected as noise on short catalog labels.
+
+- **D-43 (2026-07-09) Search matches labels, so it must say *why* a result matched.** Search covers the
+  note, partner names, and the resolved labels of acts/positions/places/occasions/kinks/toys/mood — but
+  the result card only shows a few of those. A query for a kink therefore returns cards showing no trace
+  of it, which reads as a bug. Each result reports the fields the query hit ("Matched in Acts · Place"),
+  expands **in place** to show every field (rather than forcing a round trip through the editor), and
+  bolds the matched text. Matching is case- **and accent-insensitive** via a length-preserving fold, which
+  is what lets the highlight offsets map straight back onto the original string.
 
 > Still tracked elsewhere (not re-listed): user-configurable **auto-lock timeout** & **change-PIN UI**
 > and **history filters/search** (deferred features, ROADMAP M3); **VACUUM on delete-all** for

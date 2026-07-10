@@ -1,6 +1,6 @@
 # Tryst — Data Model
 
-> **Status:** Live — **schema v12** (v0.3.2), Room over SQLCipher. Matches the entities in
+> **Status:** Live — **schema v13** (unreleased; v0.3.2 shipped v12), Room over SQLCipher. Matches the entities in
 > `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change ships a
 > non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 
@@ -180,5 +180,11 @@ storage — likely a small row in the encrypted DB.)
   remaining bare id into a row; a dedicated adopter handles the **map-encoded** `encounters.ejaculationLocations`
   column (`idx=ID1|ID2,…`). Both columns stay unchanged TEXT. Adoption is guarded by table-existence so
   earlier migrations that call it don't touch these v12 tables.
+- **v13 (`MIGRATION_12_13`, SRCH-1)** adds the **`recent_searches`** table (`query` TEXT PK,
+  `lastUsedAt` INTEGER, indexed) backing Search's recent-query chips. Pure additive DDL — no existing
+  row is touched and the table starts empty. It lives in the **encrypted** DB rather than a prefs file
+  because a search history is among the most sensitive text in the app (**D-42**), and it is
+  deliberately **excluded from `BackupManager.TABLES`**, so queries never travel inside an exported
+  backup (and a restore leaves the local history alone).
 - Export format (M5) is decoupled from the live schema and versioned independently
   (see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §4).
