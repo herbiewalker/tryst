@@ -6,9 +6,12 @@ import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.db.relation.EncounterWithDetails
+import app.tryst.data.filter.DateRange
+import app.tryst.data.filter.DateScope
 import java.time.LocalDate
 import java.time.ZoneOffset
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -214,6 +217,88 @@ class InsightsEngineTest {
         assertEquals(1, r.monthly.last().count) // current month holds the one encounter
         assertEquals(7, r.byWeekday.size)
     }
+
+    // --- INS-2: time scope ------------------------------------------------
+
+    @Test
+    fun scopeRestrictsEveryFigureToTheWindow() {
+        val log = listOf(
+            encounter("in1", LocalDate.of(2025, 3, 5), rating = 5),
+            encounter("in2", LocalDate.of(2025, 8, 20), rating = 3),
+            encounter("out", LocalDate.of(2026, 1, 10), rating = 1),
+        )
+        val r = InsightsEngine.compute(log, zone = zone, today = today, scope = year(2025))
+        assertEquals(2, r.totalCount)
+        assertTrue(r.isScoped)
+        assertEquals(4.0, r.avgRating!!, 0.001) // the 2026 entry's ★1 is excluded
+    }
+
+    @Test
+    fun scopeBucketsMonthsAcrossTheWindowNotTrailingTwelve() {
+        // The bug this guards: month buckets used to be the 12 months ending *today*, so a past-year
+        // scope produced twelve buckets for the wrong year, all zero.
+        val log = listOf(encounter("a", LocalDate.of(2024, 2, 14)))
+        val r = InsightsEngine.compute(log, zone = zone, today = today, scope = year(2024))
+        assertEquals(12, r.monthly.size)
+        assertEquals("Jan", r.monthly.first().label)
+        assertEquals("Dec", r.monthly.last().label)
+        assertEquals(1, r.monthly[1].count) // February holds the single encounter
+        assertEquals(0, r.monthly[0].count)
+    }
+
+    @Test
+    fun unscopedStillUsesTrailingTwelveMonths() {
+        val r = InsightsEngine.compute(listOf(encounter("a", today)), zone = zone, today = today)
+        assertEquals(12, r.monthly.size)
+        assertEquals(1, r.monthly.last().count) // current month is the last bucket
+        assertFalse(r.isScoped)
+    }
+
+    @Test
+    fun multiYearScopeQualifiesMonthLabelsWithTheYear() {
+        val scope = DateRange(LocalDate.of(2025, 11, 1), LocalDate.of(2026, 2, 28))
+        val r = InsightsEngine.compute(listOf(encounter("a", LocalDate.of(2025, 12, 1))), zone = zone, today = today, scope = scope)
+        assertEquals(4, r.monthly.size)
+        assertEquals("Nov 25", r.monthly.first().label)
+        assertEquals("Feb 26", r.monthly.last().label)
+    }
+
+    @Test
+    fun scopeWithholdsTodayRelativeFigures() {
+        val r = InsightsEngine.compute(listOf(encounter("a", LocalDate.of(2024, 6, 1))), zone = zone, today = today, scope = year(2024))
+        // Both describe "as of today" and would be lies for a past window.
+        assertEquals(null, r.daysSinceLast)
+        assertEquals(0, r.currentStreakWeeks)
+        // Longest streak is a property of the window itself, so it survives.
+        assertEquals(1, r.longestStreakWeeks)
+    }
+
+    @Test
+    fun emptyScopedWindowIsEmptyButStillMarkedScoped() {
+        val log = listOf(encounter("a", LocalDate.of(2026, 6, 1)))
+        val r = InsightsEngine.compute(log, zone = zone, today = today, scope = year(2021))
+        assertTrue(r.isEmpty)
+        assertTrue(r.isScoped) // "no trysts in 2021", not "no trysts yet"
+    }
+
+    @Test
+    fun avgPerMonthDividesByTheWindowsMonths() {
+        // 12 encounters across 2025 -> 1.0/month, regardless of how long ago 2025 was.
+        val log = (1..12).map { m -> encounter("e$m", LocalDate.of(2025, m, 15)) }
+        val r = InsightsEngine.compute(log, zone = zone, today = today, scope = year(2025))
+        assertEquals(1.0, r.avgPerMonth, 0.001)
+    }
+
+    @Test
+    fun scopeIsInclusiveOnBothEdges() {
+        val log = listOf(
+            encounter("start", LocalDate.of(2025, 1, 1)),
+            encounter("end", LocalDate.of(2025, 12, 31)),
+        )
+        assertEquals(2, InsightsEngine.compute(log, zone = zone, today = today, scope = year(2025)).totalCount)
+    }
+
+    private fun year(y: Int) = DateScope.Year(y).range()
 
     @Test
     fun ejaculationTallies() {

@@ -7,6 +7,7 @@ import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.Position
 import app.tryst.data.db.entity.ToyType
 import app.tryst.data.db.relation.EncounterWithDetails
+import app.tryst.data.filter.DateRange
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
@@ -24,17 +25,23 @@ data class Bucket(val label: String, val count: Int)
 /**
  * Everything the Insights screen renders, precomputed from the encounter log. Pure data —
  * no Android/Compose types — so [InsightsEngine.compute] is unit-testable on the JVM.
+ *
+ * When [isScoped] the figures cover only the selected window (INS-2). A few of them are inherently
+ * "as of today" and cannot be honestly reported for a past window — [currentStreakWeeks] and
+ * [daysSinceLast] are zeroed/nulled, and [thisMonthCount]/[thisYearCount] keep counting against the
+ * real calendar; the Overview hides all four while a scope is active (see `StatTiles`).
  */
 data class Insights(
     val totalCount: Int,
     val thisMonthCount: Int,
     val thisYearCount: Int,
-    /** Whole days between the most recent encounter and [today]; null when there are none. */
+    /** Whole days between the most recent encounter and today; null when there are none, or when scoped. */
     val daysSinceLast: Long?,
-    /** Encounters per month averaged over the active span (first encounter → today). */
+    /** Encounters per month, averaged over the scope's months (or first-encounter→today when unscoped). */
     val avgPerMonth: Double,
-    /** Consecutive weeks up to and including the current week that have ≥1 encounter. */
+    /** Consecutive weeks up to and including the current week that have ≥1 encounter; always 0 when scoped. */
     val currentStreakWeeks: Int,
+    /** Longest run of consecutive active weeks — a property of the window, so it survives a scope. */
     val longestStreakWeeks: Int,
     val avgRating: Double?,
     /** Counts for ratings 1..5 (index 0 = ★1). */
@@ -45,7 +52,7 @@ data class Insights(
     val totalPartnerOrgasms: Int,
     /** Average self-orgasms over encounters where a count was recorded. */
     val avgSelfOrgasms: Double?,
-    /** The trailing 12 months ending with the current month, oldest first. */
+    /** Oldest first: the scope's own months, or the trailing 12 ending this month when unscoped. */
     val monthly: List<Bucket>,
     /** Mon..Sun encounter counts. */
     val byWeekday: List<Bucket>,
@@ -62,8 +69,10 @@ data class Insights(
     val topInitiators: List<Tally>,
     /** Partners' orgasm counts summed per partner, named, ranked. */
     val orgasmsPerPartner: List<Tally>,
-    /** Total orgasms (yours + partners') per month, trailing 12 months. */
+    /** Total orgasms (yours + partners') over the same month buckets as [monthly]. */
     val orgasmsMonthly: List<Bucket>,
+    /** True when a time scope narrowed the log (INS-2) — some tiles are meaningless then. */
+    val isScoped: Boolean = false,
 ) {
     val isEmpty: Boolean get() = totalCount == 0
 
@@ -106,10 +115,20 @@ data class Insights(
  * Computes [Insights] from the full encounter log. Acts and positions are stored as string ids
  * (a built-in enum name, or `custom:<uuid>`); pass the custom rows' `uuid -> label` maps so
  * those resolve to human labels.
+ *
+ * Pass a [scope] to restrict every figure to a window (INS-2). Note this is **not** simply a matter of
+ * pre-filtering the input: the month buckets, the per-month average, the streak and "days since last"
+ * are all computed against *today*, so the window has to reach the engine itself.
  */
 object InsightsEngine {
 
     private const val CUSTOM_PREFIX = "custom:"
+
+    /** Widest month-bucket chart we'll draw before falling back to the most recent [MAX_MONTH_BUCKETS]. */
+    private const val MAX_MONTH_BUCKETS = 24
+
+    /** Trailing window used when no scope is set — the historical behaviour. */
+    private const val DEFAULT_MONTH_BUCKETS = 12
 
     // One cohesive, sequential aggregation that builds the whole Insights snapshot; splitting it
     // would scatter tightly-related accumulation with no real readability gain (it is JVM-tested).
@@ -124,10 +143,17 @@ object InsightsEngine {
         customEjaculationLabels: Map<String, String> = emptyMap(),
         zone: ZoneId = ZoneId.systemDefault(),
         today: LocalDate = LocalDate.now(zone),
+        /** The INS-2 window; null = all time. */
+        scope: DateRange? = null,
     ): Insights {
-        if (encounters.isEmpty()) return Insights.EMPTY
-
         fun dateOf(e: EncounterWithDetails): LocalDate = Instant.ofEpochMilli(e.encounter.startAt).atZone(zone).toLocalDate()
+
+        val scoped = scope != null
+
+        @Suppress("NAME_SHADOWING")
+        val encounters = if (scope == null) encounters else encounters.filter { dateOf(it) in scope }
+        // An empty window is a real answer ("no trysts in 2021"), not the same as an empty app.
+        if (encounters.isEmpty()) return Insights.EMPTY.copy(isScoped = scoped)
 
         val dates = encounters.map(::dateOf)
         val thisMonth = YearMonth.from(today)
@@ -154,9 +180,28 @@ object InsightsEngine {
             prev = w
         }
 
+        // --- month buckets: the scope's own months, else the trailing 12 ending this month ---
+        val bucketMonths: List<YearMonth> = if (scope == null) {
+            (DEFAULT_MONTH_BUCKETS - 1 downTo 0).map { thisMonth.minusMonths(it.toLong()) }
+        } else {
+            val last = YearMonth.from(scope.end)
+            generateSequence(YearMonth.from(scope.start)) { if (it < last) it.plusMonths(1) else null }
+                .toList()
+                .takeLast(MAX_MONTH_BUCKETS)
+        }
+        // "Jan" is ambiguous once the window spans years, so qualify it then (and only then).
+        val multiYear = bucketMonths.distinctBy { it.year }.size > 1
+        fun monthLabel(ym: YearMonth): String {
+            val month = ym.month.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+            return if (multiYear) "$month ${"%02d".format(ym.year % 100)}" else month
+        }
+
         // --- averages ---
-        val monthsActive = (ChronoUnit.MONTHS.between(YearMonth.from(dates.min()), thisMonth) + 1)
-            .coerceAtLeast(1)
+        val monthsActive = if (scope == null) {
+            ChronoUnit.MONTHS.between(YearMonth.from(dates.min()), thisMonth) + 1
+        } else {
+            ChronoUnit.MONTHS.between(YearMonth.from(scope.start), YearMonth.from(scope.end)) + 1
+        }.coerceAtLeast(1)
         val ratings = encounters.mapNotNull { it.encounter.satisfactionRating }
         val durations = encounters.mapNotNull { it.encounter.durationMin }
         val selfOrgasmCounts = encounters.mapNotNull { it.encounter.orgasmCountSelf }
@@ -168,11 +213,8 @@ object InsightsEngine {
             (e.encounter.partnerOrgasms?.values?.sum() ?: 0) + (e.encounter.orgasmCountPartner ?: 0)
         }
 
-        // --- trailing-12-month buckets ---
-        val monthly = (11 downTo 0).map { back ->
-            val ym = thisMonth.minusMonths(back.toLong())
-            val count = dates.count { YearMonth.from(it) == ym }
-            Bucket(ym.month.getDisplayName(TextStyle.SHORT, Locale.getDefault()), count)
+        val monthly = bucketMonths.map { ym ->
+            Bucket(monthLabel(ym), dates.count { YearMonth.from(it) == ym })
         }
 
         // --- weekday buckets (Mon..Sun) ---
@@ -229,24 +271,25 @@ object InsightsEngine {
             .filter { it.count > 0 }
             .sortedWith(compareByDescending<Tally> { it.count }.thenBy { it.label })
 
-        // --- total orgasms (yours + partners') per month, trailing 12 ---
-        val orgasmsMonthly = (11 downTo 0).map { back ->
-            val ym = thisMonth.minusMonths(back.toLong())
+        // --- total orgasms (yours + partners') per month, over the same buckets ---
+        val orgasmsMonthly = bucketMonths.map { ym ->
             val count = encounters.filter { YearMonth.from(dateOf(it)) == ym }.sumOf { e ->
                 (e.encounter.orgasmCountSelf ?: 0) +
                     (e.encounter.partnerOrgasms?.values?.sum() ?: 0) +
                     (e.encounter.orgasmCountPartner ?: 0)
             }
-            Bucket(ym.month.getDisplayName(TextStyle.SHORT, Locale.getDefault()), count)
+            Bucket(monthLabel(ym), count)
         }
 
         return Insights(
             totalCount = encounters.size,
             thisMonthCount = dates.count { YearMonth.from(it) == thisMonth },
             thisYearCount = dates.count { it.year == today.year },
-            daysSinceLast = ChronoUnit.DAYS.between(lastDate, today).coerceAtLeast(0),
+            // "Days since last" and "current streak" are both measured from today. Under a past window
+            // they'd describe a moment that has already passed, so they're withheld rather than faked.
+            daysSinceLast = if (scoped) null else ChronoUnit.DAYS.between(lastDate, today).coerceAtLeast(0),
             avgPerMonth = encounters.size.toDouble() / monthsActive,
-            currentStreakWeeks = currentStreak,
+            currentStreakWeeks = if (scoped) 0 else currentStreak,
             longestStreakWeeks = longestStreak,
             avgRating = ratings.takeIf { it.isNotEmpty() }?.average(),
             ratingHistogram = ratingHistogram,
@@ -270,6 +313,7 @@ object InsightsEngine {
             topInitiators = topInitiators,
             orgasmsPerPartner = orgasmsPerPartner,
             orgasmsMonthly = orgasmsMonthly,
+            isScoped = scoped,
         )
     }
 

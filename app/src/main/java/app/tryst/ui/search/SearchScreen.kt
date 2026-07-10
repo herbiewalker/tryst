@@ -22,17 +22,12 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material3.AssistChip
-import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -46,7 +41,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -76,21 +70,20 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.PartnerEntity
-import app.tryst.data.filter.DateRange
+import app.tryst.data.filter.DateScope
 import app.tryst.data.search.EncounterSearch
 import app.tryst.data.search.SearchField
 import app.tryst.data.search.SearchHit
 import app.tryst.ui.common.CARD_THUMB_PX
+import app.tryst.ui.common.CheckableItem
 import app.tryst.ui.common.DateHeader
+import app.tryst.ui.common.DateRangePickerDialog
+import app.tryst.ui.common.DateScopeChips
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.EncounterCard
 import app.tryst.ui.common.Format
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
+import app.tryst.ui.common.MenuChip
 
-private val rangeFormatter = DateTimeFormatter.ofPattern("MMM d")
 private const val DETAIL_THUMB_PX = 220
 
 /**
@@ -112,8 +105,8 @@ fun SearchScreen(
     val query by viewModel.query.collectAsStateWithLifecycle()
     val ui by viewModel.uiState.collectAsStateWithLifecycle()
     val partners by viewModel.partners.collectAsStateWithLifecycle()
-    val datePreset by viewModel.datePreset.collectAsStateWithLifecycle()
-    val customRange by viewModel.customRange.collectAsStateWithLifecycle()
+    val availableYears by viewModel.availableYears.collectAsStateWithLifecycle()
+    val dateScope by viewModel.dateScope.collectAsStateWithLifecycle()
     val rating by viewModel.rating.collectAsStateWithLifecycle()
     val partnerIds by viewModel.partnerIds.collectAsStateWithLifecycle()
     val photosOnly by viewModel.photosOnly.collectAsStateWithLifecycle()
@@ -128,7 +121,7 @@ fun SearchScreen(
     var showRangePicker by remember { mutableStateOf(false) }
     var expandedId by rememberSaveable { mutableStateOf<String?>(null) }
     // A row expanded in one search must not stay open in the next — the result set underneath it changed.
-    LaunchedEffect(query, datePreset, customRange, rating, partnerIds, photosOnly, sortOrder) {
+    LaunchedEffect(query, dateScope, rating, partnerIds, photosOnly, sortOrder) {
         expandedId = null
     }
 
@@ -179,14 +172,14 @@ fun SearchScreen(
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             FilterChipRow(
-                datePreset = datePreset,
-                customRange = customRange,
+                dateScope = dateScope,
+                availableYears = availableYears,
                 rating = rating,
                 partners = partners,
                 partnerIds = partnerIds,
                 photosOnly = photosOnly,
                 criteriaActive = ui.criteriaActive,
-                onDatePreset = viewModel::setDatePreset,
+                onDateScope = viewModel::setDateScope,
                 onCustomRange = { showRangePicker = true },
                 onRating = viewModel::setRating,
                 onTogglePartner = viewModel::togglePartner,
@@ -204,12 +197,11 @@ fun SearchScreen(
                 )
 
                 ui.hits.isEmpty() -> NoResults(
-                    datePreset = datePreset,
-                    customRange = customRange,
+                    dateScope = dateScope,
                     rating = rating,
                     partnerIds = partnerIds,
                     photosOnly = photosOnly,
-                    onDatePreset = viewModel::setDatePreset,
+                    onDateScope = viewModel::setDateScope,
                     onRating = viewModel::setRating,
                     onClearPartners = { partnerIds.forEach(viewModel::togglePartner) },
                     onPhotosOnly = viewModel::setPhotosOnly,
@@ -229,8 +221,8 @@ fun SearchScreen(
     }
 
     if (showRangePicker) {
-        RangePickerDialog(
-            initial = customRange,
+        DateRangePickerDialog(
+            initial = (dateScope as? DateScope.Custom)?.range,
             onDismiss = { showRangePicker = false },
             onConfirm = { start, end ->
                 viewModel.setCustomRange(start, end)
@@ -475,20 +467,18 @@ private fun IdleState(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun NoResults(
-    datePreset: DatePreset,
-    customRange: DateRange?,
+    dateScope: DateScope,
     rating: RatingFilter,
     partnerIds: Set<String>,
     photosOnly: Boolean,
-    onDatePreset: (DatePreset) -> Unit,
+    onDateScope: (DateScope) -> Unit,
     onRating: (RatingFilter) -> Unit,
     onClearPartners: () -> Unit,
     onPhotosOnly: (Boolean) -> Unit,
 ) {
+    val allTime = stringResource(R.string.date_scope_all_time)
     val relaxable = buildList {
-        if (customRange != null || datePreset != DatePreset.ALL_TIME) {
-            add(DatePreset.ALL_TIME.label to { onDatePreset(DatePreset.ALL_TIME) })
-        }
+        if (dateScope != DateScope.AllTime) add(allTime to { onDateScope(DateScope.AllTime) })
         if (rating != RatingFilter.ANY) add(RatingFilter.ANY.label to { onRating(RatingFilter.ANY) })
         if (partnerIds.isNotEmpty()) add("All partners" to onClearPartners)
         if (photosOnly) add("Any photo" to { onPhotosOnly(false) })
@@ -522,14 +512,14 @@ private fun NoResults(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FilterChipRow(
-    datePreset: DatePreset,
-    customRange: DateRange?,
+    dateScope: DateScope,
+    availableYears: List<Int>,
     rating: RatingFilter,
     partners: List<PartnerEntity>,
     partnerIds: Set<String>,
     photosOnly: Boolean,
     criteriaActive: Boolean,
-    onDatePreset: (DatePreset) -> Unit,
+    onDateScope: (DateScope) -> Unit,
     onCustomRange: () -> Unit,
     onRating: (RatingFilter) -> Unit,
     onTogglePartner: (String) -> Unit,
@@ -540,22 +530,13 @@ private fun FilterChipRow(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        val dateLabel = customRange?.let {
-            stringResource(R.string.search_date_range, it.start.format(rangeFormatter), it.end.format(rangeFormatter))
-        } ?: datePreset.label
-        MenuChip(label = dateLabel, selected = customRange != null || datePreset != DatePreset.ALL_TIME) { dismiss ->
-            DatePreset.entries.forEach { preset ->
-                CheckableItem(preset.label, checked = customRange == null && preset == datePreset) {
-                    onDatePreset(preset)
-                    dismiss()
-                }
-            }
-            HorizontalDivider()
-            CheckableItem(stringResource(R.string.search_date_custom), checked = customRange != null) {
-                onCustomRange()
-                dismiss()
-            }
-        }
+        // Same year -> quarter -> custom narrowing as the Insights time scope.
+        DateScopeChips(
+            scope = dateScope,
+            availableYears = availableYears,
+            onSelect = onDateScope,
+            onCustomRange = onCustomRange,
+        )
 
         MenuChip(label = rating.label, selected = rating != RatingFilter.ANY) { dismiss ->
             RatingFilter.entries.forEach { option ->
@@ -599,7 +580,7 @@ private fun SortMenu(current: SortOrder, onSelect: (SortOrder) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { expanded = true }) {
-            Icon(Icons.Filled.Sort, contentDescription = current.label)
+            Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = current.label)
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             SortOrder.entries.forEach { option ->
@@ -611,66 +592,3 @@ private fun SortMenu(current: SortOrder, onSelect: (SortOrder) -> Unit) {
         }
     }
 }
-
-/** A [FilterChip] that opens a dropdown of [menuItems]; the lambda receives a `dismiss` callback. */
-@Composable
-private fun MenuChip(
-    label: String,
-    selected: Boolean,
-    menuItems: @Composable (dismiss: () -> Unit) -> Unit,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        FilterChip(
-            selected = selected,
-            onClick = { expanded = true },
-            label = { Text(label) },
-            trailingIcon = { Icon(Icons.Filled.ArrowDropDown, contentDescription = null) },
-        )
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            menuItems { expanded = false }
-        }
-    }
-}
-
-@Composable
-private fun CheckableItem(label: String, checked: Boolean, onClick: () -> Unit) {
-    DropdownMenuItem(
-        text = { Text(label) },
-        onClick = onClick,
-        leadingIcon = { if (checked) Icon(Icons.Filled.Check, contentDescription = null) },
-    )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun RangePickerDialog(
-    initial: DateRange?,
-    onDismiss: () -> Unit,
-    onConfirm: (LocalDate, LocalDate) -> Unit,
-) {
-    // The picker speaks UTC-midnight millis; convert on both edges so the day never shifts.
-    val state = rememberDateRangePickerState(
-        initialSelectedStartDateMillis = initial?.start?.toEpochMillisUtc(),
-        initialSelectedEndDateMillis = initial?.end?.toEpochMillisUtc(),
-    )
-    val start = state.selectedStartDateMillis
-    val end = state.selectedEndDateMillis
-
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(
-                enabled = start != null && end != null,
-                onClick = { if (start != null && end != null) onConfirm(start.toLocalDateUtc(), end.toLocalDateUtc()) },
-            ) { Text(stringResource(R.string.action_ok)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
-    ) {
-        DateRangePicker(state = state, modifier = Modifier.height(520.dp))
-    }
-}
-
-private fun LocalDate.toEpochMillisUtc(): Long = atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-
-private fun Long.toLocalDateUtc(): LocalDate = Instant.ofEpochMilli(this).atZone(ZoneOffset.UTC).toLocalDate()
