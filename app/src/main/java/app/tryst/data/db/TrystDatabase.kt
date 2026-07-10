@@ -13,6 +13,7 @@ import app.tryst.data.db.dao.OccasionDao
 import app.tryst.data.db.dao.PartnerDao
 import app.tryst.data.db.dao.PositionDao
 import app.tryst.data.db.dao.ProfileDao
+import app.tryst.data.db.dao.RecentSearchDao
 import app.tryst.data.db.dao.TagDao
 import app.tryst.data.db.dao.ToyDao
 import app.tryst.data.db.entity.ActEntity
@@ -28,6 +29,7 @@ import app.tryst.data.db.entity.OccasionEntity
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.PositionEntity
 import app.tryst.data.db.entity.ProfileEntity
+import app.tryst.data.db.entity.RecentSearchEntity
 import app.tryst.data.db.entity.TagEntity
 import app.tryst.data.db.entity.ToyEntity
 
@@ -45,11 +47,12 @@ import app.tryst.data.db.entity.ToyEntity
         OccasionEntity::class,
         EjaculationLocationEntity::class,
         MediaEntity::class,
+        RecentSearchEntity::class,
         EncounterPartnerCrossRef::class,
         EncounterPositionCrossRef::class,
         EncounterTagCrossRef::class,
     ],
-    version = 12,
+    version = 13,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -66,6 +69,7 @@ abstract class TrystDatabase : RoomDatabase() {
     abstract fun occasionDao(): OccasionDao
     abstract fun ejaculationLocationDao(): EjaculationLocationDao
     abstract fun locationDao(): LocationDao
+    abstract fun recentSearchDao(): RecentSearchDao
 
     companion object {
         const val NAME = "tryst.db"

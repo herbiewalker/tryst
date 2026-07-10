@@ -13,6 +13,27 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+### Added
+- **Search.** A search icon on Trysts opens a dedicated search screen. Type to match against a tryst's
+  note, its partners, and its acts, positions, places, occasions, kinks, toys, and mood. Multi-word
+  queries match across fields in any order, and matching ignores case and accents (`cafe` finds *Café*).
+- **Search filters.** Narrow results by date window (last 7 / 30 / 90 days, this year, or a **custom
+  date range**), partner, rating, and whether the tryst has a photo. Sort by newest, oldest, highest
+  rated, or longest. When nothing matches, Tryst offers to widen whichever filters are active.
+- **Results expand in place.** Tap a result to see the whole tryst — full note, every category, and its
+  photos — without opening the editor. Because search looks at fields the card doesn't show, each result
+  says which field your query hit, and the matched words are highlighted.
+- **Recent searches**, stored in the encrypted database like the rest of your data — never in plain
+  settings files, and deliberately **never included in an exported backup**. Only searches you actually
+  submit are remembered, the last 8 are kept, and you can remove them individually or clear them all.
+
+### Internal
+- New shared `EncounterFilter` query layer (`data/filter`) — one reusable, JVM-tested way to select a
+  subset of the log by date/partner/category/rating/duration/photo/note. Search is its first consumer;
+  the Insights time scope, the photo gallery, and selective erase are next.
+- Schema **v13** (`MIGRATION_12_13`): adds the `recent_searches` table. Additive DDL only; no existing
+  row is touched.
+
 ## [0.3.2] — 2026-07-03 (versionCode 5)
 
 ### Changed

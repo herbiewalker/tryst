@@ -123,6 +123,32 @@
     <string name="history_empty">No trysts yet.\nTap + to log one.</string>
     <string name="cd_view_list">List view</string>
     <string name="cd_view_calendar">Calendar view</string>
+    <string name="cd_search">Search</string>
+
+    <!-- ============================================================= -->
+    <!-- Search (SearchScreen)                                         -->
+    <!-- ============================================================= -->
+    <string name="search_hint">Search notes, partners, acts…</string>
+    <string name="search_clear_query">Clear search</string>
+    <string name="search_clear_all">Clear all</string>
+    <string name="search_prompt">Search your trysts by note, partner, act, position, place, mood, and more — or narrow with the filters above.</string>
+    <string name="search_no_results">No trysts match.</string>
+    <string name="search_no_results_hint">Try widening a filter:</string>
+    <string name="search_chip_partners">Partners</string>
+    <string name="search_chip_partners_count">%1$d partners</string>
+    <string name="search_chip_photos">Has photo</string>
+    <string name="search_date_custom">Custom range…</string>
+    <string name="search_date_range">%1$s – %2$s</string>
+    <string name="search_matched_in">Matched in %1$s</string>
+    <string name="search_open">Open</string>
+    <string name="search_recent_title">Recent searches</string>
+    <string name="cd_search_expand">Show details</string>
+    <string name="cd_search_collapse">Hide details</string>
+    <string name="cd_search_remove_recent">Remove recent search</string>
+    <plurals name="search_result_count">
+        <item quantity="one">%1$d result</item>
+        <item quantity="other">%1$d results</item>
+    </plurals>
     <string name="cd_log_encounter">Log encounter</string>
     <string name="cd_prev_month">Previous month</string>
     <string name="cd_next_month">Next month</string>
