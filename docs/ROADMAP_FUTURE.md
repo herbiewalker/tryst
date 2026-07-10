@@ -130,8 +130,8 @@ update `tools/dataset/generate_dataset.py` (drop `ORAL_69_SIDE`, move `WATCHING_
 ### v0.3.0 — Search & the filter foundation *(the enabling layer)*
 | ID | Item | Proposed |
 |----|------|----------|
-| **FILT-1** | **Shared `EncounterFilter` query layer** | The reusable filter model + stateless query described above. Pure-Kotlin, JVM-testable, no schema change (it queries the existing log). |
-| **SRCH-1** | **Global search** | A search entry (on Trysts, and/or app-wide) that filters encounters by free text (notes, partner names, act/position/place labels) on top of the filter layer. First consumer of the layer. |
+| **FILT-1** | **Shared `EncounterFilter` query layer** | ✅ **DONE (2026-07-09, unreleased on `main`).** Pure-Kotlin `app.tryst.data.filter` package: `EncounterFilter` (all filter dimensions — date ranges, partners incl. solo, acts/positions/places/occasions/kinks/toys/protection multi-selects, moods/initiators, weekday, time-of-day, rating/duration bands, has-photo, has-note/note-contains) + `EncounterFilter.matches()` + `EncounterQuery.filter()`. **AND across categories, OR within a multi-select; empty filter = passthrough.** Supporting `DateRange` + `TimeOfDay` (morning/afternoon/evening/night, night wraps midnight). No Android types → JVM-tested like `InsightsEngine` (new `EncounterFilterTest`, 15 cases, every dimension + AND/OR + null-value exclusion). No schema change; all gates green. **No UI yet — that's SRCH-1.** |
+| **SRCH-1** | **Global search** | A search entry (on Trysts, and/or app-wide) that filters encounters by free text (notes, partner names, act/position/place labels) on top of the [FILT-1] layer. First consumer of the layer — combine `noteContains` with label-resolved id sets fed into `EncounterFilter`. |
 
 ### v0.4.0 — Insights Explorer & scope *(the big one)*
 | ID | Item | Current state | Proposed |
