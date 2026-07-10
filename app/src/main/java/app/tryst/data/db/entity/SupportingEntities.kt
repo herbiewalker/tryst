@@ -61,6 +61,22 @@ data class EjaculationLocationEntity(
     val isBuiltIn: Boolean = false,
 )
 
+/**
+ * A search query the user submitted, most-recent-first (SRCH-1). Lives **in the encrypted DB**, not in
+ * the `SharedPreferences` stores: a search history is some of the most sensitive text in the app, and
+ * the prefs files are the one part of Tryst that is *not* encrypted at rest (D-42).
+ *
+ * Deliberately **excluded from `BackupManager.TABLES`** — your queries never travel inside an export,
+ * and a restore leaves your local history alone. `SessionManager.deleteAllData` drops the DB, so a
+ * full wipe clears it.
+ */
+@Entity(tableName = "recent_searches", indices = [Index("lastUsedAt")])
+data class RecentSearchEntity(
+    /** The raw query text, as typed. Also the identity — re-searching a term just bumps its timestamp. */
+    @PrimaryKey val query: String,
+    val lastUsedAt: Long,
+)
+
 @Entity(
     tableName = "media",
     foreignKeys = [
