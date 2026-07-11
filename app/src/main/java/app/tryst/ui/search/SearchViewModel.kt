@@ -3,11 +3,16 @@ package app.tryst.ui.search
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.MediaEntity
+import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.PartnerEntity
+import app.tryst.data.db.entity.Place
+import app.tryst.data.db.entity.Protection
 import app.tryst.data.filter.DateRange
 import app.tryst.data.filter.DateScope
 import app.tryst.data.filter.EncounterFilter
+import app.tryst.data.filter.TimeOfDay
 import app.tryst.data.repository.ActRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.KinkRepository
@@ -22,6 +27,7 @@ import app.tryst.data.search.SearchHit
 import app.tryst.data.search.SearchableEncounter
 import app.tryst.ui.common.MediaImages
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
@@ -126,6 +132,20 @@ class SearchViewModel @Inject constructor(
     private val _sortOrder = MutableStateFlow(SortOrder.NEWEST)
     val sortOrder: StateFlow<SortOrder> = _sortOrder.asStateFlow()
 
+    /**
+     * Every FILT-1 dimension beyond the base chips, driven by the "More filters" sheet: acts, positions,
+     * kinks, toys, occasions, places, protection, mood, initiator, weekday, time-of-day, duration, note,
+     * and include-solo. Holds **only** the advanced fields — the base fields stay empty here and are
+     * merged with the chip-driven [baseFilter] in [filter].
+     */
+    private val _advanced = MutableStateFlow(EncounterFilter())
+    val advanced: StateFlow<EncounterFilter> = _advanced.asStateFlow()
+
+    /** How many advanced dimensions are currently narrowing the results — the "Filters" chip badge. */
+    val activeAdvancedCount: StateFlow<Int> = _advanced
+        .map { it.advancedCount() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
     /** Named partners for the partner chip's menu. */
     val partners: StateFlow<List<PartnerEntity>> = partnerRepository.observeActive()
         .catch { emit(emptyList()) }
@@ -149,8 +169,8 @@ class SearchViewModel @Inject constructor(
         .catch { emit(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    /** The chips, assembled into the shared filter model. */
-    private val filter: Flow<EncounterFilter> =
+    /** The base chips (date, rating, partners, photos), assembled into the shared filter model. */
+    private val baseFilter: Flow<EncounterFilter> =
         combine(_dateScope, _rating, _partnerIds, _photosOnly) { scope, rating, partnerIds, photosOnly ->
             EncounterFilter(
                 dateRanges = listOfNotNull(scope.range()),
@@ -160,7 +180,32 @@ class SearchViewModel @Inject constructor(
             )
         }
 
-    private val labels: Flow<CatalogLabels> = combine(
+    /** Base chips + the advanced sheet, merged into one filter. The two never touch the same fields. */
+    private val filter: Flow<EncounterFilter> =
+        combine(baseFilter, _advanced) { base, adv ->
+            base.copy(
+                actIds = adv.actIds,
+                positionIds = adv.positionIds,
+                places = adv.places,
+                occasionIds = adv.occasionIds,
+                kinkIds = adv.kinkIds,
+                toyIds = adv.toyIds,
+                protection = adv.protection,
+                moods = adv.moods,
+                initiators = adv.initiators,
+                weekdays = adv.weekdays,
+                timesOfDay = adv.timesOfDay,
+                durationRange = adv.durationRange,
+                hasNote = adv.hasNote,
+                includeSolo = adv.includeSolo,
+            )
+        }
+
+    /**
+     * The user's custom-catalog `id -> label` maps. Feeds both the search index (below) and the "More
+     * filters" sheet's catalog chips — the sheet prefixes each id with `custom:` to match stored refs.
+     */
+    val catalogLabels: StateFlow<CatalogLabels> = combine(
         actRepository.observeCustom().map { rows -> rows.associate { it.id to it.label } },
         positionRepository.observeCustom().map { rows -> rows.associate { it.id to it.label } },
         kinkRepository.observeCustom().map { rows -> rows.associate { it.id to it.label } },
@@ -169,14 +214,16 @@ class SearchViewModel @Inject constructor(
     ) { acts, positions, kinks, toys, occasions ->
         CatalogLabels(acts = acts, positions = positions, kinks = kinks, toys = toys, occasions = occasions)
     }
+        .catch { emit(CatalogLabels.EMPTY) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CatalogLabels.EMPTY)
 
     /**
      * The searchable text of the whole log. Rebuilt only when the log or a catalog label changes — the
      * expensive part of search, deliberately kept off the per-keystroke path.
      */
     private val index: Flow<List<SearchableEncounter>> =
-        combine(encounterRepository.observeAll(), labels) { encounters, catalogLabels ->
-            withContext(Dispatchers.Default) { EncounterSearch.index(encounters, catalogLabels) }
+        combine(encounterRepository.observeAll(), catalogLabels) { encounters, labels ->
+            withContext(Dispatchers.Default) { EncounterSearch.index(encounters, labels) }
         }
 
     /**
@@ -241,13 +288,49 @@ class SearchViewModel @Inject constructor(
 
     fun setSortOrder(value: SortOrder) = _sortOrder.update { value }
 
+    // --- advanced filters (the "More filters" sheet) -------------------------------------------------
+    // Catalog ids arrive already `custom:`-prefixed (built by the sheet from CatalogLabels), matching the
+    // form encounters store, so they need no further transformation here.
+
+    fun toggleAct(id: String) = _advanced.update { it.copy(actIds = it.actIds.toggled(id)) }
+    fun togglePosition(id: String) = _advanced.update { it.copy(positionIds = it.positionIds.toggled(id)) }
+    fun toggleKink(id: String) = _advanced.update { it.copy(kinkIds = it.kinkIds.toggled(id)) }
+    fun toggleToy(id: String) = _advanced.update { it.copy(toyIds = it.toyIds.toggled(id)) }
+    fun toggleOccasion(id: String) = _advanced.update { it.copy(occasionIds = it.occasionIds.toggled(id)) }
+    fun togglePlace(value: Place) = _advanced.update { it.copy(places = it.places.toggled(value)) }
+    fun toggleProtection(value: Protection) = _advanced.update { it.copy(protection = it.protection.toggled(value)) }
+    fun toggleMood(value: Mood) = _advanced.update { it.copy(moods = it.moods.toggled(value)) }
+    fun toggleInitiator(value: Initiator) = _advanced.update { it.copy(initiators = it.initiators.toggled(value)) }
+    fun toggleWeekday(value: DayOfWeek) = _advanced.update { it.copy(weekdays = it.weekdays.toggled(value)) }
+    fun toggleTimeOfDay(value: TimeOfDay) = _advanced.update { it.copy(timesOfDay = it.timesOfDay.toggled(value)) }
+
+    fun setDurationRange(range: IntRange?) = _advanced.update { it.copy(durationRange = range) }
+    fun setHasNote(value: Boolean?) = _advanced.update { it.copy(hasNote = value) }
+    fun setIncludeSolo(value: Boolean) = _advanced.update { it.copy(includeSolo = value) }
+
+    /** Clears the advanced sheet only, leaving the base chips (date/rating/partners/photos) untouched. */
+    fun clearAdvanced() {
+        _advanced.value = EncounterFilter()
+    }
+
     fun clearAll() {
         _query.value = ""
         _dateScope.value = DateScope.AllTime
         _rating.value = RatingFilter.ANY
         _partnerIds.value = emptySet()
         _photosOnly.value = false
+        _advanced.value = EncounterFilter()
     }
 
     suspend fun decode(media: MediaEntity, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { runCatching { encounterRepository.openMedia(media) }.getOrNull() }
+
+    private fun <T> Set<T>.toggled(value: T): Set<T> = if (value in this) this - value else this + value
+
+    /** How many advanced dimensions are set (each category counts once), for the "Filters" chip badge. */
+    private fun EncounterFilter.advancedCount(): Int = listOf(
+        actIds.isNotEmpty(), positionIds.isNotEmpty(), kinkIds.isNotEmpty(), toyIds.isNotEmpty(),
+        occasionIds.isNotEmpty(), places.isNotEmpty(), protection.isNotEmpty(), moods.isNotEmpty(),
+        initiators.isNotEmpty(), weekdays.isNotEmpty(), timesOfDay.isNotEmpty(),
+        durationRange != null, hasNote != null, includeSolo,
+    ).count { it }
 }
