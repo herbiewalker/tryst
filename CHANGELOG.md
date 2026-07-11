@@ -13,6 +13,8 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-07-11 (versionCode 6)
+
 ### Added
 - **Search.** A search icon on Trysts opens a dedicated search screen. Type to match against a tryst's
   note, its partners, and its acts, positions, places, occasions, kinks, toys, and mood. Multi-word
