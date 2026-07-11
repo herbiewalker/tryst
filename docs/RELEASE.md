@@ -21,8 +21,8 @@ signing key. This document is the checklist for cutting a release and getting it
 ## Per-release steps
 
 1. **Bump the version** in [`app/build.gradle.kts`](../app/build.gradle.kts):
-   - `versionCode` — integer, +1 every release (currently `5`).
-   - `versionName` — human string (currently `0.3.2`).
+   - `versionCode` — integer, +1 every release (currently `6`).
+   - `versionName` — human string (currently `0.4.0`).
 2. **Add the release notes in all three synced places** (kept in lock-step on purpose — see D-35):
    - `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` (e.g. `2.txt`) — F-Droid's "What's New"
      text. Keep the existing `1.txt` for the first release.

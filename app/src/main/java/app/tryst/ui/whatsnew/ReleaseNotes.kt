@@ -20,6 +20,17 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.4.0",
+            versionCode = 6,
+            date = "2026-07-11",
+            highlights = listOf(
+                "Search your whole history. A search icon on Trysts finds encounters by note, partner, and every category — acts, positions, kinks, and more — ignoring case and accents.",
+                "Narrow results with filters: date window, partner, rating, and photos up front, plus a \"More filters\" sheet for place, mood, protection, weekday, time of day, duration, and the rest. Results update as you tap.",
+                "Recent searches are remembered on this device, inside your encrypted database — never in plain settings, and never included in a backup.",
+                "Insights has a time range. Focus every stat and chart on a year, a quarter, or a custom window; your choice is remembered.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.3.2",
             versionCode = 5,
             date = "2026-07-03",
