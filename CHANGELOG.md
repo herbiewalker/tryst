@@ -20,6 +20,12 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 - **Search filters.** Narrow results by date window (last 7 / 30 / 90 days, this year, or a **custom
   date range**), partner, rating, and whether the tryst has a photo. Sort by newest, oldest, highest
   rated, or longest. When nothing matches, Tryst offers to widen whichever filters are active.
+- **More filters.** A "Filters" chip opens a sheet with the rest of what you can narrow by: acts,
+  positions, kinks, toys, occasions, place, protection, mood, who started it, weekday, time of day,
+  a duration range, whether the tryst has a note, and whether to include solo trysts. Each toggle
+  applies immediately and the sheet shows a running "Show N results"; the chip carries a count of how
+  many extra filters are on, and "Reset" clears just these without touching your date/rating/partner
+  chips.
 - **Results expand in place.** Tap a result to see the whole tryst — full note, every category, and its
   photos — without opening the editor. Because search looks at fields the card doesn't show, each result
   says which field your query hit, and the matched words are highlighted.
