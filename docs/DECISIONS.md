@@ -466,6 +466,27 @@
   - Chips show the locale's *short* date form to stay narrow; sentences ("No trysts in …") use the
     *medium* form, which has room.
 
+- **D-49 (2026-07-11) The rest of FILT-1 lives behind one "More filters" sheet.** Search's chip row keeps
+  only the four dimensions worth a permanent chip (date, rating, partner, photo); everything else FILT-1
+  can express — acts, positions, kinks, toys, occasions, place, protection, mood, initiator, weekday,
+  time-of-day, duration, has-note, include-solo — goes in a `ModalBottomSheet` reached from a "Filters"
+  chip badged with the count of active advanced filters.
+  - **Live-apply, not a staged draft.** Every toggle updates results immediately, matching the base
+    chips; the sheet's scrim hides the list, so the bottom bar shows a running "Show N results" (reads the
+    same `hits.size` the screen already computes) and its button only dismisses. No draft/commit state,
+    no second source of truth.
+  - **One `_advanced` holder, not fourteen flows.** Kotlin's typed `combine` tops out at five flows and the
+    base chips already use four, so the advanced dimensions live in a single `MutableStateFlow<EncounterFilter>`
+    (advanced fields only) merged with the base filter via a 2-arg `combine(base, adv)` + `.copy(...)`. The
+    two halves never write the same field.
+  - **Catalog chips carry the `custom:` prefix.** Catalog rows have bare-uuid ids but encounters store
+    `custom:<uuid>`, so the sheet builds each chip's value as `"custom:" + row.id` to match what
+    `EncounterFilter.matches` compares against. A category with no rows hides its section — an empty
+    catalog can only match nothing.
+  - **Ephemeral, like the other Search chips.** Advanced filters reset when you leave Search; they are not
+    persisted. (Contrast the Insights scope, D-47 — a date range is not sensitive the way a filter over
+    kinks/partners is, cf. D-42 on why search queries stay out of prefs and backups.)
+
 > Still tracked elsewhere (not re-listed): user-configurable **auto-lock timeout** & **change-PIN UI**
 > and **history filters/search** (deferred features, ROADMAP M3); **VACUUM on delete-all** for
 > secure-delete hardening (ROADMAP M5, SECURITY_DESIGN §6); **Keystore-backed monotonic attempt

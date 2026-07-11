@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -112,6 +113,9 @@ fun SearchScreen(
     val photosOnly by viewModel.photosOnly.collectAsStateWithLifecycle()
     val sortOrder by viewModel.sortOrder.collectAsStateWithLifecycle()
     val recents by viewModel.recentSearches.collectAsStateWithLifecycle()
+    val advanced by viewModel.advanced.collectAsStateWithLifecycle()
+    val catalogLabels by viewModel.catalogLabels.collectAsStateWithLifecycle()
+    val advancedCount by viewModel.activeAdvancedCount.collectAsStateWithLifecycle()
 
     val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -119,9 +123,10 @@ fun SearchScreen(
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
     var showRangePicker by remember { mutableStateOf(false) }
+    var showFilters by remember { mutableStateOf(false) }
     var expandedId by rememberSaveable { mutableStateOf<String?>(null) }
     // A row expanded in one search must not stay open in the next — the result set underneath it changed.
-    LaunchedEffect(query, dateScope, rating, partnerIds, photosOnly, sortOrder) {
+    LaunchedEffect(query, dateScope, rating, partnerIds, photosOnly, sortOrder, advanced) {
         expandedId = null
     }
 
@@ -178,12 +183,14 @@ fun SearchScreen(
                 partners = partners,
                 partnerIds = partnerIds,
                 photosOnly = photosOnly,
+                advancedCount = advancedCount,
                 criteriaActive = ui.criteriaActive,
                 onDateScope = viewModel::setDateScope,
                 onCustomRange = { showRangePicker = true },
                 onRating = viewModel::setRating,
                 onTogglePartner = viewModel::togglePartner,
                 onPhotosOnly = viewModel::setPhotosOnly,
+                onMoreFilters = { showFilters = true },
                 onClearAll = viewModel::clearAll,
             )
 
@@ -201,10 +208,12 @@ fun SearchScreen(
                     rating = rating,
                     partnerIds = partnerIds,
                     photosOnly = photosOnly,
+                    advancedActive = advancedCount > 0,
                     onDateScope = viewModel::setDateScope,
                     onRating = viewModel::setRating,
                     onClearPartners = { partnerIds.forEach(viewModel::togglePartner) },
                     onPhotosOnly = viewModel::setPhotosOnly,
+                    onClearAdvanced = viewModel::clearAdvanced,
                 )
 
                 else -> ResultList(
@@ -228,6 +237,34 @@ fun SearchScreen(
                 viewModel.setCustomRange(start, end)
                 showRangePicker = false
             },
+        )
+    }
+
+    if (showFilters) {
+        MoreFiltersSheet(
+            advanced = advanced,
+            catalogLabels = catalogLabels,
+            actions = remember(viewModel) {
+                MoreFiltersActions(
+                    toggleAct = viewModel::toggleAct,
+                    togglePosition = viewModel::togglePosition,
+                    toggleKink = viewModel::toggleKink,
+                    toggleToy = viewModel::toggleToy,
+                    toggleOccasion = viewModel::toggleOccasion,
+                    togglePlace = viewModel::togglePlace,
+                    toggleProtection = viewModel::toggleProtection,
+                    toggleMood = viewModel::toggleMood,
+                    toggleInitiator = viewModel::toggleInitiator,
+                    toggleWeekday = viewModel::toggleWeekday,
+                    toggleTimeOfDay = viewModel::toggleTimeOfDay,
+                    setDuration = viewModel::setDurationRange,
+                    setHasNote = viewModel::setHasNote,
+                    setIncludeSolo = viewModel::setIncludeSolo,
+                    reset = viewModel::clearAdvanced,
+                )
+            },
+            resultCount = ui.hits.size,
+            onDismiss = { showFilters = false },
         )
     }
 }
@@ -471,17 +508,21 @@ private fun NoResults(
     rating: RatingFilter,
     partnerIds: Set<String>,
     photosOnly: Boolean,
+    advancedActive: Boolean,
     onDateScope: (DateScope) -> Unit,
     onRating: (RatingFilter) -> Unit,
     onClearPartners: () -> Unit,
     onPhotosOnly: (Boolean) -> Unit,
+    onClearAdvanced: () -> Unit,
 ) {
     val allTime = stringResource(R.string.date_scope_all_time)
+    val clearMore = stringResource(R.string.search_clear_more_filters)
     val relaxable = buildList {
         if (dateScope != DateScope.AllTime) add(allTime to { onDateScope(DateScope.AllTime) })
         if (rating != RatingFilter.ANY) add(RatingFilter.ANY.label to { onRating(RatingFilter.ANY) })
         if (partnerIds.isNotEmpty()) add("All partners" to onClearPartners)
         if (photosOnly) add("Any photo" to { onPhotosOnly(false) })
+        if (advancedActive) add(clearMore to onClearAdvanced)
     }
 
     Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
@@ -518,12 +559,14 @@ private fun FilterChipRow(
     partners: List<PartnerEntity>,
     partnerIds: Set<String>,
     photosOnly: Boolean,
+    advancedCount: Int,
     criteriaActive: Boolean,
     onDateScope: (DateScope) -> Unit,
     onCustomRange: () -> Unit,
     onRating: (RatingFilter) -> Unit,
     onTogglePartner: (String) -> Unit,
     onPhotosOnly: (Boolean) -> Unit,
+    onMoreFilters: () -> Unit,
     onClearAll: () -> Unit,
 ) {
     FlowRow(
@@ -567,6 +610,19 @@ private fun FilterChipRow(
             selected = photosOnly,
             onClick = { onPhotosOnly(!photosOnly) },
             label = { Text(stringResource(R.string.search_chip_photos)) },
+        )
+
+        // Everything else in FILT-1 (acts, kinks, places, mood, duration, …) lives behind this sheet.
+        val moreLabel = if (advancedCount > 0) {
+            stringResource(R.string.search_more_filters_count, advancedCount)
+        } else {
+            stringResource(R.string.search_more_filters)
+        }
+        FilterChip(
+            selected = advancedCount > 0,
+            onClick = onMoreFilters,
+            label = { Text(moreLabel) },
+            leadingIcon = { Icon(Icons.Filled.Tune, contentDescription = null, modifier = Modifier.size(18.dp)) },
         )
 
         if (criteriaActive) {
