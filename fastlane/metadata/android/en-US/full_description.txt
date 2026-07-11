@@ -12,7 +12,8 @@ What you can do:
 * Log encounters in as much or as little detail as you like — date and time, duration, partners, acts, positions, protection, mood, setting, occasion, toys, satisfaction rating, orgasms, notes, and encrypted photo attachments.
 * Make the categories your own. Tryst ships almost no predefined categories — you build your own acts, kinks, positions, toys, occasions, and finish locations on a dedicated management page for each, and everything you add counts fully in Insights and Achievements.
 * Track partners (named or anonymous) with per-partner stats.
-* Explore Insights: streaks, trends, and per-attribute breakdowns, all computed on-device with hand-drawn charts.
+* Search and filter your history. Find any tryst by note, partner, or category, and narrow by date, partner, place, mood, protection, duration, and more.
+* Explore Insights: streaks, trends, and per-attribute breakdowns, all computed on-device with hand-drawn charts — and focus them on a year, a quarter, or a custom date range.
 * Earn Achievements derived from your own log.
 * Customize the look with light/dark themes and Material You dynamic color.
 
