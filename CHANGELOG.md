@@ -15,11 +15,13 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ### Added
 - **Photos gallery.** A new **Photos** tab gathers every photo you've attached to a tryst into one
-  browsable place. Choose how it looks — grouped by date, a flat grid, grouped by partner, or a large
-  feed — plus how many columns and newest- or oldest-first; your choice is remembered. The same search
-  and filters as Trysts narrow which photos show. Tap any photo for a full-screen viewer: swipe between
-  photos, pinch to zoom, and jump straight to the tryst it belongs to. Nothing leaves your device, and
-  the viewer is screenshot-blocked like the rest of the app.
+  browsable place. Choose how it looks in **Settings → Gallery** — grouped by date, a flat grid, grouped
+  by partner, or a large feed — plus how many columns and newest- or oldest-first; your choice is
+  remembered. The gallery stays clean: just a search and a filters button at the top. Search and the full
+  filter set narrow which photos show. In the by-partner layout, each section is headed by that partner's
+  photo and name. Tap any photo for a full-screen viewer: swipe between photos, pinch to zoom, and jump
+  straight to the tryst it belongs to. Nothing leaves your device, and the viewer is screenshot-blocked
+  like the rest of the app.
 
 ## [0.4.0] — 2026-07-11 (versionCode 6)
 

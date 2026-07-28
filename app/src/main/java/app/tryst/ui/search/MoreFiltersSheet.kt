@@ -100,38 +100,15 @@ fun MoreFiltersSheet(
                 modifier = Modifier.padding(start = 20.dp, end = 20.dp, bottom = 8.dp),
             )
 
-            Column(
-                Modifier
+            MoreFiltersColumn(
+                advanced = advanced,
+                catalogLabels = catalogLabels,
+                actions = actions,
+                modifier = Modifier
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp),
-            ) {
-                CatalogSection(stringResource(R.string.search_section_acts), catalogLabels.acts, advanced.actIds, actions.toggleAct)
-                CatalogSection(stringResource(R.string.search_section_positions), catalogLabels.positions, advanced.positionIds, actions.togglePosition)
-                CatalogSection(stringResource(R.string.search_section_kinks), catalogLabels.kinks, advanced.kinkIds, actions.toggleKink)
-                CatalogSection(stringResource(R.string.search_section_toys), catalogLabels.toys, advanced.toyIds, actions.toggleToy)
-                CatalogSection(stringResource(R.string.search_section_occasions), catalogLabels.occasions, advanced.occasionIds, actions.toggleOccasion)
-
-                EnumSection(stringResource(R.string.search_section_places), Place.entries, advanced.places, actions.togglePlace)
-                EnumSection(stringResource(R.string.search_section_protection), Protection.entries, advanced.protection, actions.toggleProtection)
-                EnumSection(stringResource(R.string.search_section_mood), Mood.entries, advanced.moods, actions.toggleMood)
-                EnumSection(stringResource(R.string.search_section_initiator), Initiator.entries, advanced.initiators, actions.toggleInitiator)
-
-                WeekdaySection(advanced.weekdays, actions.toggleWeekday)
-                EnumSection(stringResource(R.string.search_section_timeofday), TimeOfDay.entries, advanced.timesOfDay, actions.toggleTimeOfDay)
-
-                DurationSection(advanced.durationRange, actions.setDuration)
-                NoteSection(advanced.hasNote, actions.setHasNote)
-
-                FilterSection(stringResource(R.string.search_section_solo)) {
-                    SelectChip(
-                        label = stringResource(R.string.search_include_solo),
-                        selected = advanced.includeSolo,
-                        onClick = { actions.setIncludeSolo(!advanced.includeSolo) },
-                    )
-                }
-                Spacer(Modifier.padding(bottom = 8.dp))
-            }
+            )
 
             HorizontalDivider()
             Row(
@@ -150,11 +127,52 @@ fun MoreFiltersSheet(
     }
 }
 
+/**
+ * The scrollable advanced-filter sections (catalogs + enum dimensions + duration + note + solo), shared
+ * by the Search sheet above and the gallery's Filters sheet. The caller owns the scroll + the outer sheet.
+ */
+@Composable
+fun MoreFiltersColumn(
+    advanced: EncounterFilter,
+    catalogLabels: CatalogLabels,
+    actions: MoreFiltersActions,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier) {
+        CatalogSection(stringResource(R.string.search_section_acts), catalogLabels.acts, advanced.actIds, actions.toggleAct)
+        CatalogSection(stringResource(R.string.search_section_positions), catalogLabels.positions, advanced.positionIds, actions.togglePosition)
+        CatalogSection(stringResource(R.string.search_section_kinks), catalogLabels.kinks, advanced.kinkIds, actions.toggleKink)
+        CatalogSection(stringResource(R.string.search_section_toys), catalogLabels.toys, advanced.toyIds, actions.toggleToy)
+        CatalogSection(stringResource(R.string.search_section_occasions), catalogLabels.occasions, advanced.occasionIds, actions.toggleOccasion)
+
+        EnumSection(stringResource(R.string.search_section_places), Place.entries, advanced.places, actions.togglePlace)
+        EnumSection(stringResource(R.string.search_section_protection), Protection.entries, advanced.protection, actions.toggleProtection)
+        EnumSection(stringResource(R.string.search_section_mood), Mood.entries, advanced.moods, actions.toggleMood)
+        EnumSection(stringResource(R.string.search_section_initiator), Initiator.entries, advanced.initiators, actions.toggleInitiator)
+
+        WeekdaySection(advanced.weekdays, actions.toggleWeekday)
+        EnumSection(stringResource(R.string.search_section_timeofday), TimeOfDay.entries, advanced.timesOfDay, actions.toggleTimeOfDay)
+
+        DurationSection(advanced.durationRange, actions.setDuration)
+        NoteSection(advanced.hasNote, actions.setHasNote)
+
+        FilterSection(stringResource(R.string.search_section_solo)) {
+            SelectChip(
+                label = stringResource(R.string.search_include_solo),
+                selected = advanced.includeSolo,
+                onClick = { actions.setIncludeSolo(!advanced.includeSolo) },
+            )
+        }
+        Spacer(Modifier.padding(bottom = 8.dp))
+    }
+}
+
 // --- sections ----------------------------------------------------------------
 
+/** A titled row of wrapping chips — the shared building block for every filter section. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun FilterSection(title: String, content: @Composable FlowRowScope.() -> Unit) {
+fun FilterSection(title: String, content: @Composable FlowRowScope.() -> Unit) {
     Column(Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
         Text(
             text = title,
@@ -166,8 +184,9 @@ private fun FilterSection(title: String, content: @Composable FlowRowScope.() ->
     }
 }
 
+/** A single selectable filter chip. */
 @Composable
-private fun SelectChip(label: String, selected: Boolean, onClick: () -> Unit) {
+fun SelectChip(label: String, selected: Boolean, onClick: () -> Unit) {
     FilterChip(selected = selected, onClick = onClick, label = { Text(label) })
 }
 

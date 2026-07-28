@@ -1,11 +1,10 @@
 package app.tryst.ui.gallery
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
@@ -17,6 +16,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -26,13 +26,12 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -67,14 +66,10 @@ import app.tryst.data.gallery.GalleryGroup
 import app.tryst.data.gallery.GalleryLayout
 import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.data.gallery.GallerySection
-import app.tryst.ui.common.CheckableItem
 import app.tryst.ui.common.DateRangePickerDialog
-import app.tryst.ui.common.DateScopeChips
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
-import app.tryst.ui.common.MenuChip
 import app.tryst.ui.search.MoreFiltersActions
-import app.tryst.ui.search.MoreFiltersSheet
 import app.tryst.ui.search.RatingFilter
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -104,13 +99,17 @@ fun GalleryScreen(
     val advanced by viewModel.advanced.collectAsStateWithLifecycle()
     val catalogLabels by viewModel.catalogLabels.collectAsStateWithLifecycle()
     val advancedCount by viewModel.activeAdvancedCount.collectAsStateWithLifecycle()
-    val sort by viewModel.sort.collectAsStateWithLifecycle()
 
     var searching by remember { mutableStateOf(false) }
     var showFilters by remember { mutableStateOf(false) }
     var showRangePicker by remember { mutableStateOf(false) }
-    var showOptions by remember { mutableStateOf(false) }
     var viewerIndex by remember { mutableIntStateOf(-1) }
+
+    // The gallery narrows itself if there's a query or any filter set (rating/partner/date/advanced).
+    val filtersActive = advancedCount > 0 ||
+        rating != RatingFilter.ANY ||
+        partnerIds.isNotEmpty() ||
+        dateScope != DateScope.AllTime
 
     val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -152,8 +151,12 @@ fun GalleryScreen(
                         IconButton(onClick = { searching = true }) {
                             Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.gallery_search_hint))
                         }
-                        IconButton(onClick = { showOptions = true }) {
-                            Icon(Icons.Filled.Tune, contentDescription = stringResource(R.string.gallery_options))
+                        IconButton(onClick = { showFilters = true }) {
+                            Icon(
+                                Icons.Filled.Tune,
+                                contentDescription = stringResource(R.string.search_more_filters),
+                                tint = if (filtersActive) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                            )
                         }
                     }
                 },
@@ -161,22 +164,6 @@ fun GalleryScreen(
         },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
-            FilterChipRow(
-                dateScope = dateScope,
-                availableYears = availableYears,
-                rating = rating,
-                partners = partners,
-                partnerIds = partnerIds,
-                advancedCount = advancedCount,
-                criteriaActive = ui.criteriaActive,
-                onDateScope = viewModel::setDateScope,
-                onCustomRange = { showRangePicker = true },
-                onRating = viewModel::setRating,
-                onTogglePartner = viewModel::togglePartner,
-                onMoreFilters = { showFilters = true },
-                onClearAll = viewModel::clearAll,
-            )
-
             when {
                 ui.photos.isEmpty() -> EmptyState(criteriaActive = ui.criteriaActive)
                 ui.layout == GalleryLayout.FEED -> GalleryFeed(
@@ -187,8 +174,10 @@ fun GalleryScreen(
                 else -> GalleryGrid(
                     sections = ui.sections,
                     columns = ui.columns,
+                    partners = partners,
                     onOpen = { id -> viewerIndex = ui.photos.indexOfFirst { it.id == id } },
                     onLoad = viewModel::decode,
+                    onLoadPartnerPhoto = viewModel::decodePartnerPhoto,
                 )
             }
         }
@@ -206,7 +195,13 @@ fun GalleryScreen(
     }
 
     if (showFilters) {
-        MoreFiltersSheet(
+        GalleryFiltersSheet(
+            dateScope = dateScope,
+            availableYears = availableYears,
+            rating = rating,
+            partners = partners,
+            partnerIds = partnerIds,
+            filtersActive = filtersActive,
             advanced = advanced,
             catalogLabels = catalogLabels,
             actions = remember(viewModel) {
@@ -229,19 +224,12 @@ fun GalleryScreen(
                 )
             },
             resultCount = ui.totalCount,
+            onDateScope = viewModel::setDateScope,
+            onCustomRange = { showRangePicker = true },
+            onRating = viewModel::setRating,
+            onTogglePartner = viewModel::togglePartner,
+            onClearAll = viewModel::clearAll,
             onDismiss = { showFilters = false },
-        )
-    }
-
-    if (showOptions) {
-        GalleryOptionsSheet(
-            layout = ui.layout,
-            columns = ui.columns,
-            sort = sort,
-            onLayout = viewModel::setLayout,
-            onColumns = viewModel::setColumns,
-            onSort = viewModel::setSort,
-            onDismiss = { showOptions = false },
         )
     }
 
@@ -265,11 +253,11 @@ fun GalleryScreen(
 private fun GalleryGrid(
     sections: List<GallerySection>,
     columns: Int,
+    partners: List<PartnerEntity>,
     onOpen: (String) -> Unit,
     onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
+    onLoadPartnerPhoto: suspend (photoMediaId: String, reqPx: Int) -> ImageBitmap?,
 ) {
-    // Resolve headers here — label lookup is @Composable and can't run inside LazyGridScope.
-    val labeled = sections.map { it to sectionLabelOrNull(it.group) }
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
         modifier = Modifier.fillMaxSize(),
@@ -277,11 +265,11 @@ private fun GalleryGrid(
         verticalArrangement = Arrangement.spacedBy(3.dp),
         horizontalArrangement = Arrangement.spacedBy(3.dp),
     ) {
-        labeled.forEach { (section, label) ->
+        sections.forEach { section ->
             val key = sectionKey(section.group)
-            if (label != null) {
+            if (section.group != GalleryGroup.Ungrouped) {
                 item(key = "hdr:$key", span = { GridItemSpan(maxLineSpan) }) {
-                    SectionHeader(label)
+                    SectionHeader(section.group, partners, onLoadPartnerPhoto)
                 }
             }
             items(section.photos, key = { "$key:${it.id}" }) { photo ->
@@ -361,14 +349,77 @@ private fun FeedCaption(photo: GalleryPhoto) {
     }
 }
 
+/** A section header. Partner sections show the partner's avatar + name (from the Partners data). */
 @Composable
-private fun SectionHeader(label: String) {
+private fun SectionHeader(
+    group: GalleryGroup,
+    partners: List<PartnerEntity>,
+    onLoadPartnerPhoto: suspend (photoMediaId: String, reqPx: Int) -> ImageBitmap?,
+) {
+    when (group) {
+        GalleryGroup.Ungrouped -> Unit
+        GalleryGroup.Solo -> SectionHeaderText(stringResource(R.string.gallery_group_solo))
+        is GalleryGroup.Month -> {
+            val locale = LocalConfiguration.current.locales[0]
+            SectionHeaderText(YearMonth.of(group.year, group.month).format(DateTimeFormatter.ofPattern("LLLL yyyy", locale)))
+        }
+        is GalleryGroup.Partner -> {
+            val partner = partners.firstOrNull { it.id == group.id }
+            val name = partner?.let { Format.partnerName(it) }
+                ?: group.name?.takeIf { it.isNotBlank() }
+                ?: stringResource(R.string.gallery_group_anonymous)
+            Row(
+                Modifier.fillMaxWidth().padding(start = 6.dp, top = 14.dp, bottom = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PartnerAvatar(photoMediaId = partner?.photoMediaId, name = name, onLoadPartnerPhoto = onLoadPartnerPhoto)
+                Text(text = name, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SectionHeaderText(label: String) {
     Text(
         text = label,
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.fillMaxWidth().padding(start = 6.dp, top = 14.dp, bottom = 4.dp),
     )
+}
+
+private const val AVATAR_PX = 96
+
+/** The partner's photo as a small circle; falls back to their initial on a tinted circle when there's none. */
+@Composable
+private fun PartnerAvatar(
+    photoMediaId: String?,
+    name: String,
+    onLoadPartnerPhoto: suspend (photoMediaId: String, reqPx: Int) -> ImageBitmap?,
+) {
+    val shape = CircleShape
+    if (photoMediaId != null) {
+        DecodedImage(
+            model = photoMediaId,
+            contentDescription = null,
+            modifier = Modifier.size(28.dp).clip(shape),
+            contentScale = ContentScale.Crop,
+            load = { onLoadPartnerPhoto(photoMediaId, AVATAR_PX) },
+        )
+    } else {
+        Box(
+            Modifier.size(28.dp).clip(shape).background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = name.firstOrNull()?.uppercase() ?: "?",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+        }
+    }
 }
 
 @Composable
@@ -383,72 +434,6 @@ private fun EmptyState(criteriaActive: Boolean) {
     }
 }
 
-// --- filter chips --------------------------------------------------------------------------------
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun FilterChipRow(
-    dateScope: DateScope,
-    availableYears: List<Int>,
-    rating: RatingFilter,
-    partners: List<PartnerEntity>,
-    partnerIds: Set<String>,
-    advancedCount: Int,
-    criteriaActive: Boolean,
-    onDateScope: (DateScope) -> Unit,
-    onCustomRange: () -> Unit,
-    onRating: (RatingFilter) -> Unit,
-    onTogglePartner: (String) -> Unit,
-    onMoreFilters: () -> Unit,
-    onClearAll: () -> Unit,
-) {
-    FlowRow(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        DateScopeChips(scope = dateScope, availableYears = availableYears, onSelect = onDateScope, onCustomRange = onCustomRange)
-
-        MenuChip(label = rating.label, selected = rating != RatingFilter.ANY) { dismiss ->
-            RatingFilter.entries.forEach { option ->
-                CheckableItem(option.label, checked = option == rating) {
-                    onRating(option)
-                    dismiss()
-                }
-            }
-        }
-
-        val partnerLabel = when {
-            partnerIds.isEmpty() -> stringResource(R.string.search_chip_partners)
-            partnerIds.size == 1 -> partners.firstOrNull { it.id in partnerIds }?.let { Format.partnerName(it) }
-                ?: stringResource(R.string.search_chip_partners)
-            else -> stringResource(R.string.search_chip_partners_count, partnerIds.size)
-        }
-        MenuChip(label = partnerLabel, selected = partnerIds.isNotEmpty()) {
-            partners.forEach { partner ->
-                CheckableItem(Format.partnerName(partner), checked = partner.id in partnerIds) {
-                    onTogglePartner(partner.id)
-                }
-            }
-        }
-
-        val moreLabel = if (advancedCount > 0) {
-            stringResource(R.string.search_more_filters_count, advancedCount)
-        } else {
-            stringResource(R.string.search_more_filters)
-        }
-        FilterChip(
-            selected = advancedCount > 0,
-            onClick = onMoreFilters,
-            label = { Text(moreLabel) },
-            leadingIcon = { Icon(Icons.Filled.Tune, contentDescription = null, modifier = Modifier.size(18.dp)) },
-        )
-
-        if (criteriaActive) {
-            TextButton(onClick = onClearAll) { Text(stringResource(R.string.search_clear_all)) }
-        }
-    }
-}
-
 // --- helpers -------------------------------------------------------------------------------------
 
 private fun sectionKey(group: GalleryGroup): String = when (group) {
@@ -456,15 +441,4 @@ private fun sectionKey(group: GalleryGroup): String = when (group) {
     GalleryGroup.Solo -> "solo"
     is GalleryGroup.Month -> "m${group.year}-${group.month}"
     is GalleryGroup.Partner -> "p${group.id}"
-}
-
-@Composable
-private fun sectionLabelOrNull(group: GalleryGroup): String? = when (group) {
-    GalleryGroup.Ungrouped -> null
-    GalleryGroup.Solo -> stringResource(R.string.gallery_group_solo)
-    is GalleryGroup.Partner -> group.name?.takeIf { it.isNotBlank() } ?: stringResource(R.string.gallery_group_anonymous)
-    is GalleryGroup.Month -> {
-        val locale = LocalConfiguration.current.locales[0]
-        YearMonth.of(group.year, group.month).format(DateTimeFormatter.ofPattern("LLLL yyyy", locale))
-    }
 }
