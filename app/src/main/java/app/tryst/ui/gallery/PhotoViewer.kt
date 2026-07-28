@@ -3,16 +3,22 @@ package app.tryst.ui.gallery
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -35,7 +42,9 @@ import androidx.compose.ui.unit.dp
 import app.tryst.R
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.gallery.GalleryPhoto
+import app.tryst.data.media.PhotoMeta
 import app.tryst.ui.common.DecodedImage
+import app.tryst.ui.common.Format
 import kotlin.math.abs
 
 private const val VIEWER_PX = 1600
@@ -53,6 +62,7 @@ fun PhotoViewer(
     onClose: () -> Unit,
     onOpenEncounter: (String) -> Unit,
     onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
+    onLoadMeta: suspend (media: MediaEntity) -> PhotoMeta,
 ) {
     if (photos.isEmpty()) return
     val pagerState = rememberPagerState(
@@ -60,6 +70,7 @@ fun PhotoViewer(
         pageCount = { photos.size },
     )
     var chromeVisible by remember { mutableStateOf(true) }
+    var showInfo by remember { mutableStateOf(false) }
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
@@ -88,18 +99,79 @@ fun PhotoViewer(
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier.align(Alignment.Center),
                 )
-                IconButton(
-                    onClick = { onOpenEncounter(current.encounterId) },
-                    modifier = Modifier.align(Alignment.CenterEnd),
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.OpenInNew,
-                        contentDescription = stringResource(R.string.gallery_open_tryst),
-                        tint = Color.White,
-                    )
+                Row(Modifier.align(Alignment.CenterEnd)) {
+                    IconButton(onClick = { showInfo = !showInfo }) {
+                        Icon(
+                            Icons.Outlined.Info,
+                            contentDescription = stringResource(R.string.cd_photo_info),
+                            tint = if (showInfo) Color(0xFF80CBC4) else Color.White,
+                        )
+                    }
+                    IconButton(onClick = { onOpenEncounter(current.encounterId) }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.OpenInNew,
+                            contentDescription = stringResource(R.string.gallery_open_tryst),
+                            tint = Color.White,
+                        )
+                    }
                 }
             }
+
+            if (showInfo) {
+                PhotoInfoPanel(
+                    photo = photos[pagerState.currentPage],
+                    onLoadMeta = onLoadMeta,
+                    modifier = Modifier.align(Alignment.BottomStart),
+                )
+            }
         }
+    }
+}
+
+/** A photo's embedded metadata, loaded lazily for the current page. Absent fields are simply omitted. */
+@Composable
+private fun PhotoInfoPanel(
+    photo: GalleryPhoto,
+    onLoadMeta: suspend (media: MediaEntity) -> PhotoMeta,
+    modifier: Modifier = Modifier,
+) {
+    val meta by produceState(PhotoMeta(), photo.id) { value = onLoadMeta(photo.media) }
+    Column(
+        modifier
+            .fillMaxWidth()
+            .background(Color.Black.copy(alpha = 0.45f))
+            .navigationBarsPadding()
+            .padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        meta.capturedAt?.let { InfoRow(stringResource(R.string.gallery_meta_taken), Format.dateTime(it)) }
+        if (meta.width != null && meta.height != null) {
+            InfoRow(stringResource(R.string.gallery_meta_dimensions), "${meta.width} × ${meta.height}")
+        }
+        meta.camera?.let { InfoRow(stringResource(R.string.gallery_meta_camera), it) }
+        meta.latLon?.let { (lat, lon) ->
+            InfoRow(stringResource(R.string.gallery_meta_location), "%.5f, %.5f".format(lat, lon))
+        }
+        if (!meta.hasAny) {
+            Text(
+                text = stringResource(R.string.gallery_meta_none),
+                color = Color.White.copy(alpha = 0.7f),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+    }
+}
+
+@Composable
+private fun InfoRow(label: String, value: String) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            text = label,
+            color = Color.White.copy(alpha = 0.7f),
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.width(96.dp),
+        )
+        Text(text = value, color = Color.White, style = MaterialTheme.typography.bodyMedium)
     }
 }
 

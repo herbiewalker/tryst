@@ -19,6 +19,8 @@ import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.data.gallery.GalleryPhotos
 import app.tryst.data.gallery.GallerySection
 import app.tryst.data.gallery.GallerySort
+import app.tryst.data.media.PhotoMeta
+import app.tryst.data.media.PhotoMetadata
 import app.tryst.data.repository.ActRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.KinkRepository
@@ -97,6 +99,9 @@ class GalleryViewModel @Inject constructor(
     val activeAdvancedCount: StateFlow<Int> = _advanced
         .map { it.advancedCount() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+
+    /** Whether the Photos tab should open blurred behind a tap-to-reveal (SEC-2). */
+    val blurUntilRevealed: StateFlow<Boolean> = galleryPreferences.blurUntilRevealed
 
     val partners: StateFlow<List<PartnerEntity>> = partnerRepository.observeActive()
         .catch { emit(emptyList()) }
@@ -211,6 +216,11 @@ class GalleryViewModel @Inject constructor(
 
     /** Decodes a partner's avatar blob (its `photoMediaId`) for the by-partner section headers. */
     suspend fun decodePartnerPhoto(photoMediaId: String, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { runCatching { partnerRepository.openPhoto(photoMediaId) }.getOrNull() }
+
+    /** Reads a photo's embedded metadata (date/dimensions/camera/location) for the viewer info panel (META-1). */
+    suspend fun readMeta(media: MediaEntity): PhotoMeta = withContext(Dispatchers.IO) {
+        PhotoMetadata.read { runCatching { encounterRepository.openMedia(media) }.getOrNull() }
+    }
 
     private fun <T> Set<T>.toggled(value: T): Set<T> = if (value in this) this - value else this + value
 

@@ -94,6 +94,7 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
 
     implementation(libs.androidx.biometric)
+    implementation(libs.androidx.exifinterface)
 
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)

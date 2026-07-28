@@ -22,6 +22,12 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
   photo and name. Tap any photo for a full-screen viewer: swipe between photos, pinch to zoom, and jump
   straight to the tryst it belongs to. Nothing leaves your device, and the viewer is screenshot-blocked
   like the rest of the app.
+- **Photo details.** An info button in the photo viewer shows a photo's embedded details when present —
+  when it was taken, its dimensions, the camera, and coordinates if the photo carries them. Read straight
+  from the photo on your device; nothing is sent anywhere.
+- **Blur photos until tapped** *(optional, off by default).* Turn it on in Settings → Gallery and the
+  Photos tab opens blurred behind a "Show photos" tap, so your photos never appear the instant you open
+  the tab — handy when you might hand your unlocked phone to someone. It re-blurs each time you return.
 
 ## [0.4.0] — 2026-07-11 (versionCode 6)
 

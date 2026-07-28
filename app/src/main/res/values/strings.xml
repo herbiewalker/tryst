@@ -187,6 +187,16 @@
     <string name="gallery_open_tryst">Open tryst</string>
     <string name="gallery_filter_date">Date</string>
     <string name="gallery_filter_rating">Rating</string>
+    <string name="cd_photo_info">Photo details</string>
+    <string name="gallery_meta_taken">Taken</string>
+    <string name="gallery_meta_dimensions">Dimensions</string>
+    <string name="gallery_meta_camera">Camera</string>
+    <string name="gallery_meta_location">Location</string>
+    <string name="gallery_meta_none">No embedded details for this photo.</string>
+    <string name="gallery_blur_title">Photos are hidden</string>
+    <string name="gallery_blur_show">Show photos</string>
+    <string name="gallery_blur_setting">Blur photos until tapped</string>
+    <string name="gallery_blur_setting_desc">The Photos tab opens blurred behind a "Show photos" tap, so your photos never appear the instant you open it. They re-blur each time you come back to the tab.</string>
     <string name="gallery_empty">Photos you attach to trysts show up here.</string>
     <string name="gallery_empty_filtered">No photos match. Try widening a filter.</string>
     <string name="gallery_group_solo">Solo</string>

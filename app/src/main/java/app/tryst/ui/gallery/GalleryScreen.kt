@@ -2,6 +2,7 @@ package app.tryst.ui.gallery
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +26,8 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -99,11 +103,14 @@ fun GalleryScreen(
     val advanced by viewModel.advanced.collectAsStateWithLifecycle()
     val catalogLabels by viewModel.catalogLabels.collectAsStateWithLifecycle()
     val advancedCount by viewModel.activeAdvancedCount.collectAsStateWithLifecycle()
+    val blurUntilRevealed by viewModel.blurUntilRevealed.collectAsStateWithLifecycle()
 
     var searching by remember { mutableStateOf(false) }
     var showFilters by remember { mutableStateOf(false) }
     var showRangePicker by remember { mutableStateOf(false) }
     var viewerIndex by remember { mutableIntStateOf(-1) }
+    // Re-arms every time the Photos tab is entered (fresh composition) — see D-* / SEC-2.
+    var revealed by remember { mutableStateOf(false) }
 
     // The gallery narrows itself if there's a query or any filter set (rating/partner/date/advanced).
     val filtersActive = advancedCount > 0 ||
@@ -163,23 +170,27 @@ fun GalleryScreen(
             )
         },
     ) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
-            when {
-                ui.photos.isEmpty() -> EmptyState(criteriaActive = ui.criteriaActive)
-                ui.layout == GalleryLayout.FEED -> GalleryFeed(
-                    photos = ui.photos,
-                    onOpen = { id -> viewerIndex = ui.photos.indexOfFirst { it.id == id } },
-                    onLoad = viewModel::decode,
-                )
-                else -> GalleryGrid(
-                    sections = ui.sections,
-                    columns = ui.columns,
-                    partners = partners,
-                    onOpen = { id -> viewerIndex = ui.photos.indexOfFirst { it.id == id } },
-                    onLoad = viewModel::decode,
-                    onLoadPartnerPhoto = viewModel::decodePartnerPhoto,
-                )
+        val gated = blurUntilRevealed && !revealed && ui.photos.isNotEmpty()
+        Box(Modifier.fillMaxSize().padding(padding)) {
+            Column(Modifier.fillMaxSize().then(if (gated) Modifier.blur(28.dp) else Modifier)) {
+                when {
+                    ui.photos.isEmpty() -> EmptyState(criteriaActive = ui.criteriaActive)
+                    ui.layout == GalleryLayout.FEED -> GalleryFeed(
+                        photos = ui.photos,
+                        onOpen = { id -> viewerIndex = ui.photos.indexOfFirst { it.id == id } },
+                        onLoad = viewModel::decode,
+                    )
+                    else -> GalleryGrid(
+                        sections = ui.sections,
+                        columns = ui.columns,
+                        partners = partners,
+                        onOpen = { id -> viewerIndex = ui.photos.indexOfFirst { it.id == id } },
+                        onLoad = viewModel::decode,
+                        onLoadPartnerPhoto = viewModel::decodePartnerPhoto,
+                    )
+                }
             }
+            if (gated) BlurGate(onReveal = { revealed = true })
         }
     }
 
@@ -243,6 +254,7 @@ fun GalleryScreen(
                 onOpenEncounter(id)
             },
             onLoad = viewModel::decode,
+            onLoadMeta = viewModel::readMeta,
         )
     }
 }
@@ -418,6 +430,34 @@ private fun PartnerAvatar(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
+        }
+    }
+}
+
+/** The tap-to-reveal cover shown over a blurred gallery when the blur setting is on (SEC-2). */
+@Composable
+private fun BlurGate(onReveal: () -> Unit) {
+    Box(
+        // Fills the body and swallows touches so the blurred grid underneath can't be scrolled or tapped.
+        Modifier.fillMaxSize().clickable(indication = null, interactionSource = remember { MutableInteractionSource() }, onClick = {}),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                Icons.Filled.VisibilityOff,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = stringResource(R.string.gallery_blur_title),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Button(onClick = onReveal) { Text(stringResource(R.string.gallery_blur_show)) }
         }
     }
 }

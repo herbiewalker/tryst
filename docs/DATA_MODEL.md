@@ -121,6 +121,9 @@ night, Anniversary, Didn't finish, In condom) are seeded as ordinary editable ro
     it flattens each encounter's `media` (with the tryst's date/partners/rating for grouping) and never
     adds a row or column. Only encounter photos appear; the avatar blobs (no `media` row) are out of
     scope for v1 (GAL-1a).
+  - **Photo metadata (META-1)** — capture date/dimensions/camera/GPS — is **read from the blob at view
+    time** (`data/media/PhotoMetadata`, via `androidx.exifinterface`) and **not persisted**; EXIF is
+    deliberately not stripped on import (D-51). No column, no schema change.
 
 ## Category enums (`data/db/entity/Enums.kt`)
 All implement `DisplayLabel` (human-written `label` shown in the UI): `Initiator`, `Mood`,
