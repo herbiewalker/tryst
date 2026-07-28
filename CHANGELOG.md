@@ -27,7 +27,8 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
   from the photo on your device; nothing is sent anywhere.
 - **Blur photos until tapped** *(optional, off by default).* Turn it on in Settings → Gallery and the
   Photos tab opens blurred behind a "Show photos" tap, so your photos never appear the instant you open
-  the tab — handy when you might hand your unlocked phone to someone. It re-blurs each time you return.
+  the tab — handy when you might hand your unlocked phone to someone. Popping to another tab and back
+  within about half a minute keeps them showing; after that it re-blurs.
 
 ## [0.4.0] — 2026-07-11 (versionCode 6)
 
