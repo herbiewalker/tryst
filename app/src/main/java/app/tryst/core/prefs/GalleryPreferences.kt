@@ -31,6 +31,15 @@ class GalleryPreferences @Inject constructor(
     private val _sort = MutableStateFlow(loadSort())
     val sort: StateFlow<GallerySort> = _sort.asStateFlow()
 
+    /** When on, the Photos tab opens blurred behind a tap-to-reveal, so it never renders by accident (SEC-2). */
+    private val _blurUntilRevealed = MutableStateFlow(prefs.getBoolean(KEY_BLUR, false))
+    val blurUntilRevealed: StateFlow<Boolean> = _blurUntilRevealed.asStateFlow()
+
+    fun setBlurUntilRevealed(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_BLUR, enabled).apply()
+        _blurUntilRevealed.value = enabled
+    }
+
     fun setLayout(layout: GalleryLayout) {
         prefs.edit().putString(KEY_LAYOUT, layout.name).apply()
         _layout.value = layout
@@ -60,5 +69,6 @@ class GalleryPreferences @Inject constructor(
         private const val KEY_LAYOUT = "layout"
         private const val KEY_COLUMNS = "columns"
         private const val KEY_SORT = "sort"
+        private const val KEY_BLUR = "blur_until_revealed"
     }
 }

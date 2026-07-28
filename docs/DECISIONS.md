@@ -517,6 +517,26 @@
     By-partner headers show the partner's **avatar + name** (`PartnerEntity.photoMediaId` via
     `PartnerRepository.openPhoto`), the first slice of GAL-1a.
 
+- **D-51 (2026-07-12) Photo metadata is read, not stripped; the Photos gate is blur, not auth.** Two GAL-1
+  follow-ons, both shaped by a user decision.
+  - **Don't strip EXIF on import; read it at view time (META-1).** The obvious privacy move is to scrub
+    EXIF (GPS) on import, but we deliberately don't. EXIF is tiny (negligible storage), stripping forces a
+    **lossy re-encode**, and — decisively — the app has **no network, no share/export-single-photo path,
+    and encrypts every blob at rest**, so embedded location never actually leaves the device. So the blob
+    keeps its original bytes and the viewer simply **reads** the metadata (capture date, dimensions,
+    camera, GPS) on demand via `androidx.exifinterface` from the decrypted stream (`data/media/PhotoMetadata`).
+    **No schema change, nothing persisted.** GPS shows as **raw coordinates** — no `Geocoder`, which can
+    hit the network. **The one future trigger to revisit:** if a "share/export a single photo" feature is
+    ever added, strip-on-export at that boundary. (`checkNoNetworkDebug` re-verified: `exifinterface` adds
+    no INTERNET permission.)
+  - **The Photos gate is blur-only (SEC-2), off by default (user choice).** Of the two tiers discussed
+    (blur/reveal vs biometric re-auth), the user picked **blur only**, configurable in Settings → Gallery.
+    A `GalleryPreferences.blurUntilRevealed` flag (default off); when on, the gallery body renders behind
+    `Modifier.blur` + a "Show photos" cover. It **re-arms on every tab entry** via a plain
+    `remember { false }` reveal flag — the Photos destination is composed fresh on each `navigateTop`, so
+    no singleton, timer, or lock hook is needed; tapping a photo keeps it revealed while browsing. The
+    biometric re-auth tier stays on the roadmap, unbuilt.
+
 > Still tracked elsewhere (not re-listed): user-configurable **auto-lock timeout** & **change-PIN UI**
 > and **history filters/search** (deferred features, ROADMAP M3); **VACUUM on delete-all** for
 > secure-delete hardening (ROADMAP M5, SECURITY_DESIGN §6); **Keystore-backed monotonic attempt
