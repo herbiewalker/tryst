@@ -532,10 +532,14 @@
   - **The Photos gate is blur-only (SEC-2), off by default (user choice).** Of the two tiers discussed
     (blur/reveal vs biometric re-auth), the user picked **blur only**, configurable in Settings → Gallery.
     A `GalleryPreferences.blurUntilRevealed` flag (default off); when on, the gallery body renders behind
-    `Modifier.blur` + a "Show photos" cover. It **re-arms on every tab entry** via a plain
-    `remember { false }` reveal flag — the Photos destination is composed fresh on each `navigateTop`, so
-    no singleton, timer, or lock hook is needed; tapping a photo keeps it revealed while browsing. The
-    biometric re-auth tier stays on the roadmap, unbuilt.
+    `Modifier.blur` + a "Show photos" cover. It re-arms on tab entry **but only after a grace window** so a
+    quick switch away and back doesn't re-prompt: a process-scoped `GalleryRevealState` (@Singleton, **in
+    memory, not persisted**) records the last reveal time (`SystemClock.elapsedRealtime`), refreshed both on
+    "Show photos" and on leaving the tab while revealed (so grace is measured from *last active in Photos*,
+    `GRACE_MS = 30s`); the screen seeds its `revealed` flag from `revealedRecently()`. Deliberately **not**
+    reset on app-lock — the app lock is itself the gate for the locked case, and a fresh process starts
+    gated. Tapping a photo keeps it revealed while browsing. The biometric re-auth tier stays on the
+    roadmap, unbuilt.
 
 > Still tracked elsewhere (not re-listed): user-configurable **auto-lock timeout** & **change-PIN UI**
 > and **history filters/search** (deferred features, ROADMAP M3); **VACUUM on delete-all** for

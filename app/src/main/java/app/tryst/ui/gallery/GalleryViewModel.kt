@@ -72,6 +72,7 @@ data class GalleryUiState(
 class GalleryViewModel @Inject constructor(
     private val encounterRepository: EncounterRepository,
     private val galleryPreferences: GalleryPreferences,
+    private val revealState: GalleryRevealState,
     actRepository: ActRepository,
     positionRepository: PositionRepository,
     kinkRepository: KinkRepository,
@@ -102,6 +103,12 @@ class GalleryViewModel @Inject constructor(
 
     /** Whether the Photos tab should open blurred behind a tap-to-reveal (SEC-2). */
     val blurUntilRevealed: StateFlow<Boolean> = galleryPreferences.blurUntilRevealed
+
+    /** Records a reveal so a quick tab switch back doesn't re-blur (see [GalleryRevealState]). */
+    fun markRevealed() = revealState.markRevealed()
+
+    /** True if the gallery was revealed recently enough that returning shouldn't re-blur it. */
+    fun revealedRecently(): Boolean = revealState.isWithinGrace()
 
     val partners: StateFlow<List<PartnerEntity>> = partnerRepository.observeActive()
         .catch { emit(emptyList()) }

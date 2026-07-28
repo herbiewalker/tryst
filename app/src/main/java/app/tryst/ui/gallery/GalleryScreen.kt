@@ -39,6 +39,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -109,8 +110,13 @@ fun GalleryScreen(
     var showFilters by remember { mutableStateOf(false) }
     var showRangePicker by remember { mutableStateOf(false) }
     var viewerIndex by remember { mutableIntStateOf(-1) }
-    // Re-arms every time the Photos tab is entered (fresh composition) — see D-* / SEC-2.
-    var revealed by remember { mutableStateOf(false) }
+    // The blur gate (SEC-2) re-arms on tab entry, but only after a grace window — a quick switch away and
+    // back stays revealed. Grace is tracked process-wide in GalleryRevealState (via the VM).
+    var revealed by remember { mutableStateOf(viewModel.revealedRecently()) }
+    // Leaving the tab while revealed refreshes the grace, so it's measured from "last active in Photos".
+    DisposableEffect(Unit) {
+        onDispose { if (revealed) viewModel.markRevealed() }
+    }
 
     // The gallery narrows itself if there's a query or any filter set (rating/partner/date/advanced).
     val filtersActive = advancedCount > 0 ||
@@ -190,7 +196,12 @@ fun GalleryScreen(
                     )
                 }
             }
-            if (gated) BlurGate(onReveal = { revealed = true })
+            if (gated) {
+                BlurGate(onReveal = {
+                    viewModel.markRevealed()
+                    revealed = true
+                })
+            }
         }
     }
 
