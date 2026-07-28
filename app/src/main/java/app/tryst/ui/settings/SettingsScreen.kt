@@ -72,6 +72,7 @@ fun SettingsScreen(
     onOpenWhatsNew: () -> Unit = {},
     onOpenProfile: () -> Unit = {},
     onManageCategory: (String) -> Unit = {},
+    onCustomizeGallery: () -> Unit = {},
     viewModel: LockViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -315,6 +316,18 @@ fun SettingsScreen(
             }
             Text(
                 stringResource(R.string.settings_insights_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
+            Text(stringResource(R.string.settings_gallery), style = MaterialTheme.typography.titleMedium)
+            OutlinedButton(onClick = onCustomizeGallery, modifier = Modifier.fillMaxWidth()) {
+                Text(stringResource(R.string.settings_customize_gallery))
+            }
+            Text(
+                stringResource(R.string.settings_gallery_desc),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

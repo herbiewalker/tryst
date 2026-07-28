@@ -75,7 +75,7 @@ class GalleryViewModel @Inject constructor(
     kinkRepository: KinkRepository,
     toyRepository: ToyRepository,
     occasionRepository: OccasionRepository,
-    partnerRepository: PartnerRepository,
+    private val partnerRepository: PartnerRepository,
 ) : ViewModel() {
 
     private val _query = MutableStateFlow("")
@@ -204,15 +204,13 @@ class GalleryViewModel @Inject constructor(
         _advanced.value = EncounterFilter()
     }
 
-    // --- layout preferences ---------------------------------------------------------------------------
-
-    fun setLayout(layout: GalleryLayout) = galleryPreferences.setLayout(layout)
-    fun setColumns(columns: Int) = galleryPreferences.setColumns(columns)
-    fun setSort(sort: GallerySort) = galleryPreferences.setSort(sort)
-
-    val sort: StateFlow<GallerySort> = galleryPreferences.sort
+    // Layout/density/sort are set in Settings → Gallery (GallerySettingsViewModel); the gallery only reads
+    // them (via galleryPreferences in uiState).
 
     suspend fun decode(media: MediaEntity, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { runCatching { encounterRepository.openMedia(media) }.getOrNull() }
+
+    /** Decodes a partner's avatar blob (its `photoMediaId`) for the by-partner section headers. */
+    suspend fun decodePartnerPhoto(photoMediaId: String, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { runCatching { partnerRepository.openPhoto(photoMediaId) }.getOrNull() }
 
     private fun <T> Set<T>.toggled(value: T): Set<T> = if (value in this) this - value else this + value
 

@@ -184,8 +184,9 @@
     <!-- Photos gallery (GalleryScreen)                                -->
     <!-- ============================================================= -->
     <string name="gallery_search_hint">Search photos by tryst, partner, act…</string>
-    <string name="gallery_options">Layout</string>
     <string name="gallery_open_tryst">Open tryst</string>
+    <string name="gallery_filter_date">Date</string>
+    <string name="gallery_filter_rating">Rating</string>
     <string name="gallery_empty">Photos you attach to trysts show up here.</string>
     <string name="gallery_empty_filtered">No photos match. Try widening a filter.</string>
     <string name="gallery_group_solo">Solo</string>
@@ -286,6 +287,9 @@
     <string name="settings_insights">Insights</string>
     <string name="settings_customize_insights">Customize Insights</string>
     <string name="settings_insights_desc">Reorder or hide the stat boxes and pick a chart style on the Insights tab.</string>
+    <string name="settings_gallery">Gallery</string>
+    <string name="settings_customize_gallery">Gallery layout</string>
+    <string name="settings_gallery_desc">Choose how the Photos tab lays out — grouped by date, a grid, by partner, or a large feed — plus the column count and sort order.</string>
     <string name="settings_categories">Categories</string>
     <string name="settings_categories_desc">Tryst ships almost no built-in categories — add your own acts, kinks, positions, toys, occasions, and finish locations, and rename or remove them any time.</string>
     <string name="settings_manage_acts">Manage acts</string>

@@ -508,6 +508,14 @@
   - **The viewer respects insets.** Its top chrome (close / counter / open-tryst) takes `statusBarsPadding`
     — the app draws edge-to-edge under the status bar, so without it the controls sit under the status bar
     and can't be tapped (caught on-device).
+  - **Ease-of-use refinements (2026-07-12).** (a) The layout/density/sort picker **moved out of the gallery
+    app-bar into a dedicated `Settings → Gallery` screen** (`GallerySettingsScreen`) — a set-once look
+    preference belongs with the other appearance settings, not competing for space with per-session
+    filtering. (b) The gallery top bar is now **just search + one Filters button**; the always-visible
+    chip row is gone. (c) That Filters button opens a single sheet with **everything** — date, rating,
+    partners, and the advanced `MoreFiltersColumn` (extracted from Search's sheet so both share it). (d)
+    By-partner headers show the partner's **avatar + name** (`PartnerEntity.photoMediaId` via
+    `PartnerRepository.openPhoto`), the first slice of GAL-1a.
 
 > Still tracked elsewhere (not re-listed): user-configurable **auto-lock timeout** & **change-PIN UI**
 > and **history filters/search** (deferred features, ROADMAP M3); **VACUUM on delete-all** for

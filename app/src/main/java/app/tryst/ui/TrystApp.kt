@@ -57,6 +57,7 @@ import app.tryst.ui.common.WidthClass
 import app.tryst.ui.common.widthClass
 import app.tryst.ui.encounter.EncounterEditScreen
 import app.tryst.ui.gallery.GalleryScreen
+import app.tryst.ui.gallery.GallerySettingsScreen
 import app.tryst.ui.history.HistoryScreen
 import app.tryst.ui.insights.InsightsScreen
 import app.tryst.ui.lock.ChangePinScreen
@@ -82,6 +83,7 @@ private object Routes {
     const val PARTNERS = "partners"
     const val SETTINGS = "settings"
     const val ABOUT = "about"
+    const val GALLERY_SETTINGS = "settings/gallery"
     const val CHANGE_PIN = "change-pin"
     const val RESET = "settings/reset"
     const val MANAGE_CATEGORY = "settings/category/{category}"
@@ -247,7 +249,11 @@ fun TrystApp() {
                             onOpenWhatsNew = { navController.navigate(Routes.WHATS_NEW) },
                             onOpenProfile = { navController.navigate(Routes.PROFILE) },
                             onManageCategory = { category -> navController.navigate(Routes.manageCategory(category)) },
+                            onCustomizeGallery = { navController.navigate(Routes.GALLERY_SETTINGS) },
                         )
+                    }
+                    composable(Routes.GALLERY_SETTINGS) {
+                        GallerySettingsScreen(onBack = { navController.popBackStack() })
                     }
                     composable(Routes.MANAGE_CATEGORY) { entry ->
                         CatalogManageRoute(
