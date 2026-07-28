@@ -487,6 +487,28 @@
     persisted. (Contrast the Insights scope, D-47 — a date range is not sensitive the way a filter over
     kinks/partners is, cf. D-42 on why search queries stay out of prefs and backups.)
 
+- **D-50 (2026-07-12) The photo gallery is a view over the log, and its layout is a preference.** GAL-1
+  adds a Photos tab, but no new table: `GalleryPhotos.build` reads `EncounterRepository.observeAll()`,
+  filters it through the same `EncounterFilter` + `EncounterSearch` the Search screen uses (the gallery is
+  FILT-1's **third consumer**), then flattens matched encounters' `media` into photos that inherit the
+  tryst's date/partners/rating. So a photo already knows how to group and how to jump back to its tryst,
+  with **zero schema change**.
+  - **Encounter photos only (v1).** Partner/profile avatars are `photoMediaId` blobs with no `media` row,
+    no date, and nothing to filter on, so they'd need separate handling in every grouping — deferred as
+    GAL-1a (they could later become partner-section headers). Video is GAL-2 (needs MED-1).
+  - **Layout is the user's choice, not ours.** All four layouts ship as selectable options — date grid,
+    flat grid, by-partner, feed — with column density (2–4) and sort, **default date grid**. The picker
+    lives in the gallery's own app-bar (contextual, live) backed by `GalleryPreferences`, which mirrors
+    `InsightsPreferences`: plain prefs, StateFlow-exposed, **excluded from backup** (arrangement isn't
+    sensitive). No duplicate copy buried in the global Settings screen.
+  - **By-partner duplicates, the viewer de-duplicates.** In the by-partner layout a threesome's photo
+    appears under *each* partner (that's the point of "photos with Alex"), but the flat list the
+    full-screen viewer pages counts each source photo once. Grid keys are `sectionKey:mediaId` so the same
+    photo across two partner sections doesn't collide.
+  - **The viewer respects insets.** Its top chrome (close / counter / open-tryst) takes `statusBarsPadding`
+    — the app draws edge-to-edge under the status bar, so without it the controls sit under the status bar
+    and can't be tapped (caught on-device).
+
 > Still tracked elsewhere (not re-listed): user-configurable **auto-lock timeout** & **change-PIN UI**
 > and **history filters/search** (deferred features, ROADMAP M3); **VACUUM on delete-all** for
 > secure-delete hardening (ROADMAP M5, SECURITY_DESIGN §6); **Keystore-backed monotonic attempt
