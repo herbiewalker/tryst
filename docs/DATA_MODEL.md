@@ -117,6 +117,10 @@ night, Anniversary, Didn't finish, In condom) are seeded as ordinary editable ro
   the attach/view UI; partner photos reuse this via `Partner.photoMediaId`, and the profile photo via
   `Profile.photoMediaId` — both are blobs with no `media` row, so the backup gathers their ids
   explicitly, like partner avatars.)
+  - The **Photos gallery** (GAL-1, `data/gallery/GalleryPhotos`) is a **read-only view over this table** —
+    it flattens each encounter's `media` (with the tryst's date/partners/rating for grouping) and never
+    adds a row or column. Only encounter photos appear; the avatar blobs (no `media` row) are out of
+    scope for v1 (GAL-1a).
 
 ## Category enums (`data/db/entity/Enums.kt`)
 All implement `DisplayLabel` (human-written `label` shown in the UI): `Initiator`, `Mood`,

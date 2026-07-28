@@ -19,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -55,6 +56,7 @@ import app.tryst.ui.common.AppVersion
 import app.tryst.ui.common.WidthClass
 import app.tryst.ui.common.widthClass
 import app.tryst.ui.encounter.EncounterEditScreen
+import app.tryst.ui.gallery.GalleryScreen
 import app.tryst.ui.history.HistoryScreen
 import app.tryst.ui.insights.InsightsScreen
 import app.tryst.ui.lock.ChangePinScreen
@@ -72,6 +74,7 @@ import app.tryst.ui.whatsnew.WhatsNewScreen
 
 private object Routes {
     const val HISTORY = "history"
+    const val GALLERY = "gallery"
     const val SEARCH = "search"
     const val INSIGHTS = "insights"
     const val INSIGHTS_CUSTOMIZE = "insights/customize"
@@ -98,6 +101,7 @@ private data class TopDestination(
 
 private val topDestinations = listOf(
     TopDestination(Routes.HISTORY, Icons.Filled.Favorite, R.string.nav_trysts),
+    TopDestination(Routes.GALLERY, Icons.Filled.PhotoLibrary, R.string.nav_photos),
     TopDestination(Routes.INSIGHTS, Icons.Filled.Insights, R.string.nav_insights),
     TopDestination(Routes.PARTNERS, Icons.Filled.People, R.string.nav_partners),
     TopDestination(Routes.SETTINGS, Icons.Filled.Settings, R.string.nav_settings),
@@ -207,6 +211,11 @@ fun TrystApp() {
                                 animatedScope = this,
                             )
                         }
+                    }
+                    composable(Routes.GALLERY) {
+                        GalleryScreen(
+                            onOpenEncounter = { id -> navController.navigate(Routes.encounterEdit(id)) },
+                        )
                     }
                     composable(Routes.SEARCH) {
                         SearchScreen(

@@ -37,6 +37,7 @@
     <!-- Bottom / rail navigation (TrystApp)                           -->
     <!-- ============================================================= -->
     <string name="nav_trysts">Trysts</string>
+    <string name="nav_photos">Photos</string>
     <string name="nav_insights">Insights</string>
     <string name="nav_partners">Partners</string>
     <string name="nav_settings">Settings</string>
@@ -178,6 +179,27 @@
         <item quantity="one">Show %1$d result</item>
         <item quantity="other">Show %1$d results</item>
     </plurals>
+
+    <!-- ============================================================= -->
+    <!-- Photos gallery (GalleryScreen)                                -->
+    <!-- ============================================================= -->
+    <string name="gallery_search_hint">Search photos by tryst, partner, act…</string>
+    <string name="gallery_options">Layout</string>
+    <string name="gallery_open_tryst">Open tryst</string>
+    <string name="gallery_empty">Photos you attach to trysts show up here.</string>
+    <string name="gallery_empty_filtered">No photos match. Try widening a filter.</string>
+    <string name="gallery_group_solo">Solo</string>
+    <string name="gallery_group_anonymous">Anonymous</string>
+    <string name="gallery_layout">Layout</string>
+    <string name="gallery_layout_date">By date</string>
+    <string name="gallery_layout_grid">Grid</string>
+    <string name="gallery_layout_partner">By partner</string>
+    <string name="gallery_layout_feed">Feed</string>
+    <string name="gallery_density">Columns</string>
+    <string name="gallery_density_columns">%1$d</string>
+    <string name="gallery_sort">Sort</string>
+    <string name="gallery_sort_newest">Newest first</string>
+    <string name="gallery_sort_oldest">Oldest first</string>
     <string name="cd_log_encounter">Log encounter</string>
     <string name="cd_prev_month">Previous month</string>
     <string name="cd_next_month">Next month</string>
