@@ -205,6 +205,33 @@
     <string name="gallery_blur_grace_1m">1 min</string>
     <string name="gallery_blur_grace_5m">5 min</string>
     <string name="gallery_drill_title">Photos of %1$s</string>
+
+    <!-- Tile appearance -->
+    <string name="gallery_tiles_title">Photo tiles</string>
+    <string name="gallery_spacing">Spacing</string>
+    <string name="gallery_spacing_compact">Compact</string>
+    <string name="gallery_spacing_normal">Normal</string>
+    <string name="gallery_tile_captions">Show date and partner under each tile</string>
+    <string name="gallery_tile_captions_desc">Adds a small caption under each thumbnail in the grid and by-partner layouts (Feed already shows this; the mosaic keeps its clean packing).</string>
+
+    <!-- When Photos opens -->
+    <string name="gallery_on_open_title">When Photos opens</string>
+    <string name="gallery_default_favorites">Open with favourites only</string>
+    <string name="gallery_default_favorites_desc">Start the Photos tab with just your favourited photos showing. Tap the heart in the top bar to widen it back to everything for the session.</string>
+
+    <!-- Slideshow -->
+    <string name="gallery_slideshow_title">Slideshow</string>
+    <string name="gallery_slideshow_interval">Interval</string>
+    <string name="gallery_slideshow_3s">3s</string>
+    <string name="gallery_slideshow_5s">5s</string>
+    <string name="gallery_slideshow_10s">10s</string>
+    <string name="gallery_slideshow_shuffle">Shuffle order</string>
+    <string name="gallery_slideshow_desc">How fast the photo viewer\'s slideshow advances. Shuffle plays every photo in a random order without repeats until each one has shown.</string>
+
+    <!-- Camera -->
+    <string name="gallery_camera_title">Camera</string>
+    <string name="gallery_camera_keep_capturing">Keep capturing until I stop</string>
+    <string name="gallery_camera_keep_capturing_desc">When you take a photo from an encounter, the camera reopens automatically after each shot so you can take several in a row. Tap the camera\'s back button to finish.</string>
     <string name="gallery_empty">Photos you attach to trysts show up here.</string>
     <string name="gallery_empty_filtered">No photos match. Try widening a filter.</string>
     <string name="gallery_group_solo">Solo</string>

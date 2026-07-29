@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,11 +26,13 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.tryst.R
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.ui.common.DecodedImage
+import app.tryst.ui.common.Format
 
 /**
  * A photo tile that participates in multi-select: it dims + shows a check when selected, and routes taps
@@ -85,4 +89,21 @@ fun SelectablePhotoTile(
             )
         }
     }
+}
+
+/** A one-line "date · partner names" caption for a photo tile — labelSmall, dimmed, single line. */
+@Composable
+fun TileCaption(photo: GalleryPhoto, modifier: Modifier = Modifier) {
+    val parts = buildList {
+        add(Format.date(photo.takenAt))
+        photo.partnerNames.takeIf { it.isNotEmpty() }?.let { add(it.joinToString(", ")) }
+    }
+    Text(
+        text = parts.joinToString("  ·  "),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = modifier.fillMaxWidth().padding(top = 2.dp, start = 2.dp, end = 2.dp),
+    )
 }

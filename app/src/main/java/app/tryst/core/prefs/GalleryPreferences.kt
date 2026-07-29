@@ -3,6 +3,7 @@ package app.tryst.core.prefs
 import android.content.Context
 import app.tryst.data.gallery.GalleryLayout
 import app.tryst.data.gallery.GallerySort
+import app.tryst.data.gallery.GridSpacing
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -56,6 +57,66 @@ class GalleryPreferences @Inject constructor(
         _blurGraceSeconds.value = clamped
     }
 
+    /** How many seconds between slides during a viewer slideshow. */
+    private val _slideshowIntervalSeconds = MutableStateFlow(prefs.getInt(KEY_SLIDESHOW_INT_S, DEFAULT_SLIDESHOW_INT_S))
+    val slideshowIntervalSeconds: StateFlow<Int> = _slideshowIntervalSeconds.asStateFlow()
+
+    fun setSlideshowIntervalSeconds(seconds: Int) {
+        prefs.edit().putInt(KEY_SLIDESHOW_INT_S, seconds.coerceAtLeast(1)).apply()
+        _slideshowIntervalSeconds.value = seconds.coerceAtLeast(1)
+    }
+
+    /** When on, the slideshow advances in a shuffled order (no repeats until every photo has played). */
+    private val _slideshowShuffle = MutableStateFlow(prefs.getBoolean(KEY_SLIDESHOW_SHUFFLE, false))
+    val slideshowShuffle: StateFlow<Boolean> = _slideshowShuffle.asStateFlow()
+
+    fun setSlideshowShuffle(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SLIDESHOW_SHUFFLE, enabled).apply()
+        _slideshowShuffle.value = enabled
+    }
+
+    /** How much room to leave between tiles in grid/mosaic layouts (feed is untouched). */
+    private val _gridSpacing = MutableStateFlow(loadGridSpacing())
+    val gridSpacing: StateFlow<GridSpacing> = _gridSpacing.asStateFlow()
+
+    fun setGridSpacing(value: GridSpacing) {
+        prefs.edit().putString(KEY_GRID_SPACING, value.name).apply()
+        _gridSpacing.value = value
+    }
+
+    /** When on, grid/mosaic tiles get a small date · partner caption below each thumbnail. */
+    private val _showTileCaptions = MutableStateFlow(prefs.getBoolean(KEY_TILE_CAPTIONS, false))
+    val showTileCaptions: StateFlow<Boolean> = _showTileCaptions.asStateFlow()
+
+    fun setShowTileCaptions(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_TILE_CAPTIONS, enabled).apply()
+        _showTileCaptions.value = enabled
+    }
+
+    /**
+     * When on, the Photos tab opens with the favourites-only filter enabled. Turning the app-bar heart off
+     * during a session doesn't clobber the pref — the pref just re-applies on fresh VM construction.
+     */
+    private val _defaultToFavoritesOnly = MutableStateFlow(prefs.getBoolean(KEY_DEFAULT_FAV_ONLY, false))
+    val defaultToFavoritesOnly: StateFlow<Boolean> = _defaultToFavoritesOnly.asStateFlow()
+
+    fun setDefaultToFavoritesOnly(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_DEFAULT_FAV_ONLY, enabled).apply()
+        _defaultToFavoritesOnly.value = enabled
+    }
+
+    /**
+     * When on, the encounter editor's in-app camera auto-relaunches after each successful capture,
+     * so you can take several partner photos in a row and end by tapping the camera's back button.
+     */
+    private val _cameraKeepCapturing = MutableStateFlow(prefs.getBoolean(KEY_CAMERA_LOOP, false))
+    val cameraKeepCapturing: StateFlow<Boolean> = _cameraKeepCapturing.asStateFlow()
+
+    fun setCameraKeepCapturing(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_CAMERA_LOOP, enabled).apply()
+        _cameraKeepCapturing.value = enabled
+    }
+
     fun setLayout(layout: GalleryLayout) {
         prefs.edit().putString(KEY_LAYOUT, layout.name).apply()
         _layout.value = layout
@@ -76,18 +137,28 @@ class GalleryPreferences @Inject constructor(
 
     private fun loadSort(): GallerySort = prefs.getString(KEY_SORT, null)?.let { runCatching { GallerySort.valueOf(it) }.getOrNull() } ?: DEFAULT_SORT
 
+    private fun loadGridSpacing(): GridSpacing = prefs.getString(KEY_GRID_SPACING, null)?.let { runCatching { GridSpacing.valueOf(it) }.getOrNull() } ?: DEFAULT_GRID_SPACING
+
     companion object {
         val DEFAULT_LAYOUT = GalleryLayout.JUSTIFIED_DATE
         val DEFAULT_SORT = GallerySort.NEWEST
+        val DEFAULT_GRID_SPACING = GridSpacing.NORMAL
         const val MIN_COLUMNS = 2
         const val MAX_COLUMNS = 4
         const val DEFAULT_COLUMNS = 3
         const val DEFAULT_BLUR_GRACE_S = 30
         const val MAX_BLUR_GRACE_S = 3600
+        const val DEFAULT_SLIDESHOW_INT_S = 3
         private const val KEY_LAYOUT = "layout"
         private const val KEY_COLUMNS = "columns"
         private const val KEY_SORT = "sort"
         private const val KEY_BLUR = "blur_until_revealed"
         private const val KEY_BLUR_GRACE_S = "blur_grace_seconds"
+        private const val KEY_SLIDESHOW_INT_S = "slideshow_interval_seconds"
+        private const val KEY_SLIDESHOW_SHUFFLE = "slideshow_shuffle"
+        private const val KEY_GRID_SPACING = "grid_spacing"
+        private const val KEY_TILE_CAPTIONS = "show_tile_captions"
+        private const val KEY_DEFAULT_FAV_ONLY = "default_to_favorites_only"
+        private const val KEY_CAMERA_LOOP = "camera_keep_capturing"
     }
 }
