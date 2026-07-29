@@ -40,6 +40,22 @@ class GalleryPreferences @Inject constructor(
         _blurUntilRevealed.value = enabled
     }
 
+    /**
+     * How long a reveal survives after the user leaves the Photos tab before it re-blurs (seconds).
+     * `0` re-blurs the instant you leave; a bigger value stays revealed for that long across quick tab
+     * switches. Only meaningful when [blurUntilRevealed] is on.
+     */
+    private val _blurGraceSeconds = MutableStateFlow(
+        prefs.getInt(KEY_BLUR_GRACE_S, DEFAULT_BLUR_GRACE_S).coerceIn(0, MAX_BLUR_GRACE_S),
+    )
+    val blurGraceSeconds: StateFlow<Int> = _blurGraceSeconds.asStateFlow()
+
+    fun setBlurGraceSeconds(seconds: Int) {
+        val clamped = seconds.coerceIn(0, MAX_BLUR_GRACE_S)
+        prefs.edit().putInt(KEY_BLUR_GRACE_S, clamped).apply()
+        _blurGraceSeconds.value = clamped
+    }
+
     fun setLayout(layout: GalleryLayout) {
         prefs.edit().putString(KEY_LAYOUT, layout.name).apply()
         _layout.value = layout
@@ -66,9 +82,12 @@ class GalleryPreferences @Inject constructor(
         const val MIN_COLUMNS = 2
         const val MAX_COLUMNS = 4
         const val DEFAULT_COLUMNS = 3
+        const val DEFAULT_BLUR_GRACE_S = 30
+        const val MAX_BLUR_GRACE_S = 3600
         private const val KEY_LAYOUT = "layout"
         private const val KEY_COLUMNS = "columns"
         private const val KEY_SORT = "sort"
         private const val KEY_BLUR = "blur_until_revealed"
+        private const val KEY_BLUR_GRACE_S = "blur_grace_seconds"
     }
 }

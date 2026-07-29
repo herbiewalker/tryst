@@ -197,6 +197,14 @@
     <string name="gallery_blur_show">Show photos</string>
     <string name="gallery_blur_setting">Blur photos until tapped</string>
     <string name="gallery_blur_setting_desc">The Photos tab opens blurred behind a "Show photos" tap, so your photos never appear the instant you open it. They re-blur each time you come back to the tab.</string>
+    <string name="gallery_blur_grace_title">Re-blur delay</string>
+    <string name="gallery_blur_grace_desc">How long the photos stay showing after you leave the Photos tab before the blur returns. Use Immediate to re-blur every time you leave.</string>
+    <string name="gallery_blur_grace_immediate">Immediate</string>
+    <string name="gallery_blur_grace_15s">15s</string>
+    <string name="gallery_blur_grace_30s">30s</string>
+    <string name="gallery_blur_grace_1m">1 min</string>
+    <string name="gallery_blur_grace_5m">5 min</string>
+    <string name="gallery_drill_title">Photos of %1$s</string>
     <string name="gallery_empty">Photos you attach to trysts show up here.</string>
     <string name="gallery_empty_filtered">No photos match. Try widening a filter.</string>
     <string name="gallery_group_solo">Solo</string>

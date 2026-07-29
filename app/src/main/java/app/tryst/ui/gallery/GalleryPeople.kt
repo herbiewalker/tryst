@@ -1,6 +1,5 @@
 package app.tryst.ui.gallery
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,28 +8,17 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
@@ -44,12 +32,13 @@ import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
 
 private const val AVATAR_TILE_PX = 320
-private const val AVATAR_FULL_PX = 1200
 
 /**
- * The People layout (GAL-1a): partner and profile avatars as browsable items in their own right, separate
- * from the encounter-photo pipeline (they carry no date and aren't filterable). A grid of circular avatars;
- * tapping one opens a full-screen, swipeable view across everyone.
+ * The People layout (GAL-1a): partner and profile avatars as browsable items in their own right. Tapping
+ * an avatar **drills into that person's photos** — the gallery becomes a filtered By-date view of their
+ * encounters, and the standard system back gesture (or the drill top bar's back arrow) returns to People.
+ * The self-profile row is currently excluded from drill (no encounters belong to "you"), so it just
+ * displays as a face; only partners with photos are tappable in a useful way.
  */
 @Composable
 fun GalleryPeople(
@@ -57,10 +46,10 @@ fun GalleryPeople(
     partners: List<PartnerEntity>,
     columns: Int,
     onLoadAvatar: suspend (photoMediaId: String, reqPx: Int) -> ImageBitmap?,
+    onPersonClick: (partnerId: String) -> Unit,
 ) {
     val youLabel = stringResource(R.string.gallery_people_you)
     val people = remember(profile, partners, youLabel) { buildPeople(profile, partners, youLabel) }
-    var viewerIndex by remember { mutableIntStateOf(-1) }
 
     if (people.isEmpty()) {
         Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
@@ -74,82 +63,34 @@ fun GalleryPeople(
         return
     }
 
-    // Wrap in a Box so the AvatarViewer overlays the grid — otherwise the caller's Column would stack the
-    // viewer below the fillMaxSize grid at zero height and the tap would appear to do nothing.
-    Box(Modifier.fillMaxSize()) {
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(columns),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            items(people, key = { it.id }) { person ->
-                Column(
-                    Modifier.clickable { viewerIndex = people.indexOf(person) },
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    DecodedImage(
-                        model = "avatar:${person.photoMediaId}",
-                        contentDescription = person.name,
-                        modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(CircleShape),
-                        contentScale = ContentScale.Crop,
-                        load = { onLoadAvatar(person.photoMediaId, AVATAR_TILE_PX) },
-                    )
-                    Text(
-                        text = person.name,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(top = 6.dp),
-                    )
-                }
-            }
-        }
-
-        if (viewerIndex in people.indices) {
-            AvatarViewer(
-                people = people,
-                initialIndex = viewerIndex,
-                onClose = { viewerIndex = -1 },
-                onLoadAvatar = onLoadAvatar,
-            )
-        }
-    }
-}
-
-@Composable
-private fun AvatarViewer(
-    people: List<GalleryPerson>,
-    initialIndex: Int,
-    onClose: () -> Unit,
-    onLoadAvatar: suspend (photoMediaId: String, reqPx: Int) -> ImageBitmap?,
-) {
-    val pagerState = rememberPagerState(initialPage = initialIndex.coerceIn(0, people.lastIndex), pageCount = { people.size })
-    Box(Modifier.fillMaxSize().background(Color.Black)) {
-        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
-            val person = people[page]
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(columns),
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        items(people, key = { it.id }) { person ->
+            Column(
+                Modifier.clickable(enabled = !person.isSelf) { onPersonClick(person.id) },
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
                 DecodedImage(
-                    model = "avatarFull:${person.photoMediaId}",
+                    model = "avatar:${person.photoMediaId}",
                     contentDescription = person.name,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit,
-                    load = { onLoadAvatar(person.photoMediaId, AVATAR_FULL_PX) },
+                    modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                    load = { onLoadAvatar(person.photoMediaId, AVATAR_TILE_PX) },
+                )
+                Text(
+                    text = person.name,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 6.dp),
                 )
             }
-        }
-        Box(Modifier.fillMaxWidth().align(Alignment.TopStart).background(Color.Black.copy(alpha = 0.35f)).statusBarsPadding().padding(4.dp)) {
-            IconButton(onClick = onClose, modifier = Modifier.align(Alignment.CenterStart)) {
-                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close), tint = Color.White)
-            }
-            Text(
-                text = people[pagerState.currentPage].name,
-                color = Color.White,
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.align(Alignment.Center),
-            )
         }
     }
 }

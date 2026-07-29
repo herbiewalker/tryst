@@ -11,7 +11,8 @@ import javax.inject.Singleton
  * for that case.
  *
  * The timestamp is refreshed both when the user taps "Show photos" and when they leave the tab while
- * revealed, so the grace is measured from *last active in Photos*, not from the first reveal.
+ * revealed, so the grace is measured from *last active in Photos*, not from the first reveal. The grace
+ * duration itself is user-configurable in Settings → Gallery ([app.tryst.core.prefs.GalleryPreferences.blurGraceSeconds]).
  */
 @Singleton
 class GalleryRevealState @Inject constructor() {
@@ -21,11 +22,6 @@ class GalleryRevealState @Inject constructor() {
         lastRevealedAt = SystemClock.elapsedRealtime()
     }
 
-    /** True if Photos was revealed within [GRACE_MS] — i.e. a tab switch shouldn't re-blur it yet. */
-    fun isWithinGrace(): Boolean = lastRevealedAt?.let { SystemClock.elapsedRealtime() - it < GRACE_MS } ?: false
-
-    companion object {
-        /** How long a reveal survives leaving the Photos tab before it re-blurs. */
-        const val GRACE_MS = 30_000L
-    }
+    /** True if Photos was revealed within [graceMs] — i.e. a tab switch shouldn't re-blur it yet. */
+    fun isWithinGrace(graceMs: Long): Boolean = lastRevealedAt?.let { SystemClock.elapsedRealtime() - it < graceMs } ?: false
 }

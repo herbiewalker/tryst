@@ -118,6 +118,28 @@ class GalleryViewModel @Inject constructor(
     private val _selectedIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedIds: StateFlow<Set<String>> = _selectedIds.asStateFlow()
 
+    /**
+     * People-layout drill (GAL-1a): tapping an avatar in the People grid sets this to that partner's id
+     * and the gallery switches to a filtered By-date view of their photos. Exit clears it and the People
+     * layout comes back. Transient (not persisted) — a fresh app launch always starts un-drilled.
+     */
+    private val _drilledPartnerId = MutableStateFlow<String?>(null)
+    val drilledPartnerId: StateFlow<String?> = _drilledPartnerId.asStateFlow()
+
+    /** The active partner's row when drilled — for the "Photos of {name}" top-bar title. */
+    val drilledPartner: StateFlow<PartnerEntity?> =
+        combine(_drilledPartnerId, partnerRepository.observeActive()) { id, list -> list.firstOrNull { it.id == id } }
+            .catch { emit(null) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    fun drillIntoPerson(partnerId: String) {
+        _drilledPartnerId.value = partnerId
+    }
+
+    fun exitDrill() {
+        _drilledPartnerId.value = null
+    }
+
     val activeAdvancedCount: StateFlow<Int> = _advanced
         .map { it.advancedCount() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
@@ -128,8 +150,8 @@ class GalleryViewModel @Inject constructor(
     /** Records a reveal so a quick tab switch back doesn't re-blur (see [GalleryRevealState]). */
     fun markRevealed() = revealState.markRevealed()
 
-    /** True if the gallery was revealed recently enough that returning shouldn't re-blur it. */
-    fun revealedRecently(): Boolean = revealState.isWithinGrace()
+    /** True if the gallery was revealed within the user-configured grace window (0 disables the carry-over). */
+    fun revealedRecently(): Boolean = galleryPreferences.blurGraceSeconds.value.takeIf { it > 0 }?.let { revealState.isWithinGrace(it * 1000L) } ?: false
 
     val partners: StateFlow<List<PartnerEntity>> = partnerRepository.observeActive()
         .catch { emit(emptyList()) }
@@ -191,19 +213,23 @@ class GalleryViewModel @Inject constructor(
         }
     }
 
-    /** Base chips + the advanced sheet, one filter. `hasPhoto` is implicit — the gallery only shows photos. */
+    /** Base chips + the advanced sheet + drill, one filter. `hasPhoto` is implicit — the gallery only shows photos. */
     private val filter: Flow<EncounterFilter> =
-        combine(_dateScope, _rating, _partnerIds, _advanced) { scope, rating, partnerIds, advanced ->
+        combine(_dateScope, _rating, _partnerIds, _advanced, _drilledPartnerId) { scope, rating, partnerIds, advanced, drilledId ->
+            // Drilled-in-from-People wins over the persistent partner filter so you always see just that person's photos.
+            val effectivePartnerIds = drilledId?.let { setOf(it) } ?: partnerIds
             advanced.copy(
                 dateRanges = listOfNotNull(scope.range()),
                 ratingRange = rating.range,
-                partnerIds = partnerIds,
+                partnerIds = effectivePartnerIds,
             )
         }
 
     private val prefs: Flow<Triple<GalleryLayout, Int, GallerySort>> =
-        combine(galleryPreferences.layout, galleryPreferences.columns, galleryPreferences.sort) { layout, columns, sort ->
-            Triple(layout, columns, sort)
+        combine(galleryPreferences.layout, galleryPreferences.columns, galleryPreferences.sort, _drilledPartnerId) { layout, columns, sort, drilledId ->
+            // While drilled from People, force a photo layout so the user actually sees their photos.
+            val effectiveLayout = if (drilledId != null) GalleryLayout.JUSTIFIED_DATE else layout
+            Triple(effectiveLayout, columns, sort)
         }
 
     /** The filter, the free-text query, and the favourites-only toggle — the three query inputs. */
@@ -253,6 +279,7 @@ class GalleryViewModel @Inject constructor(
         _partnerIds.value = emptySet()
         _onlyFavorites.value = false
         _advanced.value = EncounterFilter()
+        _drilledPartnerId.value = null
     }
 
     // --- advanced filters (the "More filters" sheet) --------------------------------------------------
