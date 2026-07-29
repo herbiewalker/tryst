@@ -306,6 +306,11 @@
     <string name="partners_unarchive">Unarchive</string>
     <string name="partners_archived_section">Archived</string>
     <string name="partner_view_photos">View photos</string>
+    <string name="partner_photos_title">Photos</string>
+    <string name="partner_photos_save_first">Save the partner first, then add photos here.</string>
+    <string name="partner_add_photo_single">From gallery (one)</string>
+    <string name="partner_photo_actions_title">Photo</string>
+    <string name="partner_photo_set_avatar">Set as this person’s photo</string>
     <string name="partner_add">Add partner</string>
     <string name="partner_dialog_edit_title">Edit partner</string>
     <string name="cd_partner_photo">Partner photo</string>

@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tryst.core.prefs.GalleryPreferences
 import app.tryst.data.db.entity.Initiator
-import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.Place
@@ -28,6 +27,7 @@ import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.KinkRepository
 import app.tryst.data.repository.OccasionRepository
 import app.tryst.data.repository.PartnerRepository
+import app.tryst.data.repository.PersonPhotoRepository
 import app.tryst.data.repository.PositionRepository
 import app.tryst.data.repository.ProfileRepository
 import app.tryst.data.repository.ToyRepository
@@ -91,6 +91,7 @@ class GalleryViewModel @Inject constructor(
     toyRepository: ToyRepository,
     occasionRepository: OccasionRepository,
     private val partnerRepository: PartnerRepository,
+    private val personPhotoRepository: PersonPhotoRepository,
     profileRepository: ProfileRepository,
 ) : ViewModel() {
 
@@ -130,14 +131,24 @@ class GalleryViewModel @Inject constructor(
     private val _drilledPartnerId = MutableStateFlow<String?>(null)
     val drilledPartnerId: StateFlow<String?> = _drilledPartnerId.asStateFlow()
 
-    /** The active partner's row when drilled — for the "Photos of {name}" top-bar title. */
+    /** The active partner's row when drilled — for the "Photos of {name}" top-bar title. Null during self drill. */
     val drilledPartner: StateFlow<PartnerEntity?> =
         combine(_drilledPartnerId, partnerRepository.observeActive()) { id, list -> list.firstOrNull { it.id == id } }
             .catch { emit(null) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
+    /** True when the current drill is the self profile (owner id "self"). */
+    val drilledIntoSelf: StateFlow<Boolean> = _drilledPartnerId
+        .map { it == SELF_OWNER_ID }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
     fun drillIntoPerson(partnerId: String) {
         _drilledPartnerId.value = partnerId
+    }
+
+    /** People-self-avatar drill: filter to the self "partner" id (aka [ProfileEntity.SELF_ID]). */
+    fun drillIntoSelf() {
+        _drilledPartnerId.value = SELF_OWNER_ID
     }
 
     fun exitDrill() {
@@ -252,10 +263,47 @@ class GalleryViewModel @Inject constructor(
     private val query3: Flow<Triple<EncounterFilter, String, Boolean>> =
         combine(filter, _query, _onlyFavorites) { f, q, onlyFav -> Triple(f, q, onlyFav) }
 
+    /** Every partner + self-profile portrait, folded into the gallery pipeline (v15+). */
+    private val allPersonPhotos = personPhotoRepository.observeAll()
+        .catch { emit(emptyList()) }
+
+    // Bundle the four "gallery input" flows so uiState's combine stays a 4-arg call (arity cap).
+    private data class GallerySources(
+        val encounters: List<app.tryst.data.db.relation.EncounterWithDetails>,
+        val personPhotos: List<app.tryst.data.db.entity.PersonPhotoEntity>,
+        val partnerNames: Map<String, String?>,
+        val profileName: String?,
+    )
+
+    private val gallerySources: Flow<GallerySources> = combine(
+        encounterRepository.observeAll(),
+        allPersonPhotos,
+        partners,
+        profile,
+    ) { encounters, personPhotos, partners, profile ->
+        GallerySources(
+            encounters = encounters,
+            personPhotos = personPhotos,
+            partnerNames = partners.associate { it.id to it.displayName },
+            profileName = profile?.displayName,
+        )
+    }
+
     val uiState: StateFlow<GalleryUiState> =
-        combine(encounterRepository.observeAll(), catalogLabels, query3, prefs) { encounters, labels, (filter, query, onlyFav), (layout, columns, sort) ->
+        combine(gallerySources, catalogLabels, query3, prefs) { src, labels, (filter, query, onlyFav), (layout, columns, sort) ->
             withContext(Dispatchers.Default) {
-                val result = GalleryPhotos.build(encounters, filter, query, labels, layout, sort, onlyFavorites = onlyFav)
+                val result = GalleryPhotos.build(
+                    encounters = src.encounters,
+                    filter = filter,
+                    query = query,
+                    labels = labels,
+                    layout = layout,
+                    sort = sort,
+                    onlyFavorites = onlyFav,
+                    personPhotos = src.personPhotos,
+                    partnerNamesById = src.partnerNames,
+                    profileDisplayName = src.profileName,
+                )
                 GalleryUiState(
                     sections = result.sections,
                     photos = result.photos,
@@ -332,64 +380,81 @@ class GalleryViewModel @Inject constructor(
         _selectedIds.value = uiState.value.photos.mapTo(LinkedHashSet()) { it.id }
     }
 
-    /** Marks/unmarks a single photo (the viewer's star), GAL-3. */
+    /** Marks/unmarks a single photo (the viewer's star), GAL-3. Only encounter photos are favouritable. */
     fun toggleFavorite(photo: GalleryPhoto) = viewModelScope.launch {
-        encounterRepository.setFavorite(photo.id, !photo.favorite)
+        if (photo.media != null) encounterRepository.setFavorite(photo.id, !photo.favorite)
     }
 
+    /** Bulk favourite: only the encounter photos in the selection qualify — portraits carry no favourite mark. */
     fun favoriteSelected(favorite: Boolean) = viewModelScope.launch {
-        encounterRepository.setFavorite(_selectedIds.value.toList(), favorite)
+        val encounterIds = encounterBlobsInSelection()
+        if (encounterIds.isNotEmpty()) encounterRepository.setFavorite(encounterIds, favorite)
         clearSelection()
     }
 
     fun deleteSelected() = viewModelScope.launch {
         val ids = _selectedIds.value
-        val media = uiState.value.photos.filter { it.id in ids }.map { it.media }
-        encounterRepository.deleteMedia(media)
+        val selected = uiState.value.photos.filter { it.id in ids }
+        val encounterMedia = selected.mapNotNull { it.media }
+        val portraitBlobIds = selected.filter { it.source is GalleryPhoto.Source.Person }.map { it.blobId }
+        encounterRepository.deleteMedia(encounterMedia)
+        portraitBlobIds.forEach { personPhotoRepository.deleteByBlobId(it) }
         clearSelection()
     }
 
+    /** Reassign only applies to encounter photos — portraits belong to a person, not a tryst. */
     fun reassignSelected(encounterId: String) = viewModelScope.launch {
-        encounterRepository.reassignMedia(_selectedIds.value.toList(), encounterId)
+        val encounterIds = encounterBlobsInSelection()
+        if (encounterIds.isNotEmpty()) encounterRepository.reassignMedia(encounterIds, encounterId)
         clearSelection()
     }
 
     /**
-     * Copies a gallery photo into a partner's avatar (GAL-5). The photo's encrypted bytes are re-encrypted
-     * as a fresh partner-photo blob; the partner's previous avatar blob (if any) is removed after the swap.
+     * Copies a gallery photo into a partner's avatar (GAL-5). Works for encounter photos AND portraits —
+     * both are just encrypted blobs. Re-encrypts as a fresh avatar blob and removes the previous one.
      */
-    fun setAsPartnerAvatar(media: MediaEntity, partnerId: String) = viewModelScope.launch(Dispatchers.IO) {
+    fun setAsPartnerAvatar(blobId: String, partnerId: String) = viewModelScope.launch(Dispatchers.IO) {
         val partner = partnerRepository.getById(partnerId) ?: return@launch
-        val newId = runCatching { partnerRepository.savePhoto(encounterRepository.openMedia(media)) }.getOrNull() ?: return@launch
+        val newId = runCatching { partnerRepository.savePhoto(personPhotoRepository.openBlob(blobId)) }.getOrNull() ?: return@launch
         val old = partner.photoMediaId
         partnerRepository.upsert(partner.copy(photoMediaId = newId))
         if (old != null && old != newId) partnerRepository.deletePhoto(old)
     }
 
-    // --- decoding -------------------------------------------------------------------------------------
+    // --- decoding (all blobs open through the same EncryptedMediaStore) ----------------------------
 
-    suspend fun decode(media: MediaEntity, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { runCatching { encounterRepository.openMedia(media) }.getOrNull() }
+    suspend fun decode(blobId: String, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { runCatching { personPhotoRepository.openBlob(blobId) }.getOrNull() }
 
     /** Decodes an avatar blob (a partner's or the profile's `photoMediaId`) — same encrypted store. */
     suspend fun decodePartnerPhoto(photoMediaId: String, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { runCatching { partnerRepository.openPhoto(photoMediaId) }.getOrNull() }
 
     /** A photo's width/height aspect ratio for the mosaic layout (GAL-1b); decoded once and cached. */
-    suspend fun aspectRatio(media: MediaEntity): Float {
-        aspectCache[media.id]?.let { return it }
+    suspend fun aspectRatio(blobId: String): Float {
+        aspectCache[blobId]?.let { return it }
         val ratio = withContext(Dispatchers.IO) {
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            runCatching { encounterRepository.openMedia(media).use { BitmapFactory.decodeStream(it, null, bounds) } }
+            runCatching { personPhotoRepository.openBlob(blobId).use { BitmapFactory.decodeStream(it, null, bounds) } }
             if (bounds.outWidth > 0 && bounds.outHeight > 0) bounds.outWidth.toFloat() / bounds.outHeight else 1f
         }
-        aspectCache[media.id] = ratio
+        aspectCache[blobId] = ratio
         return ratio
     }
 
     private val aspectCache = ConcurrentHashMap<String, Float>()
 
     /** Reads a photo's embedded metadata (date/dimensions/camera/location) for the viewer info panel (META-1). */
-    suspend fun readMeta(media: MediaEntity): PhotoMeta = withContext(Dispatchers.IO) {
-        PhotoMetadata.read { runCatching { encounterRepository.openMedia(media) }.getOrNull() }
+    suspend fun readMeta(blobId: String): PhotoMeta = withContext(Dispatchers.IO) {
+        PhotoMetadata.read { runCatching { personPhotoRepository.openBlob(blobId) }.getOrNull() }
+    }
+
+    private fun encounterBlobsInSelection(): List<String> {
+        val ids = _selectedIds.value
+        return uiState.value.photos.filter { it.id in ids && it.media != null }.map { it.id }
+    }
+
+    companion object {
+        /** Matches [app.tryst.data.db.entity.ProfileEntity.SELF_ID]; using it as a partner-id filter selects portraits owned by the self profile. */
+        const val SELF_OWNER_ID = "self"
     }
 
     private fun <T> Set<T>.toggled(value: T): Set<T> = if (value in this) this - value else this + value

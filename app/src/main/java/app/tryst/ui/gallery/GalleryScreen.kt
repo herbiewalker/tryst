@@ -79,7 +79,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
-import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.filter.DateScope
 import app.tryst.data.gallery.GalleryGroup
@@ -131,6 +130,8 @@ fun GalleryScreen(
     val blurUntilRevealed by viewModel.blurUntilRevealed.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
     val drilledPartner by viewModel.drilledPartner.collectAsStateWithLifecycle()
+    val drilledIntoSelf by viewModel.drilledIntoSelf.collectAsStateWithLifecycle()
+    val selfName = profile?.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.gallery_people_you)
     val gridSpacing by viewModel.gridSpacing.collectAsStateWithLifecycle()
     val showTileCaptions by viewModel.showTileCaptions.collectAsStateWithLifecycle()
     val slideshowInterval by viewModel.slideshowIntervalSeconds.collectAsStateWithLifecycle()
@@ -192,8 +193,11 @@ fun GalleryScreen(
                     onDelete = { showDeleteConfirm = true },
                 )
                 drilled -> DrillBar(
-                    partnerName = drilledPartner?.let { Format.partnerName(it) }
-                        ?: stringResource(R.string.gallery_group_anonymous),
+                    partnerName = when {
+                        drilledIntoSelf -> selfName
+                        drilledPartner != null -> Format.partnerName(drilledPartner!!)
+                        else -> stringResource(R.string.gallery_group_anonymous)
+                    },
                     onBack = viewModel::exitDrill,
                 )
                 else -> TopAppBar(
@@ -262,7 +266,8 @@ fun GalleryScreen(
                         partners = partners,
                         columns = ui.columns,
                         onLoadAvatar = viewModel::decodePartnerPhoto,
-                        onPersonClick = viewModel::drillIntoPerson,
+                        // "self" is a synthetic id used only in the People grid; route it to the self drill.
+                        onPersonClick = { id -> if (id == "self") viewModel.drillIntoSelf() else viewModel.drillIntoPerson(id) },
                     )
                     ui.photos.isEmpty() -> EmptyState(criteriaActive = ui.criteriaActive)
                     ui.layout == GalleryLayout.FEED -> GalleryFeed(
@@ -503,7 +508,7 @@ private fun GalleryGrid(
     showTileCaptions: Boolean,
     hidePartnerInCaptions: Boolean,
     interaction: TileInteraction,
-    onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
+    onLoad: suspend (blobId: String, reqPx: Int) -> ImageBitmap?,
     onLoadPartnerPhoto: suspend (photoMediaId: String, reqPx: Int) -> ImageBitmap?,
     onPinch: (delta: Int) -> Unit,
 ) {
@@ -556,7 +561,7 @@ private fun spacingEdgeDp(spacing: app.tryst.data.gallery.GridSpacing): androidx
 private fun GalleryFeed(
     photos: List<GalleryPhoto>,
     interaction: TileInteraction,
-    onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
+    onLoad: suspend (blobId: String, reqPx: Int) -> ImageBitmap?,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(1),

@@ -99,3 +99,25 @@ data class MediaEntity(
     /** User "favourite" mark (GAL-3) — surfaced in the gallery's Favourites filter and starred in the viewer. */
     val favorite: Boolean = false,
 )
+
+/**
+ * A photo attached to a **person** (partner or self-profile) rather than an encounter — the "portrait
+ * album" concept added in v15. The encrypted blob lives in [app.tryst.data.media.EncryptedMediaStore]
+ * exactly like an encounter's [MediaEntity], but this row owns it directly (no encounter FK), so a
+ * user can attach several photos to a person and swap which one is the current avatar.
+ *
+ * A partner's/profile's `photoMediaId` still points at the *active* avatar; when the user picks a
+ * different portrait as their avatar, that field is updated to the new blob id. The other portraits
+ * stay attached (visible in the gallery, browsable in the editor).
+ */
+@Entity(tableName = "person_photo", indices = [Index(value = ["ownerKind", "ownerId"])])
+data class PersonPhotoEntity(
+    @PrimaryKey val id: String,
+    /** "partner" for a partner-owned photo, "profile" for the self profile. */
+    val ownerKind: String,
+    /** The partner's row id, or the single-row profile id ([ProfileEntity.SELF_ID]) when [ownerKind]=="profile". */
+    val ownerId: String,
+    /** The encrypted blob's id (opens via `EncryptedMediaStore.open(mediaBlobId)`). */
+    val mediaBlobId: String,
+    val addedAt: Long,
+)

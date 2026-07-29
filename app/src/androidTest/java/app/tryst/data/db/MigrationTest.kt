@@ -389,6 +389,43 @@ class MigrationTest {
     }
 
     /**
+     * v14 → v15: adds the `person_photo` table (per-person portrait album). Additive DDL — existing
+     * rows are untouched, the table starts empty, and a partner/profile portrait can be inserted.
+     */
+    @Test
+    fun migrate14To15_addsPersonPhotoTable() {
+        helper.createDatabase(dbName, 14).use { db ->
+            db.execSQL(
+                "INSERT INTO partners (id, displayName, isAnonymous, createdAt, updatedAt) " +
+                    "VALUES ('p1', 'Alex', 0, 1, 1)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(dbName, 15, true, MIGRATION_14_15).use { db ->
+            db.query("SELECT COUNT(*) FROM person_photo").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(0, c.getInt(0))
+            }
+            db.execSQL(
+                "INSERT INTO person_photo (id, ownerKind, ownerId, mediaBlobId, addedAt) " +
+                    "VALUES ('pp1', 'partner', 'p1', 'blob-xyz', 42)",
+            )
+            db.query("SELECT ownerKind, ownerId, mediaBlobId, addedAt FROM person_photo WHERE id = 'pp1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("partner", c.getString(0))
+                assertEquals("p1", c.getString(1))
+                assertEquals("blob-xyz", c.getString(2))
+                assertEquals(42L, c.getLong(3))
+            }
+            // Existing partner row is untouched.
+            db.query("SELECT displayName FROM partners WHERE id = 'p1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("Alex", c.getString(0))
+            }
+        }
+    }
+
+    /**
      * v13 → v14 (GAL-3): adds the `media.favorite` flag. Additive DDL — every existing media row must
      * default to not-favourited (0), existing data is untouched, and the column is writable.
      */

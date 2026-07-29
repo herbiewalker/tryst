@@ -3,6 +3,7 @@ package app.tryst.data.gallery
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.PartnerEntity
+import app.tryst.data.db.entity.PersonPhotoEntity
 import app.tryst.data.db.relation.EncounterWithDetails
 import app.tryst.data.filter.EncounterFilter
 import app.tryst.data.search.CatalogLabels
@@ -64,7 +65,15 @@ class GalleryPhotosTest {
         filter: EncounterFilter = EncounterFilter(),
         query: String = "",
         onlyFavorites: Boolean = false,
-    ) = GalleryPhotos.build(encounters, filter, query, CatalogLabels.EMPTY, layout, sort, zone, onlyFavorites)
+        personPhotos: List<PersonPhotoEntity> = emptyList(),
+        partnerNamesById: Map<String, String?> = emptyMap(),
+        profileDisplayName: String? = null,
+    ) = GalleryPhotos.build(
+        encounters, filter, query, CatalogLabels.EMPTY, layout, sort, zone, onlyFavorites,
+        personPhotos, partnerNamesById, profileDisplayName,
+    )
+
+    private fun portrait(id: String, ownerKind: String, ownerId: String, blobId: String = id, addedAt: Long = 0L) = PersonPhotoEntity(id = id, ownerKind = ownerKind, ownerId = ownerId, mediaBlobId = blobId, addedAt = addedAt)
 
     @Test
     fun onlyEncountersWithMediaContributeAndEachPhotoIsOneItem() {
@@ -174,6 +183,54 @@ class GalleryPhotosTest {
             listOf(GalleryGroup.Month(2026, 6), GalleryGroup.Month(2026, 5)),
             sections.map { it.group },
         )
+    }
+
+    @Test
+    fun portraitsMergeWithEncounterPhotosAndAttributeToTheOwner() {
+        val alex = partner("alex", "Alex")
+        val log = listOf(
+            encounter("e", LocalDateTime.of(2026, 5, 1, 12, 0), partners = listOf(alex), media = listOf(media("enc1", "e"))),
+        )
+        val portraits = listOf(
+            portrait(id = "pp1", ownerKind = "partner", ownerId = "alex", blobId = "blob-a", addedAt = epoch(LocalDateTime.of(2026, 5, 2, 9, 0))),
+            portrait(id = "pp2", ownerKind = "profile", ownerId = "self", blobId = "blob-s", addedAt = epoch(LocalDateTime.of(2026, 5, 3, 9, 0))),
+        )
+        val photos = build(
+            log,
+            personPhotos = portraits,
+            partnerNamesById = mapOf("alex" to "Alex"),
+            profileDisplayName = "You",
+        ).photos
+        // Newest first: profile portrait (May 3) → partner portrait (May 2) → encounter (May 1).
+        assertEquals(listOf("blob-s", "blob-a", "enc1"), photos.map { it.id })
+        val self = photos.first { it.id == "blob-s" }
+        val partnerPic = photos.first { it.id == "blob-a" }
+        assertEquals(listOf("You"), self.partnerNames)
+        assertEquals(listOf("Alex"), partnerPic.partnerNames)
+        // Portraits carry no encounter link and can't be favourited.
+        assertEquals(null, self.encounterId)
+        assertTrue(!self.favorite && !partnerPic.favorite)
+    }
+
+    @Test
+    fun partnerFilterPicksMatchingPortraits() {
+        val alex = partner("alex", "Alex")
+        val log = listOf(
+            encounter("e", LocalDateTime.of(2026, 5, 1, 12, 0), partners = listOf(alex), media = listOf(media("enc1", "e"))),
+        )
+        val portraits = listOf(
+            portrait("pp1", "partner", "alex", "blob-a"),
+            portrait("pp2", "partner", "sam", "blob-b"),
+            portrait("pp3", "profile", "self", "blob-s"),
+        )
+        val ids = build(
+            log,
+            personPhotos = portraits,
+            partnerNamesById = mapOf("alex" to "Alex", "sam" to "Sam"),
+            filter = EncounterFilter(partnerIds = setOf("alex")),
+        ).photos.map { it.id }.toSet()
+        // The encounter photo (Alex partner) and Alex's portrait qualify; Sam's + profile's do not.
+        assertEquals(setOf("enc1", "blob-a"), ids)
     }
 
     @Test

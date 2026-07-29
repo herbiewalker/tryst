@@ -23,7 +23,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.tryst.R
-import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.gallery.GalleryGroup
 import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.data.gallery.GallerySection
@@ -56,8 +55,8 @@ private sealed interface MosaicItem {
 fun GalleryMosaic(
     sections: List<GallerySection>,
     spacing: GridSpacing,
-    onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
-    aspectOf: suspend (media: MediaEntity) -> Float,
+    onLoad: suspend (blobId: String, reqPx: Int) -> ImageBitmap?,
+    aspectOf: suspend (blobId: String) -> Float,
     interaction: TileInteraction,
 ) {
     val gapDp = when (spacing) {
@@ -68,7 +67,7 @@ fun GalleryMosaic(
     val aspects = remember { mutableStateMapOf<String, Float>() }
     LaunchedEffect(flat) {
         for (p in flat) {
-            if (p.id !in aspects) aspects[p.id] = aspectOf(p.media).coerceIn(MIN_ASPECT, MAX_ASPECT)
+            if (p.id !in aspects) aspects[p.id] = aspectOf(p.blobId).coerceIn(MIN_ASPECT, MAX_ASPECT)
         }
     }
 
@@ -96,7 +95,7 @@ fun GalleryMosaic(
 private fun MosaicRowView(
     row: MosaicRow,
     gapDp: Float,
-    onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
+    onLoad: suspend (blobId: String, reqPx: Int) -> ImageBitmap?,
     interaction: TileInteraction,
 ) {
     Row(

@@ -10,6 +10,7 @@ import app.tryst.data.db.entity.KinkEntity
 import app.tryst.data.db.entity.LocationEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.OccasionEntity
+import app.tryst.data.db.entity.PersonPhotoEntity
 import app.tryst.data.db.entity.PositionEntity
 import app.tryst.data.db.entity.RecentSearchEntity
 import app.tryst.data.db.entity.TagEntity
@@ -147,6 +148,30 @@ interface LocationDao {
 
     @Query("SELECT * FROM locations ORDER BY label COLLATE NOCASE")
     fun observeAll(): Flow<List<LocationEntity>>
+}
+
+@Dao
+interface PersonPhotoDao {
+    @Upsert
+    suspend fun upsert(photo: PersonPhotoEntity)
+
+    @Query("SELECT * FROM person_photo WHERE ownerKind = :kind AND ownerId = :id ORDER BY addedAt DESC")
+    fun observeForOwner(kind: String, id: String): Flow<List<PersonPhotoEntity>>
+
+    @Query("SELECT * FROM person_photo WHERE ownerKind = :kind AND ownerId = :id ORDER BY addedAt DESC")
+    suspend fun getForOwner(kind: String, id: String): List<PersonPhotoEntity>
+
+    @Query("SELECT * FROM person_photo ORDER BY addedAt DESC")
+    fun observeAll(): Flow<List<PersonPhotoEntity>>
+
+    @Query("SELECT * FROM person_photo WHERE mediaBlobId = :blobId LIMIT 1")
+    suspend fun getByBlobId(blobId: String): PersonPhotoEntity?
+
+    @Query("DELETE FROM person_photo WHERE id = :id")
+    suspend fun deleteById(id: String)
+
+    @Query("DELETE FROM person_photo WHERE ownerKind = :kind AND ownerId = :id")
+    suspend fun deleteForOwner(kind: String, id: String)
 }
 
 @Dao

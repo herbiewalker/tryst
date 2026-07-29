@@ -85,24 +85,41 @@ data class GalleryResult(
 data class GalleryPartner(val id: String, val name: String?)
 
 /**
- * One encounter photo lifted into the gallery, carrying the context of the tryst it belongs to so the
- * gallery can group/caption it and jump back to the tryst — without re-reading the DB. Derived from
- * [app.tryst.data.db.relation.EncounterWithDetails]; the gallery is a **view over the `media` table**,
- * so there is no schema change.
+ * One photo lifted into the gallery. Two flavours share this shape:
+ *
+ * - **Encounter photos** (the original GAL-1 case): [source] is [Source.Encounter], `takenAt` is the
+ *   tryst's start time, `partners` are the tryst's partners, `favorite` reflects `media.favorite`.
+ * - **Person portraits** (v15+): [source] is [Source.Person], `takenAt` is when the portrait was
+ *   attached, `partners` is a synthetic singleton for the owning person, `favorite` is always false
+ *   (portraits aren't favouritable — the whole album is already curated), and there's no owning tryst
+ *   so "Open tryst" doesn't apply.
+ *
+ * Both flavours open through [EncryptedMediaStore] with the same blob id, so the gallery pipeline
+ * (decode, viewer, filmstrip) treats them identically once built.
  */
 data class GalleryPhoto(
-    val media: MediaEntity,
-    val encounterId: String,
-    /** The tryst's start time — photos cluster by their tryst's date, and this drives sort + month grouping. */
+    /** The encrypted blob id — feeds `EncryptedMediaStore.open`. Also the tile's stable key. */
+    val blobId: String,
+    val mimeType: String,
     val takenAt: Long,
     val partners: List<GalleryPartner>,
     val rating: Int?,
+    val favorite: Boolean,
+    val source: Source,
 ) {
-    val id: String get() = media.id
-
-    /** Whether this photo is marked a favourite (GAL-3). */
-    val favorite: Boolean get() = media.favorite
+    val id: String get() = blobId
 
     /** Non-blank partner display names, for the feed caption. */
     val partnerNames: List<String> get() = partners.mapNotNull { it.name?.takeIf(String::isNotBlank) }
+
+    /** The owning encounter's id when this photo is an encounter photo; null for person portraits. */
+    val encounterId: String? get() = (source as? Source.Encounter)?.encounterId
+
+    /** The underlying media row when this is an encounter photo (needed for reassign / favourite / metadata). */
+    val media: MediaEntity? get() = (source as? Source.Encounter)?.media
+
+    sealed interface Source {
+        data class Encounter(val encounterId: String, val media: MediaEntity) : Source
+        data class Person(val ownerKind: String, val ownerId: String, val personPhotoId: String) : Source
+    }
 }

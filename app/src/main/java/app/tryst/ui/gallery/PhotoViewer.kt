@@ -56,7 +56,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.tryst.R
-import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.gallery.GalleryPartner
 import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.data.media.PhotoMeta
@@ -87,10 +86,10 @@ fun PhotoViewer(
     initialIndex: Int,
     onClose: () -> Unit,
     onOpenEncounter: (String) -> Unit,
-    onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
-    onLoadMeta: suspend (media: MediaEntity) -> PhotoMeta,
+    onLoad: suspend (blobId: String, reqPx: Int) -> ImageBitmap?,
+    onLoadMeta: suspend (blobId: String) -> PhotoMeta,
     onToggleFavorite: (GalleryPhoto) -> Unit,
-    onSetAvatar: (media: MediaEntity, partnerId: String) -> Unit,
+    onSetAvatar: (blobId: String, partnerId: String) -> Unit,
     slideshowIntervalSeconds: Int,
     slideshowShuffle: Boolean,
 ) {
@@ -192,7 +191,7 @@ fun PhotoViewer(
                             partners = current.partners,
                             onDismiss = { avatarMenu = false },
                             onPick = { partnerId ->
-                                onSetAvatar(current.media, partnerId)
+                                onSetAvatar(current.blobId, partnerId)
                                 avatarMenu = false
                             },
                         )
@@ -204,11 +203,12 @@ fun PhotoViewer(
                             tint = if (showInfo) ACCENT else Color.White,
                         )
                     }
-                    IconButton(onClick = { onOpenEncounter(current.encounterId) }) {
+                    val enc = current.encounterId
+                    IconButton(onClick = { enc?.let(onOpenEncounter) }, enabled = enc != null) {
                         Icon(
                             Icons.AutoMirrored.Filled.OpenInNew,
                             contentDescription = stringResource(R.string.gallery_open_tryst),
-                            tint = Color.White,
+                            tint = if (enc != null) Color.White else Color.White.copy(alpha = 0.4f),
                         )
                     }
                 }
@@ -277,7 +277,7 @@ private fun AvatarPartnerMenu(
 private fun Filmstrip(
     photos: List<GalleryPhoto>,
     currentPage: Int,
-    onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
+    onLoad: suspend (blobId: String, reqPx: Int) -> ImageBitmap?,
     onSelect: (Int) -> Unit,
 ) {
     val listState = rememberLazyListState()
@@ -299,7 +299,7 @@ private fun Filmstrip(
                     .graphicsLayer { alpha = if (index == currentPage) 1f else 0.55f }
                     .clickable { onSelect(index) },
                 contentScale = ContentScale.Crop,
-                load = { onLoad(photo.media, FILMSTRIP_PX) },
+                load = { onLoad(photo.blobId, FILMSTRIP_PX) },
             )
         }
     }
@@ -309,10 +309,10 @@ private fun Filmstrip(
 @Composable
 private fun PhotoInfoPanel(
     photo: GalleryPhoto,
-    onLoadMeta: suspend (media: MediaEntity) -> PhotoMeta,
+    onLoadMeta: suspend (blobId: String) -> PhotoMeta,
     modifier: Modifier = Modifier,
 ) {
-    val meta by produceState(PhotoMeta(), photo.id) { value = onLoadMeta(photo.media) }
+    val meta by produceState(PhotoMeta(), photo.id) { value = onLoadMeta(photo.blobId) }
     Column(
         modifier
             .fillMaxWidth()
@@ -363,7 +363,7 @@ private fun InfoRow(label: String, value: String) {
 @Composable
 private fun ZoomablePhoto(
     photo: GalleryPhoto,
-    onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
+    onLoad: suspend (blobId: String, reqPx: Int) -> ImageBitmap?,
     onTap: () -> Unit,
     zoomEnabled: Boolean,
 ) {
@@ -413,7 +413,7 @@ private fun ZoomablePhoto(
                 translationY = offsetY,
             ),
             contentScale = ContentScale.Fit,
-            load = { onLoad(photo.media, VIEWER_PX) },
+            load = { onLoad(photo.blobId, VIEWER_PX) },
         )
     }
 }

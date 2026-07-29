@@ -9,8 +9,10 @@ import app.tryst.core.session.SessionManager
 import app.tryst.data.db.entity.BodyType
 import app.tryst.data.db.entity.Ethnicity
 import app.tryst.data.db.entity.Gender
+import app.tryst.data.db.entity.PersonPhotoEntity
 import app.tryst.data.db.entity.ProfileEntity
 import app.tryst.data.db.entity.Sex
+import app.tryst.data.repository.PersonPhotoRepository
 import app.tryst.data.repository.ProfileRepository
 import app.tryst.ui.common.MediaImages
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -46,6 +48,7 @@ class ProfileViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val session: SessionManager,
     private val repository: ProfileRepository,
+    private val personPhotoRepository: PersonPhotoRepository,
 ) : ViewModel() {
 
     /** Keep the app unlocked across the photo-picker/camera handoff. */
@@ -56,6 +59,37 @@ class ProfileViewModel @Inject constructor(
         repository.observe()
             .catch { emit(null) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** The profile's portrait album (v15+). Adds/deletes/set-as-avatar are auto-saved. */
+    val photos: StateFlow<List<PersonPhotoEntity>> =
+        personPhotoRepository.observeForOwner(PersonPhotoRepository.KIND_PROFILE, ProfileEntity.SELF_ID)
+            .catch { emit(emptyList()) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    fun addPhotos(uris: List<Uri>) {
+        if (uris.isEmpty()) return
+        viewModelScope.launch(Dispatchers.IO) {
+            uris.forEach { uri ->
+                runCatching {
+                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                        personPhotoRepository.add(PersonPhotoRepository.KIND_PROFILE, ProfileEntity.SELF_ID, stream)
+                    }
+                }
+            }
+        }
+    }
+
+    fun deletePhoto(photo: PersonPhotoEntity) {
+        viewModelScope.launch { personPhotoRepository.delete(photo) }
+    }
+
+    /** Promote a portrait to be the profile's current avatar. */
+    fun setAsAvatar(photo: PersonPhotoEntity) {
+        viewModelScope.launch {
+            val existing = repository.get() ?: ProfileEntity(id = ProfileEntity.SELF_ID, updatedAt = System.currentTimeMillis())
+            repository.upsert(existing.copy(photoMediaId = photo.mediaBlobId, updatedAt = System.currentTimeMillis()))
+        }
+    }
 
     fun save(draft: ProfileDraft, onDone: () -> Unit) {
         viewModelScope.launch {
