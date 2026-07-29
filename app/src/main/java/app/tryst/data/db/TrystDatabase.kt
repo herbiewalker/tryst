@@ -52,7 +52,7 @@ import app.tryst.data.db.entity.ToyEntity
         EncounterPositionCrossRef::class,
         EncounterTagCrossRef::class,
     ],
-    version = 13,
+    version = 14,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

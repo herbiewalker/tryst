@@ -33,16 +33,24 @@ object GalleryPhotos {
         layout: GalleryLayout,
         sort: GallerySort,
         zone: ZoneId = ZoneId.systemDefault(),
+        onlyFavorites: Boolean = false,
     ): GalleryResult {
+        // PEOPLE draws avatars from the Partners/Profile data, not encounter photos — nothing to build here.
+        if (!layout.isPhotoLayout) return GalleryResult()
+
         val withPhotos = encounters.filter { it.media.isNotEmpty() && filter.matches(it, zone) }
         val matched = applyQuery(withPhotos, query, labels)
-        val ordered = sortPhotos(matched.flatMap { e -> e.media.map { m -> toPhoto(e, m) } }, sort)
+        val flattened = matched.flatMap { e -> e.media.map { m -> toPhoto(e, m) } }
+            .filter { !onlyFavorites || it.favorite }
+        val ordered = sortPhotos(flattened, sort)
 
         val sections = when (layout) {
             GalleryLayout.SQUARE_GRID, GalleryLayout.FEED ->
                 if (ordered.isEmpty()) emptyList() else listOf(GallerySection(GalleryGroup.Ungrouped, ordered))
-            GalleryLayout.JUSTIFIED_DATE -> groupByMonth(ordered, zone)
+            // The mosaic groups by month exactly like the date grid; only its tile layout differs (UI-side).
+            GalleryLayout.JUSTIFIED_DATE, GalleryLayout.MOSAIC -> groupByMonth(ordered, zone)
             GalleryLayout.BY_PARTNER -> groupByPartner(ordered)
+            GalleryLayout.PEOPLE -> emptyList() // unreachable (guarded above); keeps the when exhaustive
         }
         return GalleryResult(sections = sections, photos = ordered)
     }

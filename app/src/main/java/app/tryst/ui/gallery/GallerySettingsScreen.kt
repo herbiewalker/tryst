@@ -118,6 +118,8 @@ internal fun layoutLabel(layout: GalleryLayout): Int = when (layout) {
     GalleryLayout.SQUARE_GRID -> R.string.gallery_layout_grid
     GalleryLayout.BY_PARTNER -> R.string.gallery_layout_partner
     GalleryLayout.FEED -> R.string.gallery_layout_feed
+    GalleryLayout.MOSAIC -> R.string.gallery_layout_mosaic
+    GalleryLayout.PEOPLE -> R.string.gallery_layout_people
 }
 
 internal fun sortLabel(sort: GallerySort): Int = when (sort) {

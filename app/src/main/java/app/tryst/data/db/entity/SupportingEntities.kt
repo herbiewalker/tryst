@@ -96,4 +96,6 @@ data class MediaEntity(
     val encFilePath: String,
     val mimeType: String,
     val createdAt: Long,
+    /** User "favourite" mark (GAL-3) — surfaced in the gallery's Favourites filter and starred in the viewer. */
+    val favorite: Boolean = false,
 )

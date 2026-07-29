@@ -243,6 +243,20 @@ val MIGRATION_12_13 = object : Migration(12, 13) {
     }
 }
 
+/**
+ * v13 → v14: adds a **`favorite`** flag to the `media` table (GAL-3), backing the gallery's Favourites
+ * filter and the per-photo star in the viewer.
+ *
+ * Pure DDL, additive — every existing photo defaults to not-favourited (`0`). It rides inside a backup
+ * for free: [app.tryst.data.backup.BackupManager] dumps/restores `media` with a generic `SELECT *`, so
+ * the new column round-trips with no format change (a pre-v14 backup simply has no value → default `0`).
+ */
+val MIGRATION_13_14 = object : Migration(13, 14) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE media ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 /** All migrations, in order. */
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
@@ -257,4 +271,5 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_10_11,
     MIGRATION_11_12,
     MIGRATION_12_13,
+    MIGRATION_13_14,
 )

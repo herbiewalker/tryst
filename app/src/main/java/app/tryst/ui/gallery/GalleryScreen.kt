@@ -1,7 +1,11 @@
 package app.tryst.ui.gallery
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,22 +15,29 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items as lazyListItems
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,6 +46,7 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -54,9 +66,11 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -82,14 +96,21 @@ import java.time.format.DateTimeFormatter
 private const val THUMB_PX = 420
 private const val FEED_PX = 900
 
+// Pinch factors that step the grid density one column looser/tighter (GAL-5).
+private const val PINCH_IN = 0.72f
+private const val PINCH_OUT = 1.4f
+
 /**
- * The Photos gallery (GAL-1): every encounter photo in one browsable surface. The user's chosen
- * [GalleryLayout] (date grid / flat grid / by partner / feed), column density, and sort come from
- * [app.tryst.core.prefs.GalleryPreferences]; a search field plus the same date/rating/partner chips and
- * "More filters" sheet as Search narrow which photos show. Tapping a photo opens the full-screen [PhotoViewer].
+ * The Photos gallery (GAL-1): every encounter photo in one browsable surface, plus its edit surface —
+ * favourites (GAL-3), multi-select with bulk delete / favourite / reassign (GAL-4), a People (avatars)
+ * layout (GAL-1a), a justified mosaic (GAL-1b), and pinch-to-zoom density. The user's chosen layout,
+ * density, and sort come from [app.tryst.core.prefs.GalleryPreferences]; a search field plus the same
+ * date/rating/partner chips and "More filters" sheet as Search narrow which photos show. Tapping a photo
+ * opens the full-screen [PhotoViewer].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@Suppress("LongMethod", "CyclomaticComplexMethod") // The gallery's single orchestration surface.
 fun GalleryScreen(
     onOpenEncounter: (String) -> Unit,
     viewModel: GalleryViewModel = hiltViewModel(),
@@ -100,29 +121,52 @@ fun GalleryScreen(
     val rating by viewModel.rating.collectAsStateWithLifecycle()
     val partnerIds by viewModel.partnerIds.collectAsStateWithLifecycle()
     val partners by viewModel.partners.collectAsStateWithLifecycle()
+    val profile by viewModel.profile.collectAsStateWithLifecycle()
     val availableYears by viewModel.availableYears.collectAsStateWithLifecycle()
     val advanced by viewModel.advanced.collectAsStateWithLifecycle()
     val catalogLabels by viewModel.catalogLabels.collectAsStateWithLifecycle()
     val advancedCount by viewModel.activeAdvancedCount.collectAsStateWithLifecycle()
+    val onlyFavorites by viewModel.onlyFavorites.collectAsStateWithLifecycle()
     val blurUntilRevealed by viewModel.blurUntilRevealed.collectAsStateWithLifecycle()
+    val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
+
+    val selectionActive = selectedIds.isNotEmpty()
+    val isPeople = ui.layout == GalleryLayout.PEOPLE
 
     var searching by remember { mutableStateOf(false) }
     var showFilters by remember { mutableStateOf(false) }
     var showRangePicker by remember { mutableStateOf(false) }
+    var showReassign by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
     var viewerIndex by remember { mutableIntStateOf(-1) }
-    // The blur gate (SEC-2) re-arms on tab entry, but only after a grace window — a quick switch away and
-    // back stays revealed. Grace is tracked process-wide in GalleryRevealState (via the VM).
     var revealed by remember { mutableStateOf(viewModel.revealedRecently()) }
-    // Leaving the tab while revealed refreshes the grace, so it's measured from "last active in Photos".
     DisposableEffect(Unit) {
         onDispose { if (revealed) viewModel.markRevealed() }
     }
 
-    // The gallery narrows itself if there's a query or any filter set (rating/partner/date/advanced).
+    // Back exits selection mode before leaving the tab.
+    BackHandler(enabled = selectionActive) { viewModel.clearSelection() }
+
     val filtersActive = advancedCount > 0 ||
         rating != RatingFilter.ANY ||
         partnerIds.isNotEmpty() ||
         dateScope != DateScope.AllTime
+
+    // Tap opens the viewer (or toggles selection when selecting); long-press selects.
+    val interaction = remember(selectionActive, selectedIds) {
+        TileInteraction(
+            selectionActive = selectionActive,
+            selectedIds = selectedIds,
+            onClick = { id ->
+                if (selectionActive) {
+                    viewModel.toggleSelected(id)
+                } else {
+                    viewerIndex = viewModel.uiState.value.photos.indexOfFirst { it.id == id }
+                }
+            },
+            onLongPress = { id -> viewModel.toggleSelected(id) },
+        )
+    }
 
     val focusRequester = remember { FocusRequester() }
     val keyboard = LocalSoftwareKeyboardController.current
@@ -130,69 +174,102 @@ fun GalleryScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    if (searching) {
-                        TextField(
-                            value = query,
-                            onValueChange = viewModel::setQuery,
-                            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
-                            placeholder = { Text(stringResource(R.string.gallery_search_hint)) },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                            keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = Color.Transparent,
-                                unfocusedContainerColor = Color.Transparent,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                            ),
-                        )
-                    } else {
-                        Text(stringResource(R.string.nav_photos))
-                    }
-                },
-                actions = {
-                    if (searching) {
-                        IconButton(onClick = {
-                            viewModel.setQuery("")
-                            searching = false
-                        }) {
-                            Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.search_clear_query))
-                        }
-                    } else {
-                        IconButton(onClick = { searching = true }) {
-                            Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.gallery_search_hint))
-                        }
-                        IconButton(onClick = { showFilters = true }) {
-                            Icon(
-                                Icons.Filled.Tune,
-                                contentDescription = stringResource(R.string.search_more_filters),
-                                tint = if (filtersActive) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+            when {
+                selectionActive -> SelectionBar(
+                    count = selectedIds.size,
+                    onClose = viewModel::clearSelection,
+                    onFavorite = { viewModel.favoriteSelected(true) },
+                    onUnfavorite = { viewModel.favoriteSelected(false) },
+                    onReassign = { showReassign = true },
+                    onDelete = { showDeleteConfirm = true },
+                )
+                else -> TopAppBar(
+                    title = {
+                        if (searching) {
+                            TextField(
+                                value = query,
+                                onValueChange = viewModel::setQuery,
+                                modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+                                placeholder = { Text(stringResource(R.string.gallery_search_hint)) },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                                keyboardActions = KeyboardActions(onSearch = { keyboard?.hide() }),
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent,
+                                    focusedIndicatorColor = Color.Transparent,
+                                    unfocusedIndicatorColor = Color.Transparent,
+                                ),
                             )
+                        } else {
+                            Text(stringResource(R.string.nav_photos))
                         }
-                    }
-                },
-            )
+                    },
+                    actions = {
+                        when {
+                            searching -> IconButton(onClick = {
+                                viewModel.setQuery("")
+                                searching = false
+                            }) {
+                                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.search_clear_query))
+                            }
+                            // People (avatars) don't participate in the photo filters.
+                            isPeople -> Unit
+                            else -> {
+                                IconButton(onClick = { viewModel.setOnlyFavorites(!onlyFavorites) }) {
+                                    Icon(
+                                        if (onlyFavorites) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                        contentDescription = stringResource(R.string.gallery_only_favorites),
+                                        tint = if (onlyFavorites) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                                    )
+                                }
+                                IconButton(onClick = { searching = true }) {
+                                    Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.gallery_search_hint))
+                                }
+                                IconButton(onClick = { showFilters = true }) {
+                                    Icon(
+                                        Icons.Filled.Tune,
+                                        contentDescription = stringResource(R.string.search_more_filters),
+                                        tint = if (filtersActive) MaterialTheme.colorScheme.primary else LocalContentColor.current,
+                                    )
+                                }
+                            }
+                        }
+                    },
+                )
+            }
         },
     ) { padding ->
         val gated = blurUntilRevealed && !revealed && ui.photos.isNotEmpty()
         Box(Modifier.fillMaxSize().padding(padding)) {
             Column(Modifier.fillMaxSize().then(if (gated) Modifier.blur(28.dp) else Modifier)) {
                 when {
+                    isPeople -> GalleryPeople(
+                        profile = profile,
+                        partners = partners,
+                        columns = ui.columns,
+                        onLoadAvatar = viewModel::decodePartnerPhoto,
+                    )
                     ui.photos.isEmpty() -> EmptyState(criteriaActive = ui.criteriaActive)
                     ui.layout == GalleryLayout.FEED -> GalleryFeed(
                         photos = ui.photos,
-                        onOpen = { id -> viewerIndex = ui.photos.indexOfFirst { it.id == id } },
+                        interaction = interaction,
                         onLoad = viewModel::decode,
+                    )
+                    ui.layout == GalleryLayout.MOSAIC -> GalleryMosaic(
+                        sections = ui.sections,
+                        onLoad = viewModel::decode,
+                        aspectOf = viewModel::aspectRatio,
+                        interaction = interaction,
                     )
                     else -> GalleryGrid(
                         sections = ui.sections,
                         columns = ui.columns,
                         partners = partners,
-                        onOpen = { id -> viewerIndex = ui.photos.indexOfFirst { it.id == id } },
+                        interaction = interaction,
                         onLoad = viewModel::decode,
                         onLoadPartnerPhoto = viewModel::decodePartnerPhoto,
+                        onPinch = viewModel::changeColumns,
                     )
                 }
             }
@@ -255,6 +332,36 @@ fun GalleryScreen(
         )
     }
 
+    if (showReassign) {
+        ReassignDialog(
+            viewModel = viewModel,
+            count = selectedIds.size,
+            onDismiss = { showReassign = false },
+            onPicked = { targetId ->
+                viewModel.reassignSelected(targetId)
+                showReassign = false
+            },
+        )
+    }
+
+    if (showDeleteConfirm) {
+        val n = selectedIds.size
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text(pluralStringResource(R.plurals.gallery_delete_title, n, n)) },
+            text = { Text(stringResource(R.string.gallery_delete_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.deleteSelected()
+                    showDeleteConfirm = false
+                }) { Text(stringResource(R.string.action_delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.action_cancel)) }
+            },
+        )
+    }
+
     if (viewerIndex in ui.photos.indices) {
         PhotoViewer(
             photos = ui.photos,
@@ -266,8 +373,83 @@ fun GalleryScreen(
             },
             onLoad = viewModel::decode,
             onLoadMeta = viewModel::readMeta,
+            onToggleFavorite = viewModel::toggleFavorite,
+            onSetAvatar = viewModel::setAsPartnerAvatar,
         )
     }
+}
+
+// --- selection bar + dialogs ---------------------------------------------------------------------
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SelectionBar(
+    count: Int,
+    onClose: () -> Unit,
+    onFavorite: () -> Unit,
+    onUnfavorite: () -> Unit,
+    onReassign: () -> Unit,
+    onDelete: () -> Unit,
+) {
+    TopAppBar(
+        title = { Text(pluralStringResource(R.plurals.gallery_selected_count, count, count)) },
+        navigationIcon = {
+            IconButton(onClick = onClose) {
+                Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
+            }
+        },
+        actions = {
+            IconButton(onClick = onFavorite) {
+                Icon(Icons.Filled.Favorite, contentDescription = stringResource(R.string.gallery_favorite_selected))
+            }
+            IconButton(onClick = onUnfavorite) {
+                Icon(Icons.Filled.FavoriteBorder, contentDescription = stringResource(R.string.gallery_unfavorite_selected))
+            }
+            IconButton(onClick = onReassign) {
+                Icon(Icons.Filled.SwapHoriz, contentDescription = stringResource(R.string.gallery_reassign))
+            }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.gallery_delete_selected))
+            }
+        },
+    )
+}
+
+/** Picks a tryst to move the selected photos into (GAL-4). */
+@Composable
+private fun ReassignDialog(
+    viewModel: GalleryViewModel,
+    count: Int,
+    onDismiss: () -> Unit,
+    onPicked: (String) -> Unit,
+) {
+    val targets by viewModel.reassignTargets.collectAsStateWithLifecycle()
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(pluralStringResource(R.plurals.gallery_reassign_title, count, count)) },
+        text = {
+            androidx.compose.foundation.lazy.LazyColumn(Modifier.heightIn(max = 360.dp)) {
+                lazyListItems(targets, key = { it.id }) { target ->
+                    val partnerLabel = target.partnerNames.takeIf { it.isNotEmpty() }?.joinToString(", ")
+                        ?: stringResource(R.string.gallery_group_solo)
+                    Column(
+                        Modifier.fillMaxWidth().clickable { onPicked(target.id) }.padding(vertical = 10.dp),
+                    ) {
+                        Text(Format.dateTime(target.date), style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            partnerLabel,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+        },
+    )
 }
 
 // --- grid + feed ---------------------------------------------------------------------------------
@@ -277,13 +459,14 @@ private fun GalleryGrid(
     sections: List<GallerySection>,
     columns: Int,
     partners: List<PartnerEntity>,
-    onOpen: (String) -> Unit,
+    interaction: TileInteraction,
     onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
     onLoadPartnerPhoto: suspend (photoMediaId: String, reqPx: Int) -> ImageBitmap?,
+    onPinch: (delta: Int) -> Unit,
 ) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().pinchColumns(onPinch),
         contentPadding = PaddingValues(2.dp),
         verticalArrangement = Arrangement.spacedBy(3.dp),
         horizontalArrangement = Arrangement.spacedBy(3.dp),
@@ -296,7 +479,13 @@ private fun GalleryGrid(
                 }
             }
             items(section.photos, key = { "$key:${it.id}" }) { photo ->
-                PhotoTile(photo = photo, onClick = { onOpen(photo.id) }, onLoad = onLoad)
+                SelectablePhotoTile(
+                    photo = photo,
+                    reqPx = THUMB_PX,
+                    onLoad = onLoad,
+                    interaction = interaction,
+                    modifier = Modifier.aspectRatio(1f),
+                )
             }
         }
     }
@@ -305,7 +494,7 @@ private fun GalleryGrid(
 @Composable
 private fun GalleryFeed(
     photos: List<GalleryPhoto>,
-    onOpen: (String) -> Unit,
+    interaction: TileInteraction,
     onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
 ) {
     LazyVerticalGrid(
@@ -315,13 +504,14 @@ private fun GalleryFeed(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         items(photos, key = { it.id }) { photo ->
-            Column(Modifier.clickable { onOpen(photo.id) }) {
-                DecodedImage(
-                    model = photo.id,
-                    contentDescription = stringResource(R.string.cd_photo),
-                    modifier = Modifier.fillMaxWidth().aspectRatio(4f / 3f).clip(RoundedCornerShape(12.dp)),
-                    contentScale = ContentScale.Crop,
-                    load = { onLoad(photo.media, FEED_PX) },
+            Column {
+                SelectablePhotoTile(
+                    photo = photo,
+                    reqPx = FEED_PX,
+                    onLoad = onLoad,
+                    interaction = interaction,
+                    modifier = Modifier.fillMaxWidth().aspectRatio(4f / 3f),
+                    shape = RoundedCornerShape(12.dp),
                 )
                 FeedCaption(photo)
             }
@@ -329,19 +519,27 @@ private fun GalleryFeed(
     }
 }
 
-@Composable
-private fun PhotoTile(
-    photo: GalleryPhoto,
-    onClick: () -> Unit,
-    onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
-) {
-    DecodedImage(
-        model = photo.id,
-        contentDescription = stringResource(R.string.cd_photo),
-        modifier = Modifier.aspectRatio(1f).clip(RoundedCornerShape(4.dp)).clickable(onClick = onClick),
-        contentScale = ContentScale.Crop,
-        load = { onLoad(photo.media, THUMB_PX) },
-    )
+/** A pinch that steps the grid density one column at a time (GAL-5), without swallowing single-finger scroll. */
+private fun Modifier.pinchColumns(onChange: (delta: Int) -> Unit): Modifier = pointerInput(Unit) {
+    awaitEachGesture {
+        awaitFirstDown(requireUnconsumed = false)
+        var zoom = 1f
+        do {
+            val event = awaitPointerEvent()
+            if (event.changes.size >= 2) {
+                zoom *= event.calculateZoom()
+                if (zoom < PINCH_IN) {
+                    onChange(-1) // pinch in → bigger tiles → fewer columns
+                    zoom = 1f
+                    event.changes.forEach { it.consume() }
+                } else if (zoom > PINCH_OUT) {
+                    onChange(+1) // spread → smaller tiles → more columns
+                    zoom = 1f
+                    event.changes.forEach { it.consume() }
+                }
+            }
+        } while (event.changes.any { it.pressed })
+    }
 }
 
 @Composable
@@ -449,7 +647,6 @@ private fun PartnerAvatar(
 @Composable
 private fun BlurGate(onReveal: () -> Unit) {
     Box(
-        // Fills the body and swallows touches so the blurred grid underneath can't be scrolled or tapped.
         Modifier.fillMaxSize().clickable(indication = null, interactionSource = remember { MutableInteractionSource() }, onClick = {}),
         contentAlignment = Alignment.Center,
     ) {

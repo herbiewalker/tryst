@@ -387,4 +387,33 @@ class MigrationTest {
             }
         }
     }
+
+    /**
+     * v13 → v14 (GAL-3): adds the `media.favorite` flag. Additive DDL — every existing media row must
+     * default to not-favourited (0), existing data is untouched, and the column is writable.
+     */
+    @Test
+    fun migrate13To14_addsFavoriteColumnDefaultingFalse() {
+        helper.createDatabase(dbName, 13).use { db ->
+            db.execSQL("INSERT INTO encounters (id, startAt, protectionUsed, createdAt, updatedAt) VALUES ('e1', 1000, '', 1, 1)")
+            db.execSQL(
+                "INSERT INTO media (id, encounterId, encFilePath, mimeType, createdAt) " +
+                    "VALUES ('m1', 'e1', '/data/media/m1.enc', 'image/jpeg', 5)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(dbName, 14, true, MIGRATION_13_14).use { db ->
+            // The pre-existing row gains the column, defaulted to 0.
+            db.query("SELECT favorite FROM media WHERE id = 'm1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(0, c.getInt(0))
+            }
+            // The column is writable and round-trips.
+            db.execSQL("UPDATE media SET favorite = 1 WHERE id = 'm1'")
+            db.query("SELECT favorite FROM media WHERE id = 'm1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(1, c.getInt(0))
+            }
+        }
+    }
 }

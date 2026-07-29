@@ -29,6 +29,16 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
   Photos tab opens blurred behind a "Show photos" tap, so your photos never appear the instant you open
   the tab — handy when you might hand your unlocked phone to someone. Popping to another tab and back
   within about half a minute keeps them showing; after that it re-blurs.
+- **Favourite photos.** Tap the heart in the photo viewer to favourite a photo, and use the heart in the
+  Photos tab to show only your favourites. Favourites are included in your encrypted backup.
+- **Select and act on many photos at once.** Long-press a photo to start selecting, then favourite,
+  remove the favourite, delete, or **move photos to a different tryst** — all in one go.
+- **Two more gallery layouts.** **Mosaic** lays photos out in tidy justified rows at their true shapes
+  (like Google Photos), and **People** shows your partners' and your own profile photos as a browsable
+  grid of avatars — tap one to view it full-screen.
+- **Gallery niceties.** Pinch the grid to change how many columns it shows; open a partner's photos in one
+  tap from the Partners list ("View photos"); start a **slideshow** from the viewer; jump around a set with
+  the new **filmstrip** strip; and set any photo as a partner's picture straight from the viewer.
 
 ## [0.4.0] — 2026-07-11 (versionCode 6)
 

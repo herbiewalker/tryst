@@ -18,10 +18,25 @@ enum class GalleryLayout {
 
     /** One large photo per row with its tryst's date/partner/rating beneath. */
     FEED,
+
+    /** Aspect-preserving justified rows under month headers (Google-Photos style), GAL-1b. */
+    MOSAIC,
+
+    /**
+     * People, not encounter photos: a browsable grid of partner (and profile) avatars, GAL-1a. Rendered
+     * from the Partners/Profile data, not the photo pipeline — so [GalleryPhotos.build] yields nothing for it.
+     */
+    PEOPLE,
     ;
 
-    /** The grid layouts honour the density (column-count) preference; the feed is intrinsically one column. */
-    val usesColumns: Boolean get() = this != FEED
+    /**
+     * The uniform-tile grids honour the density (column-count) preference. The feed is one column; the
+     * mosaic computes justified rows from aspect ratios rather than a fixed column count.
+     */
+    val usesColumns: Boolean get() = this != FEED && this != MOSAIC
+
+    /** Whether this layout is derived from encounter photos (vs. [PEOPLE], which draws avatars). */
+    val isPhotoLayout: Boolean get() = this != PEOPLE
 }
 
 /** Photo order within the gallery. */
@@ -75,6 +90,9 @@ data class GalleryPhoto(
     val rating: Int?,
 ) {
     val id: String get() = media.id
+
+    /** Whether this photo is marked a favourite (GAL-3). */
+    val favorite: Boolean get() = media.favorite
 
     /** Non-blank partner display names, for the feed caption. */
     val partnerNames: List<String> get() = partners.mapNotNull { it.name?.takeIf(String::isNotBlank) }
