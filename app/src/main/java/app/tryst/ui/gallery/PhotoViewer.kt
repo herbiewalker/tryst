@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
@@ -59,6 +60,7 @@ import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.gallery.GalleryPartner
 import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.data.media.PhotoMeta
+import app.tryst.data.media.PhotoMetadata
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
 import kotlin.math.abs
@@ -140,6 +142,16 @@ fun PhotoViewer(
             )
         }
 
+        // Favourite pill sits on the photo itself (bottom-right, safe area) so the top chrome's
+        // "N / M" counter is never covered. Stays visible whether or not the chrome is showing —
+        // it's a photo-level control, not part of the top bar.
+        val currentPhoto = photos[pagerState.currentPage]
+        FavouritePill(
+            favourite = currentPhoto.favorite,
+            onToggle = { onToggleFavorite(currentPhoto) },
+            modifier = Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(bottom = 84.dp, end = 16.dp),
+        )
+
         if (chromeVisible) {
             val current = photos[pagerState.currentPage]
             Box(
@@ -157,15 +169,6 @@ fun PhotoViewer(
                     modifier = Modifier.align(Alignment.Center),
                 )
                 Row(Modifier.align(Alignment.CenterEnd)) {
-                    IconButton(onClick = { onToggleFavorite(current) }) {
-                        Icon(
-                            if (current.favorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                            contentDescription = stringResource(
-                                if (current.favorite) R.string.gallery_unfavorite else R.string.gallery_favorite,
-                            ),
-                            tint = if (current.favorite) ACCENT else Color.White,
-                        )
-                    }
                     IconButton(onClick = { slideshow = !slideshow }) {
                         Icon(
                             Icons.Filled.Slideshow,
@@ -223,6 +226,30 @@ fun PhotoViewer(
                 )
             }
         }
+    }
+}
+
+/**
+ * A round favourite pill overlaying the photo — filled + accent when favourited, outlined + white
+ * when not. Fixed position (bottom-end above where the filmstrip sits when chrome is up); stays
+ * visible whether or not the top chrome is showing, so it never covers the "N / M" counter.
+ */
+@Composable
+private fun FavouritePill(favourite: Boolean, onToggle: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .size(44.dp)
+            .clip(CircleShape)
+            .background(Color.Black.copy(alpha = 0.45f))
+            .clickable(onClick = onToggle),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            if (favourite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+            contentDescription = stringResource(if (favourite) R.string.gallery_unfavorite else R.string.gallery_favorite),
+            tint = if (favourite) ACCENT else Color.White,
+            modifier = Modifier.size(22.dp),
+        )
     }
 }
 
@@ -298,6 +325,15 @@ private fun PhotoInfoPanel(
             InfoRow(stringResource(R.string.gallery_meta_dimensions), "${meta.width} × ${meta.height}")
         }
         meta.camera?.let { InfoRow(stringResource(R.string.gallery_meta_camera), it) }
+        // "50 mm · f/1.8 · 1/125 · ISO 200" — condensed shot-settings row when we have any of them.
+        val shot = buildList {
+            meta.focalLengthMm?.let { add("${it.toInt()} mm") }
+            meta.aperture?.let { add("f/%.1f".format(it)) }
+            meta.shutterSeconds?.let { add(PhotoMetadata.formatShutter(it)) }
+            meta.iso?.let { add("ISO $it") }
+        }.joinToString(" · ")
+        if (shot.isNotBlank()) InfoRow(stringResource(R.string.gallery_meta_shot), shot)
+        meta.orientation?.let { InfoRow(stringResource(R.string.gallery_meta_orientation), PhotoMetadata.orientationLabel(it)) }
         meta.latLon?.let { (lat, lon) ->
             InfoRow(stringResource(R.string.gallery_meta_location), "%.5f, %.5f".format(lat, lon))
         }
