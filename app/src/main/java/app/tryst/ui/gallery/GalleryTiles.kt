@@ -91,12 +91,18 @@ fun SelectablePhotoTile(
     }
 }
 
-/** A one-line "date · partner names" caption for a photo tile — labelSmall, dimmed, single line. */
+/**
+ * A one-line "date · partner names" caption for a photo tile — labelSmall, dimmed, single line.
+ *
+ * Set [showPartner] to `false` when the surrounding context already names the partner (e.g. a
+ * by-partner section header, or a drilled-in "Photos of Alex" top bar) so the caption doesn't
+ * echo the name on every single tile.
+ */
 @Composable
-fun TileCaption(photo: GalleryPhoto, modifier: Modifier = Modifier) {
+fun TileCaption(photo: GalleryPhoto, modifier: Modifier = Modifier, showPartner: Boolean = true) {
     val parts = buildList {
         add(Format.date(photo.takenAt))
-        photo.partnerNames.takeIf { it.isNotEmpty() }?.let { add(it.joinToString(", ")) }
+        if (showPartner) photo.partnerNames.takeIf { it.isNotEmpty() }?.let { add(it.joinToString(", ")) }
     }
     Text(
         text = parts.joinToString("  ·  "),
