@@ -20,6 +20,8 @@ class PartnerRepository @Inject constructor(
 
     fun observeActive(): Flow<List<PartnerEntity>> = dao.observeActive()
 
+    fun observeArchived(): Flow<List<PartnerEntity>> = dao.observeArchived()
+
     suspend fun upsert(partner: PartnerEntity) = dao.upsert(partner)
 
     suspend fun getById(id: String): PartnerEntity? = dao.getById(id)
@@ -27,6 +29,8 @@ class PartnerRepository @Inject constructor(
     suspend fun getAll(): List<PartnerEntity> = dao.getAll()
 
     suspend fun archive(id: String, now: Long = System.currentTimeMillis()) = dao.archive(id, now)
+
+    suspend fun unarchive(id: String, now: Long = System.currentTimeMillis()) = dao.unarchive(id, now)
 
     // --- Partner photo (encrypted blob in app-internal storage; id stored as Partner.photoMediaId) ---
 
