@@ -84,6 +84,7 @@ fun PartnersScreen(
     profileViewModel: ProfileViewModel = hiltViewModel(),
 ) {
     val partners by viewModel.partners.collectAsStateWithLifecycle()
+    val archived by viewModel.archivedPartners.collectAsStateWithLifecycle()
     val profile by profileViewModel.profile.collectAsStateWithLifecycle()
     var dialogTarget by remember { mutableStateOf<DialogTarget?>(null) }
 
@@ -129,6 +130,24 @@ fun PartnersScreen(
                             viewModel.viewPhotosFor(partner.id)
                             onOpenGallery()
                         },
+                        modifier = Modifier.animateItem(),
+                    )
+                }
+            }
+            if (archived.isNotEmpty()) {
+                item(key = "archived-header") {
+                    Text(
+                        stringResource(R.string.partners_archived_section),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.fillMaxWidth().padding(start = 4.dp, top = 20.dp, bottom = 4.dp),
+                    )
+                }
+                items(archived, key = { "arch-${it.id}" }) { partner ->
+                    ArchivedPartnerRow(
+                        partner = partner,
+                        onLoadPhoto = { viewModel.decodePhoto(it, AVATAR_PX) },
+                        onUnarchive = { viewModel.unarchive(partner.id) },
                         modifier = Modifier.animateItem(),
                     )
                 }
@@ -228,6 +247,35 @@ private fun PartnerRow(
                 haptics.tick()
                 onArchive()
             }) { Text(stringResource(R.string.partners_archive)) }
+        }
+    }
+}
+
+/** Dimmed row for an archived partner — only surfaces name + avatar + an Unarchive action. */
+@Composable
+private fun ArchivedPartnerRow(
+    partner: PartnerEntity,
+    onLoadPhoto: suspend (String) -> ImageBitmap?,
+    onUnarchive: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val haptics = rememberHaptics()
+    Card(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            PartnerAvatar(partner.photoMediaId, Format.partnerName(partner), 40.dp, onLoadPhoto)
+            Text(
+                text = Format.partnerName(partner),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.weight(1f).padding(start = 14.dp),
+            )
+            TextButton(onClick = {
+                haptics.tick()
+                onUnarchive()
+            }) { Text(stringResource(R.string.partners_unarchive)) }
         }
     }
 }

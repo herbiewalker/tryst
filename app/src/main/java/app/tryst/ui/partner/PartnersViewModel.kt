@@ -65,6 +65,11 @@ class PartnersViewModel @Inject constructor(
             .catch { emit(emptyList()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    val archivedPartners: StateFlow<List<PartnerEntity>> =
+        repository.observeArchived()
+            .catch { emit(emptyList()) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     fun save(id: String?, draft: PartnerDraft) {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
@@ -111,6 +116,10 @@ class PartnersViewModel @Inject constructor(
 
     fun archive(id: String) {
         viewModelScope.launch { repository.archive(id) }
+    }
+
+    fun unarchive(id: String) {
+        viewModelScope.launch { repository.unarchive(id) }
     }
 
     suspend fun decodePhoto(photoMediaId: String, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { runCatching { repository.openPhoto(photoMediaId) }.getOrNull() }

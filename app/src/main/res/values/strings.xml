@@ -266,6 +266,8 @@
     <string name="partners_title">Partners</string>
     <string name="partners_empty">No partners yet.\nTap + to add one.</string>
     <string name="partners_archive">Archive</string>
+    <string name="partners_unarchive">Unarchive</string>
+    <string name="partners_archived_section">Archived</string>
     <string name="partner_view_photos">View photos</string>
     <string name="partner_add">Add partner</string>
     <string name="partner_dialog_edit_title">Edit partner</string>
@@ -335,7 +337,7 @@
     <string name="settings_insights_desc">Reorder or hide the stat boxes and pick a chart style on the Insights tab.</string>
     <string name="settings_gallery">Gallery</string>
     <string name="settings_customize_gallery">Gallery layout</string>
-    <string name="settings_gallery_desc">Choose how the Photos tab lays out — grouped by date, a grid, by partner, or a large feed — plus the column count and sort order.</string>
+    <string name="settings_gallery_desc">Choose how the Photos tab lays out — grouped by date, a flat grid, by partner, a large feed, an aspect-preserving mosaic, or a People grid of avatars — plus column count and sort order. Long-press a photo to select and act on several at once; tap the heart to mark favourites.</string>
     <string name="settings_categories">Categories</string>
     <string name="settings_categories_desc">Tryst ships almost no built-in categories — add your own acts, kinks, positions, toys, occasions, and finish locations, and rename or remove them any time.</string>
     <string name="settings_manage_acts">Manage acts</string>

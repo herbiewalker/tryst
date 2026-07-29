@@ -74,44 +74,48 @@ fun GalleryPeople(
         return
     }
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(columns),
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        items(people, key = { it.id }) { person ->
-            Column(
-                Modifier.clickable { viewerIndex = people.indexOf(person) },
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                DecodedImage(
-                    model = "avatar:${person.photoMediaId}",
-                    contentDescription = person.name,
-                    modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(CircleShape),
-                    contentScale = ContentScale.Crop,
-                    load = { onLoadAvatar(person.photoMediaId, AVATAR_TILE_PX) },
-                )
-                Text(
-                    text = person.name,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 6.dp),
-                )
+    // Wrap in a Box so the AvatarViewer overlays the grid — otherwise the caller's Column would stack the
+    // viewer below the fillMaxSize grid at zero height and the tap would appear to do nothing.
+    Box(Modifier.fillMaxSize()) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(columns),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            items(people, key = { it.id }) { person ->
+                Column(
+                    Modifier.clickable { viewerIndex = people.indexOf(person) },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    DecodedImage(
+                        model = "avatar:${person.photoMediaId}",
+                        contentDescription = person.name,
+                        modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(CircleShape),
+                        contentScale = ContentScale.Crop,
+                        load = { onLoadAvatar(person.photoMediaId, AVATAR_TILE_PX) },
+                    )
+                    Text(
+                        text = person.name,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.padding(top = 6.dp),
+                    )
+                }
             }
         }
-    }
 
-    if (viewerIndex in people.indices) {
-        AvatarViewer(
-            people = people,
-            initialIndex = viewerIndex,
-            onClose = { viewerIndex = -1 },
-            onLoadAvatar = onLoadAvatar,
-        )
+        if (viewerIndex in people.indices) {
+            AvatarViewer(
+                people = people,
+                initialIndex = viewerIndex,
+                onClose = { viewerIndex = -1 },
+                onLoadAvatar = onLoadAvatar,
+            )
+        }
     }
 }
 
