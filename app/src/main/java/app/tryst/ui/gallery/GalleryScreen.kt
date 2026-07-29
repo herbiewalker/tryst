@@ -283,6 +283,10 @@ fun GalleryScreen(
                         partners = partners,
                         spacing = gridSpacing,
                         showTileCaptions = showTileCaptions,
+                        // Suppress the partner-name half of the caption when the surrounding chrome
+                        // already carries it: a drilled-in "Photos of Alex" title, or a by-partner
+                        // section header (per-section check happens inside GalleryGrid).
+                        hidePartnerInCaptions = drilled,
                         interaction = interaction,
                         onLoad = viewModel::decode,
                         onLoadPartnerPhoto = viewModel::decodePartnerPhoto,
@@ -497,6 +501,7 @@ private fun GalleryGrid(
     partners: List<PartnerEntity>,
     spacing: app.tryst.data.gallery.GridSpacing,
     showTileCaptions: Boolean,
+    hidePartnerInCaptions: Boolean,
     interaction: TileInteraction,
     onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
     onLoadPartnerPhoto: suspend (photoMediaId: String, reqPx: Int) -> ImageBitmap?,
@@ -518,6 +523,9 @@ private fun GalleryGrid(
                     SectionHeader(section.group, partners, onLoadPartnerPhoto)
                 }
             }
+            // The section itself may already name the partner (a Partner header, avatar-and-all) — in
+            // that case echoing the name under every tile is noise. Same for a drill-in "Photos of X".
+            val showPartner = !hidePartnerInCaptions && section.group !is GalleryGroup.Partner
             items(section.photos, key = { "$key:${it.id}" }) { photo ->
                 Column {
                     SelectablePhotoTile(
@@ -527,7 +535,7 @@ private fun GalleryGrid(
                         interaction = interaction,
                         modifier = Modifier.aspectRatio(1f),
                     )
-                    if (showTileCaptions) TileCaption(photo)
+                    if (showTileCaptions) TileCaption(photo, showPartner = showPartner)
                 }
             }
         }
