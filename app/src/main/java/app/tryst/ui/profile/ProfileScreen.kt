@@ -1,28 +1,20 @@
 package app.tryst.ui.profile
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -38,11 +30,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -51,33 +39,34 @@ import app.tryst.R
 import app.tryst.data.db.entity.Gender
 import app.tryst.data.db.entity.ProfileEntity
 import app.tryst.data.db.entity.Sex
-import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.DemographicFields
-import app.tryst.ui.common.MediaImages
 import app.tryst.ui.common.OptionalChips
+import app.tryst.ui.common.PersonPhotoStrip
 import app.tryst.ui.common.adaptiveContentWidth
-import app.tryst.ui.common.rememberCameraCapture
 import app.tryst.ui.common.rememberHaptics
-import app.tryst.ui.common.rememberImagePicker
-import java.io.File
 
-private const val AVATAR_PX = 200
+private const val AVATAR_PX = 320
 
 /**
- * The user's own profile editor (photo + name + sex/gender + demographics + note), reached from
- * Settings → Your profile and the "You" card on Partners. Mirrors the partner editor's photo staging
- * and the [app.tryst.ui.encounter.EncounterEditScreen] discard-changes guard. The single profile row
- * loads asynchronously, so the form is re-seeded via [key] when it first arrives.
+ * The user's own profile editor — photo album + name + sex/gender + demographics + note. Reached from
+ * Settings → Your profile and the "You" card on Partners. The photo album lives in the shared
+ * [PersonPhotoStrip] (v15+): add/delete/promote-to-avatar all auto-save, so a discard-changes prompt
+ * on the field edits never rolls back the photos. Loaded profile is re-seeded via [key] on arrival.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(onBack: () -> Unit, viewModel: ProfileViewModel = hiltViewModel()) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
+    val photos by viewModel.photos.collectAsStateWithLifecycle()
     key(profile) {
         ProfileEditor(
             initial = profile,
+            photos = photos,
             onSuppressAutoLock = { viewModel.suppressAutoLock() },
-            onLoadPhoto = { id -> viewModel.decodePhoto(id, AVATAR_PX) },
+            onAddPhotos = viewModel::addPhotos,
+            onDeletePhoto = viewModel::deletePhoto,
+            onSetAsAvatar = viewModel::setAsAvatar,
+            decodePhoto = { id -> viewModel.decodePhoto(id, AVATAR_PX) },
             onBack = onBack,
             onSave = { draft -> viewModel.save(draft, onBack) },
         )
@@ -86,14 +75,18 @@ fun ProfileScreen(onBack: () -> Unit, viewModel: ProfileViewModel = hiltViewMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+@Suppress("LongParameterList", "LongMethod")
 private fun ProfileEditor(
     initial: ProfileEntity?,
+    photos: List<app.tryst.data.db.entity.PersonPhotoEntity>,
     onSuppressAutoLock: () -> Unit,
-    onLoadPhoto: suspend (String) -> androidx.compose.ui.graphics.ImageBitmap?,
+    onAddPhotos: (List<android.net.Uri>) -> Unit,
+    onDeletePhoto: (app.tryst.data.db.entity.PersonPhotoEntity) -> Unit,
+    onSetAsAvatar: (app.tryst.data.db.entity.PersonPhotoEntity) -> Unit,
+    decodePhoto: suspend (String) -> androidx.compose.ui.graphics.ImageBitmap?,
     onBack: () -> Unit,
     onSave: (ProfileDraft) -> Unit,
 ) {
-    val context = LocalContext.current
     val haptics = rememberHaptics()
     var displayName by remember { mutableStateOf(initial?.displayName ?: "") }
     var sex by remember { mutableStateOf(initial?.sex) }
@@ -104,27 +97,9 @@ private fun ProfileEditor(
     var bodyType by remember { mutableStateOf(initial?.bodyType) }
     var location by remember { mutableStateOf(initial?.location ?: "") }
     var note by remember { mutableStateOf(initial?.note ?: "") }
-    var photoUri by remember { mutableStateOf<android.net.Uri?>(null) }
-    var photoRemoved by remember { mutableStateOf(false) }
-    var captureTempFile by remember { mutableStateOf<File?>(null) }
-    var photoMenu by remember { mutableStateOf(false) }
     var showDiscardConfirm by remember { mutableStateOf(false) }
 
-    val existingPhotoId = initial?.photoMediaId?.takeIf { !photoRemoved }
-    val hasPhoto = photoUri != null || existingPhotoId != null
-    val pickImage = rememberImagePicker(onLaunch = onSuppressAutoLock) {
-        captureTempFile?.delete()
-        captureTempFile = null
-        photoUri = it
-        photoRemoved = false
-    }
-    val captureImage = rememberCameraCapture(onLaunch = onSuppressAutoLock) { uri, file ->
-        captureTempFile?.delete()
-        photoUri = uri
-        photoRemoved = false
-        captureTempFile = file
-    }
-
+    // Photos auto-save via the strip — they never contribute to isDirty.
     val isDirty = displayName != (initial?.displayName ?: "") ||
         sex != initial?.sex ||
         gender != initial?.gender ||
@@ -133,17 +108,8 @@ private fun ProfileEditor(
         height != (initial?.height ?: "") ||
         bodyType != initial?.bodyType ||
         location != (initial?.location ?: "") ||
-        note != (initial?.note ?: "") ||
-        photoUri != null ||
-        photoRemoved
-    val attemptClose = {
-        if (isDirty) {
-            showDiscardConfirm = true
-        } else {
-            captureTempFile?.delete()
-            onBack()
-        }
-    }
+        note != (initial?.note ?: "")
+    val attemptClose = { if (isDirty) showDiscardConfirm = true else onBack() }
     BackHandler(enabled = isDirty) { showDiscardConfirm = true }
 
     Scaffold(
@@ -169,9 +135,10 @@ private fun ProfileEditor(
                                 bodyType = bodyType,
                                 location = location,
                                 note = note,
-                                newPhotoUri = photoUri,
-                                removePhoto = photoRemoved,
-                                captureTempFile = captureTempFile,
+                                // The strip owns photo lifecycle now; the draft's photo fields are unused.
+                                newPhotoUri = null,
+                                removePhoto = false,
+                                captureTempFile = null,
                             ),
                         )
                     }) { Text(stringResource(R.string.action_save)) }
@@ -190,48 +157,16 @@ private fun ProfileEditor(
                 .animateContentSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                ProfileAvatar(
-                    pendingUri = photoUri,
-                    existingPhotoId = existingPhotoId,
-                    fallbackLabel = displayName,
-                    onLoadPhoto = onLoadPhoto,
-                )
-                Column {
-                    Box {
-                        TextButton(onClick = { photoMenu = true }) {
-                            Text(stringResource(if (hasPhoto) R.string.partner_change_photo else R.string.partner_add_photo))
-                        }
-                        DropdownMenu(expanded = photoMenu, onDismissRequest = { photoMenu = false }) {
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.encounter_add_photo_camera)) },
-                                onClick = {
-                                    photoMenu = false
-                                    captureImage()
-                                },
-                            )
-                            DropdownMenuItem(
-                                text = { Text(stringResource(R.string.encounter_add_photo_gallery)) },
-                                onClick = {
-                                    photoMenu = false
-                                    pickImage()
-                                },
-                            )
-                        }
-                    }
-                    AnimatedVisibility(visible = hasPhoto) {
-                        TextButton(onClick = {
-                            captureTempFile?.delete()
-                            captureTempFile = null
-                            photoUri = null
-                            photoRemoved = true
-                        }) { Text(stringResource(R.string.partner_remove_photo)) }
-                    }
-                }
-            }
+            Text(stringResource(R.string.partner_photos_title), style = MaterialTheme.typography.titleMedium)
+            PersonPhotoStrip(
+                photos = photos,
+                currentAvatarBlobId = initial?.photoMediaId,
+                onSuppressAutoLock = onSuppressAutoLock,
+                onAdd = onAddPhotos,
+                onSetAsAvatar = onSetAsAvatar,
+                onDelete = onDeletePhoto,
+                decode = decodePhoto,
+            )
 
             OutlinedTextField(
                 value = displayName,
@@ -272,48 +207,10 @@ private fun ProfileEditor(
             confirmButton = {
                 TextButton(onClick = {
                     showDiscardConfirm = false
-                    captureTempFile?.delete()
                     onBack()
                 }) { Text(stringResource(R.string.action_discard)) }
             },
             dismissButton = { TextButton(onClick = { showDiscardConfirm = false }) { Text(stringResource(R.string.action_keep_editing)) } },
         )
-    }
-}
-
-@Composable
-private fun ProfileAvatar(
-    pendingUri: android.net.Uri?,
-    existingPhotoId: String?,
-    fallbackLabel: String,
-    onLoadPhoto: suspend (String) -> androidx.compose.ui.graphics.ImageBitmap?,
-) {
-    val context = LocalContext.current
-    val size = 72.dp
-    when {
-        pendingUri != null -> DecodedImage(
-            model = pendingUri,
-            contentDescription = stringResource(R.string.cd_photo),
-            modifier = Modifier.size(size).clip(CircleShape),
-            contentScale = ContentScale.Crop,
-            load = { MediaImages.decodeSampled(AVATAR_PX) { context.contentResolver.openInputStream(pendingUri) } },
-        )
-        existingPhotoId != null -> DecodedImage(
-            model = existingPhotoId,
-            contentDescription = stringResource(R.string.cd_photo),
-            modifier = Modifier.size(size).clip(CircleShape),
-            contentScale = ContentScale.Crop,
-            load = { onLoadPhoto(existingPhotoId) },
-        )
-        else -> Box(
-            modifier = Modifier.size(size).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(
-                fallbackLabel.trim().firstOrNull()?.uppercase() ?: stringResource(R.string.profile_you_initial),
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-            )
-        }
     }
 }

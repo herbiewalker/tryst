@@ -29,7 +29,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.tryst.R
-import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
@@ -43,7 +42,7 @@ import app.tryst.ui.common.Format
 fun SelectablePhotoTile(
     photo: GalleryPhoto,
     reqPx: Int,
-    onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
+    onLoad: suspend (blobId: String, reqPx: Int) -> ImageBitmap?,
     interaction: TileInteraction,
     modifier: Modifier = Modifier,
     shape: Shape = RoundedCornerShape(4.dp),
@@ -62,7 +61,7 @@ fun SelectablePhotoTile(
             contentDescription = stringResource(R.string.cd_photo),
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
-            load = { onLoad(photo.media, reqPx) },
+            load = { onLoad(photo.blobId, reqPx) },
         )
         if (photo.favorite) {
             Icon(

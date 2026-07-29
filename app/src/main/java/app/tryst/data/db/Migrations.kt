@@ -257,6 +257,28 @@ val MIGRATION_13_14 = object : Migration(13, 14) {
     }
 }
 
+/**
+ * v14 → v15: adds the **`person_photo`** table (portrait album per partner / self-profile).
+ *
+ * Pure additive DDL — every existing row is untouched, and the table starts empty. Partners and the
+ * self profile still keep their `photoMediaId` as the *active* avatar; the new table holds the album
+ * of extra photos the user attaches to a person so they can rotate which one is the current avatar.
+ * The encrypted blobs live in [app.tryst.data.media.EncryptedMediaStore] exactly like encounter media.
+ */
+val MIGRATION_14_15 = object : Migration(14, 15) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `person_photo` (" +
+                "`id` TEXT NOT NULL, `ownerKind` TEXT NOT NULL, `ownerId` TEXT NOT NULL, " +
+                "`mediaBlobId` TEXT NOT NULL, `addedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_person_photo_ownerKind_ownerId` " +
+                "ON `person_photo` (`ownerKind`, `ownerId`)",
+        )
+    }
+}
+
 /** All migrations, in order. */
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
@@ -272,4 +294,5 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_11_12,
     MIGRATION_12_13,
     MIGRATION_13_14,
+    MIGRATION_14_15,
 )

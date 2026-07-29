@@ -72,7 +72,8 @@ fun GalleryPeople(
     ) {
         items(people, key = { it.id }) { person ->
             Column(
-                Modifier.clickable(enabled = !person.isSelf) { onPersonClick(person.id) },
+                // Both partner and self entries drill in — the caller resolves "self" to a profile-photo view.
+                Modifier.clickable { onPersonClick(person.id) },
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 DecodedImage(

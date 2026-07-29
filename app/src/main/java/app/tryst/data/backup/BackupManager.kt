@@ -38,6 +38,7 @@ class BackupManager @Inject constructor(
     private val session: SessionManager,
     private val mediaStore: EncryptedMediaStore,
 ) {
+    @Suppress("CyclomaticComplexMethod") // Straight-line assembly of the backup container (header + zip entries).
     suspend fun export(password: String, out: OutputStream): Unit = withContext(Dispatchers.IO) {
         val db = session.database().openHelper.writableDatabase
         val salt = ByteArray(SALT_BYTES).also { SecureRandom().nextBytes(it) }
@@ -63,6 +64,11 @@ class BackupManager @Inject constructor(
                 while (c.moveToNext()) blobIds.add(c.getString(0))
             }
             db.query("SELECT photoMediaId FROM profile WHERE photoMediaId IS NOT NULL").use { c ->
+                while (c.moveToNext()) blobIds.add(c.getString(0))
+            }
+            // Person portraits (v15+): each row references its own blob; include them all so a restore
+            // brings the whole portrait album back.
+            db.query("SELECT mediaBlobId FROM person_photo").use { c ->
                 while (c.moveToNext()) blobIds.add(c.getString(0))
             }
             for (id in blobIds) {
@@ -205,7 +211,8 @@ class BackupManager @Inject constructor(
         val TABLES = listOf(
             "partners", "profile", "locations", "tags", "positions", "acts", "kinks", "toys",
             "occasions", "ejaculation_locations",
-            "encounters", "media", "encounter_partner", "encounter_position", "encounter_tag",
+            "encounters", "media", "person_photo",
+            "encounter_partner", "encounter_position", "encounter_tag",
         )
     }
 }

@@ -93,6 +93,8 @@ private object Routes {
     const val ENCOUNTER_NEW = "encounter/new"
     const val ENCOUNTER_EDIT = "encounter/{encounterId}"
     fun encounterEdit(id: String) = "encounter/$id"
+    const val PARTNER_EDIT = "partner/{partnerId}"
+    fun partnerEdit(id: String?) = "partner/${id ?: "new"}"
 }
 
 private data class TopDestination(
@@ -241,7 +243,11 @@ fun TrystApp() {
                         PartnersScreen(
                             onOpenProfile = { navController.navigate(Routes.PROFILE) },
                             onOpenGallery = { navController.navigateTop(Routes.GALLERY) },
+                            onOpenPartnerEdit = { id -> navController.navigate(Routes.partnerEdit(id)) },
                         )
+                    }
+                    composable(Routes.PARTNER_EDIT) {
+                        app.tryst.ui.partner.PartnerEditScreen(onClose = { navController.popBackStack() })
                     }
                     composable(Routes.SETTINGS) {
                         SettingsScreen(

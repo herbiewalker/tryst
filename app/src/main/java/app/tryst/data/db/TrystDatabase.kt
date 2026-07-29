@@ -11,6 +11,7 @@ import app.tryst.data.db.dao.LocationDao
 import app.tryst.data.db.dao.MediaDao
 import app.tryst.data.db.dao.OccasionDao
 import app.tryst.data.db.dao.PartnerDao
+import app.tryst.data.db.dao.PersonPhotoDao
 import app.tryst.data.db.dao.PositionDao
 import app.tryst.data.db.dao.ProfileDao
 import app.tryst.data.db.dao.RecentSearchDao
@@ -27,6 +28,7 @@ import app.tryst.data.db.entity.LocationEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.OccasionEntity
 import app.tryst.data.db.entity.PartnerEntity
+import app.tryst.data.db.entity.PersonPhotoEntity
 import app.tryst.data.db.entity.PositionEntity
 import app.tryst.data.db.entity.ProfileEntity
 import app.tryst.data.db.entity.RecentSearchEntity
@@ -47,12 +49,13 @@ import app.tryst.data.db.entity.ToyEntity
         OccasionEntity::class,
         EjaculationLocationEntity::class,
         MediaEntity::class,
+        PersonPhotoEntity::class,
         RecentSearchEntity::class,
         EncounterPartnerCrossRef::class,
         EncounterPositionCrossRef::class,
         EncounterTagCrossRef::class,
     ],
-    version = 14,
+    version = 15,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -70,6 +73,7 @@ abstract class TrystDatabase : RoomDatabase() {
     abstract fun ejaculationLocationDao(): EjaculationLocationDao
     abstract fun locationDao(): LocationDao
     abstract fun recentSearchDao(): RecentSearchDao
+    abstract fun personPhotoDao(): PersonPhotoDao
 
     companion object {
         const val NAME = "tryst.db"
