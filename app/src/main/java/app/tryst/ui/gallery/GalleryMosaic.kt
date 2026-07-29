@@ -27,11 +27,13 @@ import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.gallery.GalleryGroup
 import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.data.gallery.GallerySection
+import app.tryst.data.gallery.GridSpacing
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 
 private const val TARGET_ROW_HEIGHT_DP = 132f
-private const val MOSAIC_GAP_DP = 3f
+private const val COMPACT_GAP_DP = 3f
+private const val NORMAL_GAP_DP = 8f
 private const val THUMB_PX = 500
 
 // Aspect ratios are clamped so a lone panorama/strip can't blow out a row's height.
@@ -53,10 +55,15 @@ private sealed interface MosaicItem {
 @Composable
 fun GalleryMosaic(
     sections: List<GallerySection>,
+    spacing: GridSpacing,
     onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
     aspectOf: suspend (media: MediaEntity) -> Float,
     interaction: TileInteraction,
 ) {
+    val gapDp = when (spacing) {
+        GridSpacing.COMPACT -> COMPACT_GAP_DP
+        GridSpacing.NORMAL -> NORMAL_GAP_DP
+    }
     val flat = remember(sections) { sections.flatMap { it.photos } }
     val aspects = remember { mutableStateMapOf<String, Float>() }
     LaunchedEffect(flat) {
@@ -66,19 +73,19 @@ fun GalleryMosaic(
     }
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        val availableDp = maxWidth.value - 2 * MOSAIC_GAP_DP
-        val items = remember(sections, aspects.toMap(), availableDp) {
-            buildItems(sections, availableDp) { id -> aspects[id] ?: 1f }
+        val availableDp = maxWidth.value - 2 * gapDp
+        val items = remember(sections, aspects.toMap(), availableDp, gapDp) {
+            buildItems(sections, availableDp, gapDp) { id -> aspects[id] ?: 1f }
         }
         LazyColumn(
             Modifier.fillMaxSize(),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(MOSAIC_GAP_DP.dp),
-            verticalArrangement = Arrangement.spacedBy(MOSAIC_GAP_DP.dp),
+            contentPadding = androidx.compose.foundation.layout.PaddingValues(gapDp.dp),
+            verticalArrangement = Arrangement.spacedBy(gapDp.dp),
         ) {
             items(items, key = { it.key() }) { item ->
                 when (item) {
                     is MosaicItem.Header -> MonthHeader(item.group)
-                    is MosaicItem.PhotoRow -> MosaicRowView(item.row, onLoad, interaction)
+                    is MosaicItem.PhotoRow -> MosaicRowView(item.row, gapDp, onLoad, interaction)
                 }
             }
         }
@@ -88,12 +95,13 @@ fun GalleryMosaic(
 @Composable
 private fun MosaicRowView(
     row: MosaicRow,
+    gapDp: Float,
     onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
     interaction: TileInteraction,
 ) {
     Row(
         Modifier.fillMaxWidth().height(row.heightDp.dp),
-        horizontalArrangement = Arrangement.spacedBy(MOSAIC_GAP_DP.dp),
+        horizontalArrangement = Arrangement.spacedBy(gapDp.dp),
     ) {
         row.cells.forEach { cell ->
             SelectablePhotoTile(
@@ -136,11 +144,11 @@ private fun MosaicItem.key(): String = when (this) {
     is MosaicItem.PhotoRow -> "row:" + row.cells.first().photo.id
 }
 
-private fun buildItems(sections: List<GallerySection>, availableDp: Float, aspectOf: (String) -> Float): List<MosaicItem> {
+private fun buildItems(sections: List<GallerySection>, availableDp: Float, gapDp: Float, aspectOf: (String) -> Float): List<MosaicItem> {
     val out = mutableListOf<MosaicItem>()
     for (section in sections) {
         if (section.group != GalleryGroup.Ungrouped) out += MosaicItem.Header(section.group)
-        justify(section.photos, availableDp, aspectOf).forEach { out += MosaicItem.PhotoRow(it) }
+        justify(section.photos, availableDp, gapDp, aspectOf).forEach { out += MosaicItem.PhotoRow(it) }
     }
     return out
 }
@@ -149,7 +157,7 @@ private fun buildItems(sections: List<GallerySection>, availableDp: Float, aspec
  * Packs [photos] into justified rows: fill a row at the target height, then scale the row's height so its
  * photos exactly span [availableDp]. The trailing partial row keeps the target height (not upscaled). Pure.
  */
-private fun justify(photos: List<GalleryPhoto>, availableDp: Float, aspectOf: (String) -> Float): List<MosaicRow> {
+private fun justify(photos: List<GalleryPhoto>, availableDp: Float, gapDp: Float, aspectOf: (String) -> Float): List<MosaicRow> {
     if (photos.isEmpty() || availableDp <= 0f) return emptyList()
     val rows = mutableListOf<MosaicRow>()
     var current = mutableListOf<GalleryPhoto>()
@@ -160,7 +168,7 @@ private fun justify(photos: List<GalleryPhoto>, availableDp: Float, aspectOf: (S
     for (p in photos) {
         current.add(p)
         sumWidthsAtTarget += aspect(p) * TARGET_ROW_HEIGHT_DP
-        val gaps = MOSAIC_GAP_DP * (current.size - 1)
+        val gaps = gapDp * (current.size - 1)
         if (sumWidthsAtTarget + gaps >= availableDp) {
             val scale = (availableDp - gaps) / sumWidthsAtTarget
             val h = TARGET_ROW_HEIGHT_DP * scale

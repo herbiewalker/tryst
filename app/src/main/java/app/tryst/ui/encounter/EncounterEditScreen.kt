@@ -51,6 +51,7 @@ import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -92,7 +93,7 @@ import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.encounterSharedKey
 import app.tryst.ui.common.rememberCameraCapture
 import app.tryst.ui.common.rememberHaptics
-import app.tryst.ui.common.rememberImagePicker
+import app.tryst.ui.common.rememberMultiImagePicker
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZoneOffset
@@ -136,10 +137,17 @@ fun EncounterEditScreen(
     val dirty = viewModel.hasUnsavedChanges()
     val attemptClose = { if (dirty) showDiscardConfirm = true else onClose() }
     BackHandler(enabled = dirty) { showDiscardConfirm = true }
-    val pickImage = rememberImagePicker(onLaunch = { viewModel.suppressAutoLock() }) { viewModel.addPhoto(it) }
+    // Multi-pick from the system Photo Picker — pick several photos in one go, all staged for the encounter.
+    val pickImage = rememberMultiImagePicker(onLaunch = { viewModel.suppressAutoLock() }) { uris -> viewModel.addPhotos(uris) }
+    // Camera loop (opt-in): after a successful capture, if the pref is on, relaunch the intent so the
+    // user can shoot several partner photos in a row. Ended by the camera's own back button (returns failure).
+    val cameraKeepCapturing by viewModel.cameraKeepCapturing.collectAsStateWithLifecycle()
+    var relaunchTick by remember { mutableIntStateOf(0) }
     val captureImage = rememberCameraCapture(onLaunch = { viewModel.suppressAutoLock() }) { uri, file ->
         viewModel.addCapturedPhoto(uri, file)
+        if (cameraKeepCapturing) relaunchTick++
     }
+    LaunchedEffect(relaunchTick) { if (relaunchTick > 0) captureImage() }
 
     Scaffold(
         // The editor's container is the destination of the card / FAB container transform. A surface

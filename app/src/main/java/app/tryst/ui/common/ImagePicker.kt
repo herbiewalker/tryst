@@ -39,6 +39,26 @@ fun rememberImagePicker(onLaunch: () -> Unit = {}, onPicked: (Uri) -> Unit): () 
 }
 
 /**
+ * Multi-pick variant of [rememberImagePicker]: returns URIs for every selected image in one call.
+ * Uses the modern Android Photo Picker's [ActivityResultContracts.PickMultipleVisualMedia]; older
+ * devices without the picker will still get zero results, which the caller can treat as "cancelled".
+ */
+@Composable
+fun rememberMultiImagePicker(onLaunch: () -> Unit = {}, onPicked: (List<Uri>) -> Unit): () -> Unit {
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
+        if (uris.isNotEmpty()) onPicked(uris)
+    }
+    return remember(photoPicker, onLaunch) {
+        {
+            onLaunch()
+            runCatching {
+                photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            }
+        }
+    }
+}
+
+/**
  * Returns a "take a photo" action that captures directly into the app's private cache via the
  * system camera (no CAMERA permission needed for ACTION_IMAGE_CAPTURE), so the shot never lands in
  * the device gallery or cloud backup. On success, [onCaptured] gets the content URI and the temp

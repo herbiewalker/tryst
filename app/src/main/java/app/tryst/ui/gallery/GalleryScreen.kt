@@ -131,6 +131,10 @@ fun GalleryScreen(
     val blurUntilRevealed by viewModel.blurUntilRevealed.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
     val drilledPartner by viewModel.drilledPartner.collectAsStateWithLifecycle()
+    val gridSpacing by viewModel.gridSpacing.collectAsStateWithLifecycle()
+    val showTileCaptions by viewModel.showTileCaptions.collectAsStateWithLifecycle()
+    val slideshowInterval by viewModel.slideshowIntervalSeconds.collectAsStateWithLifecycle()
+    val slideshowShuffle by viewModel.slideshowShuffle.collectAsStateWithLifecycle()
 
     val selectionActive = selectedIds.isNotEmpty()
     val drilled = drilledPartner != null
@@ -268,6 +272,7 @@ fun GalleryScreen(
                     )
                     ui.layout == GalleryLayout.MOSAIC -> GalleryMosaic(
                         sections = ui.sections,
+                        spacing = gridSpacing,
                         onLoad = viewModel::decode,
                         aspectOf = viewModel::aspectRatio,
                         interaction = interaction,
@@ -276,6 +281,8 @@ fun GalleryScreen(
                         sections = ui.sections,
                         columns = ui.columns,
                         partners = partners,
+                        spacing = gridSpacing,
+                        showTileCaptions = showTileCaptions,
                         interaction = interaction,
                         onLoad = viewModel::decode,
                         onLoadPartnerPhoto = viewModel::decodePartnerPhoto,
@@ -385,6 +392,8 @@ fun GalleryScreen(
             onLoadMeta = viewModel::readMeta,
             onToggleFavorite = viewModel::toggleFavorite,
             onSetAvatar = viewModel::setAsPartnerAvatar,
+            slideshowIntervalSeconds = slideshowInterval,
+            slideshowShuffle = slideshowShuffle,
         )
     }
 }
@@ -481,21 +490,26 @@ private fun ReassignDialog(
 // --- grid + feed ---------------------------------------------------------------------------------
 
 @Composable
+@Suppress("LongParameterList") // Distinct look/behaviour inputs threaded from the VM.
 private fun GalleryGrid(
     sections: List<GallerySection>,
     columns: Int,
     partners: List<PartnerEntity>,
+    spacing: app.tryst.data.gallery.GridSpacing,
+    showTileCaptions: Boolean,
     interaction: TileInteraction,
     onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
     onLoadPartnerPhoto: suspend (photoMediaId: String, reqPx: Int) -> ImageBitmap?,
     onPinch: (delta: Int) -> Unit,
 ) {
+    val gap = spacingGapDp(spacing)
+    val edge = spacingEdgeDp(spacing)
     LazyVerticalGrid(
         columns = GridCells.Fixed(columns),
         modifier = Modifier.fillMaxSize().pinchColumns(onPinch),
-        contentPadding = PaddingValues(2.dp),
-        verticalArrangement = Arrangement.spacedBy(3.dp),
-        horizontalArrangement = Arrangement.spacedBy(3.dp),
+        contentPadding = PaddingValues(edge),
+        verticalArrangement = Arrangement.spacedBy(gap),
+        horizontalArrangement = Arrangement.spacedBy(gap),
     ) {
         sections.forEach { section ->
             val key = sectionKey(section.group)
@@ -505,16 +519,29 @@ private fun GalleryGrid(
                 }
             }
             items(section.photos, key = { "$key:${it.id}" }) { photo ->
-                SelectablePhotoTile(
-                    photo = photo,
-                    reqPx = THUMB_PX,
-                    onLoad = onLoad,
-                    interaction = interaction,
-                    modifier = Modifier.aspectRatio(1f),
-                )
+                Column {
+                    SelectablePhotoTile(
+                        photo = photo,
+                        reqPx = THUMB_PX,
+                        onLoad = onLoad,
+                        interaction = interaction,
+                        modifier = Modifier.aspectRatio(1f),
+                    )
+                    if (showTileCaptions) TileCaption(photo)
+                }
             }
         }
     }
+}
+
+private fun spacingGapDp(spacing: app.tryst.data.gallery.GridSpacing): androidx.compose.ui.unit.Dp = when (spacing) {
+    app.tryst.data.gallery.GridSpacing.COMPACT -> 3.dp
+    app.tryst.data.gallery.GridSpacing.NORMAL -> 8.dp
+}
+
+private fun spacingEdgeDp(spacing: app.tryst.data.gallery.GridSpacing): androidx.compose.ui.unit.Dp = when (spacing) {
+    app.tryst.data.gallery.GridSpacing.COMPACT -> 2.dp
+    app.tryst.data.gallery.GridSpacing.NORMAL -> 8.dp
 }
 
 @Composable

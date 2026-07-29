@@ -43,6 +43,15 @@ enum class GalleryLayout {
 enum class GallerySort { NEWEST, OLDEST }
 
 /**
+ * How much room to leave between tiles in the grid and mosaic layouts. Compact preserves the app's
+ * original tight look; Normal breathes more like Google Photos. Feed is unaffected (already spaced).
+ */
+enum class GridSpacing {
+    COMPACT, // 2dp content padding, 3dp gaps — the original look
+    NORMAL, // 8dp content padding, 8dp gaps — more room to breathe
+}
+
+/**
  * What a [GallerySection] is grouped by — the header the UI draws (label resolution, which is locale- and
  * string-resource-bound, stays in the UI; this pure layer only carries the identifying data).
  */

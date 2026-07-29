@@ -106,8 +106,12 @@ class GalleryViewModel @Inject constructor(
     private val _partnerIds = MutableStateFlow<Set<String>>(emptySet())
     val partnerIds: StateFlow<Set<String>> = _partnerIds.asStateFlow()
 
-    /** Show only favourited photos (GAL-3). */
-    private val _onlyFavorites = MutableStateFlow(false)
+    /**
+     * Show only favourited photos (GAL-3). Seeded from [GalleryPreferences.defaultToFavoritesOnly] so a
+     * user who's chosen "open with favourites only" always lands filtered on fresh VM construction;
+     * flipping the app-bar heart during a session is transient and doesn't touch the pref.
+     */
+    private val _onlyFavorites = MutableStateFlow(galleryPreferences.defaultToFavoritesOnly.value)
     val onlyFavorites: StateFlow<Boolean> = _onlyFavorites.asStateFlow()
 
     /** The "More filters" sheet's dimensions — everything beyond the base chips (see [SearchViewModel]). */
@@ -146,6 +150,18 @@ class GalleryViewModel @Inject constructor(
 
     /** Whether the Photos tab should open blurred behind a tap-to-reveal (SEC-2). */
     val blurUntilRevealed: StateFlow<Boolean> = galleryPreferences.blurUntilRevealed
+
+    /** Slideshow speed in seconds (user-picked in Settings → Gallery). */
+    val slideshowIntervalSeconds: StateFlow<Int> = galleryPreferences.slideshowIntervalSeconds
+
+    /** Whether the slideshow plays photos in a shuffled order. */
+    val slideshowShuffle: StateFlow<Boolean> = galleryPreferences.slideshowShuffle
+
+    /** How tiles are spaced in grid/mosaic layouts (user-picked in Settings → Gallery). */
+    val gridSpacing: StateFlow<app.tryst.data.gallery.GridSpacing> = galleryPreferences.gridSpacing
+
+    /** Whether to draw a small date · partner caption under each grid tile. */
+    val showTileCaptions: StateFlow<Boolean> = galleryPreferences.showTileCaptions
 
     /** Records a reveal so a quick tab switch back doesn't re-blur (see [GalleryRevealState]). */
     fun markRevealed() = revealState.markRevealed()

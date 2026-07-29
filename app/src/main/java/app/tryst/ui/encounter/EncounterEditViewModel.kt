@@ -8,6 +8,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tryst.core.prefs.GalleryPreferences
 import app.tryst.core.session.SessionManager
 import app.tryst.data.db.entity.ActEntity
 import app.tryst.data.db.entity.EjaculationLocationEntity
@@ -94,6 +95,7 @@ class EncounterEditViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val session: SessionManager,
     private val encounters: EncounterRepository,
+    galleryPreferences: GalleryPreferences,
     partners: PartnerRepository,
     positions: PositionRepository,
     acts: ActRepository,
@@ -105,6 +107,9 @@ class EncounterEditViewModel @Inject constructor(
 
     /** Keep the app unlocked across the photo-picker/camera handoff. */
     fun suppressAutoLock() = session.suppressNextAutoLock()
+
+    /** Opt-in "take another after each shot" mode from Settings → Gallery. */
+    val cameraKeepCapturing: StateFlow<Boolean> = galleryPreferences.cameraKeepCapturing
 
     val availablePartners: StateFlow<List<PartnerEntity>> =
         partners.observeActive()
@@ -224,6 +229,13 @@ class EncounterEditViewModel @Inject constructor(
     fun addPhoto(uri: Uri) {
         val mime = context.contentResolver.getType(uri) ?: "image/*"
         uiState = uiState.copy(pendingPhotos = uiState.pendingPhotos + PendingPhoto(uri, mime))
+    }
+
+    /** Stage a batch of picked URIs at once — the multi-picker's landing path. */
+    fun addPhotos(uris: List<Uri>) {
+        if (uris.isEmpty()) return
+        val added = uris.map { uri -> PendingPhoto(uri, context.contentResolver.getType(uri) ?: "image/*") }
+        uiState = uiState.copy(pendingPhotos = uiState.pendingPhotos + added)
     }
 
     /** From the in-app camera: [file] is the plaintext capture in cache, deleted once encrypted. */

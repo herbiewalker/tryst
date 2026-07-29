@@ -68,7 +68,6 @@ import kotlinx.coroutines.launch
 private const val VIEWER_PX = 1600
 private const val FILMSTRIP_PX = 160
 private const val MAX_ZOOM = 4f
-private const val SLIDESHOW_INTERVAL_MS = 3_000L
 private val ACCENT = Color(0xFF80CBC4)
 
 /**
@@ -90,6 +89,8 @@ fun PhotoViewer(
     onLoadMeta: suspend (media: MediaEntity) -> PhotoMeta,
     onToggleFavorite: (GalleryPhoto) -> Unit,
     onSetAvatar: (media: MediaEntity, partnerId: String) -> Unit,
+    slideshowIntervalSeconds: Int,
+    slideshowShuffle: Boolean,
 ) {
     if (photos.isEmpty()) return
     val pagerState = rememberPagerState(
@@ -102,12 +103,29 @@ fun PhotoViewer(
     var avatarMenu by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    // Slideshow: advance one page every few seconds, wrapping at the end. Cancelled when chrome shows a
-    // menu or the user turns it off; a manual swipe simply feeds the next tick from the new page.
-    LaunchedEffect(slideshow, pagerState.currentPage) {
+    // Shuffle order: a Fisher-Yates permutation regenerated every time slideshow flips on OR the set of
+    // photos changes. Playing consumes it end-to-end (with the current page slotted first) before reshuffling,
+    // so no repeats until every photo has shown.
+    val shuffleOrder = remember(photos.size, slideshow, slideshowShuffle) {
+        if (!slideshow || !slideshowShuffle) {
+            emptyList()
+        } else {
+            val order = photos.indices.shuffled()
+            val current = pagerState.currentPage
+            listOf(current) + order.filter { it != current }
+        }
+    }
+    // Slideshow: advance every [slideshowIntervalSeconds] seconds. Cancelled when the user turns it off;
+    // a manual swipe simply feeds the next tick from the new page.
+    LaunchedEffect(slideshow, slideshowIntervalSeconds, pagerState.currentPage, shuffleOrder) {
         if (!slideshow) return@LaunchedEffect
-        delay(SLIDESHOW_INTERVAL_MS)
-        val next = (pagerState.currentPage + 1) % photos.size
+        delay(slideshowIntervalSeconds.coerceAtLeast(1) * 1000L)
+        val next = if (slideshowShuffle && shuffleOrder.isNotEmpty()) {
+            val idx = shuffleOrder.indexOf(pagerState.currentPage)
+            shuffleOrder[(idx + 1).mod(shuffleOrder.size)]
+        } else {
+            (pagerState.currentPage + 1) % photos.size
+        }
         pagerState.animateScrollToPage(next)
     }
 
