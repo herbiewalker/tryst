@@ -1,6 +1,7 @@
 package app.tryst.ui.gallery
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -11,27 +12,41 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.PersonPin
+import androidx.compose.material.icons.filled.Slideshow
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -41,21 +56,31 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.tryst.R
 import app.tryst.data.db.entity.MediaEntity
+import app.tryst.data.gallery.GalleryPartner
 import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.data.media.PhotoMeta
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
 import kotlin.math.abs
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private const val VIEWER_PX = 1600
+private const val FILMSTRIP_PX = 160
 private const val MAX_ZOOM = 4f
+private const val SLIDESHOW_INTERVAL_MS = 3_000L
+private val ACCENT = Color(0xFF80CBC4)
 
 /**
  * Full-screen photo viewer: swipe between the gallery's photos, pinch-to-zoom and pan the current one,
  * tap to toggle the chrome, and jump to the owning tryst. `FLAG_SECURE` (set app-wide) already blocks
  * screenshots here. A page change resets the zoom so the next photo starts fit-to-screen.
+ *
+ * Also the per-photo edit surface: a favourite star (GAL-3), a slideshow toggle, a filmstrip strip to
+ * jump within the set, and "set as partner avatar" (GAL-5).
  */
 @Composable
+@Suppress("LongParameterList", "LongMethod") // A self-contained full-screen surface with several actions.
 fun PhotoViewer(
     photos: List<GalleryPhoto>,
     initialIndex: Int,
@@ -63,6 +88,8 @@ fun PhotoViewer(
     onOpenEncounter: (String) -> Unit,
     onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
     onLoadMeta: suspend (media: MediaEntity) -> PhotoMeta,
+    onToggleFavorite: (GalleryPhoto) -> Unit,
+    onSetAvatar: (media: MediaEntity, partnerId: String) -> Unit,
 ) {
     if (photos.isEmpty()) return
     val pagerState = rememberPagerState(
@@ -71,6 +98,18 @@ fun PhotoViewer(
     )
     var chromeVisible by remember { mutableStateOf(true) }
     var showInfo by remember { mutableStateOf(false) }
+    var slideshow by remember { mutableStateOf(false) }
+    var avatarMenu by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    // Slideshow: advance one page every few seconds, wrapping at the end. Cancelled when chrome shows a
+    // menu or the user turns it off; a manual swipe simply feeds the next tick from the new page.
+    LaunchedEffect(slideshow, pagerState.currentPage) {
+        if (!slideshow) return@LaunchedEffect
+        delay(SLIDESHOW_INTERVAL_MS)
+        val next = (pagerState.currentPage + 1) % photos.size
+        pagerState.animateScrollToPage(next)
+    }
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
@@ -100,11 +139,48 @@ fun PhotoViewer(
                     modifier = Modifier.align(Alignment.Center),
                 )
                 Row(Modifier.align(Alignment.CenterEnd)) {
+                    IconButton(onClick = { onToggleFavorite(current) }) {
+                        Icon(
+                            if (current.favorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                            contentDescription = stringResource(
+                                if (current.favorite) R.string.gallery_unfavorite else R.string.gallery_favorite,
+                            ),
+                            tint = if (current.favorite) ACCENT else Color.White,
+                        )
+                    }
+                    IconButton(onClick = { slideshow = !slideshow }) {
+                        Icon(
+                            Icons.Filled.Slideshow,
+                            contentDescription = stringResource(R.string.gallery_slideshow),
+                            tint = if (slideshow) ACCENT else Color.White,
+                        )
+                    }
+                    Box {
+                        IconButton(
+                            onClick = { avatarMenu = true },
+                            enabled = current.partners.isNotEmpty(),
+                        ) {
+                            Icon(
+                                Icons.Filled.PersonPin,
+                                contentDescription = stringResource(R.string.gallery_set_avatar),
+                                tint = if (current.partners.isNotEmpty()) Color.White else Color.White.copy(alpha = 0.4f),
+                            )
+                        }
+                        AvatarPartnerMenu(
+                            expanded = avatarMenu,
+                            partners = current.partners,
+                            onDismiss = { avatarMenu = false },
+                            onPick = { partnerId ->
+                                onSetAvatar(current.media, partnerId)
+                                avatarMenu = false
+                            },
+                        )
+                    }
                     IconButton(onClick = { showInfo = !showInfo }) {
                         Icon(
                             Icons.Outlined.Info,
                             contentDescription = stringResource(R.string.cd_photo_info),
-                            tint = if (showInfo) Color(0xFF80CBC4) else Color.White,
+                            tint = if (showInfo) ACCENT else Color.White,
                         )
                     }
                     IconButton(onClick = { onOpenEncounter(current.encounterId) }) {
@@ -117,13 +193,69 @@ fun PhotoViewer(
                 }
             }
 
-            if (showInfo) {
-                PhotoInfoPanel(
-                    photo = photos[pagerState.currentPage],
-                    onLoadMeta = onLoadMeta,
-                    modifier = Modifier.align(Alignment.BottomStart),
+            Column(Modifier.align(Alignment.BottomStart).fillMaxWidth()) {
+                if (showInfo) {
+                    PhotoInfoPanel(photo = photos[pagerState.currentPage], onLoadMeta = onLoadMeta)
+                }
+                Filmstrip(
+                    photos = photos,
+                    currentPage = pagerState.currentPage,
+                    onLoad = onLoad,
+                    onSelect = { index -> scope.launch { pagerState.animateScrollToPage(index) } },
                 )
             }
+        }
+    }
+}
+
+/** A menu to pick which of the photo's partners this photo becomes the avatar for (GAL-5). */
+@Composable
+private fun AvatarPartnerMenu(
+    expanded: Boolean,
+    partners: List<GalleryPartner>,
+    onDismiss: () -> Unit,
+    onPick: (partnerId: String) -> Unit,
+) {
+    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        partners.forEach { p ->
+            val name = p.name?.takeIf { it.isNotBlank() } ?: stringResource(R.string.gallery_group_anonymous)
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.gallery_set_avatar_for, name)) },
+                onClick = { onPick(p.id) },
+            )
+        }
+    }
+}
+
+/** A thumbnail strip along the bottom for jumping within the current set. */
+@Composable
+private fun Filmstrip(
+    photos: List<GalleryPhoto>,
+    currentPage: Int,
+    onLoad: suspend (media: MediaEntity, reqPx: Int) -> ImageBitmap?,
+    onSelect: (Int) -> Unit,
+) {
+    val listState = rememberLazyListState()
+    // Keep the current thumbnail in view as pages change (swipe or slideshow).
+    LaunchedEffect(currentPage) { listState.animateScrollToItem(currentPage.coerceAtLeast(0)) }
+    LazyRow(
+        state = listState,
+        modifier = Modifier.fillMaxWidth().background(Color.Black.copy(alpha = 0.45f)).navigationBarsPadding().padding(vertical = 6.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        itemsIndexed(photos, key = { _, p -> p.id }) { index, photo ->
+            DecodedImage(
+                model = "strip:${photo.id}",
+                contentDescription = null,
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .graphicsLayer { alpha = if (index == currentPage) 1f else 0.55f }
+                    .clickable { onSelect(index) },
+                contentScale = ContentScale.Crop,
+                load = { onLoad(photo.media, FILMSTRIP_PX) },
+            )
         }
     }
 }
@@ -140,7 +272,6 @@ private fun PhotoInfoPanel(
         modifier
             .fillMaxWidth()
             .background(Color.Black.copy(alpha = 0.45f))
-            .navigationBarsPadding()
             .padding(horizontal = 20.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {

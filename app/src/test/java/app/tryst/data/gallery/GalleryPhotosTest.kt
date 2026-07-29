@@ -21,7 +21,7 @@ class GalleryPhotosTest {
 
     private fun partner(id: String, name: String? = id) = PartnerEntity(id, name, isAnonymous = name == null, color = null, note = null, archivedAt = null, createdAt = 0, updatedAt = 0)
 
-    private fun media(id: String, encounterId: String, createdAt: Long = 0) = MediaEntity(id = id, encounterId = encounterId, encFilePath = id, mimeType = "image/jpeg", createdAt = createdAt)
+    private fun media(id: String, encounterId: String, createdAt: Long = 0, favorite: Boolean = false) = MediaEntity(id = id, encounterId = encounterId, encFilePath = id, mimeType = "image/jpeg", createdAt = createdAt, favorite = favorite)
 
     private fun encounter(
         id: String,
@@ -63,7 +63,8 @@ class GalleryPhotosTest {
         sort: GallerySort = GallerySort.NEWEST,
         filter: EncounterFilter = EncounterFilter(),
         query: String = "",
-    ) = GalleryPhotos.build(encounters, filter, query, CatalogLabels.EMPTY, layout, sort, zone)
+        onlyFavorites: Boolean = false,
+    ) = GalleryPhotos.build(encounters, filter, query, CatalogLabels.EMPTY, layout, sort, zone, onlyFavorites)
 
     @Test
     fun onlyEncountersWithMediaContributeAndEachPhotoIsOneItem() {
@@ -137,6 +138,42 @@ class GalleryPhotosTest {
         )
         assertEquals(listOf("wa"), build(log, query = "alex").photos.map { it.id })
         assertEquals(listOf("so"), build(log, query = "beach").photos.map { it.id })
+    }
+
+    @Test
+    fun onlyFavoritesKeepsStarredPhotos() {
+        val log = listOf(
+            encounter(
+                "e",
+                LocalDateTime.of(2026, 5, 1, 12, 0),
+                media = listOf(media("fav", "e", favorite = true), media("plain", "e")),
+            ),
+        )
+        assertEquals(setOf("fav", "plain"), build(log).photos.map { it.id }.toSet())
+        assertEquals(listOf("fav"), build(log, onlyFavorites = true).photos.map { it.id })
+    }
+
+    @Test
+    fun peopleLayoutYieldsNoPhotos() {
+        val log = listOf(
+            encounter("e", LocalDateTime.of(2026, 5, 1, 12, 0), media = listOf(media("p", "e"))),
+        )
+        val result = build(log, layout = GalleryLayout.PEOPLE)
+        assertTrue(result.photos.isEmpty())
+        assertTrue(result.sections.isEmpty())
+    }
+
+    @Test
+    fun mosaicGroupsByMonthLikeTheDateGrid() {
+        val log = listOf(
+            encounter("may", LocalDateTime.of(2026, 5, 10, 12, 0), media = listOf(media("m1", "may"))),
+            encounter("jun", LocalDateTime.of(2026, 6, 10, 12, 0), media = listOf(media("j1", "jun"))),
+        )
+        val sections = build(log, layout = GalleryLayout.MOSAIC, sort = GallerySort.NEWEST).sections
+        assertEquals(
+            listOf(GalleryGroup.Month(2026, 6), GalleryGroup.Month(2026, 5)),
+            sections.map { it.group },
+        )
     }
 
     @Test

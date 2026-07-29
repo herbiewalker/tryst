@@ -24,6 +24,16 @@ interface MediaDao {
     @Query("SELECT * FROM media WHERE encounterId = :encounterId ORDER BY createdAt")
     suspend fun getForEncounter(encounterId: String): List<MediaEntity>
 
+    @Query("UPDATE media SET favorite = :favorite WHERE id = :id")
+    suspend fun setFavorite(id: String, favorite: Boolean)
+
+    @Query("UPDATE media SET favorite = :favorite WHERE id IN (:ids)")
+    suspend fun setFavorite(ids: List<String>, favorite: Boolean)
+
+    /** Moves photos to a different tryst (bulk reassign, GAL-4). The gallery re-derives, so they relocate. */
+    @Query("UPDATE media SET encounterId = :encounterId WHERE id IN (:ids)")
+    suspend fun reassign(ids: List<String>, encounterId: String)
+
     @Delete
     suspend fun delete(media: MediaEntity)
 }

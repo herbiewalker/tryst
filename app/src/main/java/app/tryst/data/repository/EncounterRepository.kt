@@ -61,4 +61,25 @@ class EncounterRepository @Inject constructor(
         mediaStore.delete(media.id)
         mediaDao.delete(media)
     }
+
+    /** Toggles/sets a photo's favourite mark (GAL-3). */
+    suspend fun setFavorite(mediaId: String, favorite: Boolean) = mediaDao.setFavorite(mediaId, favorite)
+
+    /** Marks/unmarks many photos at once — the gallery's bulk favourite action (GAL-4). */
+    suspend fun setFavorite(mediaIds: List<String>, favorite: Boolean) {
+        if (mediaIds.isNotEmpty()) mediaDao.setFavorite(mediaIds, favorite)
+    }
+
+    /** Deletes many photos (blob + row) in one bulk action (GAL-4). */
+    suspend fun deleteMedia(media: List<MediaEntity>) {
+        for (m in media) {
+            mediaStore.delete(m.id)
+            mediaDao.delete(m)
+        }
+    }
+
+    /** Moves photos to another tryst — the gallery's bulk reassign (GAL-4). No blob movement; only the row's owner. */
+    suspend fun reassignMedia(mediaIds: List<String>, encounterId: String) {
+        if (mediaIds.isNotEmpty()) mediaDao.reassign(mediaIds, encounterId)
+    }
 }

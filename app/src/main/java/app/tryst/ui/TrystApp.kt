@@ -238,7 +238,10 @@ fun TrystApp() {
                         AchievementsScreen(onBack = { navController.popBackStack() })
                     }
                     composable(Routes.PARTNERS) {
-                        PartnersScreen(onOpenProfile = { navController.navigate(Routes.PROFILE) })
+                        PartnersScreen(
+                            onOpenProfile = { navController.navigate(Routes.PROFILE) },
+                            onOpenGallery = { navController.navigateTop(Routes.GALLERY) },
+                        )
                     }
                     composable(Routes.SETTINGS) {
                         SettingsScreen(

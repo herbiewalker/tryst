@@ -211,6 +211,41 @@
     <string name="gallery_sort">Sort</string>
     <string name="gallery_sort_newest">Newest first</string>
     <string name="gallery_sort_oldest">Oldest first</string>
+    <string name="gallery_layout_mosaic">Mosaic</string>
+    <string name="gallery_layout_people">People</string>
+
+    <!-- Favourites (GAL-3) -->
+    <string name="gallery_favorite">Favourite</string>
+    <string name="gallery_unfavorite">Remove favourite</string>
+    <string name="gallery_only_favorites">Show favourites only</string>
+
+    <!-- Photo viewer actions (GAL-5) -->
+    <string name="gallery_slideshow">Slideshow</string>
+    <string name="gallery_set_avatar">Set as partner photo</string>
+    <string name="gallery_set_avatar_for">Set as %1$s’s photo</string>
+
+    <!-- Multi-select / bulk actions (GAL-4) -->
+    <string name="gallery_favorite_selected">Favourite</string>
+    <string name="gallery_unfavorite_selected">Remove favourite</string>
+    <string name="gallery_reassign">Move to another tryst</string>
+    <string name="gallery_delete_selected">Delete</string>
+    <string name="gallery_delete_body">The photos are permanently removed from their trysts. This can’t be undone.</string>
+    <plurals name="gallery_selected_count">
+        <item quantity="one">%1$d selected</item>
+        <item quantity="other">%1$d selected</item>
+    </plurals>
+    <plurals name="gallery_delete_title">
+        <item quantity="one">Delete %1$d photo?</item>
+        <item quantity="other">Delete %1$d photos?</item>
+    </plurals>
+    <plurals name="gallery_reassign_title">
+        <item quantity="one">Move %1$d photo to…</item>
+        <item quantity="other">Move %1$d photos to…</item>
+    </plurals>
+
+    <!-- People layout (GAL-1a) -->
+    <string name="gallery_people_you">You</string>
+    <string name="gallery_people_empty">Partner and profile photos show up here. Add a photo to a partner to see them.</string>
     <string name="cd_log_encounter">Log encounter</string>
     <string name="cd_prev_month">Previous month</string>
     <string name="cd_next_month">Next month</string>
@@ -231,6 +266,7 @@
     <string name="partners_title">Partners</string>
     <string name="partners_empty">No partners yet.\nTap + to add one.</string>
     <string name="partners_archive">Archive</string>
+    <string name="partner_view_photos">View photos</string>
     <string name="partner_add">Add partner</string>
     <string name="partner_dialog_edit_title">Edit partner</string>
     <string name="cd_partner_photo">Partner photo</string>

@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
@@ -29,6 +30,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -77,6 +79,7 @@ import java.io.File
 @Composable
 fun PartnersScreen(
     onOpenProfile: () -> Unit = {},
+    onOpenGallery: () -> Unit = {},
     viewModel: PartnersViewModel = hiltViewModel(),
     profileViewModel: ProfileViewModel = hiltViewModel(),
 ) {
@@ -122,6 +125,10 @@ fun PartnersScreen(
                         onLoadPhoto = { viewModel.decodePhoto(it, AVATAR_PX) },
                         onEdit = { dialogTarget = DialogTarget(partner) },
                         onArchive = { viewModel.archive(partner.id) },
+                        onViewPhotos = {
+                            viewModel.viewPhotosFor(partner.id)
+                            onOpenGallery()
+                        },
                         modifier = Modifier.animateItem(),
                     )
                 }
@@ -187,12 +194,13 @@ private fun PartnerRow(
     onLoadPhoto: suspend (String) -> ImageBitmap?,
     onEdit: () -> Unit,
     onArchive: () -> Unit,
+    onViewPhotos: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val haptics = rememberHaptics()
     Card(onClick = onEdit, modifier = modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 8.dp, bottom = 8.dp, end = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             PartnerAvatar(partner.photoMediaId, Format.partnerName(partner), 48.dp, onLoadPhoto)
@@ -209,6 +217,12 @@ private fun PartnerRow(
                 partner.note?.let {
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+            }
+            IconButton(onClick = {
+                haptics.tick()
+                onViewPhotos()
+            }) {
+                Icon(Icons.Filled.PhotoLibrary, contentDescription = stringResource(R.string.partner_view_photos))
             }
             TextButton(onClick = {
                 haptics.tick()

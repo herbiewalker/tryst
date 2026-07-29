@@ -14,6 +14,7 @@ import app.tryst.data.db.entity.RelationshipType
 import app.tryst.data.db.entity.Sex
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.ui.common.MediaImages
+import app.tryst.ui.gallery.GalleryDeepLink
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -50,10 +51,14 @@ class PartnersViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val session: SessionManager,
     private val repository: PartnerRepository,
+    private val galleryDeepLink: GalleryDeepLink,
 ) : ViewModel() {
 
     /** Keep the app unlocked across the photo-picker/camera handoff. */
     fun suppressAutoLock() = session.suppressNextAutoLock()
+
+    /** Opens the Photos tab pre-filtered to this partner (GAL-5); the caller navigates to the tab. */
+    fun viewPhotosFor(partnerId: String) = galleryDeepLink.requestPartner(partnerId)
 
     val partners: StateFlow<List<PartnerEntity>> =
         repository.observeActive()
