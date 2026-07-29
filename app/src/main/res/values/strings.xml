@@ -192,6 +192,8 @@
     <string name="gallery_meta_dimensions">Dimensions</string>
     <string name="gallery_meta_camera">Camera</string>
     <string name="gallery_meta_location">Location</string>
+    <string name="gallery_meta_shot">Shot</string>
+    <string name="gallery_meta_orientation">Orientation</string>
     <string name="gallery_meta_none">No embedded details for this photo.</string>
     <string name="gallery_blur_title">Photos are hidden</string>
     <string name="gallery_blur_show">Show photos</string>
