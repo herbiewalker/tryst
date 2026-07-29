@@ -17,9 +17,11 @@ class GallerySettingsViewModel @Inject constructor(
     val columns: StateFlow<Int> = preferences.columns
     val sort: StateFlow<GallerySort> = preferences.sort
     val blurUntilRevealed: StateFlow<Boolean> = preferences.blurUntilRevealed
+    val blurGraceSeconds: StateFlow<Int> = preferences.blurGraceSeconds
 
     fun setLayout(layout: GalleryLayout) = preferences.setLayout(layout)
     fun setColumns(columns: Int) = preferences.setColumns(columns)
     fun setSort(sort: GallerySort) = preferences.setSort(sort)
     fun setBlurUntilRevealed(enabled: Boolean) = preferences.setBlurUntilRevealed(enabled)
+    fun setBlurGraceSeconds(seconds: Int) = preferences.setBlurGraceSeconds(seconds)
 }

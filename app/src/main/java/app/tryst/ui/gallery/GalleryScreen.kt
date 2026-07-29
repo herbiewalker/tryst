@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
@@ -129,8 +130,10 @@ fun GalleryScreen(
     val onlyFavorites by viewModel.onlyFavorites.collectAsStateWithLifecycle()
     val blurUntilRevealed by viewModel.blurUntilRevealed.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
+    val drilledPartner by viewModel.drilledPartner.collectAsStateWithLifecycle()
 
     val selectionActive = selectedIds.isNotEmpty()
+    val drilled = drilledPartner != null
     val isPeople = ui.layout == GalleryLayout.PEOPLE
 
     var searching by remember { mutableStateOf(false) }
@@ -144,8 +147,9 @@ fun GalleryScreen(
         onDispose { if (revealed) viewModel.markRevealed() }
     }
 
-    // Back exits selection mode before leaving the tab.
+    // Back exits selection mode first, then a People-drill, before leaving the tab.
     BackHandler(enabled = selectionActive) { viewModel.clearSelection() }
+    BackHandler(enabled = drilled && !selectionActive) { viewModel.exitDrill() }
 
     val filtersActive = advancedCount > 0 ||
         rating != RatingFilter.ANY ||
@@ -182,6 +186,11 @@ fun GalleryScreen(
                     onUnfavorite = { viewModel.favoriteSelected(false) },
                     onReassign = { showReassign = true },
                     onDelete = { showDeleteConfirm = true },
+                )
+                drilled -> DrillBar(
+                    partnerName = drilledPartner?.let { Format.partnerName(it) }
+                        ?: stringResource(R.string.gallery_group_anonymous),
+                    onBack = viewModel::exitDrill,
                 )
                 else -> TopAppBar(
                     title = {
@@ -249,6 +258,7 @@ fun GalleryScreen(
                         partners = partners,
                         columns = ui.columns,
                         onLoadAvatar = viewModel::decodePartnerPhoto,
+                        onPersonClick = viewModel::drillIntoPerson,
                     )
                     ui.photos.isEmpty() -> EmptyState(criteriaActive = ui.criteriaActive)
                     ui.layout == GalleryLayout.FEED -> GalleryFeed(
@@ -377,6 +387,22 @@ fun GalleryScreen(
             onSetAvatar = viewModel::setAsPartnerAvatar,
         )
     }
+}
+
+// --- drill bar (People → their photos) -----------------------------------------------------------
+
+/** Header shown while drilled into a person's photos from the People layout — title + back. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DrillBar(partnerName: String, onBack: () -> Unit) {
+    TopAppBar(
+        title = { Text(stringResource(R.string.gallery_drill_title, partnerName)) },
+        navigationIcon = {
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
+            }
+        },
+    )
 }
 
 // --- selection bar + dialogs ---------------------------------------------------------------------

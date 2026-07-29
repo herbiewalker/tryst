@@ -47,6 +47,7 @@ fun GallerySettingsScreen(
     val columns by viewModel.columns.collectAsStateWithLifecycle()
     val sort by viewModel.sort.collectAsStateWithLifecycle()
     val blur by viewModel.blurUntilRevealed.collectAsStateWithLifecycle()
+    val blurGrace by viewModel.blurGraceSeconds.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -109,8 +110,35 @@ fun GallerySettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
+            // Grace only makes sense while the blur is on — hide otherwise so it doesn't look configurable to no effect.
+            if (blur) {
+                FilterSection(stringResource(R.string.gallery_blur_grace_title)) {
+                    for (opt in BLUR_GRACE_OPTIONS) {
+                        SelectChip(stringResource(blurGraceLabel(opt)), opt == blurGrace, { viewModel.setBlurGraceSeconds(opt) })
+                    }
+                }
+                Text(
+                    text = stringResource(R.string.gallery_blur_grace_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
+}
+
+// The set of grace choices for the blur gate. Immediate = re-blur every time you leave the tab.
+private val BLUR_GRACE_OPTIONS = listOf(0, 15, 30, 60, 300)
+
+@androidx.annotation.StringRes
+private fun blurGraceLabel(seconds: Int): Int = when (seconds) {
+    0 -> R.string.gallery_blur_grace_immediate
+    15 -> R.string.gallery_blur_grace_15s
+    30 -> R.string.gallery_blur_grace_30s
+    60 -> R.string.gallery_blur_grace_1m
+    300 -> R.string.gallery_blur_grace_5m
+    else -> R.string.gallery_blur_grace_immediate
 }
 
 internal fun layoutLabel(layout: GalleryLayout): Int = when (layout) {
