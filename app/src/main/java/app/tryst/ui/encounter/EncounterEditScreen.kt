@@ -195,6 +195,7 @@ fun EncounterEditScreen(
             ) {
                 Spacer(Modifier.height(4.dp))
 
+                // ─── Who / when / where ─────────────────────────────────────────────
                 Field(stringResource(R.string.encounter_field_when)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OutlinedButton(onClick = { showDatePicker = true }) {
@@ -233,59 +234,37 @@ fun EncounterEditScreen(
                     }
                 }
 
-                MultiSelectField(
-                    label = stringResource(R.string.encounter_field_protection),
-                    all = Protection.entries,
-                    common = mostUsedCommon(CommonOptions.PROTECTION, Protection.entries) { usage.protection[it] ?: 0 },
-                    selected = ui.protection,
-                    labelOf = { it.label },
-                    onToggle = { viewModel.toggleProtection(it) },
-                )
-
-                SingleSelectField(
-                    label = stringResource(R.string.encounter_field_mood),
-                    all = Mood.entries,
-                    common = mostUsedCommon(CommonOptions.MOOD, Mood.entries) { usage.moods[it] ?: 0 },
-                    selected = ui.mood,
-                    labelOf = { it.label },
-                    onSelect = { viewModel.setMood(it) },
-                )
-
-                Field(stringResource(R.string.encounter_orgasms_you)) {
-                    Stepper(value = ui.orgasmCountSelf, onChange = { viewModel.setSelfOrgasms(it) })
-                }
-
-                // Ejaculation location(s) per orgasm you had — multi-select (e.g. chest + stomach).
-                val ejaculationOptions = EjaculationOptions.builtIns + EjaculationOptions.custom(customEjaculations)
-                val ejaculationCommon = mostUsedCommon(ejaculationOptions, ejaculationOptions) { usage.ejaculation[it.id] ?: 0 }
-                repeat(ui.orgasmCountSelf) { i ->
-                    MultiSelectField(
-                        label = if (ui.orgasmCountSelf > 1) {
-                            stringResource(R.string.encounter_ejaculation_n, i + 1)
-                        } else {
-                            stringResource(R.string.encounter_ejaculation)
-                        },
-                        all = ejaculationOptions,
-                        common = ejaculationCommon,
-                        selected = ejaculationOptions.filter { it.id in (ui.ejaculations[i] ?: emptySet()) }.toSet(),
-                        labelOf = { it.label },
-                        onToggle = { viewModel.toggleEjaculation(i, it.id) },
-                    )
-                }
-
-                // One orgasm counter per selected partner, ordered by name.
-                partners
-                    .filter { it.id in ui.selectedPartnerIds }
-                    .sortedBy { Format.partnerName(it).lowercase() }
-                    .forEach { partner ->
-                        Field(stringResource(R.string.encounter_orgasms_partner, Format.partnerName(partner))) {
-                            Stepper(
-                                value = ui.partnerOrgasms[partner.id] ?: 0,
-                                onChange = { viewModel.setPartnerOrgasms(partner.id, it) },
-                            )
-                        }
+                if (!solo) {
+                    Field(stringResource(R.string.encounter_field_initiator)) {
+                        SingleSelectChips(
+                            options = Initiator.entries,
+                            selected = ui.initiator,
+                            label = { it.label },
+                            onSelect = { viewModel.setInitiator(it) },
+                        )
                     }
+                }
 
+                MultiSelectField(
+                    label = stringResource(R.string.encounter_field_setting),
+                    all = Place.entries,
+                    common = mostUsedCommon(CommonOptions.PLACE, Place.entries) { usage.places[it] ?: 0 },
+                    selected = ui.contexts,
+                    labelOf = { it.label },
+                    onToggle = { viewModel.toggleContext(it) },
+                )
+
+                val occasionOptions = OccasionOptions.builtIns + OccasionOptions.custom(customOccasions)
+                MultiSelectField(
+                    label = stringResource(R.string.encounter_field_occasion),
+                    all = occasionOptions,
+                    common = mostUsedCommon(occasionOptions, occasionOptions) { usage.occasions[it.id] ?: 0 },
+                    selected = occasionOptions.filter { it.id in ui.occasions }.toSet(),
+                    labelOf = { it.label },
+                    onToggle = { viewModel.toggleOccasion(it.id) },
+                )
+
+                // ─── What happened ───────────────────────────────────────────────────
                 val positionOptions = PositionOptions.builtIns + PositionOptions.custom(customPositions)
                 val positionCommon = mostUsedCommon(positionOptions, positionOptions) { usage.positions[it.id] ?: 0 }
                 MultiSelectField(
@@ -329,25 +308,6 @@ fun EncounterEditScreen(
                     onToggle = { viewModel.toggleKink(it.id) },
                 )
 
-                MultiSelectField(
-                    label = stringResource(R.string.encounter_field_setting),
-                    all = Place.entries,
-                    common = mostUsedCommon(CommonOptions.PLACE, Place.entries) { usage.places[it] ?: 0 },
-                    selected = ui.contexts,
-                    labelOf = { it.label },
-                    onToggle = { viewModel.toggleContext(it) },
-                )
-
-                val occasionOptions = OccasionOptions.builtIns + OccasionOptions.custom(customOccasions)
-                MultiSelectField(
-                    label = stringResource(R.string.encounter_field_occasion),
-                    all = occasionOptions,
-                    common = mostUsedCommon(occasionOptions, occasionOptions) { usage.occasions[it.id] ?: 0 },
-                    selected = occasionOptions.filter { it.id in ui.occasions }.toSet(),
-                    labelOf = { it.label },
-                    onToggle = { viewModel.toggleOccasion(it.id) },
-                )
-
                 val toyOptions = ToyOptions.builtIns + ToyOptions.custom(customToys)
                 MultiSelectField(
                     label = stringResource(R.string.encounter_field_toys),
@@ -358,16 +318,59 @@ fun EncounterEditScreen(
                     onToggle = { viewModel.toggleToy(it.id) },
                 )
 
-                if (!solo) {
-                    Field(stringResource(R.string.encounter_field_initiator)) {
-                        SingleSelectChips(
-                            options = Initiator.entries,
-                            selected = ui.initiator,
-                            label = { it.label },
-                            onSelect = { viewModel.setInitiator(it) },
-                        )
-                    }
+                MultiSelectField(
+                    label = stringResource(R.string.encounter_field_protection),
+                    all = Protection.entries,
+                    common = mostUsedCommon(CommonOptions.PROTECTION, Protection.entries) { usage.protection[it] ?: 0 },
+                    selected = ui.protection,
+                    labelOf = { it.label },
+                    onToggle = { viewModel.toggleProtection(it) },
+                )
+
+                // ─── How it went ─────────────────────────────────────────────────────
+                Field(stringResource(R.string.encounter_orgasms_you)) {
+                    Stepper(value = ui.orgasmCountSelf, onChange = { viewModel.setSelfOrgasms(it) })
                 }
+
+                // Ejaculation location(s) per orgasm you had — multi-select (e.g. chest + stomach).
+                val ejaculationOptions = EjaculationOptions.builtIns + EjaculationOptions.custom(customEjaculations)
+                val ejaculationCommon = mostUsedCommon(ejaculationOptions, ejaculationOptions) { usage.ejaculation[it.id] ?: 0 }
+                repeat(ui.orgasmCountSelf) { i ->
+                    MultiSelectField(
+                        label = if (ui.orgasmCountSelf > 1) {
+                            stringResource(R.string.encounter_ejaculation_n, i + 1)
+                        } else {
+                            stringResource(R.string.encounter_ejaculation)
+                        },
+                        all = ejaculationOptions,
+                        common = ejaculationCommon,
+                        selected = ejaculationOptions.filter { it.id in (ui.ejaculations[i] ?: emptySet()) }.toSet(),
+                        labelOf = { it.label },
+                        onToggle = { viewModel.toggleEjaculation(i, it.id) },
+                    )
+                }
+
+                // One orgasm counter per selected partner, ordered by name.
+                partners
+                    .filter { it.id in ui.selectedPartnerIds }
+                    .sortedBy { Format.partnerName(it).lowercase() }
+                    .forEach { partner ->
+                        Field(stringResource(R.string.encounter_orgasms_partner, Format.partnerName(partner))) {
+                            Stepper(
+                                value = ui.partnerOrgasms[partner.id] ?: 0,
+                                onChange = { viewModel.setPartnerOrgasms(partner.id, it) },
+                            )
+                        }
+                    }
+
+                SingleSelectField(
+                    label = stringResource(R.string.encounter_field_mood),
+                    all = Mood.entries,
+                    common = mostUsedCommon(CommonOptions.MOOD, Mood.entries) { usage.moods[it] ?: 0 },
+                    selected = ui.mood,
+                    labelOf = { it.label },
+                    onSelect = { viewModel.setMood(it) },
+                )
 
                 Field(stringResource(R.string.encounter_field_rating)) {
                     SingleSelectChips(
