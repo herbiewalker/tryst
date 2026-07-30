@@ -169,15 +169,23 @@ fun PhotoViewer(
                     .background(Color.Black.copy(alpha = 0.35f))
                     .statusBarsPadding().padding(4.dp),
             ) {
-                IconButton(onClick = onClose, modifier = Modifier.align(Alignment.CenterStart)) {
-                    Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close), tint = Color.White)
+                // Close + N/M counter live together on the left. Anchoring the counter to the
+                // centre of the top bar bit us as the right-hand action row grew (slideshow,
+                // add-to-person, avatar, info, open-tryst) — on narrower screens the icons ran
+                // over the counter. Pinning it to Close means new actions can never overlap it.
+                Row(
+                    modifier = Modifier.align(Alignment.CenterStart),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    IconButton(onClick = onClose) {
+                        Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close), tint = Color.White)
+                    }
+                    Text(
+                        text = "${pagerState.currentPage + 1} / ${photos.size}",
+                        color = Color.White,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
                 }
-                Text(
-                    text = "${pagerState.currentPage + 1} / ${photos.size}",
-                    color = Color.White,
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.align(Alignment.Center),
-                )
                 Row(Modifier.align(Alignment.CenterEnd)) {
                     IconButton(onClick = { slideshow = !slideshow }) {
                         Icon(
