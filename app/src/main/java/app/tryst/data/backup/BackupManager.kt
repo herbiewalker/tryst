@@ -143,6 +143,7 @@ class BackupManager @Inject constructor(
             db.execSQL("PRAGMA defer_foreign_keys = TRUE")
             for (table in TABLES) {
                 val rows = tables.optJSONArray(table) ?: continue
+                val notNullDefaults = notNullColumnDefaults(db, table)
                 for (i in 0 until rows.length()) {
                     val row = rows.getJSONObject(i)
                     val values = ContentValues()
@@ -170,6 +171,19 @@ class BackupManager @Inject constructor(
                         // The stored path is device-specific — point it at this device's media dir.
                         values.getAsString("id")?.let { values.put("encFilePath", mediaStore.fileFor(it).absolutePath) }
                     }
+                    // Backfill any NOT NULL column the backup lacks with the live schema's DEFAULT.
+                    // A pre-Vn backup naturally omits every column added in Vn+ migrations; without
+                    // this, the first row we try to insert blows up on the column's NOT-NULL constraint
+                    // on any *fresh* install whose entity forgot @ColumnInfo(defaultValue=…). Rows that
+                    // do carry the key stay as-is (defer_foreign_keys still governs FK ordering).
+                    for ((col, default) in notNullDefaults) {
+                        if (values.containsKey(col)) continue
+                        when (default) {
+                            is Long -> values.put(col, default)
+                            is Double -> values.put(col, default)
+                            else -> values.put(col, default.toString())
+                        }
+                    }
                     db.insert(table, SQLiteDatabase.CONFLICT_REPLACE, values)
                 }
             }
@@ -177,6 +191,41 @@ class BackupManager @Inject constructor(
         } finally {
             db.endTransaction()
         }
+    }
+
+    /**
+     * `PRAGMA table_info(t)` rows for every NOT NULL column of [table] that carries a SQL DEFAULT,
+     * mapped `column → default value` (typed to what ContentValues will accept). Columns without a
+     * DEFAULT are deliberately absent — restore can't invent one safely for them, so an
+     * older-backup row missing a required column without any default still fails loudly rather than
+     * silently getting a fabricated zero/blank.
+     */
+    @Suppress("CyclomaticComplexMethod", "LoopWithTooManyJumpStatements") // Guard-clause loop over PRAGMA rows.
+    private fun notNullColumnDefaults(
+        db: androidx.sqlite.db.SupportSQLiteDatabase,
+        table: String,
+    ): Map<String, Any> {
+        val defaults = mutableMapOf<String, Any>()
+        db.query("PRAGMA table_info(`$table`)").use { c ->
+            val nameIdx = c.getColumnIndex("name")
+            val typeIdx = c.getColumnIndex("type")
+            val notNullIdx = c.getColumnIndex("notnull")
+            val defaultIdx = c.getColumnIndex("dflt_value")
+            val pkIdx = c.getColumnIndex("pk")
+            while (c.moveToNext()) {
+                if (c.getInt(notNullIdx) == 0) continue
+                if (c.getInt(pkIdx) != 0) continue // PKs must come from the row itself.
+                if (c.isNull(defaultIdx)) continue
+                val raw = c.getString(defaultIdx).trim().trim('\'') // SQLite quotes text defaults.
+                val typed: Any = when (c.getString(typeIdx).uppercase()) {
+                    "INTEGER" -> raw.toLongOrNull() ?: continue
+                    "REAL" -> raw.toDoubleOrNull() ?: continue
+                    else -> raw // TEXT / BLOB / no-affinity — pass the literal through.
+                }
+                defaults[c.getString(nameIdx)] = typed
+            }
+        }
+        return defaults
     }
 
     private fun readFully(input: InputStream, buf: ByteArray) {

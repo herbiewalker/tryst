@@ -52,6 +52,11 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 - Import failures now log the underlying exception (`Log.e("TRYSTIMPORT", …)`) instead of silently
   showing a generic "Import failed" toast — the previous swallow made debugging the media-favorite
   restore bug above much harder than it needed to be.
+- `BackupManager.restoreDatabase` now backfills any NOT-NULL column the backup row lacks with the
+  live table's SQL DEFAULT (from `PRAGMA table_info`) — belt-and-braces for the media-favorite class
+  of bug, so a future migration that adds a NOT-NULL column and forgets `@ColumnInfo(defaultValue=…)`
+  on the entity still restores older backups cleanly. Columns without a SQL DEFAULT still fail loudly
+  rather than getting a fabricated value.
 
 ## [0.4.0] — 2026-07-11 (versionCode 6)
 
