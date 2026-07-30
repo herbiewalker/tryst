@@ -1,6 +1,6 @@
 # Tryst — Threat Model
 
-> **Status:** Live — **v0.3.2 / schema v12**, aligned with the *implemented* security model
+> **Status:** Live — **v0.5.2 / schema v15**, aligned with the *implemented* security model
 > (Keystore-only + distinct app PIN; see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §1, Option B). The
 > v9–v11 changes (kinks then toys made id-based, and the acts/kinks then positions/toys catalog trims —
 > FDP-2/FDP-4, D-41) are category-data only and add **no new attack surface** over the v7 demographics +

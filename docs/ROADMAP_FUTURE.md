@@ -1,10 +1,15 @@
 # Tryst — Future Roadmap (post-v0.1.0)
 
-> **Status: ACTIVE roadmap (last reviewed 2026-06-28).** Originally a raw idea dump (2026-06-14); since
-> then ENC-1 and the v0.2.0 QOL/calendar items have shipped, and a holistic review added an
-> **Engineering, infra & housekeeping backlog** section (CI-1, STORE-1, etc.). Version groupings and
-> ordering remain a *proposal* — reshuffle freely. See "Recommended near-term ordering" under that
-> section for the current suggested sequence.
+> **Status: ACTIVE roadmap (last reviewed 2026-07-30).** Originally a raw idea dump (2026-06-14).
+> Since then the v0.2.0 QOL/calendar items, v0.3.x F-Droid content-policy rework, v0.4.0
+> Search+FILT-1+INS-2, and the whole **v0.5.x Photos gallery** line (GAL-1/1a/1b + META-1 + SEC-2 +
+> GAL-3..7 person-photo album, plus a QoL patch: inline "+ New" for catalog multi-selects,
+> wipe-first Import checkbox, legacy-avatar auto-adopt, self-drill back button) have all shipped.
+> The v0.5.0 release was followed by a **7-lens post-release audit**
+> ([docs/audits/2026-07-30-*](audits/)) that surfaced the v0.5.1/v0.5.2 patch bundle.
+> Version groupings and ordering remain a *proposal* — reshuffle freely. See "Recommended near-term
+> ordering" under the Engineering backlog section for the current suggested sequence. **Newly open:**
+> D-54 (ejaculation/finish-location model expansion — deferred to a v0.6 design pass).
 
 Every item preserves the **hard constraints** (no network ever, encrypted at rest, `FLAG_SECURE`,
 local-only, additive/nullable migrations only). Anything that would violate them is out of scope by
