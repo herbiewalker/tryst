@@ -135,13 +135,15 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(stringResource(R.string.settings_general), style = MaterialTheme.typography.titleMedium)
+            // Top-of-Settings privacy preamble — sits above every section since it describes the whole app.
             Text(
                 stringResource(R.string.settings_about_app_blurb),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
+            // ─── You ──────────────────────────────────────────────────────────────
+            Text(stringResource(R.string.settings_you), style = MaterialTheme.typography.titleMedium)
             OutlinedButton(onClick = onOpenProfile, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.settings_profile))
             }
@@ -150,6 +152,11 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
+            // ─── Security ─────────────────────────────────────────────────────────
+            Text(stringResource(R.string.settings_security), style = MaterialTheme.typography.titleMedium)
 
             OutlinedButton(onClick = onChangePin, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.settings_change_pin))
@@ -174,51 +181,6 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .toggleable(
-                        value = hapticsEnabled,
-                        role = Role.Switch,
-                        onValueChange = { generalViewModel.setHapticsEnabled(it) },
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Switch(checked = hapticsEnabled, onCheckedChange = null)
-                Text(stringResource(R.string.settings_haptics), style = MaterialTheme.typography.bodyMedium)
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .toggleable(
-                        value = defaultToCalendar,
-                        role = Role.Switch,
-                        onValueChange = { generalViewModel.setDefaultToCalendar(it) },
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Switch(checked = defaultToCalendar, onCheckedChange = null)
-                Text(stringResource(R.string.settings_default_calendar), style = MaterialTheme.typography.bodyMedium)
-            }
-
-            Text(stringResource(R.string.settings_week_start), style = MaterialTheme.typography.labelLarge)
-            SingleSelectChips(
-                options = WeekStart.entries,
-                selected = weekStart,
-                label = {
-                    when (it) {
-                        WeekStart.SUNDAY -> weekStartSundayLabel
-                        WeekStart.MONDAY -> weekStartMondayLabel
-                    }
-                },
-                onSelect = { generalViewModel.setWeekStart(it) },
-            )
-
-            HorizontalDivider(Modifier.padding(vertical = 8.dp))
-
-            Text(stringResource(R.string.settings_security), style = MaterialTheme.typography.titleMedium)
 
             when {
                 !biometricAvailable -> Text(
@@ -275,6 +237,7 @@ fun SettingsScreen(
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
+            // ─── Appearance ───────────────────────────────────────────────────────
             Text(stringResource(R.string.settings_appearance), style = MaterialTheme.typography.titleMedium)
             Text(stringResource(R.string.settings_theme), style = MaterialTheme.typography.labelLarge)
             SingleSelectChips(
@@ -308,9 +271,51 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .toggleable(
+                        value = hapticsEnabled,
+                        role = Role.Switch,
+                        onValueChange = { generalViewModel.setHapticsEnabled(it) },
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Switch(checked = hapticsEnabled, onCheckedChange = null)
+                Text(stringResource(R.string.settings_haptics), style = MaterialTheme.typography.bodyMedium)
+            }
+
+            Text(stringResource(R.string.settings_week_start), style = MaterialTheme.typography.labelLarge)
+            SingleSelectChips(
+                options = WeekStart.entries,
+                selected = weekStart,
+                label = {
+                    when (it) {
+                        WeekStart.SUNDAY -> weekStartSundayLabel
+                        WeekStart.MONDAY -> weekStartMondayLabel
+                    }
+                },
+                onSelect = { generalViewModel.setWeekStart(it) },
+            )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .toggleable(
+                        value = defaultToCalendar,
+                        role = Role.Switch,
+                        onValueChange = { generalViewModel.setDefaultToCalendar(it) },
+                    ),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Switch(checked = defaultToCalendar, onCheckedChange = null)
+                Text(stringResource(R.string.settings_default_calendar), style = MaterialTheme.typography.bodyMedium)
+            }
+
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-            Text(stringResource(R.string.settings_insights), style = MaterialTheme.typography.titleMedium)
+            // ─── Customize tabs ───────────────────────────────────────────────────
+            Text(stringResource(R.string.settings_customize), style = MaterialTheme.typography.titleMedium)
             OutlinedButton(onClick = onCustomizeInsights, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.settings_customize_insights))
             }
@@ -319,10 +324,6 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-
-            HorizontalDivider(Modifier.padding(vertical = 8.dp))
-
-            Text(stringResource(R.string.settings_gallery), style = MaterialTheme.typography.titleMedium)
             OutlinedButton(onClick = onCustomizeGallery, modifier = Modifier.fillMaxWidth()) {
                 Text(stringResource(R.string.settings_customize_gallery))
             }
