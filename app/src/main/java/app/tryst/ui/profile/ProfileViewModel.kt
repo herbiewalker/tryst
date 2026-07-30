@@ -66,6 +66,20 @@ class ProfileViewModel @Inject constructor(
             .catch { emit(emptyList()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
+    init {
+        // Heal legacy avatars: v13/v14 backups have profile.photoMediaId set (via the old savePhoto
+        // path) but no matching person_photo row, so PersonPhotoStrip would render empty. Adopt the
+        // blob as a portrait row — reuses the existing encrypted file, no re-encryption. Idempotent.
+        viewModelScope.launch {
+            val existing = repository.get() ?: return@launch
+            val avatarBlob = existing.photoMediaId ?: return@launch
+            val album = personPhotoRepository.getForOwner(PersonPhotoRepository.KIND_PROFILE, ProfileEntity.SELF_ID)
+            if (album.none { it.mediaBlobId == avatarBlob }) {
+                personPhotoRepository.adoptExistingBlob(PersonPhotoRepository.KIND_PROFILE, ProfileEntity.SELF_ID, avatarBlob)
+            }
+        }
+    }
+
     fun addPhotos(uris: List<Uri>) {
         if (uris.isEmpty()) return
         viewModelScope.launch(Dispatchers.IO) {
