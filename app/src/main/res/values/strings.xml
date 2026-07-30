@@ -14,6 +14,7 @@
     <string name="action_add">Add</string>
     <string name="action_close">Close</string>
     <string name="action_more">More…</string>
+    <string name="action_add_new_placeholder">Add a new one…</string>
     <string name="action_discard">Discard</string>
     <string name="action_keep_editing">Keep editing</string>
     <string name="action_got_it">Got it</string>

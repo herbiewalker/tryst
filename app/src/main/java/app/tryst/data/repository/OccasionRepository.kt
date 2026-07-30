@@ -16,10 +16,13 @@ class OccasionRepository @Inject constructor(
 
     fun observeCustom(): Flow<List<OccasionEntity>> = dao.observeCustom()
 
-    suspend fun addCustom(label: String) {
+    /** Adds a custom occasion. Returns its new id (or null when the label was blank). */
+    suspend fun addCustom(label: String): String? {
         val trimmed = label.trim()
-        if (trimmed.isEmpty()) return
-        dao.upsert(OccasionEntity(id = UUID.randomUUID().toString(), label = trimmed, isBuiltIn = false))
+        if (trimmed.isEmpty()) return null
+        val id = UUID.randomUUID().toString()
+        dao.upsert(OccasionEntity(id = id, label = trimmed, isBuiltIn = false))
+        return id
     }
 
     /** Renames a custom occasion in place (id — and so every encounter ref — is untouched). A label that collides with an existing entry (unique index) is silently rejected. */

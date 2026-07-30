@@ -262,6 +262,7 @@ fun EncounterEditScreen(
                     selected = occasionOptions.filter { it.id in ui.occasions }.toSet(),
                     labelOf = { it.label },
                     onToggle = { viewModel.toggleOccasion(it.id) },
+                    onAddNew = { viewModel.addCustomOccasion(it) },
                 )
 
                 // ─── What happened ───────────────────────────────────────────────────
@@ -274,6 +275,7 @@ fun EncounterEditScreen(
                     selected = positionOptions.filter { it.id in ui.selectedPositionIds }.toSet(),
                     labelOf = { it.label },
                     onToggle = { viewModel.togglePosition(it.id) },
+                    onAddNew = { viewModel.addCustomPosition(it) },
                 )
 
                 val actOptions = ActOptions.builtIns + ActOptions.custom(customActs)
@@ -285,6 +287,7 @@ fun EncounterEditScreen(
                     selected = actOptions.filter { it.id in ui.practicesPerformed }.toSet(),
                     labelOf = { it.label },
                     onToggle = { viewModel.togglePerformed(it.id) },
+                    onAddNew = { viewModel.addCustomActAsPerformed(it) },
                 )
 
                 if (!solo) {
@@ -295,6 +298,7 @@ fun EncounterEditScreen(
                         selected = actOptions.filter { it.id in ui.practicesReceived }.toSet(),
                         labelOf = { it.label },
                         onToggle = { viewModel.toggleReceived(it.id) },
+                        onAddNew = { viewModel.addCustomActAsReceived(it) },
                     )
                 }
 
@@ -306,6 +310,7 @@ fun EncounterEditScreen(
                     selected = kinkOptions.filter { it.id in ui.kinks }.toSet(),
                     labelOf = { it.label },
                     onToggle = { viewModel.toggleKink(it.id) },
+                    onAddNew = { viewModel.addCustomKink(it) },
                 )
 
                 val toyOptions = ToyOptions.builtIns + ToyOptions.custom(customToys)
@@ -316,6 +321,7 @@ fun EncounterEditScreen(
                     selected = toyOptions.filter { it.id in ui.toys }.toSet(),
                     labelOf = { it.label },
                     onToggle = { viewModel.toggleToy(it.id) },
+                    onAddNew = { viewModel.addCustomToy(it) },
                 )
 
                 MultiSelectField(
@@ -347,6 +353,7 @@ fun EncounterEditScreen(
                         selected = ejaculationOptions.filter { it.id in (ui.ejaculations[i] ?: emptySet()) }.toSet(),
                         labelOf = { it.label },
                         onToggle = { viewModel.toggleEjaculation(i, it.id) },
+                        onAddNew = { viewModel.addCustomEjaculation(i, it) },
                     )
                 }
 

@@ -97,12 +97,12 @@ class EncounterEditViewModel @Inject constructor(
     private val encounters: EncounterRepository,
     galleryPreferences: GalleryPreferences,
     partners: PartnerRepository,
-    positions: PositionRepository,
-    acts: ActRepository,
-    kinks: KinkRepository,
-    toys: ToyRepository,
-    occasions: OccasionRepository,
-    ejaculationLocations: EjaculationLocationRepository,
+    private val positions: PositionRepository,
+    private val acts: ActRepository,
+    private val kinks: KinkRepository,
+    private val toys: ToyRepository,
+    private val occasions: OccasionRepository,
+    private val ejaculationLocations: EjaculationLocationRepository,
 ) : ViewModel() {
 
     /** Keep the app unlocked across the photo-picker/camera handoff. */
@@ -318,6 +318,48 @@ class EncounterEditViewModel @Inject constructor(
 
     fun toggleToy(value: String) {
         uiState = uiState.copy(toys = uiState.toys.toggle(value))
+    }
+
+    // --- Inline "+ New" from the More… sheet (adds to the catalog AND selects for this tryst). ---
+    // The repo returns a raw UUID; encounters store `custom:<uuid>`, so we prefix before adding to
+    // the selection set. The catalog StateFlow updates a moment later and the newly-selected chip
+    // renders normally in the next composition.
+
+    fun addCustomActAsPerformed(label: String) = viewModelScope.launch {
+        val id = acts.addCustom(label) ?: return@launch
+        uiState = uiState.copy(practicesPerformed = uiState.practicesPerformed + "custom:$id")
+    }
+
+    fun addCustomActAsReceived(label: String) = viewModelScope.launch {
+        val id = acts.addCustom(label) ?: return@launch
+        uiState = uiState.copy(practicesReceived = uiState.practicesReceived + "custom:$id")
+    }
+
+    fun addCustomPosition(label: String) = viewModelScope.launch {
+        val id = positions.addCustom(label) ?: return@launch
+        uiState = uiState.copy(selectedPositionIds = uiState.selectedPositionIds + "custom:$id")
+    }
+
+    fun addCustomKink(label: String) = viewModelScope.launch {
+        val id = kinks.addCustom(label) ?: return@launch
+        uiState = uiState.copy(kinks = uiState.kinks + "custom:$id")
+    }
+
+    fun addCustomToy(label: String) = viewModelScope.launch {
+        val id = toys.addCustom(label) ?: return@launch
+        uiState = uiState.copy(toys = uiState.toys + "custom:$id")
+    }
+
+    fun addCustomOccasion(label: String) = viewModelScope.launch {
+        val id = occasions.addCustom(label) ?: return@launch
+        uiState = uiState.copy(occasions = uiState.occasions + "custom:$id")
+    }
+
+    /** Adds a finish location and selects it for the given self-orgasm index. */
+    fun addCustomEjaculation(orgasmIndex: Int, label: String) = viewModelScope.launch {
+        val id = ejaculationLocations.addCustom(label) ?: return@launch
+        val current = uiState.ejaculations[orgasmIndex] ?: emptySet()
+        uiState = uiState.copy(ejaculations = uiState.ejaculations + (orgasmIndex to (current + "custom:$id")))
     }
 
     fun save(onDone: () -> Unit) {
