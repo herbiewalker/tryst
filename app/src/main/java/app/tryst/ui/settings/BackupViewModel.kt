@@ -2,6 +2,7 @@ package app.tryst.ui.settings
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -56,6 +57,7 @@ class BackupViewModel @Inject constructor(
                     ?: throw IOException("Couldn't open the file")
                 status = context.getString(R.string.backup_status_restore_done)
             } catch (e: Exception) {
+                Log.e("TRYSTIMPORT", "import failed: ${e.javaClass.name}: ${e.message}", e)
                 status = context.getString(R.string.backup_status_import_failed)
             } finally {
                 busy = false
