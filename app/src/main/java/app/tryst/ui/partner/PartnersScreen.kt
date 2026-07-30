@@ -151,7 +151,7 @@ private fun YouCard(
                 val descriptor = listOfNotNull(
                     profile?.gender?.label ?: profile?.sex?.label,
                     profile?.birthDate?.let { Format.age(it) }?.let { stringResource(R.string.demo_age, it) },
-                ).joinToString(" Â· ")
+                ).joinToString(" · ")
                 Text(
                     descriptor.ifEmpty { stringResource(R.string.profile_you_cta) },
                     style = MaterialTheme.typography.bodySmall,
@@ -188,7 +188,7 @@ private fun PartnerRow(
                     partner.relationshipType?.label,
                     partner.gender?.label ?: partner.sex?.label,
                     partner.birthDate?.let { Format.age(it) }?.let { stringResource(R.string.demo_age, it) },
-                ).joinToString(" Â· ")
+                ).joinToString(" · ")
                 if (descriptor.isNotEmpty()) {
                     Text(descriptor, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                 }

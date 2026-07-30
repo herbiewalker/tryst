@@ -40,6 +40,10 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
   tap from the Partners list ("View photos"); start a **slideshow** from the viewer; jump around a set with
   the new **filmstrip** strip; and set any photo as a partner's picture straight from the viewer.
 
+### Fixed
+- **Partner card subtitles** no longer show a stray "Â·" — the middle dot between sex/gender/age
+  fields in the Partners tab renders correctly again ("Man · Age 39", not "Man Â· Age 39").
+
 ## [0.4.0] — 2026-07-11 (versionCode 6)
 
 ### Added
