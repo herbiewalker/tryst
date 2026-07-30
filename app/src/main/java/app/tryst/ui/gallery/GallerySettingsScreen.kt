@@ -123,6 +123,8 @@ fun GallerySettingsScreen(
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
 
             // --- When Photos opens -------------------------------------------------------------
+            // Groups the two "initial state" prefs users see the moment they land on the tab:
+            // whether it opens filtered to favourites, and whether it opens blurred.
             Text(stringResource(R.string.gallery_on_open_title), style = MaterialTheme.typography.titleMedium)
             SettingsSwitchRow(
                 label = stringResource(R.string.gallery_default_favorites),
@@ -134,6 +136,31 @@ fun GallerySettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+
+            SettingsSwitchRow(
+                label = stringResource(R.string.gallery_blur_setting),
+                checked = blur,
+                onCheckedChange = viewModel::setBlurUntilRevealed,
+            )
+            Text(
+                text = stringResource(R.string.gallery_blur_setting_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            // Grace only makes sense while the blur is on — hide otherwise so it doesn't look configurable to no effect.
+            if (blur) {
+                FilterSection(stringResource(R.string.gallery_blur_grace_title)) {
+                    for (opt in BLUR_GRACE_OPTIONS) {
+                        SelectChip(stringResource(blurGraceLabel(opt)), opt == blurGrace, { viewModel.setBlurGraceSeconds(opt) })
+                    }
+                }
+                Text(
+                    text = stringResource(R.string.gallery_blur_grace_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
 
@@ -169,35 +196,6 @@ fun GallerySettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-
-            HorizontalDivider(Modifier.padding(vertical = 16.dp))
-
-            // --- Blur gate ---------------------------------------------------------------------
-            Text(stringResource(R.string.gallery_blur_setting), style = MaterialTheme.typography.titleMedium)
-            SettingsSwitchRow(
-                label = stringResource(R.string.gallery_blur_setting),
-                checked = blur,
-                onCheckedChange = viewModel::setBlurUntilRevealed,
-            )
-            Text(
-                text = stringResource(R.string.gallery_blur_setting_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-
-            // Grace only makes sense while the blur is on — hide otherwise so it doesn't look configurable to no effect.
-            if (blur) {
-                FilterSection(stringResource(R.string.gallery_blur_grace_title)) {
-                    for (opt in BLUR_GRACE_OPTIONS) {
-                        SelectChip(stringResource(blurGraceLabel(opt)), opt == blurGrace, { viewModel.setBlurGraceSeconds(opt) })
-                    }
-                }
-                Text(
-                    text = stringResource(R.string.gallery_blur_grace_desc),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
         }
     }
 }
