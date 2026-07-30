@@ -20,6 +20,21 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.5.0",
+            versionCode = 7,
+            date = "2026-07-30",
+            highlights = listOf(
+                "Photos gallery. A new Photos tab collects every photo you've attached to a tryst in one browsable place — grouped by date, a flat grid, by partner, or a large feed. Tap for a full-screen viewer with pinch-zoom, swipe, slideshow, and a jump-to-tryst button.",
+                "Multi-photo albums per person. Add several photos to any partner (or your own profile) from the full-screen partner editor, and pick any of them as their avatar. Portraits appear in the Photos gallery alongside encounter photos.",
+                "Photo details on-device. An info button in the viewer shows a photo's embedded date, dimensions, camera, and coordinates when present — read straight from the file, nothing sent anywhere.",
+                "Blur photos until tapped (optional). Turn it on in Settings → Gallery so the Photos tab opens blurred behind a Show-photos tap — handy if you might hand your unlocked phone to someone.",
+                "Favourite photos and multi-select. Heart a photo, filter to favourites only, or long-press to bulk-favourite, delete, or move photos to a different tryst.",
+                "Solo tryst photos are attributed to You. They appear alongside your self-profile portraits when drilling into your own person, instead of hiding in a nameless Solo bucket.",
+                "Add-to-person from the viewer. Copy any photo into a partner's or your own portrait album in one tap — the source photo stays where it is.",
+                "Fix: restoring an older backup on a fresh install now works (a NOT-NULL constraint on the new photo-favourite column no longer blocks import).",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.4.0",
             versionCode = 6,
             date = "2026-07-11",

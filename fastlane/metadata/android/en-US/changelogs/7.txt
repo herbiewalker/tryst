@@ -1,0 +1,9 @@
+Photos gallery and multi-photo people.
+
+A new Photos tab collects every photo you've attached to a tryst in one browsable place - grouped by date, a flat grid, by partner, a large feed, or Mosaic that lays them out at true shapes. Tap for a full-screen viewer with pinch-zoom, swipe, slideshow, EXIF details, and a jump-to-tryst button. Long-press to bulk favourite, delete, or move photos to a different tryst.
+
+Multi-photo albums per person: add several photos to any partner or your own profile from the new full-screen partner editor, and pick any one as their avatar. Solo tryst photos are now attributed to You. From the viewer you can also add-to-person to copy a photo into a partner's album.
+
+Optional Blur-until-tapped in Settings - Gallery so the Photos tab opens blurred behind a Show-photos tap.
+
+Fixes: restoring a pre-v14 backup on a fresh install now works, and the photo viewer counter no longer hides under the growing action row.
