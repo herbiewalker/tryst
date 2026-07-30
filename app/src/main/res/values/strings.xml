@@ -260,6 +260,8 @@
     <string name="gallery_slideshow">Slideshow</string>
     <string name="gallery_set_avatar">Set as partner photo</string>
     <string name="gallery_set_avatar_for">Set as %1$s’s photo</string>
+    <string name="gallery_add_to_person_photos">Add to person’s photos</string>
+    <string name="gallery_add_to_person_photos_for">Add to %1$s’s photos</string>
 
     <!-- Multi-select / bulk actions (GAL-4) -->
     <string name="gallery_favorite_selected">Favourite</string>

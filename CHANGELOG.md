@@ -40,6 +40,17 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
   tap from the Partners list ("View photos"); start a **slideshow** from the viewer; jump around a set with
   the new **filmstrip** strip; and set any photo as a partner's picture straight from the viewer.
 
+### Added
+- **Solo tryst photos count as photos of You.** In By-partner and when drilling into your own
+  profile from the People layout, photos from solo trysts now appear under You alongside your
+  self-profile portrait album — instead of hiding in a nameless "Solo" bucket. Nothing changes
+  in the encounter log; only how the gallery groups those photos.
+- **Add a photo to someone's photos, from the viewer.** A new action in the photo viewer copies
+  the current photo into any partner's or your own portrait album — the source stays exactly where
+  it is. Handy when someone was in a photo but wasn't listed on the tryst, or when a solo shot
+  should also live under a partner. The photo shows in People → that-person right away, and can
+  be set as their profile picture from the strip.
+
 ### Fixed
 - **Restoring an older backup on a fresh install now works.** A fresh install created the `media.favorite`
   column without the DEFAULT clause the v13→v14 migration sets, so importing a pre-v14 backup on a

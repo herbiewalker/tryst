@@ -110,21 +110,33 @@ class GalleryPhotosTest {
     }
 
     @Test
-    fun byPartnerPutsAPhotoUnderEachPartnerAndSoloLast() {
+    fun byPartnerPutsAPhotoUnderEachPartnerAndSoloUnderSelf() {
         val alex = partner("alex", "Alex")
         val sam = partner("sam", "Sam")
         val log = listOf(
             encounter("threesome", LocalDateTime.of(2026, 5, 3, 12, 0), partners = listOf(alex, sam), media = listOf(media("t1", "threesome"))),
             encounter("solo", LocalDateTime.of(2026, 5, 2, 12, 0), media = listOf(media("s1", "solo"))),
         )
-        val sections = build(log, layout = GalleryLayout.BY_PARTNER).sections
-        // The threesome photo appears under both partners; the solo photo lands in a trailing Solo section.
+        // The threesome photo appears under both partners; the solo photo attributes to self ("You")
+        // and shows under a self section — not a trailing generic Solo bucket.
+        val sections = build(log, layout = GalleryLayout.BY_PARTNER, profileDisplayName = "You").sections
         assertEquals(GalleryGroup.Partner("alex", "Alex"), sections[0].group)
         assertEquals(GalleryGroup.Partner("sam", "Sam"), sections[1].group)
-        assertEquals(GalleryGroup.Solo, sections.last().group)
+        assertEquals(GalleryGroup.Partner(GalleryPhotos.SELF_PARTNER_ID, "You"), sections.last().group)
         assertTrue(sections[0].photos.single().id == "t1" && sections[1].photos.single().id == "t1")
+        assertEquals("s1", sections.last().photos.single().id)
         // The flat viewer list de-duplicates: two source photos, not three.
         assertEquals(listOf("t1", "s1"), build(log, layout = GalleryLayout.BY_PARTNER).photos.map { it.id })
+    }
+
+    @Test
+    fun soloEncounterPhotoAttributesToSelfPartnerId() {
+        val log = listOf(
+            encounter("solo", LocalDateTime.of(2026, 5, 2, 12, 0), media = listOf(media("s1", "solo"))),
+        )
+        val photo = build(log, profileDisplayName = "Sam").photos.single()
+        assertEquals(listOf(GalleryPhotos.SELF_PARTNER_ID), photo.partners.map { it.id })
+        assertEquals(listOf("Sam"), photo.partnerNames)
     }
 
     @Test

@@ -401,6 +401,8 @@ fun GalleryScreen(
             onLoadMeta = viewModel::readMeta,
             onToggleFavorite = viewModel::toggleFavorite,
             onSetAvatar = viewModel::setAsPartnerAvatar,
+            assignablePeople = viewModel.assignablePeople.collectAsStateWithLifecycle().value,
+            onAddToPerson = viewModel::addPhotoToPerson,
             slideshowIntervalSeconds = slideshowInterval,
             slideshowShuffle = slideshowShuffle,
         )

@@ -51,7 +51,7 @@ object GalleryPhotos {
 
         val withPhotos = encounters.filter { it.media.isNotEmpty() && filter.matches(it, zone) }
         val matched = applyQuery(withPhotos, query, labels)
-        val encounterPhotos = matched.flatMap { e -> e.media.map { m -> encounterPhoto(e, m) } }
+        val encounterPhotos = matched.flatMap { e -> e.media.map { m -> encounterPhoto(e, m, profileDisplayName) } }
         val portraitPhotos = personPhotos.mapNotNull { pp -> portraitPhoto(pp, partnerNamesById, profileDisplayName) }
             .filter { personPhotoPassesFilter(it, filter, zone) }
         val flattened = (encounterPhotos + portraitPhotos).filter { !onlyFavorites || it.favorite }
@@ -79,15 +79,32 @@ object GalleryPhotos {
         return EncounterSearch.search(index, tokens).map { it.encounter }
     }
 
-    private fun encounterPhoto(e: EncounterWithDetails, m: MediaEntity): GalleryPhoto = GalleryPhoto(
+    /**
+     * A solo encounter has no partners of its own, so its photos are attributed to **self** — they
+     * naturally fall under "You" in By-partner and appear when drilling into self from People.
+     * The drill-into-self filter path also flips `includeSolo = true` so [EncounterFilter.matches]
+     * lets those encounters through (self isn't a real partner id in the encounters table).
+     */
+    private fun encounterPhoto(
+        e: EncounterWithDetails,
+        m: MediaEntity,
+        profileDisplayName: String?,
+    ): GalleryPhoto = GalleryPhoto(
         blobId = m.id,
         mimeType = m.mimeType,
         takenAt = e.encounter.startAt,
-        partners = e.partners.map { GalleryPartner(it.id, it.displayName) },
+        partners = if (e.partners.isEmpty()) {
+            listOf(GalleryPartner(id = SELF_PARTNER_ID, name = profileDisplayName))
+        } else {
+            e.partners.map { GalleryPartner(it.id, it.displayName) }
+        },
         rating = e.encounter.satisfactionRating,
         favorite = m.favorite,
         source = GalleryPhoto.Source.Encounter(encounterId = e.encounter.id, media = m),
     )
+
+    /** Owner id used for the self profile — mirrored by `GalleryViewModel.SELF_OWNER_ID`. */
+    const val SELF_PARTNER_ID = "self"
 
     /**
      * Builds a portrait's [GalleryPhoto]. For a partner portrait, [partnerNamesById] supplies the display
