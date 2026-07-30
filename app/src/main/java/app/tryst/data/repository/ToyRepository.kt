@@ -16,10 +16,13 @@ class ToyRepository @Inject constructor(
 
     fun observeCustom(): Flow<List<ToyEntity>> = dao.observeCustom()
 
-    suspend fun addCustom(label: String) {
+    /** Adds a custom toy. Returns its new id (or null when the label was blank). */
+    suspend fun addCustom(label: String): String? {
         val trimmed = label.trim()
-        if (trimmed.isEmpty()) return
-        dao.upsert(ToyEntity(id = UUID.randomUUID().toString(), label = trimmed, isBuiltIn = false))
+        if (trimmed.isEmpty()) return null
+        val id = UUID.randomUUID().toString()
+        dao.upsert(ToyEntity(id = id, label = trimmed, isBuiltIn = false))
+        return id
     }
 
     /** Renames a custom toy in place (id — and so every encounter ref — is untouched). A label that collides with an existing entry (unique index) is silently rejected. */

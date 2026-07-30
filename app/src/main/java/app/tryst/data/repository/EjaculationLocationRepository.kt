@@ -16,10 +16,13 @@ class EjaculationLocationRepository @Inject constructor(
 
     fun observeCustom(): Flow<List<EjaculationLocationEntity>> = dao.observeCustom()
 
-    suspend fun addCustom(label: String) {
+    /** Adds a custom finish location. Returns its new id (or null when the label was blank). */
+    suspend fun addCustom(label: String): String? {
         val trimmed = label.trim()
-        if (trimmed.isEmpty()) return
-        dao.upsert(EjaculationLocationEntity(id = UUID.randomUUID().toString(), label = trimmed, isBuiltIn = false))
+        if (trimmed.isEmpty()) return null
+        val id = UUID.randomUUID().toString()
+        dao.upsert(EjaculationLocationEntity(id = id, label = trimmed, isBuiltIn = false))
+        return id
     }
 
     /** Renames a custom finish location in place (id — and so every encounter ref — is untouched). A label that collides with an existing entry (unique index) is silently rejected. */
