@@ -80,7 +80,15 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun deletePhoto(photo: PersonPhotoEntity) {
-        viewModelScope.launch { personPhotoRepository.delete(photo) }
+        viewModelScope.launch {
+            // If the deleted portrait is the current avatar, null out `photoMediaId` FIRST so we don't
+            // leave the profile row pointing at a blob we're about to delete (Bundle-A N4).
+            val existing = repository.get()
+            if (existing != null && existing.photoMediaId == photo.mediaBlobId) {
+                repository.upsert(existing.copy(photoMediaId = null, updatedAt = System.currentTimeMillis()))
+            }
+            personPhotoRepository.delete(photo)
+        }
     }
 
     /** Promote a portrait to be the profile's current avatar. */

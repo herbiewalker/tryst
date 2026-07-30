@@ -246,6 +246,52 @@ class GalleryPhotosTest {
     }
 
     @Test
+    fun textQueryNarrowsPortraitsByOwnerName() {
+        // Repro of Lens-1 N2: portraits used to bypass applyQuery entirely, so typing "alex"
+        // returned Alex's tryst photo AND every other partner's portrait. After the fix, a
+        // portrait keeps only if every query token is a substring of the (folded) owner name.
+        val alex = partner("alex", "Alex")
+        val log = listOf(
+            encounter("withAlex", LocalDateTime.of(2026, 5, 1, 12, 0), partners = listOf(alex), media = listOf(media("enc-alex", "withAlex"))),
+        )
+        val portraits = listOf(
+            portrait("pp1", "partner", "alex", "blob-a"),
+            portrait("pp2", "partner", "sam", "blob-b"),
+            portrait("pp3", "profile", "self", "blob-s"),
+        )
+        val partnerNames = mapOf("alex" to "Alex", "sam" to "Sam")
+        val queryAlex = build(log, query = "alex", personPhotos = portraits, partnerNamesById = partnerNames, profileDisplayName = "You").photos.map { it.id }.toSet()
+        assertEquals(setOf("enc-alex", "blob-a"), queryAlex)
+        // Case + accent fold: "SAM" query hits Sam's portrait, self ("You") stays out.
+        val querySam = build(log, query = "SAM", personPhotos = portraits, partnerNamesById = partnerNames, profileDisplayName = "You").photos.map { it.id }.toSet()
+        assertEquals(setOf("blob-b"), querySam)
+        // A portrait with no owner name (anonymous partner or unnamed profile) is dropped when a query is set.
+        val portraitsAnon = listOf(portrait("pp4", "partner", "ghost", "blob-g"))
+        val queryX = build(emptyList(), query = "x", personPhotos = portraitsAnon, partnerNamesById = mapOf("ghost" to null)).photos
+        assertTrue(queryX.isEmpty())
+    }
+
+    @Test
+    fun selfDrillIncludesSelfPortraitButNotPartnerPortraits() {
+        // Repro of Lens-1 N1: drilling into "You" from People (which the VM emits as
+        // includeSolo=true, partnerIds=empty) used to let every partner's portrait through
+        // because the guard collapsed to `if (!byPartner && !true.not())` = always false.
+        val portraits = listOf(
+            portrait("pp1", "partner", "alex", "blob-a"),
+            portrait("pp2", "partner", "sam", "blob-b"),
+            portrait("pp3", "profile", "self", "blob-s"),
+        )
+        val ids = build(
+            emptyList(),
+            filter = EncounterFilter(partnerIds = emptySet(), includeSolo = true),
+            personPhotos = portraits,
+            partnerNamesById = mapOf("alex" to "Alex", "sam" to "Sam"),
+            profileDisplayName = "You",
+        ).photos.map { it.id }.toSet()
+        assertEquals(setOf("blob-s"), ids)
+    }
+
+    @Test
     fun photoCarriesTrystContext() {
         val alex = partner("alex", "Alex")
         val log = listOf(

@@ -52,8 +52,10 @@ object GalleryPhotos {
         val withPhotos = encounters.filter { it.media.isNotEmpty() && filter.matches(it, zone) }
         val matched = applyQuery(withPhotos, query, labels)
         val encounterPhotos = matched.flatMap { e -> e.media.map { m -> encounterPhoto(e, m, profileDisplayName) } }
+        val queryTokens = EncounterSearch.tokenize(query)
         val portraitPhotos = personPhotos.mapNotNull { pp -> portraitPhoto(pp, partnerNamesById, profileDisplayName) }
             .filter { personPhotoPassesFilter(it, filter, zone) }
+            .filter { portraitMatchesQuery(it, queryTokens) }
         val flattened = (encounterPhotos + portraitPhotos).filter { !onlyFavorites || it.favorite }
         val ordered = sortPhotos(flattened, sort)
 
@@ -77,6 +79,18 @@ object GalleryPhotos {
         if (tokens.isEmpty()) return encounters
         val index = EncounterSearch.index(encounters, labels)
         return EncounterSearch.search(index, tokens).map { it.encounter }
+    }
+
+    /**
+     * A portrait has no encounter fields to search, but it does carry the owner's display name — so a
+     * user typing "alex" reasonably expects Alex's portraits alongside Alex's tryst photos. Empty query
+     * = passthrough; otherwise every token must be a substring of the folded partner name.
+     */
+    private fun portraitMatchesQuery(photo: GalleryPhoto, tokens: List<String>): Boolean {
+        if (tokens.isEmpty()) return true
+        val name = photo.partners.firstOrNull()?.name ?: return false
+        val folded = EncounterSearch.fold(name)
+        return tokens.all { folded.contains(it) }
     }
 
     /**
@@ -148,7 +162,11 @@ object GalleryPhotos {
         if (filter.partnerIds.isNotEmpty() || filter.includeSolo) {
             val ownerId = photo.partners.firstOrNull()?.id
             val byPartner = filter.partnerIds.isNotEmpty() && ownerId != null && ownerId in filter.partnerIds
-            if (!byPartner && !filter.includeSolo) return false // portraits are never solo
+            // Portraits have no encounter, so "solo" doesn't apply to them literally. The VM maps a
+            // drill-into-You (or an "include solo" chip with no partner selected) to includeSolo=true;
+            // for portraits that means "let the self-profile portrait through" — never every partner's.
+            val bySelf = filter.includeSolo && ownerId == SELF_PARTNER_ID
+            if (!byPartner && !bySelf) return false
         }
         // Any structured category that would exclude a photo based on encounter fields excludes portraits too
         // (they simply have no such data).
