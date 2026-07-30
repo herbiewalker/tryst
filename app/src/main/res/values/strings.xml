@@ -316,9 +316,7 @@
     <string name="partner_add">Add partner</string>
     <string name="partner_dialog_edit_title">Edit partner</string>
     <string name="cd_partner_photo">Partner photo</string>
-    <string name="partner_change_photo">Change photo</string>
     <string name="partner_add_photo">Add photo</string>
-    <string name="partner_remove_photo">Remove</string>
     <string name="partner_name_label">Name</string>
     <string name="partner_anonymous">"  Anonymous"</string>
     <string name="partner_sex">Sex</string>
@@ -332,7 +330,6 @@
     <string name="profile_title">Your profile</string>
     <string name="profile_note_label">About you (optional)</string>
     <string name="profile_you">You</string>
-    <string name="profile_you_initial">Y</string>
     <string name="profile_you_cta">Add your photo and details</string>
 
     <!-- ============================================================= -->
@@ -340,7 +337,6 @@
     <!-- ============================================================= -->
     <string name="settings_title">Settings</string>
     <!-- Section headers (Settings screen) -->
-    <string name="settings_general">General</string>
     <string name="settings_you">You</string>
     <string name="settings_customize">Customize tabs</string>
     <string name="settings_profile">Your profile</string>
@@ -378,7 +374,6 @@
     <string name="settings_theme_dark">Dark</string>
     <string name="settings_material_you">"  Use Material You colors"</string>
     <string name="settings_material_you_desc">Off uses Tryst\'s purple &amp; green palette; on follows your phone\'s wallpaper colors.</string>
-    <string name="settings_insights">Insights</string>
     <string name="settings_customize_insights">Customize Insights</string>
     <string name="settings_insights_desc">Reorder or hide the stat boxes and pick a chart style on the Insights tab.</string>
     <string name="settings_gallery">Gallery</string>
