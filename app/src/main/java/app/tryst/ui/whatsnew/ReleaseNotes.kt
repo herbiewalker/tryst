@@ -20,6 +20,17 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.5.2",
+            versionCode = 9,
+            date = "2026-07-30",
+            highlights = listOf(
+                "Add new categories on the fly. Every catalog list in the encounter editor — acts, positions, kinks, toys, occasions, finish locations — now has an \"Add a new one…\" field at the bottom of its More… sheet. Type a name, tap Add, and it's saved AND selected for the current tryst — no more trip to Settings for a one-off entry.",
+                "Fix: drilling into \"You\" from the People layout now has a back button and honours the system back gesture, so you can leave the self drill without closing the Photos tab.",
+                "Fix: partner and profile pictures from older backups now show correctly in the partner editor and Your profile page. The strip used to render empty when the avatar came from a v13/v14 backup because it wasn't yet tracked as a portrait; the app now auto-adopts those blobs into the portrait album on first open.",
+                "Import backup: new \"Replace my current data with the backup (recommended)\" checkbox — on by default — makes restore atomic and predictable. Turn it off if you deliberately want to merge two datasets.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.5.1",
             versionCode = 8,
             date = "2026-07-30",

@@ -1,0 +1,7 @@
+Quality-of-life patch focused on the encounter editor and backup restore.
+
+Encounter editor: every catalog list (acts, positions, kinks, toys, occasions, finish locations) now has an "Add a new one..." field at the bottom of its More sheet - type a name, tap Add, and it's saved AND selected for the current tryst. No trip to Settings for a one-off entry.
+
+Fixes: drilling into "You" from People now has a back button and honours the system back gesture. Partner and profile pictures from older (v13/v14) backups now show correctly in the partner editor and Your profile page - the app auto-adopts those legacy blobs into the portrait album on first open.
+
+Backup restore: new "Replace my current data with the backup (recommended)" checkbox on Import, on by default, makes restore atomic and predictable. Turn off if you deliberately want to merge datasets.

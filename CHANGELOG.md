@@ -13,7 +13,20 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.5.2] — 2026-07-30 (versionCode 9)
+
+Quality-of-life + audit-cleanup patch. Every fix here came out of the v0.5.1 on-device
+validation walkthrough (`docs/audits/2026-07-30-session-validation.md`) or the audit
+nice-to-haves. Nothing that shipped in v0.5.1 has yet reached F-Droid, so this is still
+the first "publicly landing" release for everything since v0.4.0.
+
 ### Added
+
+- **Add a new category on the fly.** Every catalog list in the encounter editor — acts,
+  positions, kinks, toys, occasions, finish locations — now has an "Add a new one…" field
+  at the bottom of its More… sheet. Type a name, tap Add, and it's saved AND selected for
+  the current tryst. Adds are visible in Settings → Categories immediately afterwards,
+  just like anything added there.
 - **"Replace my current data with the backup" checkbox** on Import (Bundle-E Q1, default on).
   When on, the backup restore first wipes every row in the app before inserting the backup
   rows — all inside a single DB transaction, so a mid-restore failure rolls both halves back
@@ -22,7 +35,21 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
   cleaned up too. Off keeps the previous merge behaviour (advanced — leaves cross-refs to
   local-only encounters dangling on any partner id shared with the backup).
 
+### Fixed
+
+- **Back button on the People-drill for self.** Drilling into "You" from People used to
+  render no top-bar back button AND swallow the system-back gesture (`_drilledPartnerId`
+  was `"self"`, which isn't a real partner id, so `drilled` collapsed to false). The
+  self-drill now shows the same DrillBar as any partner drill.
+- **Partner/profile avatars from older backups render again.** `PersonPhotoStrip` only
+  iterates the v15 `person_photo` table; blobs stored the pre-v15 way (`partners.photoMediaId`
+  from a v13/v14 backup) had no matching portrait row, so the strip looked empty. Both
+  editors now auto-adopt the legacy blob as a portrait row on first open — reuses the
+  existing encrypted file, no re-encryption. Idempotent, no schema bump.
+
 ### Internal
+- `PersonPhotoRepository.adoptExistingBlob(kind, ownerId, blobId)` — insert a portrait row
+  for an already-encrypted blob. Used by the two editor VMs to heal legacy avatars.
 - `BackupManager.restoreDatabase` refactored to `restoreDatabaseIntoTx` — no longer opens its
   own transaction; the caller owns the tx so wipe+restore commit atomically.
 - `EncryptedMediaStore.deleteOrphans(keep)` — sweep every live `<id>.enc` whose id isn't in the
