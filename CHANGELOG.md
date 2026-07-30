@@ -52,6 +52,9 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
   be set as their profile picture from the strip.
 
 ### Fixed
+- **Photo viewer counter no longer hides behind the action row.** The "N / M" counter used to
+  sit in the middle of the top bar; as more actions were added to the right it started to overlap.
+  It now lives next to the Close button on the left, so adding more actions later can't hide it.
 - **Restoring an older backup on a fresh install now works.** A fresh install created the `media.favorite`
   column without the DEFAULT clause the v13→v14 migration sets, so importing a pre-v14 backup on a
   brand-new phone hit a NOT-NULL constraint on that column. Room's fresh CREATE now carries the same
