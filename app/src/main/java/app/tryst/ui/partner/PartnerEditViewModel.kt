@@ -87,6 +87,17 @@ class PartnerEditViewModel @Inject constructor(
         viewModelScope.launch {
             val id = partnerId ?: return@launch
             val existing = partnerRepository.getById(id) ?: return@launch
+            // Heal legacy avatars: v13/v14 backups have partner.photoMediaId set (via the old
+            // savePhoto path) but no matching person_photo row, so PersonPhotoStrip would render
+            // empty. Adopt the blob as a portrait row — reuses the existing encrypted file, no
+            // re-encryption. Idempotent: we only insert when there's no matching row yet.
+            val avatarBlob = existing.photoMediaId
+            if (avatarBlob != null) {
+                val album = personPhotoRepository.getForOwner(PersonPhotoRepository.KIND_PARTNER, id)
+                if (album.none { it.mediaBlobId == avatarBlob }) {
+                    personPhotoRepository.adoptExistingBlob(PersonPhotoRepository.KIND_PARTNER, id, avatarBlob)
+                }
+            }
             uiState = PartnerEditUiState(
                 name = existing.displayName.orEmpty(),
                 anonymous = existing.isAnonymous,

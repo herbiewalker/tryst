@@ -138,7 +138,10 @@ fun GalleryScreen(
     val slideshowShuffle by viewModel.slideshowShuffle.collectAsStateWithLifecycle()
 
     val selectionActive = selectedIds.isNotEmpty()
-    val drilled = drilledPartner != null
+    // Include drilledIntoSelf: the self-drill sets _drilledPartnerId to "self" (not a real partner id),
+    // so drilledPartner stays null. Without this, the self-drill top bar and the exit-drill back handler
+    // would both be hidden — user has no way back to People except closing the tab.
+    val drilled = drilledPartner != null || drilledIntoSelf
     val isPeople = ui.layout == GalleryLayout.PEOPLE
 
     var searching by remember { mutableStateOf(false) }

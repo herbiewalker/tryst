@@ -52,6 +52,29 @@ class PersonPhotoRepository @Inject constructor(
         row
     }
 
+    /**
+     * Adopt an ALREADY-encrypted blob as a portrait row without re-encrypting it. Used to fold pre-v15
+     * legacy avatars (stored in `partners.photoMediaId` / `profile.photoMediaId` via the old
+     * `savePhoto` path) into the v15 person_photo album so PersonPhotoStrip can render + manage them
+     * uniformly. Idempotent-friendly: callers should check `getForOwner` first to avoid duplicates.
+     */
+    suspend fun adoptExistingBlob(
+        kind: String,
+        ownerId: String,
+        blobId: String,
+        now: Long = System.currentTimeMillis(),
+    ): PersonPhotoEntity = withContext(Dispatchers.IO) {
+        val row = PersonPhotoEntity(
+            id = UUID.randomUUID().toString(),
+            ownerKind = kind,
+            ownerId = ownerId,
+            mediaBlobId = blobId,
+            addedAt = now,
+        )
+        dao.upsert(row)
+        row
+    }
+
     /** Deletes both the row and its encrypted blob. */
     suspend fun delete(entity: PersonPhotoEntity) {
         mediaStore.delete(entity.mediaBlobId)
