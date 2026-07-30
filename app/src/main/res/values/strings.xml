@@ -382,7 +382,7 @@
     <string name="settings_customize_insights">Customize Insights</string>
     <string name="settings_insights_desc">Reorder or hide the stat boxes and pick a chart style on the Insights tab.</string>
     <string name="settings_gallery">Gallery</string>
-    <string name="settings_customize_gallery">Gallery layout</string>
+    <string name="settings_customize_gallery">Customize Gallery</string>
     <string name="settings_gallery_desc">Choose how the Photos tab lays out — grouped by date, a flat grid, by partner, a large feed, an aspect-preserving mosaic, or a People grid of avatars — plus column count and sort order. Long-press a photo to select and act on several at once; tap the heart to mark favourites.</string>
     <string name="settings_categories">Categories</string>
     <string name="settings_categories_desc">Tryst ships almost no built-in categories — add your own acts, kinks, positions, toys, occasions, and finish locations, and rename or remove them any time.</string>
@@ -394,7 +394,7 @@
     <string name="settings_manage_ejaculation">Manage finish locations</string>
     <string name="settings_backup">Backup &amp; restore</string>
     <string name="settings_export">Export encrypted backup</string>
-    <string name="settings_import">Import / restore backup</string>
+    <string name="settings_import">Import backup</string>
     <string name="settings_backup_desc">Backups are password-encrypted and include everything (photos too). Keep the password safe — there\'s no recovery if you lose it.</string>
     <string name="settings_import_csv">Import from CSV (other apps)</string>
     <string name="settings_csv_desc">Bring in encounter history from other apps/spreadsheets via CSV — you map the columns to Tryst fields.</string>
@@ -402,7 +402,7 @@
     <string name="settings_delete_all">Delete all data…</string>
     <string name="settings_delete_all_desc">Permanently erases every encounter, partner, photo, and your PIN. Opens a confirmation page — this cannot be undone.</string>
     <string name="settings_about">About</string>
-    <string name="settings_about_button">About &amp; open-source licenses</string>
+    <string name="settings_about_button">About &amp; licenses</string>
     <string name="settings_about_desc">Tryst is open-source under GPLv3. See the credits for the third-party components it uses.</string>
     <!-- Reset-all sub-page (ResetDataScreen) -->
     <string name="reset_title">Delete all data</string>
