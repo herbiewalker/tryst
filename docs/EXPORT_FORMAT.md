@@ -55,7 +55,11 @@ associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, i
   no path separators or `..`, and the resolved file must stay inside the media dir — so a crafted backup
   can't use it to write outside app storage (Zip-Slip).
 - **Schema version** is recorded; restores assume forward-only, additive-nullable migrations (a newer
-  backup into an older app isn't supported).
+  backup into an older app isn't supported). For NOT-NULL columns added by a later migration that
+  a backup naturally lacks, restore consults `PRAGMA table_info` per table and backfills the live
+  schema's SQL DEFAULT — so restoring a v13 backup on a v15+ install fills `media.favorite = 0`
+  (D-53). Columns with no SQL DEFAULT still fail loudly; that's a deliberate signal to bump the
+  entity, not fabricate a value.
 
 ## Importing data from *other* apps (implemented, M5b)
 Separate path from this backup format. Because intimacy/period trackers share no standard, this is a

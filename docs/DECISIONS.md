@@ -1,7 +1,7 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v13** (latest: **D-44…D-48**, the Insights time scope
-> and the shared Insights/Search date vocabulary).
+> **Status:** Live — decisions through **schema v15** (latest: **D-52…D-53**, the person-photo album +
+> "add to person's photos" from the viewer + backup-restore defense-in-depth).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
 > D-41 covers the F-Droid content-policy rework — acts/kinks in
 > 0.3.0, positions/toys in 0.3.1, then empty predefined lists + custom occasions/finish-locations in
@@ -540,6 +540,45 @@
     reset on app-lock — the app lock is itself the gate for the locked case, and a fresh process starts
     gated. Tapping a photo keeps it revealed while browsing. The biometric re-auth tier stays on the
     roadmap, unbuilt.
+
+- **D-52 (2026-07-30) Solo tryst photos attribute to self, and photos can be manually tagged onto a
+  person from the viewer.** Two related shifts to make the Photos tab match how people actually think
+  about "photos of X".
+  - **Solo → self (auto).** A solo tryst has no partner rows, and the previous pipeline dropped its
+    photos into a nameless `GalleryGroup.Solo` bucket — drilling into You from People showed *nothing*
+    because the drill filter set `partnerIds = {"self"}` and no encounter has that as a real partner.
+    Now `GalleryPhotos.encounterPhoto` attributes solo photos to `SELF_PARTNER_ID` so By-partner puts
+    them under You (alongside the self-profile portrait album), and the drill-into-self path translates
+    the filter to `includeSolo = true, partnerIds = {}` so `EncounterFilter.matches` still lets solo
+    encounters through. No schema change; no encounter data mutated.
+  - **Add to person's photos (manual).** A new action in `PhotoViewer` (`AddPhotoAlternate` icon) opens
+    a menu of every active partner + You; picking one copies the current photo into that person's
+    portrait album via `PersonPhotoRepository.add`. The source stays put. Cheap way to fix a
+    mis-attribution ("Alex was in the shot but the tryst was solo") without editing the encounter's
+    partner list — and a photo can be tagged onto multiple people that way.
+  - **Non-goals kept explicit.** No new photo↔person tag table — we already have `person_photo` and
+    encounter-partner rows, and layering a third association model would fragment the story. The
+    copy-into-album approach reuses the existing tables and stays consistent with "portrait = photo
+    of a person, encounter photo = photo attached to a tryst".
+
+- **D-53 (2026-07-30) Restore backfills NOT-NULL columns from the live schema's DEFAULT; entities
+  must declare `defaultValue` for every column added post-v1.** A shipped v0.4.0 phone was on schema
+  v13; upgrading to v15 (main) runs `MIGRATION_13_14` which sets `media.favorite INTEGER NOT NULL
+  DEFAULT 0`. But **fresh** v15 installs got the column with no SQL DEFAULT because the entity
+  lacked `@ColumnInfo(defaultValue = "0")` — so restoring a v13 backup on a brand-new phone died
+  with `SQLiteConstraintException: NOT NULL constraint failed: media.favorite`. Two-layer fix:
+  - **Entity source-of-truth.** `MediaEntity.favorite` gains `@ColumnInfo(defaultValue = "0")` so
+    fresh Room CREATE matches the migration. Rule going forward: any new NOT-NULL column added via
+    an `ADD COLUMN … NOT NULL DEFAULT X` migration also carries `defaultValue = "X"` on the entity.
+  - **BackupManager backfill (defense-in-depth).** `restoreDatabase` now runs `PRAGMA table_info`
+    per target table and, for any NOT-NULL column with a live SQL DEFAULT that the backup row
+    doesn't carry, fills that DEFAULT into the ContentValues before insert. That means the next
+    migration to forget the entity annotation still restores older backups cleanly. Columns with
+    no SQL DEFAULT still fail loudly — we deliberately don't fabricate a `0` / `""` because the
+    "right" value is domain-specific and silent data corruption is worse than a loud error.
+  - **Also (observability).** `BackupViewModel.import` no longer swallows the exception silently —
+    it now `Log.e("TRYSTIMPORT", …)` before showing the generic toast. This bug was invisible for
+    a full session because of the swallow; the log line kills that class of debugging pain.
 
 > Still tracked elsewhere (not re-listed): user-configurable **auto-lock timeout** & **change-PIN UI**
 > and **history filters/search** (deferred features, ROADMAP M3); **VACUUM on delete-all** for

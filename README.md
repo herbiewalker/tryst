@@ -60,7 +60,12 @@ Privacy isn't a setting here — it's the architecture.
   acts, kinks, positions, toys, occasions, and finish locations on a dedicated management page per
   category. Everything you add — or had already logged — counts fully across Insights and Achievements.
 - **Partners & a self profile** — named or anonymous partners with relationship type and optional
-  demographics (age, ethnicity, height, body type, location) and avatars, plus your own profile.
+  demographics (age, ethnicity, height, body type, location) and a **portrait album per person** (a set
+  of photos you can rotate the current avatar from), plus your own profile.
+- **Photos gallery** — a browsable Photos tab over every image attached to a tryst plus every person's
+  portrait album, with layouts (date grid, mosaic, by-partner, People avatars, feed), search, filters,
+  favourites, bulk actions, a slideshow, pinch-to-zoom viewer, and — the "add-to-person" action — one
+  tap in the viewer to also file a photo under any partner (or You).
 - **Insights** — a pure-Kotlin stats engine: totals, week streaks, averages, monthly & weekday
   trends, and per-attribute breakdowns. Reorder/hide tiles and cards, pick a chart style per card
   (bars / line / donut), with stable per-type colors. Charts are **hand-drawn** — no chart dependency.

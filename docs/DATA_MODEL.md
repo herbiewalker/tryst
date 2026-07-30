@@ -1,8 +1,16 @@
 # Tryst — Data Model
 
-> **Status:** Live — **schema v13** (unreleased; v0.3.2 shipped v12), Room over SQLCipher. Matches the entities in
+> **Status:** Live — **schema v15** (unreleased; v0.4.0 shipped v13), Room over SQLCipher. Matches the entities in
 > `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change ships a
 > non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
+>
+> v14 added `media.favorite` (favourite photos, GAL-3); v15 added the `person_photo` table (portrait album
+> per partner / self-profile, GAL-6). Both are pure additive DDL — no existing row is touched.
+>
+> **Rule:** any new NOT-NULL column added via `ADD COLUMN … NOT NULL DEFAULT X` in a migration must also
+> carry `@ColumnInfo(defaultValue = "X")` on the entity, so **fresh** Room CREATE matches the migration's
+> DEFAULT. Otherwise a fresh install can't restore older backups (D-53). `BackupManager.restoreDatabase`
+> also backfills the live `PRAGMA table_info` DEFAULT as defense-in-depth.
 
 > All tables live in the encrypted SQLCipher DB. IDs are app-local UUID strings. Nothing here
 > leaves the device except via the user's encrypted export (M5).
