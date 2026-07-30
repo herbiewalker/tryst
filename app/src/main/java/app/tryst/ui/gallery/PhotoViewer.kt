@@ -24,6 +24,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
@@ -72,6 +73,13 @@ private const val MAX_ZOOM = 4f
 private val ACCENT = Color(0xFF80CBC4)
 
 /**
+ * A person the viewer can tag the current photo onto — every active partner plus "You" (self profile).
+ * Distinct from [GalleryPartner] because the tag flow needs the storage kind (`partner` / `profile`),
+ * which encounter photos don't carry.
+ */
+data class AssignablePerson(val kind: String, val ownerId: String, val displayName: String?)
+
+/**
  * Full-screen photo viewer: swipe between the gallery's photos, pinch-to-zoom and pan the current one,
  * tap to toggle the chrome, and jump to the owning tryst. `FLAG_SECURE` (set app-wide) already blocks
  * screenshots here. A page change resets the zoom so the next photo starts fit-to-screen.
@@ -90,6 +98,8 @@ fun PhotoViewer(
     onLoadMeta: suspend (blobId: String) -> PhotoMeta,
     onToggleFavorite: (GalleryPhoto) -> Unit,
     onSetAvatar: (blobId: String, partnerId: String) -> Unit,
+    assignablePeople: List<AssignablePerson>,
+    onAddToPerson: (blobId: String, kind: String, ownerId: String) -> Unit,
     slideshowIntervalSeconds: Int,
     slideshowShuffle: Boolean,
 ) {
@@ -102,6 +112,7 @@ fun PhotoViewer(
     var showInfo by remember { mutableStateOf(false) }
     var slideshow by remember { mutableStateOf(false) }
     var avatarMenu by remember { mutableStateOf(false) }
+    var addToPersonMenu by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     // Shuffle order: a Fisher-Yates permutation regenerated every time slideshow flips on OR the set of
@@ -173,6 +184,27 @@ fun PhotoViewer(
                             Icons.Filled.Slideshow,
                             contentDescription = stringResource(R.string.gallery_slideshow),
                             tint = if (slideshow) ACCENT else Color.White,
+                        )
+                    }
+                    Box {
+                        IconButton(
+                            onClick = { addToPersonMenu = true },
+                            enabled = assignablePeople.isNotEmpty(),
+                        ) {
+                            Icon(
+                                Icons.Filled.AddPhotoAlternate,
+                                contentDescription = stringResource(R.string.gallery_add_to_person_photos),
+                                tint = if (assignablePeople.isNotEmpty()) Color.White else Color.White.copy(alpha = 0.4f),
+                            )
+                        }
+                        AddToPersonMenu(
+                            expanded = addToPersonMenu,
+                            people = assignablePeople,
+                            onDismiss = { addToPersonMenu = false },
+                            onPick = { p ->
+                                onAddToPerson(current.blobId, p.kind, p.ownerId)
+                                addToPersonMenu = false
+                            },
                         )
                     }
                     Box {
@@ -267,6 +299,30 @@ private fun AvatarPartnerMenu(
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.gallery_set_avatar_for, name)) },
                 onClick = { onPick(p.id) },
+            )
+        }
+    }
+}
+
+/**
+ * Menu of every person the current photo can be tagged onto — active partners plus You. Picking one
+ * copies the photo (its blob is re-encrypted into a new portrait row) into that person's album; the
+ * original encounter photo stays exactly where it was. Cheap way to fix a mis-attributed photo without
+ * touching the encounter's partner list.
+ */
+@Composable
+private fun AddToPersonMenu(
+    expanded: Boolean,
+    people: List<AssignablePerson>,
+    onDismiss: () -> Unit,
+    onPick: (AssignablePerson) -> Unit,
+) {
+    DropdownMenu(expanded = expanded, onDismissRequest = onDismiss) {
+        people.forEach { p ->
+            val name = p.displayName?.takeIf { it.isNotBlank() } ?: stringResource(R.string.gallery_group_anonymous)
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.gallery_add_to_person_photos_for, name)) },
+                onClick = { onPick(p) },
             )
         }
     }

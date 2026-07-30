@@ -244,11 +244,19 @@ class GalleryViewModel @Inject constructor(
     private val filter: Flow<EncounterFilter> =
         combine(_dateScope, _rating, _partnerIds, _advanced, _drilledPartnerId) { scope, rating, partnerIds, advanced, drilledId ->
             // Drilled-in-from-People wins over the persistent partner filter so you always see just that person's photos.
-            val effectivePartnerIds = drilledId?.let { setOf(it) } ?: partnerIds
+            // "self" isn't a real partner id in the encounters table, so a drill into You becomes
+            // "include solo encounters, no partner constraint" — that surfaces every solo encounter's
+            // photos alongside the self-profile portrait album.
+            val (effectivePartnerIds, effectiveIncludeSolo) = when (drilledId) {
+                null -> partnerIds to advanced.includeSolo
+                SELF_OWNER_ID -> emptySet<String>() to true
+                else -> setOf(drilledId) to false
+            }
             advanced.copy(
                 dateRanges = listOfNotNull(scope.range()),
                 ratingRange = rating.range,
                 partnerIds = effectivePartnerIds,
+                includeSolo = effectiveIncludeSolo,
             )
         }
 
@@ -407,6 +415,29 @@ class GalleryViewModel @Inject constructor(
         val encounterIds = encounterBlobsInSelection()
         if (encounterIds.isNotEmpty()) encounterRepository.reassignMedia(encounterIds, encounterId)
         clearSelection()
+    }
+
+    /**
+     * Every person the viewer can tag a photo onto — active partners + You. Composed from the
+     * observed partner list and profile, so it stays in sync with adds/renames/archives.
+     */
+    val assignablePeople: StateFlow<List<AssignablePerson>> =
+        combine(partners, profile) { list, self ->
+            val selfName = self?.displayName?.takeIf { it.isNotBlank() }
+            listOf(AssignablePerson(PersonPhotoRepository.KIND_PROFILE, SELF_OWNER_ID, selfName)) +
+                list.map { p -> AssignablePerson(PersonPhotoRepository.KIND_PARTNER, p.id, p.displayName) }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /**
+     * Copies a gallery photo (encounter or portrait — both are just encrypted blobs) into a person's
+     * portrait album. The source stays put; a fresh `person_photo` row + re-encrypted blob is created.
+     * Cheap way to fix a mis-attributed photo (e.g. Alex was on the shot but not listed on the tryst)
+     * without touching the encounter's partner list.
+     */
+    fun addPhotoToPerson(blobId: String, kind: String, ownerId: String) = viewModelScope.launch(Dispatchers.IO) {
+        runCatching {
+            personPhotoRepository.openBlob(blobId).use { personPhotoRepository.add(kind, ownerId, it) }
+        }
     }
 
     /**
