@@ -1,5 +1,6 @@
 package app.tryst.data.db.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -96,8 +97,14 @@ data class MediaEntity(
     val encFilePath: String,
     val mimeType: String,
     val createdAt: Long,
-    /** User "favourite" mark (GAL-3) — surfaced in the gallery's Favourites filter and starred in the viewer. */
-    val favorite: Boolean = false,
+    /**
+     * User "favourite" mark (GAL-3) — surfaced in the gallery's Favourites filter and starred in the viewer.
+     *
+     * `defaultValue = "0"` mirrors the DEFAULT clause in `MIGRATION_13_14`, so a fresh v15+ install
+     * creates `media.favorite` with the same DEFAULT the upgrade path installs. Without it, restoring a
+     * pre-v14 backup (which has no `favorite` key) into a fresh install fails NOT-NULL on this column.
+     */
+    @ColumnInfo(defaultValue = "0") val favorite: Boolean = false,
 )
 
 /**

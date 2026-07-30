@@ -41,8 +41,17 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
   the new **filmstrip** strip; and set any photo as a partner's picture straight from the viewer.
 
 ### Fixed
+- **Restoring an older backup on a fresh install now works.** A fresh install created the `media.favorite`
+  column without the DEFAULT clause the v13→v14 migration sets, so importing a pre-v14 backup on a
+  brand-new phone hit a NOT-NULL constraint on that column. Room's fresh CREATE now carries the same
+  `DEFAULT 0` as the migration; the "move to a new phone" flow is unblocked.
 - **Partner card subtitles** no longer show a stray "Â·" — the middle dot between sex/gender/age
   fields in the Partners tab renders correctly again ("Man · Age 39", not "Man Â· Age 39").
+
+### Internal
+- Import failures now log the underlying exception (`Log.e("TRYSTIMPORT", …)`) instead of silently
+  showing a generic "Import failed" toast — the previous swallow made debugging the media-favorite
+  restore bug above much harder than it needed to be.
 
 ## [0.4.0] — 2026-07-11 (versionCode 6)
 
