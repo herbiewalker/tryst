@@ -13,6 +13,26 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+### Added
+- **"Replace my current data with the backup" checkbox** on Import (Bundle-E Q1, default on).
+  When on, the backup restore first wipes every row in the app before inserting the backup
+  rows — all inside a single DB transaction, so a mid-restore failure rolls both halves back
+  and leaves your data exactly where it was. Then the restored blob-id set becomes the "keep"
+  filter for a media dir sweep so old encrypted files that no row references any more get
+  cleaned up too. Off keeps the previous merge behaviour (advanced — leaves cross-refs to
+  local-only encounters dangling on any partner id shared with the backup).
+
+### Internal
+- `BackupManager.restoreDatabase` refactored to `restoreDatabaseIntoTx` — no longer opens its
+  own transaction; the caller owns the tx so wipe+restore commit atomically.
+- `EncryptedMediaStore.deleteOrphans(keep)` — sweep every live `<id>.enc` whose id isn't in the
+  keep set. The wipe-first import path uses this after the DB commit succeeds.
+- Deleted 5 truly-orphan string resources: `settings_general` and `settings_insights` (Q2/Q3,
+  freed by the this-cycle Settings resection), plus `partner_change_photo`,
+  `partner_remove_photo`, `profile_you_initial` (dead before this session, no callers).
+  Lens 7 also flagged 6 more but those are `<plurals>` used via `R.plurals.*` (SearchScreen,
+  GalleryScreen, GalleryFiltersSheet, MoreFiltersSheet, EncounterCard) — kept.
+
 ## [0.5.1] — 2026-07-30 (versionCode 8)
 
 Bug-fix release. Cluster came out of the v0.5.0 post-release audit

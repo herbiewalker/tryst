@@ -80,8 +80,18 @@ class BackupManager @Inject constructor(
         }
     }
 
-    @Suppress("CyclomaticComplexMethod", "NestedBlockDepth") // Multi-phase restore is clearer inline than split.
-    suspend fun import(password: String, input: InputStream): Unit = withContext(Dispatchers.IO) {
+    /**
+     * Restore an encrypted backup. When [wipeFirst] is true (Bundle-E Q1), every row in the backup's
+     * `TABLES` list is deleted before the backup rows are inserted — the whole wipe+restore runs in a
+     * single DB transaction so a failure rolls both halves back. When false (advanced), the previous
+     * `INSERT OR REPLACE` merge semantics apply (with the known cascade side-effect on cross-refs).
+     */
+    @Suppress("CyclomaticComplexMethod", "NestedBlockDepth", "LongMethod") // Multi-phase restore is clearer inline than split.
+    suspend fun import(
+        password: String,
+        input: InputStream,
+        wipeFirst: Boolean = false,
+    ): Unit = withContext(Dispatchers.IO) {
         val magic = ByteArray(MAGIC.size).also { readFully(input, it) }
         require(magic.contentEquals(MAGIC)) { "Not a Tryst backup file" }
         require(input.read() == FORMAT_VERSION) { "Unsupported backup version" }
@@ -96,10 +106,9 @@ class BackupManager @Inject constructor(
         val stagedIds = mutableListOf<String>()
         try {
             // Phase 1: drain the ZIP. Read data.json into memory; write every media blob to its
-            // STAGING path (`<id>.enc.staging`) — never touching the live `<id>.enc` until after we
-            // know the whole restore is going to succeed. A mid-loop failure here leaves the on-disk
-            // media/ dir and the DB untouched (Bundle-C N5: previously the DB was committed on the
-            // first data.json entry, so a later blob failure left a silent lossy round-trip).
+            // STAGING path (`<id>.enc.staging`) — never touching the live `<id>.enc` until after the
+            // DB commit succeeds. A mid-loop failure here leaves the on-disk media/ dir and the DB
+            // untouched (Bundle-C N5).
             var dataJson: JSONObject? = null
             ZipInputStream(BackupCrypto.decryptingStream(key, input)).use { zip ->
                 var entry: ZipEntry? = zip.nextEntry
@@ -119,21 +128,37 @@ class BackupManager @Inject constructor(
             }
             val root = dataJson ?: throw IOException("Backup missing data.json")
 
-            // Phase 2: promote every staged blob into place. Do this BEFORE the DB commit so that
-            // when restoreDatabase writes rows referring to `media/<id>`, the files are already
-            // there. If a rename fails, we drop the still-staged rest in `finally` and never
-            // commit the DB.
+            // Phase 2: DB transaction — wipe (if requested) + restore. Both halves commit as one
+            // atomic unit, so a mid-restore failure rolls the wipe back and leaves the user's data
+            // exactly where it was.
+            db.beginTransaction()
+            try {
+                db.execSQL("PRAGMA defer_foreign_keys = TRUE")
+                if (wipeFirst) {
+                    // Children before parents so FK order is respected even without the pragma.
+                    for (table in TABLES.reversed()) db.execSQL("DELETE FROM $table")
+                }
+                restoreDatabaseIntoTx(db, root)
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+
+            // Phase 3: promote staged blobs into their live paths. DB is now committed; the restored
+            // media/person_photo/partner/profile rows expect these files to exist. Promotion happens
+            // after commit so a failure here doesn't corrupt the DB rollback in Phase 2.
             for (id in stagedIds) mediaStore.promoteStaged(id)
 
-            // Phase 3: DB commit. Only now, with every blob present, do we swap the rows.
-            restoreDatabase(db, root)
+            // Phase 4: (wipe-first only) drop any remaining blob whose id isn't in the restored set —
+            // that's the previous user data's media files, orphaned now that no row references them.
+            if (wipeFirst) mediaStore.deleteOrphans(stagedIds.toSet())
 
             // Restore inserts rows raw — it does NOT replay migrations — so a backup made before a
             // catalog trim can reintroduce since-removed built-in act/kink ids. Adopt them into the
             // custom tables exactly like MIGRATION_9_10 does; no-op for current backups (idempotent).
             CatalogAdoption.adoptUnknownIds(db)
         } finally {
-            // Any staging file left over (loop-fail before Phase 2, or Phase-2 rename failure) is
+            // Any staging file left over (loop-fail before Phase 3, or Phase-3 rename failure) is
             // just accumulated junk if we don't clean it. Best-effort sweep — doesn't touch live blobs.
             mediaStore.clearAllStaged()
         }
@@ -164,61 +189,60 @@ class BackupManager @Inject constructor(
         return JSONObject().put("schemaVersion", db.version).put("tables", tables)
     }
 
+    /**
+     * Insert every backup row into the DB. Runs inside a caller-owned transaction so wipe+restore
+     * can commit atomically when the caller wants that (Bundle-E Q1). The caller is responsible for
+     * `beginTransaction` / `setTransactionSuccessful` / `endTransaction` and for setting
+     * `defer_foreign_keys` before this method starts inserting.
+     */
     @Suppress("CyclomaticComplexMethod", "NestedBlockDepth")
-    private fun restoreDatabase(db: androidx.sqlite.db.SupportSQLiteDatabase, root: JSONObject) {
+    private fun restoreDatabaseIntoTx(db: androidx.sqlite.db.SupportSQLiteDatabase, root: JSONObject) {
         val tables = root.optJSONObject("tables") ?: return
-        db.beginTransaction()
-        try {
-            db.execSQL("PRAGMA defer_foreign_keys = TRUE")
-            for (table in TABLES) {
-                val rows = tables.optJSONArray(table) ?: continue
-                val notNullDefaults = notNullColumnDefaults(db, table)
-                for (i in 0 until rows.length()) {
-                    val row = rows.getJSONObject(i)
-                    val values = ContentValues()
-                    val keys = row.keys()
-                    while (keys.hasNext()) {
-                        val k = keys.next()
-                        // Column names come from the untrusted backup JSON, and the framework's
-                        // insert() appends them into the SQL column list unquoted — so reject
-                        // anything that isn't a plain SQL identifier (real columns always match)
-                        // to deny SQL injection via a crafted key. Defence-in-depth: import already
-                        // requires the backup's password (AEAD-authenticated).
-                        if (!COLUMN_NAME.matches(k)) continue
-                        when {
-                            row.isNull(k) -> values.putNull(k)
-                            else -> when (val v = row.get(k)) {
-                                is Int -> values.put(k, v.toLong())
-                                is Long -> values.put(k, v)
-                                is Double -> values.put(k, v)
-                                is Boolean -> values.put(k, if (v) 1L else 0L)
-                                else -> values.put(k, v.toString())
-                            }
+        for (table in TABLES) {
+            val rows = tables.optJSONArray(table) ?: continue
+            val notNullDefaults = notNullColumnDefaults(db, table)
+            for (i in 0 until rows.length()) {
+                val row = rows.getJSONObject(i)
+                val values = ContentValues()
+                val keys = row.keys()
+                while (keys.hasNext()) {
+                    val k = keys.next()
+                    // Column names come from the untrusted backup JSON, and the framework's
+                    // insert() appends them into the SQL column list unquoted — so reject
+                    // anything that isn't a plain SQL identifier (real columns always match)
+                    // to deny SQL injection via a crafted key. Defence-in-depth: import already
+                    // requires the backup's password (AEAD-authenticated).
+                    if (!COLUMN_NAME.matches(k)) continue
+                    when {
+                        row.isNull(k) -> values.putNull(k)
+                        else -> when (val v = row.get(k)) {
+                            is Int -> values.put(k, v.toLong())
+                            is Long -> values.put(k, v)
+                            is Double -> values.put(k, v)
+                            is Boolean -> values.put(k, if (v) 1L else 0L)
+                            else -> values.put(k, v.toString())
                         }
                     }
-                    if (table == "media") {
-                        // The stored path is device-specific — point it at this device's media dir.
-                        values.getAsString("id")?.let { values.put("encFilePath", mediaStore.fileFor(it).absolutePath) }
-                    }
-                    // Backfill any NOT NULL column the backup lacks with the live schema's DEFAULT.
-                    // A pre-Vn backup naturally omits every column added in Vn+ migrations; without
-                    // this, the first row we try to insert blows up on the column's NOT-NULL constraint
-                    // on any *fresh* install whose entity forgot @ColumnInfo(defaultValue=…). Rows that
-                    // do carry the key stay as-is (defer_foreign_keys still governs FK ordering).
-                    for ((col, default) in notNullDefaults) {
-                        if (values.containsKey(col)) continue
-                        when (default) {
-                            is Long -> values.put(col, default)
-                            is Double -> values.put(col, default)
-                            else -> values.put(col, default.toString())
-                        }
-                    }
-                    db.insert(table, SQLiteDatabase.CONFLICT_REPLACE, values)
                 }
+                if (table == "media") {
+                    // The stored path is device-specific — point it at this device's media dir.
+                    values.getAsString("id")?.let { values.put("encFilePath", mediaStore.fileFor(it).absolutePath) }
+                }
+                // Backfill any NOT NULL column the backup lacks with the live schema's DEFAULT.
+                // A pre-Vn backup naturally omits every column added in Vn+ migrations; without
+                // this, the first row we try to insert blows up on the column's NOT-NULL constraint
+                // on any *fresh* install whose entity forgot @ColumnInfo(defaultValue=…). Rows that
+                // do carry the key stay as-is (defer_foreign_keys still governs FK ordering).
+                for ((col, default) in notNullDefaults) {
+                    if (values.containsKey(col)) continue
+                    when (default) {
+                        is Long -> values.put(col, default)
+                        is Double -> values.put(col, default)
+                        else -> values.put(col, default.toString())
+                    }
+                }
+                db.insert(table, SQLiteDatabase.CONFLICT_REPLACE, values)
             }
-            db.setTransactionSuccessful()
-        } finally {
-            db.endTransaction()
         }
     }
 
