@@ -1,6 +1,6 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v15** (latest: **D-52…D-53**, the person-photo album +
+> **Status:** Live — decisions through **schema v15** (latest: **D-52…D-54**, the person-photo album,
 > "add to person's photos" from the viewer + backup-restore defense-in-depth).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
 > D-41 covers the F-Droid content-policy rework — acts/kinks in
@@ -579,6 +579,30 @@
   - **Also (observability).** `BackupViewModel.import` no longer swallows the exception silently —
     it now `Log.e("TRYSTIMPORT", …)` before showing the generic toast. This bug was invisible for
     a full session because of the swallow; the log line kills that class of debugging pain.
+
+- **D-54 (2026-07-30) OPEN — Ejaculation / finish-location model needs a design pass.** A
+  field-testing question surfaced during v0.5.1 validation: the current per-self-orgasm
+  "ejaculation location" prompt was designed with a penis-owning user in mind, and doesn't
+  cover (a) a partner ejaculating, or (b) a vagina-owning user squirting. The prompt
+  itself is not anatomy-gated (nothing in code enforces penis-only), but the framing +
+  catalog labels do. Options weighed:
+  - **A.** Add ejaculation location per PARTNER orgasm too, and add "squirted" as an
+    option. Schema change: `partnerEjaculations: Map<partnerId, Map<orgasmIndex, Set<String>>>`
+    or a per-orgasm ejaculation regardless of who orgasmed. Non-trivial: entity + DAO
+    change, migration, backup format additions, editor UI work.
+  - **B.** Just add "Squirted" as a self-orgasm option (built-in or in the customizable
+    starter set). No schema change. Doesn't help partner-ejaculation.
+  - **C.** Rename the field to "Finish location" throughout, leave the catalog fully
+    customizable (users add "Squirted", "Chest", etc. as they like), AND add a matching
+    per-partner prompt with the same catalog. Cleanest long-term — aligns names and covers
+    both cases. Schema change still needed for the partner side (roughly the same shape
+    as A).
+  - **D.** Defer (this decision — write it down, sit with it, revisit in v0.6).
+  - **Decision (deferred):** D. The user picked "write a DECISIONS entry and defer".
+    Right call because A/C both touch schema (a bigger commitment than a v0.5.x patch)
+    and B is a band-aid that leaves the partner side unaddressed. Revisit as part of a
+    v0.6 design pass alongside any other data-model expansions (see D-XX/roadmap open
+    items). No code changes this cycle.
 
 > Still tracked elsewhere (not re-listed): user-configurable **auto-lock timeout** & **change-PIN UI**
 > and **history filters/search** (deferred features, ROADMAP M3); **VACUUM on delete-all** for
