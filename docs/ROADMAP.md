@@ -1,19 +1,19 @@
 # Tryst — Roadmap / Milestones
 
-> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.3.2**. Each
+> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.5.2**. Each
 > milestone ended runnable & tested. This file is the milestone *history* (see the dated note below);
 > forward work lives in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
 
-> **Update (2026-07-03):** M0–M8 are all **done** and the app has **shipped** (v0.1.0 → v0.2.0 →
-> v0.3.0 → v0.3.1 → v0.3.2; the F-Droid submission MR is open — the content-policy rework spans acts/kinks
-> (0.3.0), positions/toys (0.3.1), and empty predefined lists + custom occasions/finish-locations (0.3.2)).
-> This file is the milestone *history*; all forward work — post-1.0
-> features
-> **and** the engineering/infra/housekeeping backlog (CI instrumented tests, F-Droid screenshots, SPDX
-> headers, Argon2id export KDF, baseline profile, etc.) — now lives in
-> [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md). The legacy "deferred polish backlog" notes below (history
-> filters, VACUUM secure-delete, Argon2id, monotonic attempt counter, …) are folded into / superseded
-> by that document.
+> **Update (2026-07-30):** M0–M8 are all **done**. Shipped so far: v0.1.0 → v0.2.0 → v0.3.0 → v0.3.1
+> → v0.3.2 → v0.4.0 (Search + filter foundation + Insights time scope) → v0.5.0 (Photos gallery +
+> multi-photo person albums + META-1 + SEC-2 blur gate) → v0.5.1 (post-audit fix bundle) → v0.5.2
+> (QoL + audit cleanup: wipe-first Import checkbox, inline "+ New" for catalog multi-selects,
+> legacy-avatar auto-adopt, self-drill back button). **F-Droid MR !40471 still open** — the
+> auto-picked tag on merge will be v0.5.2, not v0.5.0. Schema currently at **v15**. All forward work
+> — post-1.0 features **and** the engineering/infra/housekeeping backlog — lives in
+> [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md). Pre-release audit playbook now supplemented by a
+> **post-release 7-lens audit** ([docs/audits/2026-07-30-*](audits/)), which surfaced the
+> v0.5.1/v0.5.2 patch bundle.
 
 ## M0 — Project scaffold  ✅ done (verified building & running)
 - [x] Android project: Gradle KTS, version catalog, Compose, Hilt, base theme.

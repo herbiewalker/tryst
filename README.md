@@ -9,7 +9,7 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?logo=kotlin&logoColor=white)](#built-with)
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](#built-with)
 [![Offline only](https://img.shields.io/badge/network-none-critical)](#why-tryst)
-[![Release](https://img.shields.io/badge/release-v0.3.2-success)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-v0.5.2-success)](CHANGELOG.md)
 
 Tryst keeps your most personal data on your phone and nowhere else — no account, no sync,
 and **no internet permission at all**, so the app *cannot* send your data anywhere.
@@ -104,12 +104,16 @@ Screenshots are black by design on-device (`FLAG_SECURE`).
 
 ## Status
 
-✅ **Shipped.** Current release **v0.3.2** (versionCode 5). Distribution is **F-Droid**, which builds
-and signs from this source — Tryst ships no binary and commits no signing key. The **0.3.x** line turns
-every category into **your own data**: acts, kinks, positions, toys, occasions, and finish locations
-ship with no explicit built-ins (just a couple of neutral seeds), and you add, rename, or remove your
-own entries on a dedicated page per category. Everything you add — or had already logged — is kept as a
-fully-functional **custom** entry (schema v12, lossless migration), counted in Insights and Achievements.
+✅ **Shipped.** Current release **v0.5.2** (versionCode 9, schema v15). Distribution is **F-Droid**,
+which builds and signs from this source — Tryst ships no binary and commits no signing key. The
+**0.5.x** line delivers the **Photos** tab: a browsable gallery over every image attached to a tryst
+plus every person's portrait album, with search, filters, favourites, bulk actions, a slideshow, and
+a pinch-to-zoom viewer with add-to-person and set-as-avatar actions; a **full-screen partner editor**
+with a per-person photo strip; **atomic encrypted-backup restore** with a "replace my data" checkbox
+default-on; **inline add** for every catalog category directly from the encounter editor; and a raft
+of behaviour + verbiage polish out of a formal 7-lens post-release audit
+([docs/audits/2026-07-30-triage.md](docs/audits/2026-07-30-triage.md)). Everything you had already
+logged is preserved across every schema bump (v13→v14→v15, all additive-only).
 
 Full release notes are in [CHANGELOG.md](CHANGELOG.md); the milestone history and pre-release audit
 program live in [docs/ROADMAP.md](docs/ROADMAP.md), and post-1.0 plans in
@@ -122,7 +126,7 @@ program live in [docs/ROADMAP.md](docs/ROADMAP.md), and post-1.0 plans in
 | [REQUIREMENTS.md](docs/REQUIREMENTS.md) | Functional & non-functional requirements |
 | [THREAT_MODEL.md](docs/THREAT_MODEL.md) | Adversaries, mitigations, residual risk |
 | [SECURITY_DESIGN.md](docs/SECURITY_DESIGN.md) | Encryption & key management |
-| [DATA_MODEL.md](docs/DATA_MODEL.md) | Entities & fields (schema v12) |
+| [DATA_MODEL.md](docs/DATA_MODEL.md) | Entities & fields (schema v15) |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack & module layout |
 | [FLOWCHARTS.md](docs/FLOWCHARTS.md) | Visual maps of the core logic flows |
 | [ROADMAP.md](docs/ROADMAP.md) | Milestones & the 12-pass pre-release audit |

@@ -1,11 +1,14 @@
 # Tryst — Data Model
 
-> **Status:** Live — **schema v15** (unreleased; v0.4.0 shipped v13), Room over SQLCipher. Matches the entities in
+> **Status:** Live — **schema v15** (shipped in v0.5.0), Room over SQLCipher. Matches the entities in
 > `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change ships a
 > non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 >
 > v14 added `media.favorite` (favourite photos, GAL-3); v15 added the `person_photo` table (portrait album
-> per partner / self-profile, GAL-6). Both are pure additive DDL — no existing row is touched.
+> per partner / self-profile, GAL-6). Both are pure additive DDL — no existing row is touched. Legacy
+> avatars from pre-v15 backups (in `partners.photoMediaId` / `profile.photoMediaId` with no matching
+> `person_photo` row) are **auto-adopted** into the portrait album on first open of each editor —
+> no schema change, reuses the existing blob.
 >
 > **Rule:** any new NOT-NULL column added via `ADD COLUMN … NOT NULL DEFAULT X` in a migration must also
 > carry `@ColumnInfo(defaultValue = "X")` on the entity, so **fresh** Room CREATE matches the migration's
