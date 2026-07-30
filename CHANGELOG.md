@@ -13,6 +13,66 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.5.1] — 2026-07-30 (versionCode 8)
+
+Bug-fix release. Cluster came out of the v0.5.0 post-release audit
+(`docs/audits/2026-07-30-*`) — every finding here was in code that shipped
+in v0.5.0 but had never been F-Droid-published, so no user ever installs
+the buggy v0.5.0 as long as the F-Droid MR merges after this tag.
+
+### Fixed
+
+- **Photos → drilling into "You" no longer leaks partners' portraits.** The
+  filter that let a self-drill include solo tryst photos was also (wrongly)
+  letting every partner's portrait album through. Now only the self portrait
+  passes; every partner's portraits stay out. Same fix covers toggling the
+  advanced "Include solo" chip on its own.
+- **Photos search bar now narrows portraits.** Typing a name used to return
+  that partner's tryst photos plus every other partner's portrait album,
+  because the text query only filtered encounter-derived photos. Portraits
+  are now matched by the (case+accent-folded) owner display name.
+- **"Set as partner avatar" from the photo viewer** now stores the new
+  avatar as part of that partner's portrait album — so the strip in the
+  partner editor renders a checkmark on the current avatar and lets you
+  delete it from the strip. Previously it created a fresh blob no
+  `PersonPhotoEntity` referenced.
+- **Deleting the portrait that is the current avatar** now nulls out
+  `photoMediaId` in the same coroutine, so partner (or profile) rows no
+  longer end up pointing at a deleted blob. Applies to both
+  `PartnerEditViewModel` and `ProfileViewModel`.
+- **Backup restore is now atomic.** Previously `restoreDatabase` committed
+  its DB transaction on the first ZIP entry (`data.json`); if a subsequent
+  `media/<id>` entry failed mid-loop (disk full, truncated container), the
+  DB was fully swapped with rows pointing at blobs that had never been
+  written — surfaced only as a generic "Import failed" toast, so from the
+  user's perspective it looked like silent data loss. New flow drains the
+  entire ZIP into memory (`data.json`) + a staging directory (`<id>.enc.staging`),
+  then promotes every staged blob into place, THEN commits the DB. Any
+  failure before the DB commit leaves the on-disk media dir and DB untouched;
+  a `finally` block sweeps leftover `.staging` files.
+
+### Internal
+
+- `EncryptedMediaStore` gains staging support (`saveStaged` / `promoteStaged` /
+  `clearStaged` / `clearAllStaged`) — the primitive the atomic-restore
+  pipeline is built on. Same Zip-Slip guard as `fileFor`; `promoteStaged`
+  atomically renames when possible and falls back to copy-delete for
+  cross-fs edge cases.
+- `PersonPhotoRepository.deleteByBlobId` now returns `Boolean` so callers
+  can distinguish "the blob was a portrait and got cleaned up" from "the
+  blob wasn't tracked as a portrait — you may need to delete it directly".
+  `GalleryViewModel.setAsPartnerAvatar` uses the new return to route
+  legacy pre-v15 avatar-blob cleanup to `PartnerRepository.deletePhoto`
+  while portrait-tracked avatars go through the portrait path.
+- **ProGuard: `Log.w` and `Log.e` now stripped in release too.** The prior
+  rule only stripped `v/d/i`, so the `Log.e("TRYSTIMPORT", …, e)` line
+  added last session survived R8 in release. Today's exception messages
+  are benign but shipping `e.message` + a full throwable to logcat on a
+  release APK is exactly the release-log leak vector CLAUDE.md
+  hard-constraint #4 forbids. R8's `-assumenosideeffects` eliminates the
+  whole call site including argument evaluation. Verified: the literal
+  string `TRYSTIMPORT` is absent from `classes.dex` in the release APK.
+
 ## [0.5.0] — 2026-07-30 (versionCode 7)
 
 ### Added
