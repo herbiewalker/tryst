@@ -80,6 +80,7 @@ class BackupManager @Inject constructor(
         }
     }
 
+    @Suppress("CyclomaticComplexMethod", "NestedBlockDepth") // Multi-phase restore is clearer inline than split.
     suspend fun import(password: String, input: InputStream): Unit = withContext(Dispatchers.IO) {
         val magic = ByteArray(MAGIC.size).also { readFully(input, it) }
         require(magic.contentEquals(MAGIC)) { "Not a Tryst backup file" }
@@ -92,22 +93,50 @@ class BackupManager @Inject constructor(
 
         val key = Pbkdf2.derive(password, salt, iterations)
         val db = session.database().openHelper.writableDatabase
-        ZipInputStream(BackupCrypto.decryptingStream(key, input)).use { zip ->
-            var entry: ZipEntry? = zip.nextEntry
-            while (entry != null) {
-                val name = entry.name
-                when {
-                    name == "data.json" -> restoreDatabase(db, JSONObject(zip.readBytes().toString(Charsets.UTF_8)))
-                    name.startsWith("media/") -> mediaStore.save(name.removePrefix("media/"), zip) // re-encrypts for this device
+        val stagedIds = mutableListOf<String>()
+        try {
+            // Phase 1: drain the ZIP. Read data.json into memory; write every media blob to its
+            // STAGING path (`<id>.enc.staging`) — never touching the live `<id>.enc` until after we
+            // know the whole restore is going to succeed. A mid-loop failure here leaves the on-disk
+            // media/ dir and the DB untouched (Bundle-C N5: previously the DB was committed on the
+            // first data.json entry, so a later blob failure left a silent lossy round-trip).
+            var dataJson: JSONObject? = null
+            ZipInputStream(BackupCrypto.decryptingStream(key, input)).use { zip ->
+                var entry: ZipEntry? = zip.nextEntry
+                while (entry != null) {
+                    val name = entry.name
+                    when {
+                        name == "data.json" -> dataJson = JSONObject(zip.readBytes().toString(Charsets.UTF_8))
+                        name.startsWith("media/") -> {
+                            val id = name.removePrefix("media/")
+                            mediaStore.saveStaged(id, zip)
+                            stagedIds += id
+                        }
+                    }
+                    zip.closeEntry()
+                    entry = zip.nextEntry
                 }
-                zip.closeEntry()
-                entry = zip.nextEntry
             }
+            val root = dataJson ?: throw IOException("Backup missing data.json")
+
+            // Phase 2: promote every staged blob into place. Do this BEFORE the DB commit so that
+            // when restoreDatabase writes rows referring to `media/<id>`, the files are already
+            // there. If a rename fails, we drop the still-staged rest in `finally` and never
+            // commit the DB.
+            for (id in stagedIds) mediaStore.promoteStaged(id)
+
+            // Phase 3: DB commit. Only now, with every blob present, do we swap the rows.
+            restoreDatabase(db, root)
+
+            // Restore inserts rows raw — it does NOT replay migrations — so a backup made before a
+            // catalog trim can reintroduce since-removed built-in act/kink ids. Adopt them into the
+            // custom tables exactly like MIGRATION_9_10 does; no-op for current backups (idempotent).
+            CatalogAdoption.adoptUnknownIds(db)
+        } finally {
+            // Any staging file left over (loop-fail before Phase 2, or Phase-2 rename failure) is
+            // just accumulated junk if we don't clean it. Best-effort sweep — doesn't touch live blobs.
+            mediaStore.clearAllStaged()
         }
-        // Restore inserts rows raw — it does NOT replay migrations — so a backup made before a
-        // catalog trim can reintroduce since-removed built-in act/kink ids. Adopt them into the
-        // custom tables exactly like MIGRATION_9_10 does; no-op for current backups (idempotent).
-        CatalogAdoption.adoptUnknownIds(db)
     }
 
     @Suppress("NestedBlockDepth")
