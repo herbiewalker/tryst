@@ -1,0 +1,7 @@
+A small patch focused on the Photos gallery and backups.
+
+Photos: drilling into "You" from People no longer leaks every partner's portraits; the search bar now correctly filters portraits by owner name; "Set as partner avatar" from the photo viewer now stores the new avatar in the partner's portrait album (checkmark, deletable from the strip); and deleting the portrait that is the current avatar now clears the avatar reference too.
+
+Backups: restoring an encrypted backup is now atomic - a mid-restore failure leaves your existing data untouched instead of half-swapping the database.
+
+Privacy hardening: the import-diagnostic log line is now fully stripped from release builds.

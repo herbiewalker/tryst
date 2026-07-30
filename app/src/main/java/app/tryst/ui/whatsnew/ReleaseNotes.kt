@@ -20,6 +20,19 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.5.1",
+            versionCode = 8,
+            date = "2026-07-30",
+            highlights = listOf(
+                "Fix: drilling into \"You\" from the People layout no longer shows every partner's portrait album — only your own portraits and solo tryst photos appear, as intended.",
+                "Fix: the Photos search bar now filters portraits too. Typing a partner's name returns their tryst photos and their portraits — not everyone else's portraits.",
+                "Fix: \"Set as avatar for {partner}\" from the photo viewer now stores the new avatar in that partner's portrait album, so the strip in the partner editor shows a checkmark on it and lets you delete it later.",
+                "Fix: deleting the portrait that is the current avatar now clears the avatar reference too, instead of leaving the partner (or your profile) pointing at a deleted picture.",
+                "Fix: restoring an encrypted backup is now atomic — a mid-restore failure (disk full, corrupted file) leaves your existing data untouched instead of half-swapping the database.",
+                "Privacy hardening: the import-diagnostic log line is now fully stripped from release builds.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.5.0",
             versionCode = 7,
             date = "2026-07-30",
