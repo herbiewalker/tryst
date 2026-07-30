@@ -13,6 +13,8 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-07-30 (versionCode 7)
+
 ### Added
 - **Photos gallery.** A new **Photos** tab gathers every photo you've attached to a tryst into one
   browsable place. Choose how it looks in **Settings → Gallery** — grouped by date, a flat grid, grouped
@@ -22,6 +24,19 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
   photo and name. Tap any photo for a full-screen viewer: swipe between photos, pinch to zoom, and jump
   straight to the tryst it belongs to. Nothing leaves your device, and the viewer is screenshot-blocked
   like the rest of the app.
+- **Multi-photo albums per person.** Add several photos to any partner or your own profile from the new
+  **full-screen partner editor**, and pick any of them as their avatar. Portraits appear in the Photos
+  gallery alongside encounter photos (partner filter includes them; structured filters like date/rating
+  drop them since they have no tryst-side data). Round-trip through your encrypted backup.
+- **Solo tryst photos count as photos of You.** In By-partner and when drilling into your own
+  profile from the People layout, photos from solo trysts now appear under You alongside your
+  self-profile portrait album — instead of hiding in a nameless "Solo" bucket. Nothing changes
+  in the encounter log; only how the gallery groups those photos.
+- **Add a photo to someone's photos, from the viewer.** A new action in the photo viewer copies
+  the current photo into any partner's or your own portrait album — the source stays exactly where
+  it is. Handy when someone was in a photo but wasn't listed on the tryst, or when a solo shot
+  should also live under a partner. The photo shows in People → that-person right away, and can
+  be set as their profile picture from the strip.
 - **Photo details.** An info button in the photo viewer shows a photo's embedded details when present —
   when it was taken, its dimensions, the camera, and coordinates if the photo carries them. Read straight
   from the photo on your device; nothing is sent anywhere.
@@ -39,17 +54,6 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 - **Gallery niceties.** Pinch the grid to change how many columns it shows; open a partner's photos in one
   tap from the Partners list ("View photos"); start a **slideshow** from the viewer; jump around a set with
   the new **filmstrip** strip; and set any photo as a partner's picture straight from the viewer.
-
-### Added
-- **Solo tryst photos count as photos of You.** In By-partner and when drilling into your own
-  profile from the People layout, photos from solo trysts now appear under You alongside your
-  self-profile portrait album — instead of hiding in a nameless "Solo" bucket. Nothing changes
-  in the encounter log; only how the gallery groups those photos.
-- **Add a photo to someone's photos, from the viewer.** A new action in the photo viewer copies
-  the current photo into any partner's or your own portrait album — the source stays exactly where
-  it is. Handy when someone was in a photo but wasn't listed on the tryst, or when a solo shot
-  should also live under a partner. The photo shows in People → that-person right away, and can
-  be set as their profile picture from the strip.
 
 ### Fixed
 - **Photo viewer counter no longer hides behind the action row.** The "N / M" counter used to
@@ -71,6 +75,9 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
   of bug, so a future migration that adds a NOT-NULL column and forgets `@ColumnInfo(defaultValue=…)`
   on the entity still restores older backups cleanly. Columns without a SQL DEFAULT still fail loudly
   rather than getting a fabricated value.
+- Schema **v14** (`MIGRATION_13_14`): adds `media.favorite INTEGER NOT NULL DEFAULT 0`.
+- Schema **v15** (`MIGRATION_14_15`): adds the `person_photo` table (id / ownerKind / ownerId /
+  mediaBlobId / addedAt, indexed by owner) for portrait albums. Additive DDL only.
 
 ## [0.4.0] — 2026-07-11 (versionCode 6)
 
