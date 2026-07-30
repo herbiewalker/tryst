@@ -445,7 +445,7 @@ fun SettingsScreen(
         BackupPasswordDialog(
             title = stringResource(R.string.settings_backup_pw_set_title),
             requireConfirm = true,
-            onConfirm = { pw ->
+            onConfirm = { pw, _ ->
                 showExportPw = false
                 pendingExportPassword = pw
                 backupViewModel.suppressAutoLock()
@@ -459,9 +459,10 @@ fun SettingsScreen(
         BackupPasswordDialog(
             title = stringResource(R.string.settings_backup_pw_enter_title),
             requireConfirm = false,
-            onConfirm = { pw ->
+            wipeFirstInitial = true,
+            onConfirm = { pw, wipeFirst ->
                 showImportPw = false
-                pendingImportUri?.let { backupViewModel.import(it, pw) }
+                pendingImportUri?.let { backupViewModel.import(it, pw, wipeFirst) }
                 pendingImportUri = null
             },
             onDismiss = {
@@ -560,11 +561,15 @@ private fun CsvFieldRow(field: CsvField, headers: List<String>, selected: Int?, 
 private fun BackupPasswordDialog(
     title: String,
     requireConfirm: Boolean,
-    onConfirm: (String) -> Unit,
+    onConfirm: (String, Boolean) -> Unit,
     onDismiss: () -> Unit,
+    // Non-null on the import path (Bundle-E Q1): renders a wipe-first checkbox above the password
+    // field so users can pick "replace" (default) vs "merge on top" semantics.
+    wipeFirstInitial: Boolean? = null,
 ) {
     var password by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
+    var wipeFirst by remember { mutableStateOf(wipeFirstInitial ?: false) }
     val mismatch = requireConfirm && confirm.isNotEmpty() && password != confirm
     val valid = password.length >= 6 && (!requireConfirm || password == confirm)
 
@@ -573,6 +578,26 @@ private fun BackupPasswordDialog(
         title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (wipeFirstInitial != null) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .toggleable(value = wipeFirst, role = Role.Switch, onValueChange = { wipeFirst = it }),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Switch(checked = wipeFirst, onCheckedChange = null)
+                        Text(
+                            stringResource(R.string.settings_backup_wipe_first),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+                    Text(
+                        stringResource(R.string.settings_backup_wipe_first_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
@@ -599,7 +624,7 @@ private fun BackupPasswordDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { onConfirm(password) }, enabled = valid) { Text(stringResource(R.string.action_ok)) } },
+        confirmButton = { TextButton(onClick = { onConfirm(password, wipeFirst) }, enabled = valid) { Text(stringResource(R.string.action_ok)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }

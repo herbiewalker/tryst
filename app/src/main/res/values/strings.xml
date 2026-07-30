@@ -411,6 +411,8 @@
     <!-- Backup password dialog -->
     <string name="settings_backup_pw_set_title">Set a backup password</string>
     <string name="settings_backup_pw_enter_title">Enter backup password</string>
+    <string name="settings_backup_wipe_first">Replace my current data with the backup (recommended)</string>
+    <string name="settings_backup_wipe_first_desc">When off, the backup is merged on top of what\'s already in the app. Turn off only if you know you want to combine two datasets.</string>
     <string name="settings_password_label">Password</string>
     <string name="settings_confirm_password_label">Confirm password</string>
     <string name="settings_password_mismatch">Passwords don\'t match.</string>

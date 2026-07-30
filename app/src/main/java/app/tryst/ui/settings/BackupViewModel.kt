@@ -48,12 +48,12 @@ class BackupViewModel @Inject constructor(
         }
     }
 
-    fun import(uri: Uri, password: String) {
+    fun import(uri: Uri, password: String, wipeFirst: Boolean) {
         viewModelScope.launch {
             busy = true
             status = null
             try {
-                context.contentResolver.openInputStream(uri)?.use { backup.import(password, it) }
+                context.contentResolver.openInputStream(uri)?.use { backup.import(password, it, wipeFirst) }
                     ?: throw IOException("Couldn't open the file")
                 status = context.getString(R.string.backup_status_restore_done)
             } catch (e: Exception) {

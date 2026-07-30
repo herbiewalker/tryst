@@ -98,4 +98,17 @@ class EncryptedMediaStore @Inject constructor(
     fun clearAllStaged() {
         dir.listFiles { _, name -> name.endsWith(".enc.staging") }?.forEach { it.delete() }
     }
+
+    /**
+     * Delete every live blob file whose id is NOT in [keep]. Staging files are ignored — this is
+     * intended for the restore-over-existing wipe path (Bundle-E Q1): after the DB has been wiped
+     * and the backup rows restored, orphan blobs are the previous user's photos that no row
+     * points at any more.
+     */
+    fun deleteOrphans(keep: Set<String>) {
+        dir.listFiles { _, name -> name.endsWith(".enc") && !name.endsWith(".enc.staging") }?.forEach { file ->
+            val id = file.name.removeSuffix(".enc")
+            if (id !in keep) file.delete()
+        }
+    }
 }
