@@ -58,9 +58,15 @@ class PersonPhotoRepository @Inject constructor(
         dao.deleteById(entity.id)
     }
 
-    /** Find-and-delete by blob id — silent no-op if that blob isn't tracked as a portrait. */
-    suspend fun deleteByBlobId(blobId: String) {
-        dao.getByBlobId(blobId)?.let { delete(it) }
+    /**
+     * Find-and-delete by blob id. Returns `true` if a portrait row referenced [blobId] and was removed
+     * (along with its encrypted blob), `false` if nothing was tracked — the caller can then decide
+     * whether the raw blob still needs cleaning via [PartnerRepository.deletePhoto] or similar.
+     */
+    suspend fun deleteByBlobId(blobId: String): Boolean {
+        val row = dao.getByBlobId(blobId) ?: return false
+        delete(row)
+        return true
     }
 
     fun openBlob(id: String): InputStream = mediaStore.open(id)

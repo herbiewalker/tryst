@@ -192,7 +192,21 @@ class PartnerEditViewModel @Inject constructor(
     }
 
     fun deletePhoto(photo: PersonPhotoEntity) {
-        viewModelScope.launch { personPhotoRepository.delete(photo) }
+        viewModelScope.launch {
+            val id = partnerId
+            // If the deleted portrait is the current avatar, null out `photoMediaId` FIRST so we don't
+            // leave the partner row pointing at a blob we're about to delete (Bundle-A N4).
+            if (id != null) {
+                val existing = partnerRepository.getById(id)
+                if (existing != null && existing.photoMediaId == photo.mediaBlobId) {
+                    val cleared = existing.copy(photoMediaId = null)
+                    partnerRepository.upsert(cleared)
+                    uiState = uiState.copy(existing = cleared)
+                    baseline = uiState
+                }
+            }
+            personPhotoRepository.delete(photo)
+        }
     }
 
     /** Promote a portrait to be the partner's current avatar (updates `partners.photoMediaId`). */

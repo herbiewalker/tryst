@@ -442,14 +442,26 @@ class GalleryViewModel @Inject constructor(
 
     /**
      * Copies a gallery photo into a partner's avatar (GAL-5). Works for encounter photos AND portraits —
-     * both are just encrypted blobs. Re-encrypts as a fresh avatar blob and removes the previous one.
+     * both are just encrypted blobs. The fresh copy is added to the partner's **portrait album** (not
+     * just to `partners.photoMediaId`) so PersonPhotoStrip can render the checkmark on the current
+     * avatar and the user can delete the copy from the strip later. Cleans up the previous avatar's
+     * blob (and its portrait row if it had one) so we don't accumulate orphan encrypted files.
      */
     fun setAsPartnerAvatar(blobId: String, partnerId: String) = viewModelScope.launch(Dispatchers.IO) {
         val partner = partnerRepository.getById(partnerId) ?: return@launch
-        val newId = runCatching { partnerRepository.savePhoto(personPhotoRepository.openBlob(blobId)) }.getOrNull() ?: return@launch
+        val newPortrait = runCatching {
+            personPhotoRepository.openBlob(blobId).use { input ->
+                personPhotoRepository.add(PersonPhotoRepository.KIND_PARTNER, partnerId, input)
+            }
+        }.getOrNull() ?: return@launch
+        val newId = newPortrait.mediaBlobId
         val old = partner.photoMediaId
         partnerRepository.upsert(partner.copy(photoMediaId = newId))
-        if (old != null && old != newId) partnerRepository.deletePhoto(old)
+        if (old != null && old != newId) {
+            // If old was a portrait, deleteByBlobId removes both the row and the blob; if it wasn't
+            // tracked (legacy pre-v15 avatar), fall back to the raw-blob delete.
+            if (!personPhotoRepository.deleteByBlobId(old)) partnerRepository.deletePhoto(old)
+        }
     }
 
     // --- decoding (all blobs open through the same EncryptedMediaStore) ----------------------------
