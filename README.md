@@ -22,12 +22,9 @@ Inspired by other tracking apps you need to pay for, and built so privacy is the
     <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03_insights_overview.png" width="200"><br><sub><b>Insights</b></sub></td>
   </tr>
   <tr>
-    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/04_insights_breakdowns.png" width="200"><br><sub><b>Breakdowns</b></sub></td>
     <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/05_achievements.png" width="200"><br><sub><b>Achievements</b></sub></td>
     <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/06_partners.png" width="200"><br><sub><b>Partners</b></sub></td>
-  </tr>
-  <tr>
-    <td colspan="3" align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/07_manage_categories.png" width="200"><br><sub><b>Every category is yours — add, rename, or remove anything</b></sub></td>
+    <td></td>
   </tr>
 </table>
 
