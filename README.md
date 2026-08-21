@@ -5,6 +5,7 @@
 ### A private, local-only journal for your intimate life — encrypted, offline, and open source.
 
 [![License: GPLv3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE)
+[![F-Droid](https://img.shields.io/f-droid/v/app.tryst?logo=fdroid&logoColor=white&label=F-Droid)](https://f-droid.org/en/packages/app.tryst/)
 [![Platform](https://img.shields.io/badge/Android-12%2B-3DDC84?logo=android&logoColor=white)](#built-with)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?logo=kotlin&logoColor=white)](#built-with)
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](#built-with)
