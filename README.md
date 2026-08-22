@@ -16,18 +16,8 @@ Tryst keeps your most personal data on your phone and nowhere else — no accoun
 and **no internet permission at all**, so the app *cannot* send your data anywhere.
 Inspired by other tracking apps you need to pay for, and built so privacy is the feature, not a footnote.
 
-<table>
-  <tr>
-    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01_trysts_list.png" width="200"><br><sub><b>Trysts</b></sub></td>
-    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02_calendar.png" width="200"><br><sub><b>Calendar heatmap</b></sub></td>
-    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03_insights_overview.png" width="200"><br><sub><b>Insights</b></sub></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/05_achievements.png" width="200"><br><sub><b>Achievements</b></sub></td>
-    <td align="center"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/06_partners.png" width="200"><br><sub><b>Partners</b></sub></td>
-    <td></td>
-  </tr>
-</table>
+<sub><i>Screenshots + app icon pending the QOL-4 / STORE-1 / STORE-2 design refresh — see
+<a href="docs/ROADMAP_FUTURE.md">docs/ROADMAP_FUTURE.md</a>.</i></sub>
 
 </div>
 
