@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 package app.tryst.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape

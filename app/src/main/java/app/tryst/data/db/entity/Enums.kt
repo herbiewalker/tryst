@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 package app.tryst.data.db.entity
 
 /** Implemented by every category enum so the UI can show a curated, human-written label. */

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 package app.tryst.core.security
 
 /** The entered PIN was incorrect. [attemptsRemaining] before the vault self-wipes. */

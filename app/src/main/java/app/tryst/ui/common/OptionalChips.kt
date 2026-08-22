@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 package app.tryst.ui.common
 
 import androidx.compose.foundation.layout.Arrangement

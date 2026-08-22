@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 package app.tryst.ui.profile
 
 import androidx.activity.compose.BackHandler
