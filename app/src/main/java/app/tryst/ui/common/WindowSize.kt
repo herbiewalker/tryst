@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 @file:Suppress("MatchingDeclarationName") // file groups the WidthClass enum + widthClass()/adaptiveContentWidth() helpers.
 
 package app.tryst.ui.common

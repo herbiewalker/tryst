@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 package app.tryst.core.crypto
 
 import com.google.crypto.tink.StreamingAead

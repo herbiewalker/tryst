@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 package app.tryst.ui.settings
 
 /** Stable category keys for the manage-category navigation route (Settings → Manage …). */

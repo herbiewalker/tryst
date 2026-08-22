@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 package app.tryst.data.search
 
 import app.tryst.data.db.entity.EncounterEntity

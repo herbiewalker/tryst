@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 package app.tryst.data.backup
 
 /** Minimal RFC-4180-ish CSV parser (handles quoted fields, embedded commas/newlines, "" escapes). */

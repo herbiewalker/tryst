@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 package app.tryst.core.session
 
 /** Top-level lock state that drives what the UI shows. */
