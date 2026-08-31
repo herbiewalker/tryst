@@ -13,6 +13,7 @@ What you can do:
 * Make the categories your own. Tryst ships almost no predefined categories — you build your own acts, kinks, positions, toys, occasions, and finish locations on a dedicated management page for each, and everything you add counts fully in Insights and Achievements.
 * Track partners (named or anonymous) with per-partner stats.
 * Search and filter your history. Find any tryst by note, partner, or category, and narrow by date, partner, place, mood, protection, duration, and more.
+* Browse your Photos. A dedicated Photos tab gathers every image attached to a tryst plus per-partner and self portrait albums, with layouts (date grid, mosaic, by-partner, People, feed), search, filters, favourites, bulk actions, a slideshow, and a pinch-to-zoom viewer. Optional "blur until tapped" gate keeps photos private when you hand the phone over.
 * Explore Insights: streaks, trends, and per-attribute breakdowns, all computed on-device with hand-drawn charts — and focus them on a year, a quarter, or a custom date range.
 * Earn Achievements derived from your own log.
 * Customize the look with light/dark themes and Material You dynamic color.

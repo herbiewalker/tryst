@@ -27,23 +27,28 @@ core/
   security/   Vault (DEK double-wrap), SecureKeyStore, BiometricVault, Pbkdf2, SessionKeys
   session/    SessionManager (lock lifecycle, opens/closes the DB), LockState
   crypto/     MediaCrypto (Tink streaming), BackupCrypto (password KDF + AEAD container)
-  prefs/      ThemePreferences, InsightsPreferences, GeneralPreferences (auto-lock/haptics/week-start/last-seen-version)  (SharedPreferences, non-sensitive)
+  prefs/      ThemePreferences, InsightsPreferences, GeneralPreferences (auto-lock/haptics/week-start/last-seen-version), GalleryPreferences (tryst_gallery: layout/columns/sort/blur/slideshow) — all SharedPreferences, non-sensitive, excluded from backup
 data/
-  db/         TrystDatabase, TrystDatabaseFactory, entities, DAOs, Converters, Migrations, CatalogAdoption (v10–v11 removed-id → custom adoption for acts/kinks/positions/toys; also run post-restore), SqlCipherLibrary
-  repository/ Encounter / Partner / Profile / Position / Act / Kink / Toy repositories (read DAOs from the unlocked session)
-  media/      EncryptedMediaStore (encrypted blobs in app-internal storage)
-  backup/     BackupManager (export/restore), Csv (importer)
-  stats/      InsightsEngine + Insights model (pure Kotlin)
+  db/         TrystDatabase, TrystDatabaseFactory, entities, DAOs, Converters, Migrations, CatalogAdoption (v10–v12 removed-id → custom adoption for acts/kinks/positions/toys/occasions/ejaculation-locations; also run post-restore), CatalogSeeds (v12 fresh-install + upgrade seeding of the neutral starter rows), SqlCipherLibrary
+  repository/ Encounter / Partner / Profile / Position / Act / Kink / Toy / Occasion / EjaculationLocation / PersonPhoto repositories (read DAOs from the unlocked session)
+  filter/     EncounterFilter + matches() + EncounterQuery (shared JVM-tested filter layer — Search, Insights scope, Gallery all consume it)
+  search/     EncounterSearch (accent-folded, AND-across-tokens over note + partner names + resolved category labels)
+  gallery/    GalleryPhotos.build (pure fn folding encounter photos + person_photo portraits into the gallery pipeline), GalleryModels
+  media/      EncryptedMediaStore (encrypted blobs + staging support for atomic restore), PhotoMetadata (androidx.exifinterface EXIF read at view time)
+  backup/     BackupManager (export/restore, atomic wipe+restore in one tx, PRAGMA table_info NOT-NULL backfill), Csv (importer)
+  stats/      InsightsEngine + Insights model (pure Kotlin, scope-aware)
 di/           Hilt wiring (most types use @Inject constructors; module is minimal)
 ui/
-  common/     SelectionField/Chips, MediaImages, ImagePicker, Format, Position/Act/Kink/Toy options, ActVisuals, Haptics (LocalHapticsEnabled), WindowSize, AppVersion (PackageManager version code/name)
+  common/     SelectionField/Chips, MediaImages, ImagePicker, Format, Position/Act/Kink/Toy options, ActVisuals, Haptics (LocalHapticsEnabled), WindowSize, AppVersion, DateScopeChips (shared by Search + Insights scope), EncounterCard, DateHeader, PersonPhotoStrip
   lock/        SetupScreen, LockScreen, ChangePinScreen, LockViewModel, BiometricPromptHelper, PinPad
   history/     HistoryScreen (list + calendar), HistoryViewModel
   encounter/   EncounterEditScreen + ViewModel
-  partner/     PartnersScreen (+ "You" profile card) + ViewModel
+  partner/     PartnersScreen (+ "You" profile card) + ViewModel; PartnerEditScreen + PartnerEditViewModel (full-screen editor, QOL-3)
   profile/     ProfileScreen + ViewModel (the user's own photo + demographics; single self row)
+  search/      SearchScreen + SearchViewModel; MoreFiltersSheet (the advanced-dims sheet, shared with the gallery's filters)
+  gallery/     GalleryScreen + GalleryViewModel; PhotoViewer (pinch-zoom + info panel + add-to-person + set-as-avatar + slideshow); GalleryFiltersSheet; GallerySettingsScreen; AvatarViewer
   insights/    InsightsScreen, charts, StatTiles/InsightSections catalogs, TypeColors, ViewModel
-  settings/    SettingsScreen (General/Security/Appearance/Insights/Categories/Backup/Danger/About) + ResetDataScreen (type-to-confirm wipe) + Appearance/General/Backup/CsvImport/CustomActs/CustomKinks/CustomPositions/CustomToys VMs
+  settings/    SettingsScreen (General/Security/Appearance/Insights/Categories/Backup/Danger/About) + ResetDataScreen (type-to-confirm wipe) + Appearance/General/Backup/CsvImport/CustomActs/CustomKinks/CustomPositions/CustomToys/CustomOccasions/CustomEjaculationLocations VMs
   whatsnew/    ReleaseNotes (bundled notes), WhatsNewScreen + WhatsNewDialog (post-update popup)
   theme/       Color, Theme, Type, Shape (brand purple/green; sleek-dark default)
 MainActivity   FragmentActivity; FLAG_SECURE; renders by LockState (Setup / Lock / Unlocked → TrystApp)
@@ -77,7 +82,7 @@ one-time **post-update What's-new popup** (installed `versionCode` vs `GeneralPr
 - **JVM unit:** stats engine (`InsightsEngineTest`), Insights catalogs (`StatTilesTest`,
   `InsightSectionsTest`), CSV parser (`CsvParseTest`).
 - **Instrumented (emulator, real Keystore/SQLCipher):** vault, DB-encrypted-on-disk, media crypto,
-  session lifecycle, Room migrations (v1→v11, incl. the v7→v8/v9→v10/v10→v11 data migrations), media attachment round-trip, backup round-trip, and
+  session lifecycle, Room migrations (v1→v15, incl. the v7→v8/v9→v10/v10→v11/v11→v12 data migrations plus additive v13/v14/v15 DDL), media attachment round-trip, backup round-trip, and
   backup/restore regression edge cases (`BackupRestoreRegressionTest`: restore-over-existing,
   restore-after-delete-all-data, partner-avatar-survives — the paths that produced the Pass-12 data-loss
   bugs).

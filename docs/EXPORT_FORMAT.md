@@ -43,11 +43,16 @@ associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, i
 - **Wrong password** ⇒ the AEAD stream fails authentication on first read (import aborts cleanly).
 - **Tables** (insert order respects FKs; `PRAGMA defer_foreign_keys` also guards it): partners,
   profile, locations, tags, positions, acts, kinks, toys, occasions, ejaculation_locations, encounters,
-  media, encounter_partner, encounter_position, encounter_tag. Rows are inserted with `INSERT OR REPLACE`
-  (idempotent re-import).
-- **Media blobs:** export gathers ids from **both** `media` rows (encounter photos) **and**
-  `partners.photoMediaId` (avatars) — avatars have no media-table row, so dumping the table alone would
-  silently drop them from the backup. On import, `encFilePath` is device-specific, so it's repointed at
+  media, person_photo (v15 portrait-album rows), encounter_partner, encounter_position, encounter_tag.
+  Rows are inserted with `INSERT OR REPLACE` (idempotent re-import).
+- **`recent_searches` is deliberately EXCLUDED** (v13 / SRCH-1 / D-42). Search history is
+  among the most sensitive text in the app, so it lives only on the local device; an export
+  never carries it and a restore leaves the local table alone.
+- **Media blobs:** export gathers ids from **four** provenance streams — `media` rows (encounter
+  photos), `partners.photoMediaId` (partner avatars), `profile.photoMediaId` (the self-profile
+  avatar, v7), and `person_photo.mediaBlobId` (per-person portrait album blobs, v15). Everything
+  but the media-row blobs has no `media` row, so dumping the table alone would silently drop them
+  from the backup. On import, `encFilePath` is device-specific, so it's repointed at
   this device's media dir and the blob is written via `EncryptedMediaStore` (re-encrypted under the
   current media key). `EncryptedMediaStore.save` recreates the media dir if it's missing — the standard
   "delete all data, then restore" migration removes it, and a stale singleton would otherwise fail the
