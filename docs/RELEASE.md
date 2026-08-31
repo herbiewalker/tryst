@@ -4,13 +4,11 @@ Tryst ships through **F-Droid only** (decision D-32). F-Droid builds the app fro
 infrastructure and signs the result with its key, so we never ship a binary ourselves and never commit a
 signing key. This document is the checklist for cutting a release and getting it into F-Droid.
 
-## Prerequisites (one-time)
+## Prerequisites (one-time — all satisfied for the live app)
 
-- [ ] **The source repository must be public.** F-Droid builds from a public git repo; it cannot ingest a
-      private one. `herbiewalker/tryst` is **deliberately kept private until release** (it stays private
-      while the app is unfinished). **Making it public is the final pre-submission step** — at that point
-      GitHub auto-detects the license as GPL-3.0. (It was briefly flipped public on 2026-06-12, then set
-      back to private; current state is **private** — confirmed via the GitHub API on 2026-06-13.)
+- [x] **The source repository is public.** `herbiewalker/tryst` has been public since the F-Droid
+      submission ran in July 2026 (`AutoUpdateMode: Version` requires it). GitHub auto-detects the
+      license as GPL-3.0.
 - [ ] All dependencies are FOSS and there are no proprietary blobs (verified in pre-release Pass 10; the
       `OssLicenses` list + the banned-SDK grep guard this). F-Droid will reject non-free dependencies or
       `anti-features` we haven't declared. Tryst has **no anti-features** (no tracking, no non-free deps,
@@ -21,8 +19,8 @@ signing key. This document is the checklist for cutting a release and getting it
 ## Per-release steps
 
 1. **Bump the version** in [`app/build.gradle.kts`](../app/build.gradle.kts):
-   - `versionCode` — integer, +1 every release (currently `6`).
-   - `versionName` — human string (currently `0.4.0`).
+   - `versionCode` — integer, +1 every release (currently `9`).
+   - `versionName` — human string (currently `0.5.2`).
 2. **Add the release notes in all three synced places** (kept in lock-step on purpose — see D-35):
    - `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` (e.g. `2.txt`) — F-Droid's "What's New"
      text. Keep the existing `1.txt` for the first release.
@@ -100,15 +98,29 @@ Notes:
 - `UpdateCheckMode: Tags` + `AutoUpdateMode: Version v%v` means future releases are picked up automatically
   from new `vX.Y.Z` tags whose `versionCode` increased — no further fdroiddata MR needed for routine
   updates.
-- Screenshots are optional and **not** included: `FLAG_SECURE` blanks captures, so producing real ones
-  needs the temporary FLAG_SECURE-off procedure from pre-release Pass 5. Add them later under
-  `fastlane/metadata/android/en-US/images/phoneScreenshots/` if desired.
+- Screenshots + store `icon.png` live under `fastlane/metadata/android/en-US/images/`.
+  Capturing them needs the temporary FLAG_SECURE-off procedure from pre-release Pass 5. The
+  set was pulled 2026-08-19 pending a design refresh (QOL-4) and reshipped 2026-08-31 from
+  the current v0.5.2 build; a full designer swap belongs to STORE-1 / STORE-2 alongside QOL-4.
 
-### MR runbook (must be done by a human on GitLab — F-Droid is GitLab-hosted)
+## Ongoing releases (post-first-submission)
 
-The submission cannot be automated from this repo's tooling (no `glab`, no GitLab credential; F-Droid is
-on GitLab, not GitHub). Pass 12 has passed (GO, conditional — see [ROADMAP.md](ROADMAP.md)), so this is
-now unblocked; do it once, by hand:
+Once the fdroiddata recipe (below) is merged with `AutoUpdateMode: Version` +
+`UpdateCheckMode: Tags`, routine releases need **zero fdroiddata work**. After you tag
+`vX.Y.Z` with a bumped `versionCode` and push the tag, F-Droid's **`checkupdates-bot`** opens
+a recipe MR against fdroiddata within a day and, if lint-clean, merges it automatically.
+First live proof: **MR !44579** (`bot: Update Tryst to 9`) auto-bumped the recipe from
+`versionCode 5` (0.3.2) straight to `versionCode 9` (0.5.2) on 2026-08-02 — v0.4.0 / v0.5.0 /
+v0.5.1 were skipped because the bot picks the highest tag, not every tag.
+
+Manual fdroiddata work is only needed when the recipe itself changes (build flags, subdir,
+new gradle args, added anti-features, etc.). See the historical runbook below for the API +
+PAT pattern used to edit `metadata/app.tryst.yml`.
+
+### MR runbook — first submission (2026-06, historical)
+
+The plan below is preserved for reference. The submission was done by hand once (MR
+!40471, merged 2026-08-01), unblocked by Pass 12 — see [ROADMAP.md](ROADMAP.md):
 
 1. Sign in / register at <https://gitlab.com> and **fork** <https://gitlab.com/fdroid/fdroiddata>.
 2. Clone your fork and create a branch:

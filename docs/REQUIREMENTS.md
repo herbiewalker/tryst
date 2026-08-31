@@ -57,7 +57,30 @@ with deeply personal data. Inspired by the iOS app *Nice*.
 - **FR-18** A **General** settings section: app/how-it-works info, change PIN, auto-lock timeout (FR-12),
   haptics on/off, calendar week start.
 
-### 4.5 Backup & portability
+### 4.5 Discovery & exploration (v0.4.x)
+- **FR-23** **Full-text search** across the encounter log (note + partner names + resolved category
+  labels), with structured filter chips (date preset or custom range, partner, rating, photo) and a
+  "More filters" sheet exposing every category, weekday, time of day, duration range, protection,
+  mood, and initiator (SRCH-1 + SRCH-2, D-49). Results expand in place; recent queries persist in
+  the encrypted DB and are **never** included in an exported backup (D-42).
+- **FR-24** **Insights time scope** — the Insights tab recomputes every stat/tile/chart for a
+  year, quarter, or a custom date range; achievements always stay lifetime-scoped (INS-2,
+  D-44/D-45/D-46/D-47). Uses the same shared `DateScopeChips` as Search so the two never drift
+  (D-48).
+
+### 4.6 Photos (v0.5.x)
+- **FR-25** A dedicated **Photos** tab gathering every image in the app: encounter photos plus
+  per-partner and self-profile portrait albums (GAL-1..GAL-7, D-50/D-52). Five user-selectable
+  layouts (justified date grid, mosaic, by-partner, People avatars, feed), pinch-zoom viewer with
+  favourite, add-to-person, and set-as-avatar actions, plus a filters sheet reusing FR-23's dims.
+- **FR-26** A **portrait album per person** (GAL-6, schema v15). Any partner or the self profile
+  can own a set of photos beyond the single active avatar; the avatar is picked from the strip and
+  the album round-trips through the encrypted backup.
+- **FR-27** **Optional blur gate** on the Photos tab (SEC-2, D-51). Off by default; when on, the
+  gallery renders behind a "Show photos" cover and re-arms after a 30 s grace window, so quickly
+  switching tabs doesn't keep re-prompting.
+
+### 4.7 Backup & portability
 - **FR-15** **Manual encrypted export** to a user-chosen file (password-protected).
 - **FR-16** **Import** from a previously exported file (for new-phone migration).
 - **FR-17** Full **wipe** ("delete all data") on its own page, gated by a **type-to-confirm** step
