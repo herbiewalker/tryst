@@ -1,7 +1,7 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v15** (latest: **D-52…D-54**, the person-photo album,
-> "add to person's photos" from the viewer + backup-restore defense-in-depth).
+> **Status:** Live — decisions through **schema v16** (latest: **D-55**, per-photo captions'
+> user-picked entry-point pref for the viewer, CAP-1 / v0.5.3).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
 > D-41 covers the F-Droid content-policy rework — acts/kinks in
 > 0.3.0, positions/toys in 0.3.1, then empty predefined lists + custom occasions/finish-locations in
@@ -603,6 +603,18 @@
     and B is a band-aid that leaves the partner side unaddressed. Revisit as part of a
     v0.6 design pass alongside any other data-model expansions (see D-XX/roadmap open
     items). No code changes this cycle.
+
+- **D-55 (2026-08-31) Per-photo captions ship with a user-picked entry point (CAP-1, v0.5.3).**
+  The photo viewer already has a densely-packed top action row (Close · counter · slideshow ·
+  add-to-person · avatar · info · open-tryst); a caption editor could reasonably live in the
+  (i) info panel (quieter, discoverable) or as its own top-row icon (fastest access). Rather
+  than pick one and be wrong for half the users, ship both entry points under a Settings
+  toggle: **Info panel** / **Top toolbar** / **Both** (default) / **Off**. The `OFF` value
+  hides the UI entirely but the underlying data still rides in the encrypted backup and
+  still fires search hits — it's a pure UI toggle, not a data toggle. That preserves the
+  freedom to switch on/off without ever losing a caption a user typed under a different
+  setting. The pref lives in `GalleryPreferences` (`CaptionEntryPoint` enum), joining the
+  other Photos-tab look/behaviour prefs.
 
 > Still tracked elsewhere (not re-listed): user-configurable **auto-lock timeout** & **change-PIN UI**
 > and **history filters/search** (deferred features, ROADMAP M3); **VACUUM on delete-all** for

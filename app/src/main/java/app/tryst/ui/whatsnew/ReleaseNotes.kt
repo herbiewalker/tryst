@@ -21,6 +21,15 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.5.3",
+            versionCode = 10,
+            date = "2026-08-31",
+            highlights = listOf(
+                "Photo captions. Add a short note to any of your tryst photos from the photo viewer — searchable across the app, and included in your encrypted backup. Pick where the caption editor lives in Settings → Gallery → Photo captions: the info panel, a new top-toolbar button, both (the default), or off.",
+                "Search now looks at photo captions too. Typing a caption phrase surfaces the tryst it belongs to.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.5.2",
             versionCode = 9,
             date = "2026-07-30",

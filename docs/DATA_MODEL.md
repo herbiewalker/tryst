@@ -1,14 +1,15 @@
 # Tryst — Data Model
 
-> **Status:** Live — **schema v15** (shipped in v0.5.0), Room over SQLCipher. Matches the entities in
+> **Status:** Live — **schema v16** (shipped in v0.5.3), Room over SQLCipher. Matches the entities in
 > `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change ships a
 > non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 >
 > v14 added `media.favorite` (favourite photos, GAL-3); v15 added the `person_photo` table (portrait album
-> per partner / self-profile, GAL-6). Both are pure additive DDL — no existing row is touched. Legacy
-> avatars from pre-v15 backups (in `partners.photoMediaId` / `profile.photoMediaId` with no matching
-> `person_photo` row) are **auto-adopted** into the portrait album on first open of each editor —
-> no schema change, reuses the existing blob.
+> per partner / self-profile, GAL-6); v16 added `media.caption` (per-photo captions, CAP-1). All pure
+> additive DDL — no existing row is touched. Legacy avatars from pre-v15 backups (in
+> `partners.photoMediaId` / `profile.photoMediaId` with no matching `person_photo` row) are
+> **auto-adopted** into the portrait album on first open of each editor — no schema change, reuses the
+> existing blob.
 >
 > **Rule:** any new NOT-NULL column added via `ADD COLUMN … NOT NULL DEFAULT X` in a migration must also
 > carry `@ColumnInfo(defaultValue = "X")` on the entity, so **fresh** Room CREATE matches the migration's
@@ -204,5 +205,18 @@ storage — likely a small row in the encrypted DB.)
   because a search history is among the most sensitive text in the app (**D-42**), and it is
   deliberately **excluded from `BackupManager.TABLES`**, so queries never travel inside an exported
   backup (and a restore leaves the local history alone).
+- **v14 (`MIGRATION_13_14`, GAL-3)** adds a **`favorite`** flag to `media` (`INTEGER NOT NULL DEFAULT
+  0`). Pure additive DDL — every existing photo defaults to not-favourited. Rides inside a backup for
+  free (generic `SELECT *` dump), and its NOT-NULL/default is mirrored on `MediaEntity` per D-53 so a
+  fresh v15+ install can restore a pre-v14 backup without hitting the NOT-NULL constraint.
+- **v15 (`MIGRATION_14_15`, GAL-6)** adds the **`person_photo`** table (per-person portrait album:
+  `id` / `ownerKind` / `ownerId` / `mediaBlobId` / `addedAt`, indexed by owner). Pure additive DDL —
+  existing rows untouched, table starts empty. Blobs live in `EncryptedMediaStore` like encounter
+  media; `BackupManager` gathers their ids so the album round-trips.
+- **v16 (`MIGRATION_15_16`, CAP-1, 0.5.3)** adds a nullable **`caption`** column to `media` — the
+  user's short note per photo, editable from the photo viewer. Pure additive DDL; nullable, so no
+  entity `defaultValue` mirror is needed (D-53 applies only to NOT-NULL additions). Round-trips via
+  the generic `SELECT *` dump (a pre-v16 backup simply has no key → NULL). Also folded into the
+  `EncounterSearch` index as `SearchField.PHOTO_CAPTION`.
 - Export format (M5) is decoupled from the live schema and versioned independently
   (see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §4).

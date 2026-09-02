@@ -175,6 +175,9 @@ class GalleryViewModel @Inject constructor(
     /** Whether to draw a small date · partner caption under each grid tile. */
     val showTileCaptions: StateFlow<Boolean> = galleryPreferences.showTileCaptions
 
+    /** Where to expose the per-photo caption editor in the viewer (CAP-1, D-55). */
+    val captionEntryPoint: StateFlow<app.tryst.core.prefs.CaptionEntryPoint> = galleryPreferences.captionEntryPoint
+
     /** Records a reveal so a quick tab switch back doesn't re-blur (see [GalleryRevealState]). */
     fun markRevealed() = revealState.markRevealed()
 
@@ -392,6 +395,15 @@ class GalleryViewModel @Inject constructor(
     /** Marks/unmarks a single photo (the viewer's star), GAL-3. Only encounter photos are favouritable. */
     fun toggleFavorite(photo: GalleryPhoto) = viewModelScope.launch {
         if (photo.media != null) encounterRepository.setFavorite(photo.id, !photo.favorite)
+    }
+
+    /**
+     * Sets or clears a photo's caption (CAP-1). Only encounter photos carry captions — person portraits
+     * (which have no `media` row) silently no-op. Blank text becomes NULL upstream so the empty-caption
+     * state stays canonical.
+     */
+    fun setCaption(photo: GalleryPhoto, caption: String?) = viewModelScope.launch {
+        if (photo.media != null) encounterRepository.setCaption(photo.id, caption)
     }
 
     /** Bulk favourite: only the encounter photos in the selection qualify — portraits carry no favourite mark. */

@@ -64,7 +64,8 @@ associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, i
   a backup naturally lacks, restore consults `PRAGMA table_info` per table and backfills the live
   schema's SQL DEFAULT — so restoring a v13 backup on a v15+ install fills `media.favorite = 0`
   (D-53). Columns with no SQL DEFAULT still fail loudly; that's a deliberate signal to bump the
-  entity, not fabricate a value.
+  entity, not fabricate a value. Nullable columns (like the v16 `media.caption`) simply arrive as
+  NULL from a pre-v16 backup.
 
 ## Importing data from *other* apps (implemented, M5b)
 Separate path from this backup format. Because intimacy/period trackers share no standard, this is a

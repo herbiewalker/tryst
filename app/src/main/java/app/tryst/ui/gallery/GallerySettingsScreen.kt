@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
+import app.tryst.core.prefs.CaptionEntryPoint
 import app.tryst.core.prefs.GalleryPreferences
 import app.tryst.data.gallery.GalleryLayout
 import app.tryst.data.gallery.GallerySort
@@ -57,6 +58,7 @@ fun GallerySettingsScreen(
     val cameraKeepCapturing by viewModel.cameraKeepCapturing.collectAsStateWithLifecycle()
     val blur by viewModel.blurUntilRevealed.collectAsStateWithLifecycle()
     val blurGrace by viewModel.blurGraceSeconds.collectAsStateWithLifecycle()
+    val captionEntry by viewModel.captionEntryPoint.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -185,6 +187,28 @@ fun GallerySettingsScreen(
 
             HorizontalDivider(Modifier.padding(vertical = 16.dp))
 
+            // --- Photo captions (CAP-1) --------------------------------------------------------
+            // Where the per-photo caption editor lives in the viewer. "Off" hides the UI entirely
+            // (existing captions still ride in the backup and still fold into search — this is a
+            // pure UI toggle, not a data toggle).
+            Text(stringResource(R.string.gallery_caption_title), style = MaterialTheme.typography.titleMedium)
+            FilterSection(stringResource(R.string.gallery_caption_entry_label)) {
+                CaptionEntryPoint.entries.forEach { option ->
+                    SelectChip(
+                        stringResource(captionEntryLabel(option)),
+                        option == captionEntry,
+                        { viewModel.setCaptionEntryPoint(option) },
+                    )
+                }
+            }
+            Text(
+                text = stringResource(R.string.gallery_caption_entry_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
+            HorizontalDivider(Modifier.padding(vertical = 16.dp))
+
             // --- Camera capture ----------------------------------------------------------------
             Text(stringResource(R.string.gallery_camera_title), style = MaterialTheme.typography.titleMedium)
             SettingsSwitchRow(
@@ -244,6 +268,14 @@ private fun slideshowIntervalLabel(seconds: Int): Int = when (seconds) {
 private fun spacingLabel(value: GridSpacing): Int = when (value) {
     GridSpacing.COMPACT -> R.string.gallery_spacing_compact
     GridSpacing.NORMAL -> R.string.gallery_spacing_normal
+}
+
+@androidx.annotation.StringRes
+private fun captionEntryLabel(value: CaptionEntryPoint): Int = when (value) {
+    CaptionEntryPoint.INFO_PANEL -> R.string.gallery_caption_entry_info
+    CaptionEntryPoint.TOP_ROW -> R.string.gallery_caption_entry_top
+    CaptionEntryPoint.BOTH -> R.string.gallery_caption_entry_both
+    CaptionEntryPoint.OFF -> R.string.gallery_caption_entry_off
 }
 
 internal fun layoutLabel(layout: GalleryLayout): Int = when (layout) {

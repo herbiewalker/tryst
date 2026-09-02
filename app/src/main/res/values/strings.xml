@@ -235,6 +235,21 @@
     <string name="gallery_camera_title">Camera</string>
     <string name="gallery_camera_keep_capturing">Keep capturing until I stop</string>
     <string name="gallery_camera_keep_capturing_desc">When you take a photo from an encounter, the camera reopens automatically after each shot so you can take several in a row. Tap the camera\'s back button to finish.</string>
+
+    <!-- Photo captions (CAP-1) -->
+    <string name="gallery_caption_title">Photo captions</string>
+    <string name="gallery_caption_entry_label">Where to add a caption from</string>
+    <string name="gallery_caption_entry_desc">Where the caption editor appears in the photo viewer. Captions are searchable and are included in your encrypted backup either way.</string>
+    <string name="gallery_caption_entry_info">Info panel</string>
+    <string name="gallery_caption_entry_top">Top toolbar</string>
+    <string name="gallery_caption_entry_both">Both</string>
+    <string name="gallery_caption_entry_off">Off</string>
+    <string name="gallery_caption_label">Caption</string>
+    <string name="gallery_caption_add">Add a caption…</string>
+    <string name="gallery_caption_placeholder">A short note about this photo</string>
+    <string name="gallery_caption_edit_title">Edit caption</string>
+    <string name="gallery_caption_edit_action">Edit caption</string>
+    <string name="gallery_caption_clear">Clear</string>
     <string name="gallery_empty">Photos you attach to trysts show up here.</string>
     <string name="gallery_empty_filtered">No photos match. Try widening a filter.</string>
     <string name="gallery_group_solo">Solo</string>

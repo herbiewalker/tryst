@@ -13,6 +13,28 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.5.3] — 2026-08-31 (versionCode 10)
+
+### Added
+
+- **Photo captions.** Every attached photo can carry a short user-typed note, edited from the
+  photo viewer. Where the editor appears is a Settings choice
+  (**Settings → Gallery → Photo captions**): the info panel, a new top-toolbar button, both
+  (the default), or off. Captions are folded into the same search index as tryst notes, partner
+  names, and category labels, so typing a caption phrase surfaces the tryst it belongs to.
+  Round-trips through the encrypted backup for free.
+
+### Internal
+- Schema **v16** (`MIGRATION_15_16`): adds `media.caption TEXT NULL`. Pure additive DDL; a fresh
+  Room CREATE also makes it nullable, so no `defaultValue` mirror is needed (the D-53 rule
+  applies only to NOT-NULL additions).
+- New `SearchField.PHOTO_CAPTION` in `EncounterSearch`; captions across an encounter's photos are
+  aggregated into that field and matched folded (accent- and case-insensitive) like every other
+  text source.
+- New `CaptionEntryPoint` enum + `GalleryPreferences.captionEntryPoint` (default `BOTH`) drive
+  which viewer surfaces render the caption UI. `OFF` hides the UI entirely but data still rides
+  in the backup and still fires search hits.
+
 ## [0.5.2] — 2026-07-30 (versionCode 9)
 
 Quality-of-life + audit-cleanup patch. Every fix here came out of the v0.5.1 on-device

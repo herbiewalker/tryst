@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Favorite
@@ -32,12 +33,15 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PersonPin
 import androidx.compose.material.icons.filled.Slideshow
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,6 +62,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.tryst.R
+import app.tryst.core.prefs.CaptionEntryPoint
 import app.tryst.data.gallery.GalleryPartner
 import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.data.media.PhotoMeta
@@ -103,6 +108,8 @@ fun PhotoViewer(
     onAddToPerson: (blobId: String, kind: String, ownerId: String) -> Unit,
     slideshowIntervalSeconds: Int,
     slideshowShuffle: Boolean,
+    captionEntryPoint: CaptionEntryPoint,
+    onSetCaption: (GalleryPhoto, String?) -> Unit,
 ) {
     if (photos.isEmpty()) return
     val pagerState = rememberPagerState(
@@ -114,6 +121,7 @@ fun PhotoViewer(
     var slideshow by remember { mutableStateOf(false) }
     var avatarMenu by remember { mutableStateOf(false) }
     var addToPersonMenu by remember { mutableStateOf(false) }
+    var editingCaption by remember { mutableStateOf<GalleryPhoto?>(null) }
     val scope = rememberCoroutineScope()
 
     // Shuffle order: a Fisher-Yates permutation regenerated every time slideshow flips on OR the set of
@@ -237,6 +245,15 @@ fun PhotoViewer(
                             },
                         )
                     }
+                    if (captionEntryPoint.showsTopRowButton && current.media != null) {
+                        IconButton(onClick = { editingCaption = current }) {
+                            Icon(
+                                Icons.AutoMirrored.Outlined.Notes,
+                                contentDescription = stringResource(R.string.gallery_caption_edit_action),
+                                tint = if (!current.media?.caption.isNullOrBlank()) ACCENT else Color.White,
+                            )
+                        }
+                    }
                     IconButton(onClick = { showInfo = !showInfo }) {
                         Icon(
                             Icons.Outlined.Info,
@@ -257,7 +274,12 @@ fun PhotoViewer(
 
             Column(Modifier.align(Alignment.BottomStart).fillMaxWidth()) {
                 if (showInfo) {
-                    PhotoInfoPanel(photo = photos[pagerState.currentPage], onLoadMeta = onLoadMeta)
+                    PhotoInfoPanel(
+                        photo = photos[pagerState.currentPage],
+                        onLoadMeta = onLoadMeta,
+                        showCaptionRow = captionEntryPoint.showsInfoPanelField,
+                        onEditCaption = { editingCaption = photos[pagerState.currentPage] },
+                    )
                 }
                 Filmstrip(
                     photos = photos,
@@ -268,6 +290,55 @@ fun PhotoViewer(
             }
         }
     }
+
+    editingCaption?.let { photo ->
+        CaptionEditDialog(
+            initial = photo.media?.caption.orEmpty(),
+            onDismiss = { editingCaption = null },
+            onSave = { text ->
+                onSetCaption(photo, text)
+                editingCaption = null
+            },
+        )
+    }
+}
+
+/**
+ * Modal editor for a photo's caption (CAP-1). Blank text saves as NULL (clears the caption); the
+ * dialog exposes a dedicated Clear action so a user with an existing caption can wipe it in one tap
+ * without selecting the whole string.
+ */
+@Composable
+private fun CaptionEditDialog(initial: String, onDismiss: () -> Unit, onSave: (String?) -> Unit) {
+    var text by remember(initial) { mutableStateOf(initial) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.gallery_caption_edit_title)) },
+        text = {
+            OutlinedTextField(
+                value = text,
+                onValueChange = { text = it },
+                singleLine = false,
+                placeholder = { Text(stringResource(R.string.gallery_caption_placeholder)) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(text.takeIf { it.isNotBlank() }) }) {
+                Text(stringResource(R.string.action_save))
+            }
+        },
+        dismissButton = {
+            Row {
+                if (initial.isNotBlank()) {
+                    TextButton(onClick = { onSave(null) }) {
+                        Text(stringResource(R.string.gallery_caption_clear))
+                    }
+                }
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
+            }
+        },
+    )
 }
 
 /**
@@ -375,6 +446,8 @@ private fun Filmstrip(
 private fun PhotoInfoPanel(
     photo: GalleryPhoto,
     onLoadMeta: suspend (blobId: String) -> PhotoMeta,
+    showCaptionRow: Boolean,
+    onEditCaption: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val meta by produceState(PhotoMeta(), photo.id) { value = onLoadMeta(photo.blobId) }
@@ -385,6 +458,26 @@ private fun PhotoInfoPanel(
             .padding(horizontal = 20.dp, vertical = 14.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
+        // Caption row (CAP-1) — only for encounter photos (person portraits have no media row).
+        if (showCaptionRow && photo.media != null) {
+            val existing = photo.media?.caption?.takeIf { it.isNotBlank() }
+            Row(
+                modifier = Modifier.fillMaxWidth().clickable(onClick = onEditCaption),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.gallery_caption_label),
+                    color = Color.White.copy(alpha = 0.7f),
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.width(96.dp),
+                )
+                Text(
+                    text = existing ?: stringResource(R.string.gallery_caption_add),
+                    color = if (existing != null) Color.White else Color.White.copy(alpha = 0.6f),
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
         meta.capturedAt?.let { InfoRow(stringResource(R.string.gallery_meta_taken), Format.dateTime(it)) }
         if (meta.width != null && meta.height != null) {
             InfoRow(stringResource(R.string.gallery_meta_dimensions), "${meta.width} × ${meta.height}")

@@ -118,6 +118,19 @@ class GalleryPreferences @Inject constructor(
         _cameraKeepCapturing.value = enabled
     }
 
+    /** Where the per-photo caption editor is reachable from in the viewer (CAP-1, D-55). */
+    private val _captionEntryPoint = MutableStateFlow(loadCaptionEntryPoint())
+    val captionEntryPoint: StateFlow<CaptionEntryPoint> = _captionEntryPoint.asStateFlow()
+
+    fun setCaptionEntryPoint(value: CaptionEntryPoint) {
+        prefs.edit().putString(KEY_CAPTION_ENTRY, value.name).apply()
+        _captionEntryPoint.value = value
+    }
+
+    private fun loadCaptionEntryPoint(): CaptionEntryPoint = prefs.getString(KEY_CAPTION_ENTRY, null)
+        ?.let { runCatching { CaptionEntryPoint.valueOf(it) }.getOrNull() }
+        ?: DEFAULT_CAPTION_ENTRY_POINT
+
     fun setLayout(layout: GalleryLayout) {
         prefs.edit().putString(KEY_LAYOUT, layout.name).apply()
         _layout.value = layout
@@ -144,6 +157,7 @@ class GalleryPreferences @Inject constructor(
         val DEFAULT_LAYOUT = GalleryLayout.JUSTIFIED_DATE
         val DEFAULT_SORT = GallerySort.NEWEST
         val DEFAULT_GRID_SPACING = GridSpacing.NORMAL
+        val DEFAULT_CAPTION_ENTRY_POINT = CaptionEntryPoint.BOTH
         const val MIN_COLUMNS = 2
         const val MAX_COLUMNS = 4
         const val DEFAULT_COLUMNS = 3
@@ -161,5 +175,30 @@ class GalleryPreferences @Inject constructor(
         private const val KEY_TILE_CAPTIONS = "show_tile_captions"
         private const val KEY_DEFAULT_FAV_ONLY = "default_to_favorites_only"
         private const val KEY_CAMERA_LOOP = "camera_keep_capturing"
+        private const val KEY_CAPTION_ENTRY = "caption_entry_point"
     }
+}
+
+/**
+ * Where the per-photo caption editor lives in the viewer (CAP-1, D-55). Users pick their favourite —
+ * the top-row icon is fastest, the info-panel field is quieter, both is discoverable, off hides captions
+ * entirely (they still persist and still fold into search — just no viewer surface to add/edit them).
+ */
+enum class CaptionEntryPoint {
+    /** A "Caption" field at the top of the (i) info panel; tap opens the edit dialog. */
+    INFO_PANEL,
+
+    /** A dedicated icon in the viewer's top action row; tap opens the edit dialog directly. */
+    TOP_ROW,
+
+    /** Both entry points are shown (the default). */
+    BOTH,
+
+    /** No caption UI at all — existing captions still ride in the backup + still fold into search. */
+    OFF,
+    ;
+
+    val showsInfoPanelField: Boolean get() = this == INFO_PANEL || this == BOTH
+    val showsTopRowButton: Boolean get() = this == TOP_ROW || this == BOTH
+    val anyEntryVisible: Boolean get() = this != OFF
 }

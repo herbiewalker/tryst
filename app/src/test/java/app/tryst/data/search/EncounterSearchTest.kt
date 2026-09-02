@@ -2,6 +2,7 @@
 package app.tryst.data.search
 
 import app.tryst.data.db.entity.EncounterEntity
+import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.Place
@@ -36,6 +37,7 @@ class EncounterSearchTest {
         places: Set<Place> = emptySet(),
         mood: Mood? = null,
         partners: List<PartnerEntity> = emptyList(),
+        captions: List<String?> = emptyList(),
     ) = EncounterWithDetails(
         encounter = EncounterEntity(
             id = id,
@@ -55,7 +57,9 @@ class EncounterSearchTest {
         partners = partners,
         positions = emptyList(),
         tags = emptyList(),
-        media = emptyList(),
+        media = captions.mapIndexed { i, caption ->
+            MediaEntity(id = "m$i", encounterId = id, encFilePath = "/tmp/$i", mimeType = "image/jpeg", createdAt = 0, caption = caption)
+        },
         location = null,
     )
 
@@ -111,6 +115,18 @@ class EncounterSearchTest {
         assertTrue(matches(encounter(partners = emptyList()), "solo"))
         assertTrue(matches(encounter(partners = listOf(partner("p1", null))), "anonymous"))
         assertFalse(matches(encounter(partners = listOf(partner("p1", "Sam"))), "solo"))
+    }
+
+    @Test
+    fun matchesPhotoCaption() {
+        val e = encounter(captions = listOf("Sunset on the roof", null, "Café balcony"))
+        // Words drawn from either caption match; PHOTO_CAPTION is the field that hits.
+        val hit1 = hit(e, "sunset")
+        assertTrue(hit1 != null && SearchField.PHOTO_CAPTION in hit1.matchedFields)
+        val hit2 = hit(e, "cafe balcony") // AND-across-tokens + accent-fold both hold.
+        assertTrue(hit2 != null && SearchField.PHOTO_CAPTION in hit2.matchedFields)
+        // Blank/null captions never contribute.
+        assertFalse(matches(encounter(captions = listOf(null, "")), "sunset"))
     }
 
     @Test

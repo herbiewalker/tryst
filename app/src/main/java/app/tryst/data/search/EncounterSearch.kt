@@ -32,6 +32,9 @@ enum class SearchField(val label: String) {
     KINK("Kinks"),
     TOY("Toys"),
     MOOD("Mood"),
+
+    /** Captions on the encounter's photos (CAP-1). Aggregated across every photo the tryst carries. */
+    PHOTO_CAPTION("Photo caption"),
 }
 
 /**
@@ -156,6 +159,7 @@ object EncounterSearch {
         } else {
             e.partners.map { it.displayName?.takeIf { n -> n.isNotBlank() } ?: "Anonymous" }
         }
+        val captions = e.media.mapNotNull { it.caption?.takeIf { c -> c.isNotBlank() } }
         return buildMap {
             putIfNotEmpty(SearchField.NOTE, listOfNotNull(enc.note?.takeIf { it.isNotBlank() }))
             putIfNotEmpty(SearchField.PARTNER, partners)
@@ -166,6 +170,7 @@ object EncounterSearch {
             putIfNotEmpty(SearchField.KINK, resolveAll(enc.kinks, labels.kinks))
             putIfNotEmpty(SearchField.TOY, resolveAll(enc.toys, labels.toys))
             putIfNotEmpty(SearchField.MOOD, listOfNotNull(enc.mood?.label))
+            putIfNotEmpty(SearchField.PHOTO_CAPTION, captions)
         }
     }
 
