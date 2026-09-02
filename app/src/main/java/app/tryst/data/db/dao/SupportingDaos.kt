@@ -32,6 +32,10 @@ interface MediaDao {
     @Query("UPDATE media SET favorite = :favorite WHERE id IN (:ids)")
     suspend fun setFavorite(ids: List<String>, favorite: Boolean)
 
+    /** Sets or clears the caption on one photo (CAP-1). Empty/blank captions are stored as NULL. */
+    @Query("UPDATE media SET caption = :caption WHERE id = :id")
+    suspend fun setCaption(id: String, caption: String?)
+
     /** Moves photos to a different tryst (bulk reassign, GAL-4). The gallery re-derives, so they relocate. */
     @Query("UPDATE media SET encounterId = :encounterId WHERE id IN (:ids)")
     suspend fun reassign(ids: List<String>, encounterId: String)

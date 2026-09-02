@@ -106,6 +106,13 @@ data class MediaEntity(
      * pre-v14 backup (which has no `favorite` key) into a fresh install fails NOT-NULL on this column.
      */
     @ColumnInfo(defaultValue = "0") val favorite: Boolean = false,
+    /**
+     * User-typed caption for this photo (CAP-1, v16). Nullable — the vast majority of photos won't have
+     * one. Folded into the SRCH-1 search index as an extra text source per encounter, so searching by a
+     * caption phrase surfaces the tryst it belongs to. Backup round-trips via the generic `SELECT *`
+     * dump so no export-format change is needed (a pre-v16 backup simply has no value → NULL).
+     */
+    val caption: String? = null,
 )
 
 /**

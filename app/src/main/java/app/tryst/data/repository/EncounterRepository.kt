@@ -71,6 +71,15 @@ class EncounterRepository @Inject constructor(
         if (mediaIds.isNotEmpty()) mediaDao.setFavorite(mediaIds, favorite)
     }
 
+    /**
+     * Sets or clears the caption on one photo (CAP-1). Blank text becomes `null` so the empty-caption
+     * state stays canonical (search/UI can null-check rather than string-length-check).
+     */
+    suspend fun setCaption(mediaId: String, caption: String?) {
+        val normalized = caption?.trim()?.takeIf { it.isNotEmpty() }
+        mediaDao.setCaption(mediaId, normalized)
+    }
+
     /** Deletes many photos (blob + row) in one bulk action (GAL-4). */
     suspend fun deleteMedia(media: List<MediaEntity>) {
         for (m in media) {

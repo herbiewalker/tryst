@@ -280,6 +280,21 @@ val MIGRATION_14_15 = object : Migration(14, 15) {
     }
 }
 
+/**
+ * v15 → v16: adds a **`caption`** column to `media` (CAP-1) — a user-typed note per photo, surfaced in
+ * the photo viewer and folded into the SRCH-1 search index alongside note/partners/categories.
+ *
+ * Pure additive DDL — nullable TEXT, no default needed (a fresh Room CREATE also gives it as nullable),
+ * so the D-53 "declare defaults on entities" rule doesn't apply. Rides inside a backup for free:
+ * `BackupManager` dumps/restores `media` with a generic `SELECT *`, so pre-v16 backups round-trip with
+ * their `caption` implicitly NULL.
+ */
+val MIGRATION_15_16 = object : Migration(15, 16) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE media ADD COLUMN caption TEXT")
+    }
+}
+
 /** All migrations, in order. */
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
@@ -296,4 +311,5 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_12_13,
     MIGRATION_13_14,
     MIGRATION_14_15,
+    MIGRATION_15_16,
 )

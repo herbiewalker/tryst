@@ -2,6 +2,7 @@
 package app.tryst.ui.gallery
 
 import androidx.lifecycle.ViewModel
+import app.tryst.core.prefs.CaptionEntryPoint
 import app.tryst.core.prefs.GalleryPreferences
 import app.tryst.data.gallery.GalleryLayout
 import app.tryst.data.gallery.GallerySort
@@ -26,6 +27,7 @@ class GallerySettingsViewModel @Inject constructor(
     val showTileCaptions: StateFlow<Boolean> = preferences.showTileCaptions
     val defaultToFavoritesOnly: StateFlow<Boolean> = preferences.defaultToFavoritesOnly
     val cameraKeepCapturing: StateFlow<Boolean> = preferences.cameraKeepCapturing
+    val captionEntryPoint: StateFlow<CaptionEntryPoint> = preferences.captionEntryPoint
 
     fun setLayout(layout: GalleryLayout) = preferences.setLayout(layout)
     fun setColumns(columns: Int) = preferences.setColumns(columns)
@@ -38,4 +40,5 @@ class GallerySettingsViewModel @Inject constructor(
     fun setShowTileCaptions(enabled: Boolean) = preferences.setShowTileCaptions(enabled)
     fun setDefaultToFavoritesOnly(enabled: Boolean) = preferences.setDefaultToFavoritesOnly(enabled)
     fun setCameraKeepCapturing(enabled: Boolean) = preferences.setCameraKeepCapturing(enabled)
+    fun setCaptionEntryPoint(value: CaptionEntryPoint) = preferences.setCaptionEntryPoint(value)
 }

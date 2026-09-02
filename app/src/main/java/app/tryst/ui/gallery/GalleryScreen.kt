@@ -137,6 +137,7 @@ fun GalleryScreen(
     val showTileCaptions by viewModel.showTileCaptions.collectAsStateWithLifecycle()
     val slideshowInterval by viewModel.slideshowIntervalSeconds.collectAsStateWithLifecycle()
     val slideshowShuffle by viewModel.slideshowShuffle.collectAsStateWithLifecycle()
+    val captionEntryPoint by viewModel.captionEntryPoint.collectAsStateWithLifecycle()
 
     val selectionActive = selectedIds.isNotEmpty()
     // Include drilledIntoSelf: the self-drill sets _drilledPartnerId to "self" (not a real partner id),
@@ -409,6 +410,8 @@ fun GalleryScreen(
             onAddToPerson = viewModel::addPhotoToPerson,
             slideshowIntervalSeconds = slideshowInterval,
             slideshowShuffle = slideshowShuffle,
+            captionEntryPoint = captionEntryPoint,
+            onSetCaption = { photo, text -> viewModel.setCaption(photo, text) },
         )
     }
 }

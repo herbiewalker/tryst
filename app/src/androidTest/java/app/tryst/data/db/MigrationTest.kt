@@ -427,6 +427,41 @@ class MigrationTest {
     }
 
     /**
+     * v15 → v16 (CAP-1): adds `media.caption` (nullable TEXT). Additive DDL — every existing media row
+     * gains the column defaulting to NULL, existing data is untouched, and the column round-trips.
+     */
+    @Test
+    fun migrate15To16_addsCaptionColumnDefaultingNull() {
+        helper.createDatabase(dbName, 15).use { db ->
+            db.execSQL("INSERT INTO encounters (id, startAt, protectionUsed, createdAt, updatedAt) VALUES ('e1', 1000, '', 1, 1)")
+            db.execSQL(
+                "INSERT INTO media (id, encounterId, encFilePath, mimeType, createdAt, favorite) " +
+                    "VALUES ('m1', 'e1', '/data/media/m1.enc', 'image/jpeg', 5, 0)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(dbName, 16, true, MIGRATION_15_16).use { db ->
+            // The pre-existing row gains the column, NULL by default.
+            db.query("SELECT caption FROM media WHERE id = 'm1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertTrue("caption defaults to NULL for pre-v16 rows", c.isNull(0))
+            }
+            // The column is writable and round-trips.
+            db.execSQL("UPDATE media SET caption = 'Sunset on the roof' WHERE id = 'm1'")
+            db.query("SELECT caption FROM media WHERE id = 'm1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("Sunset on the roof", c.getString(0))
+            }
+            // Clearing back to NULL works too.
+            db.execSQL("UPDATE media SET caption = NULL WHERE id = 'm1'")
+            db.query("SELECT caption FROM media WHERE id = 'm1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertTrue(c.isNull(0))
+            }
+        }
+    }
+
+    /**
      * v13 → v14 (GAL-3): adds the `media.favorite` flag. Additive DDL — every existing media row must
      * default to not-favourited (0), existing data is untouched, and the column is writable.
      */
