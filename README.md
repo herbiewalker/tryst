@@ -10,7 +10,7 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?logo=kotlin&logoColor=white)](#built-with)
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](#built-with)
 [![Offline only](https://img.shields.io/badge/network-none-critical)](#why-tryst)
-[![Release](https://img.shields.io/badge/release-v0.5.5-success)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-v0.5.6-success)](CHANGELOG.md)
 
 Tryst keeps your most personal data on your phone and nowhere else — no account, no sync,
 and **no internet permission at all**, so the app *cannot* send your data anywhere.
@@ -99,7 +99,7 @@ Screenshots are black by design on-device (`FLAG_SECURE`).
 
 ## Status
 
-✅ **Shipped.** Current release **v0.5.5** (versionCode 12, schema v16). Distribution is **F-Droid**,
+✅ **Shipped.** Current release **v0.5.6** (versionCode 13, schema v16). Distribution is **F-Droid**,
 which builds and signs from this source — Tryst ships no binary and commits no signing key. The
 **0.5.x** line delivers the **Photos** tab: a browsable gallery over every image attached to a tryst
 plus every person's portrait album, with search, filters, favourites, bulk actions, a slideshow, and

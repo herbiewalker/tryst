@@ -13,6 +13,16 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.5.6] — 2026-08-31 (versionCode 13)
+
+### Added
+
+- **Photo captions show under the tile too (CAP-1b).** When the existing
+  **Show date · partner under tiles** setting is on (Settings → Gallery), a caption's first
+  line is drawn as a second line under the tile in the date grid and by-partner layouts. The
+  **Feed** layout renders up to two lines of caption under the date row. Long captions are
+  ellipsized so tile heights stay predictable; the viewer still shows the full text.
+
 ## [0.5.5] — 2026-08-31 (versionCode 12)
 
 ### Changed

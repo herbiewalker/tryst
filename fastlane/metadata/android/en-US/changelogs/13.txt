@@ -1,0 +1,4 @@
+Captions surface under tiles
+
+* When "Show date · partner under tiles" is on (Settings → Gallery), a photo's caption now shows as a second line under its tile.
+* The Feed layout renders up to two lines of caption below the date row.

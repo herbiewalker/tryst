@@ -4,7 +4,9 @@ package app.tryst.ui.gallery
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -92,11 +94,11 @@ fun SelectablePhotoTile(
 }
 
 /**
- * A one-line "date · partner names" caption for a photo tile — labelSmall, dimmed, single line.
- *
- * Set [showPartner] to `false` when the surrounding context already names the partner (e.g. a
- * by-partner section header, or a drilled-in "Photos of Alex" top bar) so the caption doesn't
- * echo the name on every single tile.
+ * The under-tile caption shown when Settings → Gallery → "Show date · partner under tiles" is on.
+ * Line 1 is always the date (+ partner names when [showPartner] is true — false when the surrounding
+ * chrome already names the partner, e.g. a by-partner section header or a drilled-in "Photos of
+ * Alex" top bar). Line 2 is the photo's caption (CAP-1b) when present, ellipsized to one line so
+ * a long note doesn't push the tile height around unpredictably.
  */
 @Composable
 fun TileCaption(photo: GalleryPhoto, modifier: Modifier = Modifier, showPartner: Boolean = true) {
@@ -104,12 +106,26 @@ fun TileCaption(photo: GalleryPhoto, modifier: Modifier = Modifier, showPartner:
         add(Format.date(photo.takenAt))
         if (showPartner) photo.partnerNames.takeIf { it.isNotEmpty() }?.let { add(it.joinToString(", ")) }
     }
-    Text(
-        text = parts.joinToString("  ·  "),
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
+    val caption = photo.media?.caption?.takeIf { it.isNotBlank() }
+    Column(
         modifier = modifier.fillMaxWidth().padding(top = 2.dp, start = 2.dp, end = 2.dp),
-    )
+        verticalArrangement = Arrangement.spacedBy(1.dp),
+    ) {
+        Text(
+            text = parts.joinToString("  ·  "),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        if (caption != null) {
+            Text(
+                text = caption,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
 }
