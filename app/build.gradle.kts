@@ -18,8 +18,8 @@ android {
         applicationId = "app.tryst"
         minSdk = 31
         targetSdk = 36
-        versionCode = 13
-        versionName = "0.5.6"
+        versionCode = 14
+        versionName = "0.5.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

@@ -21,6 +21,16 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.5.7",
+            versionCode = 14,
+            date = "2026-08-31",
+            highlights = listOf(
+                "Optional re-auth to open the Photos tab. Turn it on in Settings → Gallery; the Photos tab then asks for biometric or your device screen lock before it opens. Handy when you sometimes hand the unlocked phone to someone.",
+                "Pick a grace window so a quick tab switch away and back doesn't re-prompt (Immediate / 15s / 30s / 1 min / 5 min, default 30s).",
+                "The toggle stays hidden on devices with no biometric and no screen lock, since the OS has no way to gate.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.5.6",
             versionCode = 13,
             date = "2026-08-31",

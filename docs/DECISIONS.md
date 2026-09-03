@@ -1,8 +1,8 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v16** (latest: **D-57**, QOL-7 audit outcome —
-> two dialog surfaces promoted to full-screen routes, every other dialog left as a proper
-> picker/confirm/menu, v0.5.5).
+> **Status:** Live — decisions through **schema v16** (latest: **D-58**, SEC-2 tier 2 is a
+> presence-only re-auth via BiometricPrompt with device-credential fallback — no CryptoObject,
+> no DEK touch, v0.5.7).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
 > D-41 covers the F-Droid content-policy rework — acts/kinks in
 > 0.3.0, positions/toys in 0.3.1, then empty predefined lists + custom occasions/finish-locations in
@@ -616,6 +616,26 @@
   freedom to switch on/off without ever losing a caption a user typed under a different
   setting. The pref lives in `GalleryPreferences` (`CaptionEntryPoint` enum), joining the
   other Photos-tab look/behaviour prefs.
+
+- **D-58 (2026-08-31) SEC-2 tier 2 is a presence-only re-auth; no CryptoObject, no DEK
+  touch (v0.5.7).** The re-auth gate the user opts into for the Photos tab is not the same
+  crypto path the main app lock uses. The main lock's BiometricPrompt runs with a
+  CryptoObject-backed cipher so a successful auth *unwraps the DEK*; that's why it's
+  BIOMETRIC_STRONG only (no device credential — the OS won't hand you a cipher for a
+  screen-lock unlock). SEC-2 tier 2 is different: the DEK is already in memory (the app is
+  unlocked), we just want to confirm the person holding the phone is still the owner. So we
+  reuse the same `BiometricPromptHelper` file but add a **presence-only** overload
+  (`confirmPresence`) that skips the CryptoObject and allows
+  `BIOMETRIC_STRONG or DEVICE_CREDENTIAL`. That means:
+  - Devices with an enrolled biometric use it (fastest path).
+  - Devices with only a screen-lock PIN/pattern/password still work — the OS chains to the
+    device credential. Otherwise this tier would be biometric-only, which excludes a
+    material slice of users.
+  - We don't verify against Tryst's *own* app PIN — that would need a custom PIN pad and
+    doesn't add security over the device credential the user has already trusted for their
+    phone. Simple, native, less code.
+  Toggle is hidden on devices with no biometric AND no screen lock (the OS reports no
+  authenticator available); showing it would be a lie.
 
 - **D-57 (2026-08-31) QOL-7 dialog audit: promote CsvMappingDialog + ReassignDialog to
   routes; leave every other dialog as-is (QOL-7, v0.5.5).** A grep-driven audit over every

@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SwapHoriz
@@ -88,6 +89,7 @@ import app.tryst.data.gallery.GallerySection
 import app.tryst.ui.common.DateRangePickerDialog
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
+import app.tryst.ui.lock.findFragmentActivity
 import app.tryst.ui.search.MoreFiltersActions
 import app.tryst.ui.search.RatingFilter
 import java.time.YearMonth
@@ -128,6 +130,7 @@ fun GalleryScreen(
     val advancedCount by viewModel.activeAdvancedCount.collectAsStateWithLifecycle()
     val onlyFavorites by viewModel.onlyFavorites.collectAsStateWithLifecycle()
     val blurUntilRevealed by viewModel.blurUntilRevealed.collectAsStateWithLifecycle()
+    val requireReauth by viewModel.requireReauthForPhotos.collectAsStateWithLifecycle()
     val selectedIds by viewModel.selectedIds.collectAsStateWithLifecycle()
     val drilledPartner by viewModel.drilledPartner.collectAsStateWithLifecycle()
     val drilledIntoSelf by viewModel.drilledIntoSelf.collectAsStateWithLifecycle()
@@ -152,9 +155,17 @@ fun GalleryScreen(
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var viewerIndex by remember { mutableIntStateOf(-1) }
     var revealed by remember { mutableStateOf(viewModel.revealedRecently()) }
+    var authed by remember { mutableStateOf(viewModel.authedRecently()) }
     DisposableEffect(Unit) {
-        onDispose { if (revealed) viewModel.markRevealed() }
+        onDispose {
+            if (revealed) viewModel.markRevealed()
+            if (authed) viewModel.markAuthed()
+        }
     }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val activity = remember(context) { context.findFragmentActivity() }
+    val authTitle = stringResource(R.string.gallery_reauth_prompt_title)
+    val authSubtitle = stringResource(R.string.gallery_reauth_prompt_subtitle)
 
     // Back exits selection mode first, then a People-drill, before leaving the tab.
     BackHandler(enabled = selectionActive) { viewModel.clearSelection() }
@@ -261,6 +272,7 @@ fun GalleryScreen(
             }
         },
     ) { padding ->
+        val authGated = requireReauth && !authed
         val gated = blurUntilRevealed && !revealed && ui.photos.isNotEmpty()
         Box(Modifier.fillMaxSize().padding(padding)) {
             Column(Modifier.fillMaxSize().then(if (gated) Modifier.blur(28.dp) else Modifier)) {
@@ -307,6 +319,21 @@ fun GalleryScreen(
                 BlurGate(onReveal = {
                     viewModel.markRevealed()
                     revealed = true
+                })
+            }
+            if (authGated) {
+                AuthGate(onUnlock = {
+                    app.tryst.ui.lock.BiometricPromptHelper.confirmPresence(
+                        activity = activity,
+                        title = authTitle,
+                        subtitle = authSubtitle,
+                        onSuccess = {
+                            viewModel.markAuthed()
+                            authed = true
+                        },
+                        onError = { /* leave gate up; user can retry */ },
+                        onCancel = { /* leave gate up; user can retry */ },
+                    )
                 })
             }
         }
@@ -784,6 +811,40 @@ private fun PartnerAvatar(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
             )
+        }
+    }
+}
+
+/**
+ * The re-auth cover shown over the Photos tab when SEC-2 tier 2 is on and no recent auth exists.
+ * A Confirm button drives [BiometricPromptHelper.confirmPresence] — biometric first, screen-lock
+ * credential fallback for PIN-only devices. Sits above [BlurGate] so if both are on, the user
+ * unlocks first, then reveals.
+ */
+@Composable
+private fun AuthGate(onUnlock: () -> Unit) {
+    Box(
+        Modifier.fillMaxSize()
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable(indication = null, interactionSource = remember { MutableInteractionSource() }, onClick = {}),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Icon(
+                Icons.Filled.Lock,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = stringResource(R.string.gallery_reauth_title),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            Button(onClick = onUnlock) { Text(stringResource(R.string.gallery_reauth_unlock)) }
         }
     }
 }
