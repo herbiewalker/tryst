@@ -21,6 +21,15 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.5.4",
+            versionCode = 11,
+            date = "2026-08-31",
+            highlights = listOf(
+                "Edit photos in place. From the photo viewer, tap the pencil to rotate 90° left or right, or open a full-screen cropper with corner handles and Free / 1 : 1 / 4 : 3 / 16 : 9 aspect presets.",
+                "Edits replace the photo in place, still encrypted; embedded EXIF metadata (camera, GPS) is dropped in the re-encode.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.5.3",
             versionCode = 10,
             date = "2026-08-31",

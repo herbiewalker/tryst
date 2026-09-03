@@ -21,8 +21,10 @@ import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.data.gallery.GalleryPhotos
 import app.tryst.data.gallery.GallerySection
 import app.tryst.data.gallery.GallerySort
+import app.tryst.data.media.FractionalRect
 import app.tryst.data.media.PhotoMeta
 import app.tryst.data.media.PhotoMetadata
+import app.tryst.data.media.PhotoTransforms
 import app.tryst.data.repository.ActRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.KinkRepository
@@ -501,6 +503,43 @@ class GalleryViewModel @Inject constructor(
     /** Reads a photo's embedded metadata (date/dimensions/camera/location) for the viewer info panel (META-1). */
     suspend fun readMeta(blobId: String): PhotoMeta = withContext(Dispatchers.IO) {
         PhotoMetadata.read { runCatching { personPhotoRepository.openBlob(blobId) }.getOrNull() }
+    }
+
+    // --- editing (EDIT-1) --------------------------------------------------------------------------
+    //
+    // Blob bytes are replaced in place (same id), so nothing that references the photo has to be
+    // re-threaded. The `photoRevision` map bumps per edited blob so caching consumers (DecodedImage
+    // keyed by `photoBustKey(blobId)`, the aspect cache below) know to re-load.
+
+    private val _photoRevision = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val photoRevision: StateFlow<Map<String, Int>> = _photoRevision.asStateFlow()
+
+    /** Cache-busting key for loaders — pairs the blob id with the current edit revision. */
+    fun photoBustKey(blobId: String): String = "$blobId#${_photoRevision.value[blobId] ?: 0}"
+
+    /** Rotates a photo by [degrees] (typically ±90) and re-encrypts it in place (EDIT-1). */
+    fun rotate(photo: GalleryPhoto, degrees: Int) = viewModelScope.launch(Dispatchers.IO) {
+        transformInPlace(photo) { bmp -> PhotoTransforms.rotate(bmp, degrees) }
+    }
+
+    /** Crops a photo to [rect] (fractional coords over the original image) and re-encrypts in place. */
+    fun crop(photo: GalleryPhoto, rect: FractionalRect) = viewModelScope.launch(Dispatchers.IO) {
+        transformInPlace(photo) { bmp -> PhotoTransforms.crop(bmp, rect) }
+    }
+
+    private suspend fun transformInPlace(photo: GalleryPhoto, transform: (android.graphics.Bitmap) -> android.graphics.Bitmap) {
+        val bmp = runCatching {
+            personPhotoRepository.openBlob(photo.blobId).use { PhotoTransforms.decode(it) }
+        }.getOrNull() ?: return
+        val transformed = runCatching { transform(bmp) }.getOrNull() ?: return
+        val jpeg = PhotoTransforms.encodeJpeg(transformed)
+        when (val src = photo.source) {
+            is GalleryPhoto.Source.Encounter -> encounterRepository.replacePhotoBytes(src.media, jpeg)
+            is GalleryPhoto.Source.Person -> personPhotoRepository.replaceBlobBytes(photo.blobId, jpeg)
+        }
+        // Invalidate downstream caches keyed by the blob id — decoded ImageBitmap + aspect ratio.
+        aspectCache.remove(photo.blobId)
+        _photoRevision.update { current -> current + (photo.blobId to ((current[photo.blobId] ?: 0) + 1)) }
     }
 
     private fun encounterBlobsInSelection(): List<String> {

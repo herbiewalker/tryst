@@ -250,6 +250,19 @@
     <string name="gallery_caption_edit_title">Edit caption</string>
     <string name="gallery_caption_edit_action">Edit caption</string>
     <string name="gallery_caption_clear">Clear</string>
+
+    <!-- Photo edit (EDIT-1) -->
+    <string name="gallery_edit_photo">Edit photo</string>
+    <string name="gallery_edit_photo_title">Edit photo</string>
+    <string name="gallery_edit_photo_desc">Rotate applies right away. Crop opens an editor with corner handles and aspect presets. Edits replace the photo in place; there\'s no undo.</string>
+    <string name="gallery_edit_rotate_left">Rotate 90° left</string>
+    <string name="gallery_edit_rotate_right">Rotate 90° right</string>
+    <string name="gallery_edit_crop">Crop…</string>
+    <string name="gallery_edit_loading">Loading photo…</string>
+    <string name="gallery_edit_aspect_free">Free</string>
+    <string name="gallery_edit_aspect_1x1">1 : 1</string>
+    <string name="gallery_edit_aspect_4x3">4 : 3</string>
+    <string name="gallery_edit_aspect_16x9">16 : 9</string>
     <string name="gallery_empty">Photos you attach to trysts show up here.</string>
     <string name="gallery_empty_filtered">No photos match. Try widening a filter.</string>
     <string name="gallery_group_solo">Solo</string>

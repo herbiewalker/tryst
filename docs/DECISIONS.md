@@ -1,7 +1,7 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v16** (latest: **D-55**, per-photo captions'
-> user-picked entry-point pref for the viewer, CAP-1 / v0.5.3).
+> **Status:** Live — decisions through **schema v16** (latest: **D-56**, in-place photo edits
+> with EXIF-dropped-on-re-encode, EDIT-1 / v0.5.4).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
 > D-41 covers the F-Droid content-policy rework — acts/kinks in
 > 0.3.0, positions/toys in 0.3.1, then empty predefined lists + custom occasions/finish-locations in
@@ -616,7 +616,25 @@
   setting. The pref lives in `GalleryPreferences` (`CaptionEntryPoint` enum), joining the
   other Photos-tab look/behaviour prefs.
 
-> Still tracked elsewhere (not re-listed): user-configurable **auto-lock timeout** & **change-PIN UI**
+- **D-56 (2026-08-31) In-app photo edit replaces the blob in place; EXIF is dropped in the
+  re-encode (EDIT-1, v0.5.4).** Two branches on the design:
+  - **Edit in place vs new blob.** Chosen: **in place**. Same blob id keeps every reference
+    (`media.encFilePath`, `person_photo.mediaBlobId`, `partners.photoMediaId`) valid with no
+    schema touch and no orphan-sweep after commit. Downside is no cross-session undo — the
+    original bytes are gone. Given the app's small photo set and the "small edit" scope
+    (rotate + crop, no destructive filters), the ergonomic win outweighs a history feature
+    nobody explicitly asked for. Safety comes from `EncryptedMediaStore.saveStaged` +
+    `promoteStaged`: the new bytes land in `<id>.enc.staging` first, then atomically replace
+    the live blob — a mid-encrypt crash leaves the original blob intact.
+  - **EXIF stripping on edit.** Any real edit re-decodes the pixels and re-encodes as JPEG,
+    so embedded EXIF (camera model, GPS coordinates, original date) is naturally lost — no
+    extra plumbing. This is the strip-on-edit hook D-51 reserved when it decided against
+    stripping on import; that decision still holds for imports (EXIF is small, stripping =
+    lossy re-encode, and the vault never leaks it anyway), but the moment a user chooses to
+    edit, dropping the metadata is the right default. Original creation-date in the tryst
+    is unaffected (it's the tryst's own `startAt`, not the photo's EXIF).
+
+- **D-55 (2026-08-31) Per-photo captions ship with a user-picked entry point (CAP-1, v0.5.3).**
 > and **history filters/search** (deferred features, ROADMAP M3); **VACUUM on delete-all** for
 > secure-delete hardening (ROADMAP M5, SECURITY_DESIGN §6); **Keystore-backed monotonic attempt
 > counter** (SECURITY_DESIGN §6); **Argon2id** upgrade for the PIN/backup KDF (SECURITY_DESIGN §6).
