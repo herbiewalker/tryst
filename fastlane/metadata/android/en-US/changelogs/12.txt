@@ -1,0 +1,4 @@
+Roomier import and picker screens
+
+* CSV import gets its own full-screen page (Settings → Import from CSV) with the full mapping list visible at once, a detected-rows summary, and a hint about what column formats work.
+* Bulk photo reassign has a full-screen tryst picker with a search field, so a large log no longer forces a long scroll to find a date.

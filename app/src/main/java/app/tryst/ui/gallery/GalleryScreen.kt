@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -364,7 +363,7 @@ fun GalleryScreen(
     }
 
     if (showReassign) {
-        ReassignDialog(
+        ReassignPicker(
             viewModel = viewModel,
             count = selectedIds.size,
             onDismiss = { showReassign = false },
@@ -471,41 +470,96 @@ private fun SelectionBar(
     )
 }
 
-/** Picks a tryst to move the selected photos into (GAL-4). */
+/**
+ * Full-screen tryst picker for bulk reassign (GAL-4). QOL-7 promotes this from a 360dp-capped
+ * AlertDialog to a proper full-screen surface — a filterable list is a lot easier to scan and search
+ * with more room, and the search field means a big log no longer forces a long scroll to find a date.
+ *
+ * Uses a `Dialog` with `usePlatformDefaultWidth = false` so it truly fills the screen without needing
+ * its own nav-graph route (mirrors the PhotoCropper pattern; the picker's state is transient — a
+ * back-stack entry would carry no useful history).
+ */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-private fun ReassignDialog(
+private fun ReassignPicker(
     viewModel: GalleryViewModel,
     count: Int,
     onDismiss: () -> Unit,
     onPicked: (String) -> Unit,
 ) {
     val targets by viewModel.reassignTargets.collectAsStateWithLifecycle()
-    AlertDialog(
+    var query by remember { mutableStateOf("") }
+    val folded = remember(query) { app.tryst.data.search.EncounterSearch.fold(query.trim()) }
+    val filtered = remember(targets, folded) {
+        if (folded.isEmpty()) {
+            targets
+        } else {
+            targets.filter { t ->
+                val text = t.partnerNames.joinToString(" ") + " " + Format.dateTime(t.date)
+                app.tryst.data.search.EncounterSearch.fold(text).contains(folded)
+            }
+        }
+    }
+    androidx.compose.ui.window.Dialog(
         onDismissRequest = onDismiss,
-        title = { Text(pluralStringResource(R.plurals.gallery_reassign_title, count, count)) },
-        text = {
-            androidx.compose.foundation.lazy.LazyColumn(Modifier.heightIn(max = 360.dp)) {
-                lazyListItems(targets, key = { it.id }) { target ->
-                    val partnerLabel = target.partnerNames.takeIf { it.isNotEmpty() }?.joinToString(", ")
-                        ?: stringResource(R.string.gallery_group_solo)
-                    Column(
-                        Modifier.fillMaxWidth().clickable { onPicked(target.id) }.padding(vertical = 10.dp),
-                    ) {
-                        Text(Format.dateTime(target.date), style = MaterialTheme.typography.bodyMedium)
-                        Text(
-                            partnerLabel,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+        properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        androidx.compose.material3.Scaffold(
+            topBar = {
+                androidx.compose.material3.TopAppBar(
+                    title = { Text(pluralStringResource(R.plurals.gallery_reassign_title, count, count)) },
+                    navigationIcon = {
+                        IconButton(onClick = onDismiss) {
+                            Icon(
+                                androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = stringResource(R.string.cd_back),
+                            )
+                        }
+                    },
+                )
+            },
+        ) { padding ->
+            Column(Modifier.fillMaxSize().padding(padding)) {
+                androidx.compose.material3.OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    singleLine = true,
+                    placeholder = { Text(stringResource(R.string.gallery_reassign_search_hint)) },
+                )
+                androidx.compose.foundation.lazy.LazyColumn(Modifier.fillMaxSize()) {
+                    if (filtered.isEmpty()) {
+                        item {
+                            Text(
+                                text = stringResource(R.string.gallery_reassign_none),
+                                modifier = Modifier.fillMaxWidth().padding(24.dp),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    } else {
+                        lazyListItems(filtered, key = { it.id }) { target ->
+                            val partnerLabel = target.partnerNames.takeIf { it.isNotEmpty() }?.joinToString(", ")
+                                ?: stringResource(R.string.gallery_group_solo)
+                            Column(
+                                Modifier.fillMaxWidth()
+                                    .clickable { onPicked(target.id) }
+                                    .padding(horizontal = 20.dp, vertical = 14.dp),
+                            ) {
+                                Text(Format.dateTime(target.date), style = MaterialTheme.typography.bodyMedium)
+                                Text(
+                                    partnerLabel,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            androidx.compose.material3.HorizontalDivider()
+                        }
                     }
                 }
             }
-        },
-        confirmButton = {},
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
-        },
-    )
+        }
+    }
 }
 
 // --- grid + feed ---------------------------------------------------------------------------------

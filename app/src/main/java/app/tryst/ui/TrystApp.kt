@@ -66,6 +66,7 @@ import app.tryst.ui.partner.PartnersScreen
 import app.tryst.ui.profile.ProfileScreen
 import app.tryst.ui.search.SearchScreen
 import app.tryst.ui.settings.CatalogManageRoute
+import app.tryst.ui.settings.CsvImportScreen
 import app.tryst.ui.settings.GeneralSettingsViewModel
 import app.tryst.ui.settings.ResetDataScreen
 import app.tryst.ui.settings.SettingsScreen
@@ -85,6 +86,7 @@ private object Routes {
     const val SETTINGS = "settings"
     const val ABOUT = "about"
     const val GALLERY_SETTINGS = "settings/gallery"
+    const val CSV_IMPORT = "settings/csv-import"
     const val CHANGE_PIN = "change-pin"
     const val RESET = "settings/reset"
     const val MANAGE_CATEGORY = "settings/category/{category}"
@@ -260,10 +262,14 @@ fun TrystApp() {
                             onOpenProfile = { navController.navigate(Routes.PROFILE) },
                             onManageCategory = { category -> navController.navigate(Routes.manageCategory(category)) },
                             onCustomizeGallery = { navController.navigate(Routes.GALLERY_SETTINGS) },
+                            onOpenCsvImport = { navController.navigate(Routes.CSV_IMPORT) },
                         )
                     }
                     composable(Routes.GALLERY_SETTINGS) {
                         GallerySettingsScreen(onBack = { navController.popBackStack() })
+                    }
+                    composable(Routes.CSV_IMPORT) {
+                        CsvImportScreen(onBack = { navController.popBackStack() })
                     }
                     composable(Routes.MANAGE_CATEGORY) { entry ->
                         CatalogManageRoute(
