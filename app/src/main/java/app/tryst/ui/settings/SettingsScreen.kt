@@ -6,12 +6,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
@@ -20,8 +18,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -74,6 +70,7 @@ fun SettingsScreen(
     onOpenProfile: () -> Unit = {},
     onManageCategory: (String) -> Unit = {},
     onCustomizeGallery: () -> Unit = {},
+    onOpenCsvImport: () -> Unit = {},
     viewModel: LockViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -105,10 +102,6 @@ fun SettingsScreen(
             pendingImportUri = uri
             showImportPw = true
         }
-    }
-    val csvViewModel: CsvImportViewModel = hiltViewModel()
-    val openCsv = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) csvViewModel.parse(uri)
     }
 
     val biometricEnableTitle = stringResource(R.string.settings_biometric_enable)
@@ -388,11 +381,7 @@ fun SettingsScreen(
                 }
             }
             OutlinedButton(
-                onClick = {
-                    csvViewModel.suppressAutoLock()
-                    openCsv.launch(arrayOf("*/*"))
-                },
-                enabled = !csvViewModel.busy,
+                onClick = onOpenCsvImport,
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.settings_import_csv)) }
             Text(
@@ -400,11 +389,6 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            AnimatedVisibility(visible = csvViewModel.status != null) {
-                csvViewModel.status?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                }
-            }
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
@@ -471,89 +455,6 @@ fun SettingsScreen(
                 pendingImportUri = null
             },
         )
-    }
-
-    if (csvViewModel.showMapping) {
-        CsvMappingDialog(
-            headers = csvViewModel.headers,
-            rowCount = csvViewModel.rowCount,
-            mapping = csvViewModel.mapping,
-            busy = csvViewModel.busy,
-            onSet = { field, col -> csvViewModel.setMapping(field, col) },
-            onImport = { csvViewModel.import() },
-            onDismiss = { csvViewModel.cancel() },
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun CsvMappingDialog(
-    headers: List<String>,
-    rowCount: Int,
-    mapping: Map<CsvField, Int?>,
-    busy: Boolean,
-    onSet: (CsvField, Int?) -> Unit,
-    onImport: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.csv_map_title)) },
-        text = {
-            Column(
-                modifier = Modifier.heightIn(max = 460.dp).verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Text(
-                    stringResource(R.string.csv_rows_found, rowCount),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                CsvField.entries.forEach { field ->
-                    CsvFieldRow(field, headers, mapping[field]) { onSet(field, it) }
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onImport, enabled = !busy && mapping[CsvField.DATE] != null) { Text(stringResource(R.string.csv_import)) }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
-    )
-}
-
-@Composable
-private fun CsvFieldRow(field: CsvField, headers: List<String>, selected: Int?, onSet: (Int?) -> Unit) {
-    var open by remember { mutableStateOf(false) }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            field.label + if (field.required) " *" else "",
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        Box {
-            OutlinedButton(onClick = { open = true }) {
-                Text(selected?.let { idx -> headers.getOrNull(idx)?.ifBlank { stringResource(R.string.csv_column_n, idx + 1) } } ?: "—")
-            }
-            DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-                DropdownMenuItem(text = { Text(stringResource(R.string.csv_none)) }, onClick = {
-                    onSet(null)
-                    open = false
-                })
-                headers.forEachIndexed { i, h ->
-                    DropdownMenuItem(
-                        text = { Text(h.ifBlank { stringResource(R.string.csv_column_n, i + 1) }) },
-                        onClick = {
-                            onSet(i)
-                            open = false
-                        },
-                    )
-                }
-            }
-        }
     }
 }
 

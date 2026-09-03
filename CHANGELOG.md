@@ -13,6 +13,30 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.5.5] — 2026-08-31 (versionCode 12)
+
+### Changed
+
+- **CSV import is now its own full-screen route** (**Settings → Import from CSV**). It was
+  previously an `AlertDialog` capped at 460dp with an inner scroll; the promoted route shows
+  every mapping field at once, a "N rows detected" summary card, an inline hint about what
+  column formats parse cleanly, and the file picker lives right there so re-picking a
+  different CSV doesn't need a trip back to Settings.
+- **Bulk photo reassign uses a full-screen tryst picker** with a search field. Was a scrollable
+  `AlertDialog` capped at 360dp — a big log made it painful. Search folds the same way as the
+  main tryst search (accent- and case-insensitive) and matches against the target's date and
+  partner names.
+
+### Internal
+- New `CsvImportScreen` (`ui/settings/`) + `Routes.CSV_IMPORT` + nav wiring. `SettingsScreen`
+  now owns only the entry-point button; the file picker + parse + mapping UI all live on the
+  route.
+- `ReassignPicker` in `ui/gallery/GalleryScreen.kt` replaces the private `ReassignDialog`
+  composable — a full-screen `Dialog(usePlatformDefaultWidth = false)` overlay (the same
+  pattern `PhotoCropper` uses) with its own `TopAppBar`, search field, and `LazyColumn`.
+- D-57 records the QOL-7 audit outcome: only these two dialog surfaces qualified as
+  substantial multi-field forms; every other dialog is a proper picker/confirm/menu and stays.
+
 ## [0.5.4] — 2026-08-31 (versionCode 11)
 
 ### Added

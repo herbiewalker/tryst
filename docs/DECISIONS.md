@@ -1,7 +1,8 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v16** (latest: **D-56**, in-place photo edits
-> with EXIF-dropped-on-re-encode, EDIT-1 / v0.5.4).
+> **Status:** Live — decisions through **schema v16** (latest: **D-57**, QOL-7 audit outcome —
+> two dialog surfaces promoted to full-screen routes, every other dialog left as a proper
+> picker/confirm/menu, v0.5.5).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
 > D-41 covers the F-Droid content-policy rework — acts/kinks in
 > 0.3.0, positions/toys in 0.3.1, then empty predefined lists + custom occasions/finish-locations in
@@ -615,6 +616,31 @@
   freedom to switch on/off without ever losing a caption a user typed under a different
   setting. The pref lives in `GalleryPreferences` (`CaptionEntryPoint` enum), joining the
   other Photos-tab look/behaviour prefs.
+
+- **D-57 (2026-08-31) QOL-7 dialog audit: promote CsvMappingDialog + ReassignDialog to
+  routes; leave every other dialog as-is (QOL-7, v0.5.5).** A grep-driven audit over every
+  Compose `AlertDialog` / `ModalBottomSheet` / `DatePickerDialog` / `TimePickerDialog` in
+  `ui/` found 15 files with dialog usage. The rule from ROADMAP_FUTURE (`substantial
+  multi-field form → route; genuine picker / confirm / menu → dialog`) selected only two:
+  - **CsvMappingDialog** (`SettingsScreen.kt`) — the mapping form has a row per `CsvField`
+    entry with a header dropdown each, capped inside a 460dp `AlertDialog` with an inner
+    `verticalScroll`. Promoted to `CsvImportScreen` (`ui/settings/`, `Routes.CSV_IMPORT`);
+    file picker moves into the route so re-picking a different CSV doesn't need a return
+    to Settings.
+  - **ReassignDialog** (`GalleryScreen.kt`) — a scrollable tryst list capped at 360dp with
+    no way to search. Promoted to `ReassignPicker`, a full-screen `Dialog` overlay (same
+    `usePlatformDefaultWidth = false` pattern `PhotoCropper` uses — no nav route because the
+    picker's state is transient) with a `TopAppBar` and a search field that folds through
+    `EncounterSearch.fold`.
+  Everything else was left as-is: WhatsNewDialog is a one-shot post-update popup; the
+  Date/Time/DateRange dialogs are proper pickers; MoreFiltersSheet + GalleryFiltersSheet are
+  intentional filter sheets (a bottom sheet is the right pattern for "keep the results
+  visible below the controls"); PersonPhotoStrip + SelectionField menus are short pickers;
+  discard-changes / delete-confirm / import-password dialogs are confirms. BackupPasswordDialog
+  is a single-field prompt with an optional checkbox — borderline, but not "substantial." The
+  discard-changes guard (D-33) was intentionally NOT added to the two new routes because
+  neither has a destructive save step: CSV import only writes rows on the explicit Import
+  action, and reassign is a single tap → apply.
 
 - **D-56 (2026-08-31) In-app photo edit replaces the blob in place; EXIF is dropped in the
   re-encode (EDIT-1, v0.5.4).** Two branches on the design:

@@ -21,6 +21,15 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.5.5",
+            versionCode = 12,
+            date = "2026-08-31",
+            highlights = listOf(
+                "CSV import gets its own full-screen page (Settings → Import from CSV). Every mapping field is now visible at once with room to breathe, plus a detected-rows summary and a hint about what column formats work.",
+                "Bulk photo reassign has a full-screen tryst picker with a search field, so a large log no longer forces a long scroll.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.5.4",
             versionCode = 11,
             date = "2026-08-31",

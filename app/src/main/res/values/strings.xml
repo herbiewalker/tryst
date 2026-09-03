@@ -263,6 +263,19 @@
     <string name="gallery_edit_aspect_1x1">1 : 1</string>
     <string name="gallery_edit_aspect_4x3">4 : 3</string>
     <string name="gallery_edit_aspect_16x9">16 : 9</string>
+
+    <!-- CSV import (QOL-7: promoted from an AlertDialog to a full-screen route) -->
+    <string name="csv_import_title">Import from CSV</string>
+    <string name="csv_import_intro">Bring in encounter history from another app\'s CSV export or a spreadsheet. Nothing leaves your device; the file is parsed locally and inserted into your encrypted database.</string>
+    <string name="csv_import_pick">Pick a CSV file</string>
+    <string name="csv_import_pick_another">Pick a different CSV file</string>
+    <string name="csv_import_map_hint">Map each Tryst field to a column below. * fields are required.</string>
+    <string name="csv_import_clear">Discard</string>
+    <string name="csv_import_supported">Any comma- or tab-separated file with a header row works. Dates can be YYYY-MM-DD, MM/DD/YYYY, "MMM D, YYYY", or an ISO 8601 timestamp. Duration in minutes; rating 1–5. Partner names are matched by name — new ones are created.</string>
+
+    <!-- Gallery reassign picker (QOL-7: promoted from an AlertDialog to a full-screen picker) -->
+    <string name="gallery_reassign_search_hint">Search partners or dates</string>
+    <string name="gallery_reassign_none">No matching trysts.</string>
     <string name="gallery_empty">Photos you attach to trysts show up here.</string>
     <string name="gallery_empty_filtered">No photos match. Try widening a filter.</string>
     <string name="gallery_group_solo">Solo</string>
