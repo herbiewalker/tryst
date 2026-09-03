@@ -126,6 +126,7 @@ program live in [docs/ROADMAP.md](docs/ROADMAP.md), and post-1.0 plans in
 | [FLOWCHARTS.md](docs/FLOWCHARTS.md) | Visual maps of the core logic flows |
 | [ROADMAP.md](docs/ROADMAP.md) | Milestones & the 12-pass pre-release audit |
 | [ROADMAP_FUTURE.md](docs/ROADMAP_FUTURE.md) | Post-1.0 roadmap (shipped + planned) |
+| [ROADMAP_VIDEO.md](docs/ROADMAP_VIDEO.md) | Video attachments — its own theme (needs a runtime dep) |
 | [DECISIONS.md](docs/DECISIONS.md) | Decision log & open questions |
 | [RELEASE.md](docs/RELEASE.md) | Cut-a-release checklist + F-Droid submission |
 | [CHANGELOG.md](CHANGELOG.md) | Per-release notes |
