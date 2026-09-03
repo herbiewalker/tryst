@@ -676,28 +676,41 @@ private fun Modifier.pinchColumns(onChange: (delta: Int) -> Unit): Modifier = po
 
 @Composable
 private fun FeedCaption(photo: GalleryPhoto) {
-    Row(
-        Modifier.fillMaxWidth().padding(top = 6.dp, start = 2.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            text = Format.date(photo.takenAt),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        if (photo.partnerNames.isNotEmpty()) {
+    val caption = photo.media?.caption?.takeIf { it.isNotBlank() }
+    Column(Modifier.fillMaxWidth().padding(top = 6.dp, start = 2.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
-                text = photo.partnerNames.joinToString(", "),
+                text = Format.date(photo.takenAt),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-        }
-        photo.rating?.let { r ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
-                Text(" $r", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (photo.partnerNames.isNotEmpty()) {
+                Text(
+                    text = photo.partnerNames.joinToString(", "),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
+            photo.rating?.let { r ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Filled.Star, contentDescription = null, modifier = Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
+                    Text(" $r", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+        if (caption != null) {
+            // Two-line cap keeps a long note from turning the feed into a novel; the viewer shows the full text.
+            Text(
+                text = caption,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                modifier = Modifier.padding(top = 2.dp),
+            )
         }
     }
 }

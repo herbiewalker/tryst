@@ -21,6 +21,14 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.5.6",
+            versionCode = 13,
+            date = "2026-08-31",
+            highlights = listOf(
+                "Photo captions surface under the tile too. When \"Show date · partner under tiles\" is on (Settings → Gallery), a photo's caption shows as a second line under its tile; the Feed layout shows up to two lines of caption below the date row.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.5.5",
             versionCode = 12,
             date = "2026-08-31",
