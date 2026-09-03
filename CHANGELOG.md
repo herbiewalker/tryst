@@ -13,6 +13,32 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.5.4] — 2026-08-31 (versionCode 11)
+
+### Added
+
+- **Edit photos in place.** From the photo viewer, a new pencil action opens an Edit sheet with
+  **Rotate 90° left**, **Rotate 90° right**, and **Crop…**. Rotate applies immediately; Crop
+  opens a full-screen editor with corner handles and aspect presets (Free / 1 : 1 / 4 : 3 /
+  16 : 9). Edits replace the encrypted blob in place, so nothing else in the app needs
+  re-threading. Embedded EXIF (camera, GPS coordinates) is dropped in the re-encode — a natural
+  strip-on-edit safeguard that aligns with D-51's "no strip on import, strip on export/edit"
+  hook. There is no undo.
+
+### Internal
+- New `PhotoTransforms` (`data/media/`): pure `Bitmap`/`Matrix` helpers (rotate, crop, encode
+  JPEG q92) plus JVM-testable rect math (`FractionalRect`, `computeCropRectPx`, `snapToAspect`,
+  `clampRect`) so the crop UI's snap-to-aspect logic doesn't need an emulator to verify.
+- New `EncounterRepository.replacePhotoBytes(media, bytes, mimeType)` and
+  `PersonPhotoRepository.replaceBlobBytes(blobId, bytes)` — both stage the new blob via
+  `EncryptedMediaStore.saveStaged` and then `promoteStaged` atomically, so a failure mid-encrypt
+  leaves the live blob untouched.
+- `GalleryViewModel.photoRevision` + `photoBustKey` — a per-blob revision counter that pairs
+  with the blob id in every loader/cache-key. On edit the counter bumps, decoded ImageBitmap
+  caches re-load, and the aspect-ratio cache entry is invalidated.
+- New `PhotoEditor` composables — `EditPhotoSheet` (bottom sheet) and `PhotoCropper` (full-screen
+  Dialog with corner handles and aspect chips).
+
 ## [0.5.3] — 2026-08-31 (versionCode 10)
 
 ### Added

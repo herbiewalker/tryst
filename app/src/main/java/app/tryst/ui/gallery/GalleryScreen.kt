@@ -412,6 +412,9 @@ fun GalleryScreen(
             slideshowShuffle = slideshowShuffle,
             captionEntryPoint = captionEntryPoint,
             onSetCaption = { photo, text -> viewModel.setCaption(photo, text) },
+            bustKey = { blobId -> viewModel.photoBustKey(blobId) },
+            onRotate = { photo, degrees -> viewModel.rotate(photo, degrees) },
+            onCrop = { photo, rect -> viewModel.crop(photo, rect) },
         )
     }
 }

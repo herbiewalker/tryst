@@ -4,6 +4,7 @@ package app.tryst.data.repository
 import app.tryst.core.session.SessionManager
 import app.tryst.data.db.entity.PersonPhotoEntity
 import app.tryst.data.media.EncryptedMediaStore
+import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.util.UUID
 import javax.inject.Inject
@@ -94,6 +95,22 @@ class PersonPhotoRepository @Inject constructor(
     }
 
     fun openBlob(id: String): InputStream = mediaStore.open(id)
+
+    /**
+     * Replace a portrait blob's encrypted bytes in-place (EDIT-1): stage the new blob then promote it
+     * atomically over the same blob id, so the owning `person_photo` row (and any partner/profile
+     * `photoMediaId` pointing at this id, if it happens to be a current avatar) all see the new bytes
+     * without a schema touch. On failure the live blob is untouched.
+     */
+    suspend fun replaceBlobBytes(blobId: String, newBytes: ByteArray): Unit = withContext(Dispatchers.IO) {
+        ByteArrayInputStream(newBytes).use { mediaStore.saveStaged(blobId, it) }
+        try {
+            mediaStore.promoteStaged(blobId)
+        } catch (t: Throwable) {
+            mediaStore.clearStaged(blobId)
+            throw t
+        }
+    }
 
     companion object {
         const val KIND_PARTNER = "partner"

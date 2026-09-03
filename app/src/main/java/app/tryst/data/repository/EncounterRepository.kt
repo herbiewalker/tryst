@@ -6,6 +6,7 @@ import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.relation.EncounterWithDetails
 import app.tryst.data.media.EncryptedMediaStore
+import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.util.UUID
 import javax.inject.Inject
@@ -91,5 +92,29 @@ class EncounterRepository @Inject constructor(
     /** Moves photos to another tryst — the gallery's bulk reassign (GAL-4). No blob movement; only the row's owner. */
     suspend fun reassignMedia(mediaIds: List<String>, encounterId: String) {
         if (mediaIds.isNotEmpty()) mediaDao.reassign(mediaIds, encounterId)
+    }
+
+    /**
+     * Replace an existing photo's encrypted bytes in-place (EDIT-1): stage the new blob, promote it
+     * atomically, then update the row's `mimeType`. Same blob id — nothing else in the app has to
+     * re-thread references. If [newMimeType] differs from the row's current mime the row is updated;
+     * otherwise the DB write is a no-op. On any failure the original blob is untouched (staging never
+     * touches the live file until [EncryptedMediaStore.promoteStaged]).
+     */
+    suspend fun replacePhotoBytes(
+        media: MediaEntity,
+        newBytes: ByteArray,
+        newMimeType: String = "image/jpeg",
+    ): MediaEntity {
+        ByteArrayInputStream(newBytes).use { mediaStore.saveStaged(media.id, it) }
+        try {
+            mediaStore.promoteStaged(media.id)
+        } catch (t: Throwable) {
+            mediaStore.clearStaged(media.id)
+            throw t
+        }
+        val updated = if (media.mimeType == newMimeType) media else media.copy(mimeType = newMimeType)
+        if (updated !== media) mediaDao.upsert(updated)
+        return updated
     }
 }

@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.PersonPin
 import androidx.compose.material.icons.filled.Slideshow
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
@@ -110,6 +111,9 @@ fun PhotoViewer(
     slideshowShuffle: Boolean,
     captionEntryPoint: CaptionEntryPoint,
     onSetCaption: (GalleryPhoto, String?) -> Unit,
+    bustKey: (String) -> Any,
+    onRotate: (GalleryPhoto, Int) -> Unit,
+    onCrop: (GalleryPhoto, app.tryst.data.media.FractionalRect) -> Unit,
 ) {
     if (photos.isEmpty()) return
     val pagerState = rememberPagerState(
@@ -122,6 +126,8 @@ fun PhotoViewer(
     var avatarMenu by remember { mutableStateOf(false) }
     var addToPersonMenu by remember { mutableStateOf(false) }
     var editingCaption by remember { mutableStateOf<GalleryPhoto?>(null) }
+    var editSheetOpen by remember { mutableStateOf(false) }
+    var cropping by remember { mutableStateOf<GalleryPhoto?>(null) }
     val scope = rememberCoroutineScope()
 
     // Shuffle order: a Fisher-Yates permutation regenerated every time slideshow flips on OR the set of
@@ -154,6 +160,7 @@ fun PhotoViewer(
         HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
             ZoomablePhoto(
                 photo = photos[page],
+                modelKey = bustKey(photos[page].blobId),
                 onLoad = onLoad,
                 onTap = { chromeVisible = !chromeVisible },
                 // Only the settled page reads gestures, so a mid-swipe pinch doesn't fight the pager.
@@ -254,6 +261,13 @@ fun PhotoViewer(
                             )
                         }
                     }
+                    IconButton(onClick = { editSheetOpen = true }) {
+                        Icon(
+                            Icons.Outlined.Edit,
+                            contentDescription = stringResource(R.string.gallery_edit_photo),
+                            tint = Color.White,
+                        )
+                    }
                     IconButton(onClick = { showInfo = !showInfo }) {
                         Icon(
                             Icons.Outlined.Info,
@@ -285,6 +299,7 @@ fun PhotoViewer(
                     photos = photos,
                     currentPage = pagerState.currentPage,
                     onLoad = onLoad,
+                    bustKey = bustKey,
                     onSelect = { index -> scope.launch { pagerState.animateScrollToPage(index) } },
                 )
             }
@@ -298,6 +313,34 @@ fun PhotoViewer(
             onSave = { text ->
                 onSetCaption(photo, text)
                 editingCaption = null
+            },
+        )
+    }
+
+    if (editSheetOpen) {
+        val current = photos[pagerState.currentPage]
+        EditPhotoSheet(
+            onDismiss = { editSheetOpen = false },
+            onRotate = { deg ->
+                onRotate(current, deg)
+                editSheetOpen = false
+            },
+            onCrop = {
+                editSheetOpen = false
+                cropping = current
+            },
+        )
+    }
+
+    cropping?.let { photo ->
+        PhotoCropper(
+            photo = photo,
+            bustKey = bustKey,
+            onLoad = onLoad,
+            onCancel = { cropping = null },
+            onSave = { rect ->
+                onCrop(photo, rect)
+                cropping = null
             },
         )
     }
@@ -414,6 +457,7 @@ private fun Filmstrip(
     photos: List<GalleryPhoto>,
     currentPage: Int,
     onLoad: suspend (blobId: String, reqPx: Int) -> ImageBitmap?,
+    bustKey: (String) -> Any,
     onSelect: (Int) -> Unit,
 ) {
     val listState = rememberLazyListState()
@@ -427,7 +471,7 @@ private fun Filmstrip(
     ) {
         itemsIndexed(photos, key = { _, p -> p.id }) { index, photo ->
             DecodedImage(
-                model = "strip:${photo.id}",
+                model = "strip:${bustKey(photo.blobId)}",
                 contentDescription = null,
                 modifier = Modifier
                     .size(48.dp)
@@ -521,13 +565,14 @@ private fun InfoRow(label: String, value: String) {
 @Composable
 private fun ZoomablePhoto(
     photo: GalleryPhoto,
+    modelKey: Any,
     onLoad: suspend (blobId: String, reqPx: Int) -> ImageBitmap?,
     onTap: () -> Unit,
     zoomEnabled: Boolean,
 ) {
-    var scale by remember(photo.id) { mutableFloatStateOf(1f) }
-    var offsetX by remember(photo.id) { mutableFloatStateOf(0f) }
-    var offsetY by remember(photo.id) { mutableFloatStateOf(0f) }
+    var scale by remember(modelKey) { mutableFloatStateOf(1f) }
+    var offsetX by remember(modelKey) { mutableFloatStateOf(0f) }
+    var offsetY by remember(modelKey) { mutableFloatStateOf(0f) }
 
     Box(
         Modifier.fillMaxSize()
@@ -562,7 +607,7 @@ private fun ZoomablePhoto(
         contentAlignment = Alignment.Center,
     ) {
         DecodedImage(
-            model = photo.id,
+            model = modelKey,
             contentDescription = stringResource(R.string.cd_photo),
             modifier = Modifier.fillMaxSize().graphicsLayer(
                 scaleX = scale,

@@ -1,0 +1,5 @@
+Photo editing (rotate and crop)
+
+* Edit photos in place from the viewer's new pencil action. Rotate 90° left or right, or open a full-screen cropper with corner handles and aspect presets (Free / 1:1 / 4:3 / 16:9).
+* Edits replace the photo in place, still encrypted. Embedded EXIF metadata (camera, GPS) is dropped in the re-encode — a natural strip-on-edit safeguard.
+* Original bytes are gone once you save an edit — there is no undo.
