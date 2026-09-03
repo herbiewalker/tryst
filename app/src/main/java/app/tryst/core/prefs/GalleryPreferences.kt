@@ -131,6 +131,32 @@ class GalleryPreferences @Inject constructor(
         ?.let { runCatching { CaptionEntryPoint.valueOf(it) }.getOrNull() }
         ?: DEFAULT_CAPTION_ENTRY_POINT
 
+    /**
+     * Require a biometric/device-credential re-auth to enter the Photos tab (SEC-2 tier 2). Off by
+     * default; the primary app lock already covers the phone-lost/stolen threat, this is the
+     * stronger opt-in for "phone unlocked in someone's hand." Paired with [reauthGraceSeconds] so a
+     * quick tab switch away and back doesn't re-prompt.
+     */
+    private val _requireReauthForPhotos = MutableStateFlow(prefs.getBoolean(KEY_REAUTH, false))
+    val requireReauthForPhotos: StateFlow<Boolean> = _requireReauthForPhotos.asStateFlow()
+
+    fun setRequireReauthForPhotos(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_REAUTH, enabled).apply()
+        _requireReauthForPhotos.value = enabled
+    }
+
+    /** How long a re-auth stays valid after leaving the Photos tab, in seconds (SEC-2 tier 2). */
+    private val _reauthGraceSeconds = MutableStateFlow(
+        prefs.getInt(KEY_REAUTH_GRACE_S, DEFAULT_REAUTH_GRACE_S).coerceIn(0, MAX_BLUR_GRACE_S),
+    )
+    val reauthGraceSeconds: StateFlow<Int> = _reauthGraceSeconds.asStateFlow()
+
+    fun setReauthGraceSeconds(seconds: Int) {
+        val clamped = seconds.coerceIn(0, MAX_BLUR_GRACE_S)
+        prefs.edit().putInt(KEY_REAUTH_GRACE_S, clamped).apply()
+        _reauthGraceSeconds.value = clamped
+    }
+
     fun setLayout(layout: GalleryLayout) {
         prefs.edit().putString(KEY_LAYOUT, layout.name).apply()
         _layout.value = layout
@@ -162,6 +188,7 @@ class GalleryPreferences @Inject constructor(
         const val MAX_COLUMNS = 4
         const val DEFAULT_COLUMNS = 3
         const val DEFAULT_BLUR_GRACE_S = 30
+        const val DEFAULT_REAUTH_GRACE_S = 30
         const val MAX_BLUR_GRACE_S = 3600
         const val DEFAULT_SLIDESHOW_INT_S = 3
         private const val KEY_LAYOUT = "layout"
@@ -176,6 +203,8 @@ class GalleryPreferences @Inject constructor(
         private const val KEY_DEFAULT_FAV_ONLY = "default_to_favorites_only"
         private const val KEY_CAMERA_LOOP = "camera_keep_capturing"
         private const val KEY_CAPTION_ENTRY = "caption_entry_point"
+        private const val KEY_REAUTH = "require_reauth_for_photos"
+        private const val KEY_REAUTH_GRACE_S = "reauth_grace_seconds"
     }
 }
 

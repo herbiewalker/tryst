@@ -23,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -59,6 +60,10 @@ fun GallerySettingsScreen(
     val blur by viewModel.blurUntilRevealed.collectAsStateWithLifecycle()
     val blurGrace by viewModel.blurGraceSeconds.collectAsStateWithLifecycle()
     val captionEntry by viewModel.captionEntryPoint.collectAsStateWithLifecycle()
+    val requireReauth by viewModel.requireReauthForPhotos.collectAsStateWithLifecycle()
+    val reauthGrace by viewModel.reauthGraceSeconds.collectAsStateWithLifecycle()
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val canReauth = remember { app.tryst.ui.lock.BiometricPromptHelper.canConfirmPresence(context) }
 
     Scaffold(
         topBar = {
@@ -163,6 +168,34 @@ fun GallerySettingsScreen(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+
+            // --- SEC-2 tier 2: re-auth ---------------------------------------------------------
+            // Hide the toggle entirely on devices with no biometric AND no screen lock — the OS
+            // has no authenticator to gate with, so the setting would be a lie.
+            if (canReauth) {
+                SettingsSwitchRow(
+                    label = stringResource(R.string.gallery_reauth_setting),
+                    checked = requireReauth,
+                    onCheckedChange = viewModel::setRequireReauthForPhotos,
+                )
+                Text(
+                    text = stringResource(R.string.gallery_reauth_setting_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                if (requireReauth) {
+                    FilterSection(stringResource(R.string.gallery_reauth_grace_title)) {
+                        for (opt in BLUR_GRACE_OPTIONS) {
+                            SelectChip(stringResource(blurGraceLabel(opt)), opt == reauthGrace, { viewModel.setReauthGraceSeconds(opt) })
+                        }
+                    }
+                    Text(
+                        text = stringResource(R.string.gallery_reauth_grace_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
 
             HorizontalDivider(Modifier.padding(vertical = 16.dp))

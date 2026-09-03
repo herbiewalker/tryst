@@ -13,6 +13,32 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.5.7] — 2026-08-31 (versionCode 14)
+
+### Added
+
+- **Optional re-auth to open the Photos tab (SEC-2 tier 2).** Off by default. Turn it on in
+  **Settings → Gallery → Require re-auth for Photos** and the Photos tab asks for a biometric
+  or the device screen lock before it opens — on top of the primary app lock. Aimed at the
+  "phone unlocked in someone's hand" case, not phone-lost/stolen (the app lock still covers
+  that). Uses the OS-native `BiometricPrompt` with `BIOMETRIC_STRONG or DEVICE_CREDENTIAL`, so
+  it works whether biometrics are enrolled or only the screen lock is set. **No new crypto** —
+  it's a presence check, not a DEK-touching path. The toggle hides itself on devices with no
+  biometric and no screen lock (the OS reports no authenticator available).
+- **Re-auth grace window.** A quick tab switch away and back within the window skips the
+  re-prompt. Same option set as the blur grace (Immediate / 15s / 30s / 1 min / 5 min,
+  default 30s).
+
+### Internal
+- `BiometricPromptHelper.confirmPresence(…)` — new presence-only overload that skips the
+  `CryptoObject` path and allows `DEVICE_CREDENTIAL` as a fallback. `canConfirmPresence(ctx)`
+  is used by Settings to gate whether the toggle even appears.
+- `GalleryPreferences.requireReauthForPhotos` + `reauthGraceSeconds` prefs; new
+  `GalleryAuthState` singleton mirrors the existing `GalleryRevealState` (in-memory,
+  per-process, not persisted — fresh launch always re-prompts if the pref is on).
+- `GalleryScreen` renders a new `AuthGate` cover above the existing `BlurGate` when the pref
+  is on and no recent auth exists.
+
 ## [0.5.6] — 2026-08-31 (versionCode 13)
 
 ### Added

@@ -87,6 +87,7 @@ class GalleryViewModel @Inject constructor(
     private val encounterRepository: EncounterRepository,
     private val galleryPreferences: GalleryPreferences,
     private val revealState: GalleryRevealState,
+    private val authState: GalleryAuthState,
     private val deepLink: GalleryDeepLink,
     actRepository: ActRepository,
     positionRepository: PositionRepository,
@@ -185,6 +186,16 @@ class GalleryViewModel @Inject constructor(
 
     /** True if the gallery was revealed within the user-configured grace window (0 disables the carry-over). */
     fun revealedRecently(): Boolean = galleryPreferences.blurGraceSeconds.value.takeIf { it > 0 }?.let { revealState.isWithinGrace(it * 1000L) } ?: false
+
+    /** Whether entering the Photos tab requires a re-auth (SEC-2 tier 2). */
+    val requireReauthForPhotos: StateFlow<Boolean> = galleryPreferences.requireReauthForPhotos
+
+    /** Records a successful re-auth so a quick tab switch back doesn't re-prompt. */
+    fun markAuthed() = authState.markAuthed()
+
+    /** True if the user re-authed within the configured grace window (0 disables the carry-over). */
+    fun authedRecently(): Boolean = galleryPreferences.reauthGraceSeconds.value.takeIf { it > 0 }
+        ?.let { authState.isWithinGrace(it * 1000L) } ?: false
 
     val partners: StateFlow<List<PartnerEntity>> = partnerRepository.observeActive()
         .catch { emit(emptyList()) }

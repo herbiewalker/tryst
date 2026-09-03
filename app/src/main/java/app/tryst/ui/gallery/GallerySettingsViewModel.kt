@@ -28,6 +28,8 @@ class GallerySettingsViewModel @Inject constructor(
     val defaultToFavoritesOnly: StateFlow<Boolean> = preferences.defaultToFavoritesOnly
     val cameraKeepCapturing: StateFlow<Boolean> = preferences.cameraKeepCapturing
     val captionEntryPoint: StateFlow<CaptionEntryPoint> = preferences.captionEntryPoint
+    val requireReauthForPhotos: StateFlow<Boolean> = preferences.requireReauthForPhotos
+    val reauthGraceSeconds: StateFlow<Int> = preferences.reauthGraceSeconds
 
     fun setLayout(layout: GalleryLayout) = preferences.setLayout(layout)
     fun setColumns(columns: Int) = preferences.setColumns(columns)
@@ -41,4 +43,6 @@ class GallerySettingsViewModel @Inject constructor(
     fun setDefaultToFavoritesOnly(enabled: Boolean) = preferences.setDefaultToFavoritesOnly(enabled)
     fun setCameraKeepCapturing(enabled: Boolean) = preferences.setCameraKeepCapturing(enabled)
     fun setCaptionEntryPoint(value: CaptionEntryPoint) = preferences.setCaptionEntryPoint(value)
+    fun setRequireReauthForPhotos(enabled: Boolean) = preferences.setRequireReauthForPhotos(enabled)
+    fun setReauthGraceSeconds(seconds: Int) = preferences.setReauthGraceSeconds(seconds)
 }

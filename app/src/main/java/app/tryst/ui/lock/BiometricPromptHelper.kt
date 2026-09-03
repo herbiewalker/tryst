@@ -3,6 +3,7 @@ package app.tryst.ui.lock
 
 import android.content.Context
 import android.content.ContextWrapper
+import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
@@ -52,6 +53,71 @@ object BiometricPromptHelper {
             .setAllowedAuthenticators(androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG)
             .build()
         prompt.authenticate(info, BiometricPrompt.CryptoObject(cipher))
+    }
+
+    /**
+     * Presence-only re-auth (SEC-2 tier 2): no CryptoObject, no DEK touch — just "prove the person
+     * holding the phone is still the owner." Used to gate optional extra-sensitive surfaces (the
+     * Photos tab) once the user has already unlocked the app. Falls back to the device credential
+     * (screen-lock PIN/pattern/password) when biometrics aren't enrolled, so it works on every
+     * device that has *any* lock method set up.
+     *
+     * Callers can query [canConfirmPresence] first to hide the gate's toggle on devices where no
+     * authenticator is available at all.
+     */
+    @Suppress("LongParameterList")
+    fun confirmPresence(
+        activity: FragmentActivity,
+        title: String,
+        subtitle: String,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit,
+        onCancel: () -> Unit,
+    ) {
+        val prompt = BiometricPrompt(
+            activity,
+            ContextCompat.getMainExecutor(activity),
+            object : BiometricPrompt.AuthenticationCallback() {
+                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                    onSuccess()
+                }
+
+                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
+                    when (errorCode) {
+                        BiometricPrompt.ERROR_NEGATIVE_BUTTON,
+                        BiometricPrompt.ERROR_USER_CANCELED,
+                        BiometricPrompt.ERROR_CANCELED,
+                        -> onCancel()
+                        else -> onError(errString.toString())
+                    }
+                }
+            },
+        )
+        val info = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(title)
+            .setSubtitle(subtitle)
+            // BIOMETRIC_STRONG + DEVICE_CREDENTIAL lets the OS chain to the phone's lock if no
+            // biometric is enrolled — so the gate still works for PIN-only users. The negative
+            // button is disallowed with DEVICE_CREDENTIAL, so no setNegativeButtonText here.
+            .setAllowedAuthenticators(
+                BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                    BiometricManager.Authenticators.DEVICE_CREDENTIAL,
+            )
+            .build()
+        prompt.authenticate(info)
+    }
+
+    /**
+     * Can the device do a presence re-auth at all? True when either a biometric is enrolled or the
+     * device screen lock is set. Used by Settings to gate whether the SEC-2 tier-2 toggle is even
+     * shown.
+     */
+    fun canConfirmPresence(context: Context): Boolean {
+        val bm = BiometricManager.from(context)
+        return bm.canAuthenticate(
+            BiometricManager.Authenticators.BIOMETRIC_STRONG or
+                BiometricManager.Authenticators.DEVICE_CREDENTIAL,
+        ) == BiometricManager.BIOMETRIC_SUCCESS
     }
 }
 

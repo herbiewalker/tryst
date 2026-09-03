@@ -276,6 +276,16 @@
     <!-- Gallery reassign picker (QOL-7: promoted from an AlertDialog to a full-screen picker) -->
     <string name="gallery_reassign_search_hint">Search partners or dates</string>
     <string name="gallery_reassign_none">No matching trysts.</string>
+
+    <!-- Photos re-auth gate (SEC-2 tier 2) -->
+    <string name="gallery_reauth_setting">Require re-auth for Photos</string>
+    <string name="gallery_reauth_setting_desc">On top of the app lock, the Photos tab asks for biometric or your device screen lock before it opens. Handy when you sometimes hand the unlocked phone to someone. Ignored if you have no biometric and no screen lock set on this device.</string>
+    <string name="gallery_reauth_grace_title">Re-prompt after</string>
+    <string name="gallery_reauth_grace_desc">How long a successful unlock stays valid after you leave the Photos tab. A quick switch away and back within this window skips the re-prompt.</string>
+    <string name="gallery_reauth_title">Photos is locked.</string>
+    <string name="gallery_reauth_unlock">Unlock</string>
+    <string name="gallery_reauth_prompt_title">Unlock Photos</string>
+    <string name="gallery_reauth_prompt_subtitle">Confirm it\'s you to open the Photos tab.</string>
     <string name="gallery_empty">Photos you attach to trysts show up here.</string>
     <string name="gallery_empty_filtered">No photos match. Try widening a filter.</string>
     <string name="gallery_group_solo">Solo</string>

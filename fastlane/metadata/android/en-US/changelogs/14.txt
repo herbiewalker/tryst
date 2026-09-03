@@ -1,0 +1,5 @@
+Optional re-auth for the Photos tab
+
+* Turn on Settings → Gallery → Require re-auth for Photos and the Photos tab asks for biometric or your device screen lock before it opens. Handy when you sometimes hand the unlocked phone to someone.
+* Pick a grace window (Immediate / 15s / 30s / 1 min / 5 min, default 30s) so a quick tab switch away and back doesn't re-prompt.
+* Toggle hides itself on devices with no biometric and no screen lock — the OS has no way to gate.
