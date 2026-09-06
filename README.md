@@ -22,9 +22,7 @@ Inspired by other tracking apps you need to pay for, and built so privacy is the
 <a href="fastlane/metadata/android/en-US/images/phoneScreenshots/05_insights.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/05_insights.png" width="18%" alt="Insights" /></a>
 <a href="fastlane/metadata/android/en-US/images/phoneScreenshots/06_partners.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/06_partners.png" width="18%" alt="Partners" /></a>
 
-<sub><i>Screenshots captured from the current v0.5.2 build on a synthetic dataset (no real
-data). Store icon + launcher use a placeholder-flame mark; a designed refresh is
-tracked as QOL-4 / STORE-2 in <a href="docs/ROADMAP_FUTURE.md">docs/ROADMAP_FUTURE.md</a>.</i></sub>
+<sub><i>Screenshots captured from the current v0.5.2 build on a synthetic dataset (no real data).</i></sub>
 
 </div>
 
