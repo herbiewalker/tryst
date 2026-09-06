@@ -76,6 +76,7 @@ import app.tryst.data.filter.DateScope
 import app.tryst.data.search.EncounterSearch
 import app.tryst.data.search.SearchField
 import app.tryst.data.search.SearchHit
+import app.tryst.ui.brand.BrandMark
 import app.tryst.ui.common.CARD_THUMB_PX
 import app.tryst.ui.common.CheckableItem
 import app.tryst.ui.common.DateHeader
@@ -203,6 +204,8 @@ fun SearchScreen(
                     onDelete = viewModel::deleteRecent,
                     onClearRecents = viewModel::clearRecents,
                 )
+
+                ui.hits.isEmpty() && BrandMark.isEasterEggQuery(query) -> BrandEasterEggChip()
 
                 ui.hits.isEmpty() -> NoResults(
                     dateScope = dateScope,
@@ -448,6 +451,18 @@ private fun highlight(text: String, tokens: List<String>, color: Color): Annotat
 }
 
 // --- empty states --------------------------------------------------------
+
+@Composable
+private fun BrandEasterEggChip() {
+    Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
+        AssistChip(
+            onClick = {},
+            label = {
+                Text("${stringResource(R.string.search_egg_greeting)} · ${BrandMark.MARK}")
+            },
+        )
+    }
+}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable

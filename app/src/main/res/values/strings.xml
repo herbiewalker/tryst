@@ -622,4 +622,7 @@
     <string name="csv_import_done">Imported %1$d encounter(s).</string>
     <string name="csv_import_done_skipped">Imported %1$d encounter(s), skipped %2$d (no readable date).</string>
     <string name="csv_status_import_failed">Import failed: %1$s</string>
+    <string name="about_maker_credit">⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣</string>
+    <string name="about_egg_found">you found it</string>
+    <string name="search_egg_greeting">hi 👋</string>
 </resources>
