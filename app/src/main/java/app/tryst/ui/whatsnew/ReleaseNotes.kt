@@ -21,6 +21,16 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.5.8",
+            versionCode = 15,
+            date = "2026-09-06",
+            highlights = listOf(
+                "Fresh app icon: a T-heart mark on a pink-to-purple gradient. Replaces the placeholder flame that had been shipping since v0.2.",
+                "Adaptive-icon setup so launcher shape masks (circle, squircle, teardrop) render cleanly on Android 12+.",
+                "No feature or behaviour changes in this release — the app under the icon is v0.5.7 with the same features.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.5.7",
             versionCode = 14,
             date = "2026-08-31",

@@ -10,7 +10,7 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?logo=kotlin&logoColor=white)](#built-with)
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](#built-with)
 [![Offline only](https://img.shields.io/badge/network-none-critical)](#why-tryst)
-[![Release](https://img.shields.io/badge/release-v0.5.7-success)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-v0.5.8-success)](CHANGELOG.md)
 
 Tryst keeps your most personal data on your phone and nowhere else — no account, no sync,
 and **no internet permission at all**, so the app *cannot* send your data anywhere.
