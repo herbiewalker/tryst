@@ -13,6 +13,17 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.5.8] — 2026-09-06 (versionCode 15)
+
+### Changed
+
+- **New app icon.** Replaces the placeholder-flame mark that had been shipping since v0.2. The
+  new icon is a T-heart glyph on a pink-to-purple gradient, wired up as an Android adaptive
+  icon (foreground PNG at all five densities + background-colour fallback) so launcher shape
+  masks — circle, squircle, teardrop — render cleanly on Android 12+. The foreground is padded
+  so the mark lands inside the safe zone; the surrounding gradient is synthesised from the
+  icon's own edge colours so the join is seamless. F-Droid store icon updated to match.
+
 ## [0.5.7] — 2026-08-31 (versionCode 14)
 
 ### Added
