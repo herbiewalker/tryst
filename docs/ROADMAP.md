@@ -1,8 +1,17 @@
 # Tryst — Roadmap / Milestones
 
-> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.5.2**. Each
-> milestone ended runnable & tested. This file is the milestone *history* (see the dated note below);
-> forward work lives in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
+> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.5.8**
+> (schema v16). Each milestone ended runnable & tested. This file is the milestone *history* (see
+> the dated notes below); forward work lives in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
+
+> **Update (2026-09-07):** the v0.5.x line is closed. Shipped since the 2026-07-30 note below:
+> **v0.5.3** (CAP-1 photo captions — schema v16), **v0.5.4** (EDIT-1 in-app rotate/crop),
+> **v0.5.5** (QOL-7 dialog→route conversions: CSV import + reassign picker), **v0.5.6** (CAP-1b
+> caption preview under tiles), **v0.5.7** (SEC-2 tier 2 optional Photos re-auth), **v0.5.8**
+> (new T-heart adaptive launcher icon + About-screen maker credit — QOL-4 + STORE-2 shipped
+> together). Schema currently at **v16**. F-Droid tracks the tags automatically via
+> checkupdates-bot (last-picked was v0.5.3 as of 2026-09-06). Next line is v0.6.x; forward work
+> is in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
 
 > **Update (2026-07-30):** M0–M8 are all **done**. Shipped so far: v0.1.0 → v0.2.0 → v0.3.0 → v0.3.1
 > → v0.3.2 → v0.4.0 (Search + filter foundation + Insights time scope) → v0.5.0 (Photos gallery +

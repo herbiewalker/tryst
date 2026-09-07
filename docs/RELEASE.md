@@ -101,7 +101,8 @@ Notes:
 - Screenshots + store `icon.png` live under `fastlane/metadata/android/en-US/images/`.
   Capturing them needs the temporary FLAG_SECURE-off procedure from pre-release Pass 5. The
   set was pulled 2026-08-19 pending a design refresh (QOL-4) and reshipped 2026-08-31 from
-  the current v0.5.2 build; a full designer swap belongs to STORE-1 / STORE-2 alongside QOL-4.
+  a v0.5.2 build; the fresh `icon.png` shipped in v0.5.8 (T-heart on pink-to-purple gradient),
+  and a full designer screenshot swap remains as STORE-1.
 
 ## Ongoing releases (post-first-submission)
 

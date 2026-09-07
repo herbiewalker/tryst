@@ -680,7 +680,9 @@
     edit, dropping the metadata is the right default. Original creation-date in the tryst
     is unaffected (it's the tryst's own `startAt`, not the photo's EXIF).
 
-- **D-55 (2026-08-31) Per-photo captions ship with a user-picked entry point (CAP-1, v0.5.3).**
-> and **history filters/search** (deferred features, ROADMAP M3); **VACUUM on delete-all** for
-> secure-delete hardening (ROADMAP M5, SECURITY_DESIGN §6); **Keystore-backed monotonic attempt
-> counter** (SECURITY_DESIGN §6); **Argon2id** upgrade for the PIN/backup KDF (SECURITY_DESIGN §6).
+> **Standing follow-ups (not blockers, tracked here as pointers):**
+> **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;
+> only the M3-era "filter chip on History" idea remains, superseded by dedicated Search); **VACUUM
+> on delete-all** for secure-delete hardening (ROADMAP M5, SECURITY_DESIGN §6); **Keystore-backed
+> monotonic attempt counter** (SECURITY_DESIGN §6); **Argon2id** upgrade for the PIN/backup KDF
+> (SECURITY_DESIGN §6, also SEC-1 in ROADMAP_FUTURE).
