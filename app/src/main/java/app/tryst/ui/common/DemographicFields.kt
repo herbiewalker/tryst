@@ -1,4 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// ╭──────────────────────────────────────────────────────────────────╮
+// │  ┌●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┐  │
+// │  │                                                            │  │
+// │  ●   ██╗  ██╗    ██╗    ██╗                                   ●  │
+// │  │   ██║  ██║    ██║    ██║           herbiewalker            │  │
+// │  │   ███████║    ██║ █╗ ██║──●──●──●──┐                       │  │
+// │  │   ██╔══██║    ██║███╗██║           │                       │  │
+// │  ●   ██║  ██║    ╚███╔███╔╝           ●───⏣  code · tools     ●  │
+// │  │   ╚═╝  ╚═╝     ╚══╝╚══╝                    homelab         │  │
+// │  │                                                            │  │
+// │  └●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┘  │
+// ╰──────────────────────────────────────────────────────────────────╯
 package app.tryst.ui.common
 
 import androidx.compose.foundation.layout.Arrangement
@@ -132,3 +144,5 @@ private fun localNoonToPickerMillis(localNoon: Long): Long {
     val date = Instant.ofEpochMilli(localNoon).atZone(ZoneId.systemDefault()).toLocalDate()
     return date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 }
+
+// ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

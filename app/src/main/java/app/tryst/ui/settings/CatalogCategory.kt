@@ -1,4 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// ╭──────────────────────────────────────────────────────────────────╮
+// │  ┌●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┐  │
+// │  │                                                            │  │
+// │  ●   ██╗  ██╗    ██╗    ██╗                                   ●  │
+// │  │   ██║  ██║    ██║    ██║           herbiewalker            │  │
+// │  │   ███████║    ██║ █╗ ██║──●──●──●──┐                       │  │
+// │  │   ██╔══██║    ██║███╗██║           │                       │  │
+// │  ●   ██║  ██║    ╚███╔███╔╝           ●───⏣  code · tools     ●  │
+// │  │   ╚═╝  ╚═╝     ╚══╝╚══╝                    homelab         │  │
+// │  │                                                            │  │
+// │  └●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┘  │
+// ╰──────────────────────────────────────────────────────────────────╯
 package app.tryst.ui.settings
 
 /** Stable category keys for the manage-category navigation route (Settings → Manage …). */
@@ -10,3 +22,5 @@ object CatalogCategory {
     const val OCCASIONS = "occasions"
     const val EJACULATION = "ejaculation"
 }
+
+// ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

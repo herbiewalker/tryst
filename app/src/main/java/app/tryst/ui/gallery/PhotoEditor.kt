@@ -1,4 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// ╭──────────────────────────────────────────────────────────────────╮
+// │  ┌●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┐  │
+// │  │                                                            │  │
+// │  ●   ██╗  ██╗    ██╗    ██╗                                   ●  │
+// │  │   ██║  ██║    ██║    ██║           herbiewalker            │  │
+// │  │   ███████║    ██║ █╗ ██║──●──●──●──┐                       │  │
+// │  │   ██╔══██║    ██║███╗██║           │                       │  │
+// │  ●   ██║  ██║    ╚███╔███╔╝           ●───⏣  code · tools     ●  │
+// │  │   ╚═╝  ╚═╝     ╚══╝╚══╝                    homelab         │  │
+// │  │                                                            │  │
+// │  └●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┘  │
+// ╰──────────────────────────────────────────────────────────────────╯
 package app.tryst.ui.gallery
 
 import androidx.compose.foundation.Image
@@ -332,3 +344,5 @@ private fun fitInside(image: Size, canvas: IntSize): DisplayedRect {
         DisplayedRect(Offset(left, 0f), Size(w, h))
     }
 }
+
+// ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

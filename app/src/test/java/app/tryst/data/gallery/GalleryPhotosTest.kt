@@ -1,4 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// ╭──────────────────────────────────────────────────────────────────╮
+// │  ┌●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┐  │
+// │  │                                                            │  │
+// │  ●   ██╗  ██╗    ██╗    ██╗                                   ●  │
+// │  │   ██║  ██║    ██║    ██║           herbiewalker            │  │
+// │  │   ███████║    ██║ █╗ ██║──●──●──●──┐                       │  │
+// │  │   ██╔══██║    ██║███╗██║           │                       │  │
+// │  ●   ██║  ██║    ╚███╔███╔╝           ●───⏣  code · tools     ●  │
+// │  │   ╚═╝  ╚═╝     ╚══╝╚══╝                    homelab         │  │
+// │  │                                                            │  │
+// │  └●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┘  │
+// ╰──────────────────────────────────────────────────────────────────╯
 package app.tryst.data.gallery
 
 import app.tryst.data.db.entity.EncounterEntity
@@ -305,3 +317,5 @@ class GalleryPhotosTest {
         assertEquals(LocalDate.of(2026, 5, 1), java.time.Instant.ofEpochMilli(photo.takenAt).atZone(zone).toLocalDate())
     }
 }
+
+// ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

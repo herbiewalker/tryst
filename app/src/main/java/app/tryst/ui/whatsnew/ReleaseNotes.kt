@@ -1,4 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// ╭──────────────────────────────────────────────────────────────────╮
+// │  ┌●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┐  │
+// │  │                                                            │  │
+// │  ●   ██╗  ██╗    ██╗    ██╗                                   ●  │
+// │  │   ██║  ██║    ██║    ██║           herbiewalker            │  │
+// │  │   ███████║    ██║ █╗ ██║──●──●──●──┐                       │  │
+// │  │   ██╔══██║    ██║███╗██║           │                       │  │
+// │  ●   ██║  ██║    ╚███╔███╔╝           ●───⏣  code · tools     ●  │
+// │  │   ╚═╝  ╚═╝     ╚══╝╚══╝                    homelab         │  │
+// │  │                                                            │  │
+// │  └●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┘  │
+// ╰──────────────────────────────────────────────────────────────────╯
 package app.tryst.ui.whatsnew
 
 /**
@@ -190,3 +202,5 @@ object ReleaseNotes {
     /** Notes for versions newer than [sinceVersionCode], newest first — drives the post-update popup. */
     fun since(sinceVersionCode: Long): List<ReleaseNote> = all.filter { it.versionCode > sinceVersionCode }
 }
+
+// ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

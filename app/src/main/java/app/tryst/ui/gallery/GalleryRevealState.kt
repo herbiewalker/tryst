@@ -1,4 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// ╭──────────────────────────────────────────────────────────────────╮
+// │  ┌●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┐  │
+// │  │                                                            │  │
+// │  ●   ██╗  ██╗    ██╗    ██╗                                   ●  │
+// │  │   ██║  ██║    ██║    ██║           herbiewalker            │  │
+// │  │   ███████║    ██║ █╗ ██║──●──●──●──┐                       │  │
+// │  │   ██╔══██║    ██║███╗██║           │                       │  │
+// │  ●   ██║  ██║    ╚███╔███╔╝           ●───⏣  code · tools     ●  │
+// │  │   ╚═╝  ╚═╝     ╚══╝╚══╝                    homelab         │  │
+// │  │                                                            │  │
+// │  └●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┘  │
+// ╰──────────────────────────────────────────────────────────────────╯
 package app.tryst.ui.gallery
 
 import android.os.SystemClock
@@ -26,3 +38,5 @@ class GalleryRevealState @Inject constructor() {
     /** True if Photos was revealed within [graceMs] — i.e. a tab switch shouldn't re-blur it yet. */
     fun isWithinGrace(graceMs: Long): Boolean = lastRevealedAt?.let { SystemClock.elapsedRealtime() - it < graceMs } ?: false
 }
+
+// ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

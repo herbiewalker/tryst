@@ -1,3 +1,15 @@
+# ╭──────────────────────────────────────────────────────────────────╮
+# │  ┌●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┐  │
+# │  │                                                            │  │
+# │  ●   ██╗  ██╗    ██╗    ██╗                                   ●  │
+# │  │   ██║  ██║    ██║    ██║           herbiewalker            │  │
+# │  │   ███████║    ██║ █╗ ██║──●──●──●──┐                       │  │
+# │  │   ██╔══██║    ██║███╗██║           │                       │  │
+# │  ●   ██║  ██║    ╚███╔███╔╝           ●───⏣  code · tools     ●  │
+# │  │   ╚═╝  ╚═╝     ╚══╝╚══╝                    homelab         │  │
+# │  │                                                            │  │
+# │  └●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┘  │
+# ╰──────────────────────────────────────────────────────────────────╯
 name: CI
 
 on:
@@ -98,3 +110,5 @@ jobs:
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -camera-front none
           script: ./gradlew connectedDebugAndroidTest --stacktrace
+
+# ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

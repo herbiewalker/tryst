@@ -1,4 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// ╭──────────────────────────────────────────────────────────────────╮
+// │  ┌●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┐  │
+// │  │                                                            │  │
+// │  ●   ██╗  ██╗    ██╗    ██╗                                   ●  │
+// │  │   ██║  ██║    ██║    ██║           herbiewalker            │  │
+// │  │   ███████║    ██║ █╗ ██║──●──●──●──┐                       │  │
+// │  │   ██╔══██║    ██║███╗██║           │                       │  │
+// │  ●   ██║  ██║    ╚███╔███╔╝           ●───⏣  code · tools     ●  │
+// │  │   ╚═╝  ╚═╝     ╚══╝╚══╝                    homelab         │  │
+// │  │                                                            │  │
+// │  └●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┘  │
+// ╰──────────────────────────────────────────────────────────────────╯
 @file:Suppress("MatchingDeclarationName") // file groups the WidthClass enum + widthClass()/adaptiveContentWidth() helpers.
 
 package app.tryst.ui.common
@@ -41,3 +53,5 @@ fun widthClass(): WidthClass {
  * centering parent (e.g. a `Box` aligning `TopCenter`) so the capped content sits in the middle.
  */
 fun Modifier.adaptiveContentWidth(max: Dp = 640.dp): Modifier = this.widthIn(max = max)
+
+// ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣
