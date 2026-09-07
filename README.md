@@ -1,6 +1,6 @@
 <div align="center">
 
-# Tryst
+<h1><img src="fastlane/metadata/android/en-US/images/icon.png" width="72" alt="" />&nbsp;Tryst</h1>
 
 ### A private, local-only journal for your intimate life — encrypted, offline, and open source.
 
