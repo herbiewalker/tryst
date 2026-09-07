@@ -22,7 +22,7 @@ Inspired by other tracking apps you need to pay for, and built so privacy is the
 <a href="fastlane/metadata/android/en-US/images/phoneScreenshots/05_insights.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/05_insights.png" width="18%" alt="Insights" /></a>
 <a href="fastlane/metadata/android/en-US/images/phoneScreenshots/06_partners.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/06_partners.png" width="18%" alt="Partners" /></a>
 
-<sub><i>Screenshots captured from the current v0.5.2 build on a synthetic dataset (no real data).</i></sub>
+<sub><i>Screenshots captured from a recent build on a synthetic dataset (no real data).</i></sub>
 
 </div>
 
@@ -97,7 +97,7 @@ Screenshots are black by design on-device (`FLAG_SECURE`).
 
 ## Status
 
-✅ **Shipped.** Current release **v0.5.7** (versionCode 14, schema v16). Distribution is **F-Droid**,
+✅ **Shipped.** Current release **v0.5.8** (versionCode 15, schema v16). Distribution is **F-Droid**,
 which builds and signs from this source — Tryst ships no binary and commits no signing key. The
 **0.5.x** line delivers the **Photos** tab: a browsable gallery over every image attached to a tryst
 plus every person's portrait album, with search, filters, favourites, bulk actions, a slideshow, and
