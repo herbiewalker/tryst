@@ -1,4 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// ╭──────────────────────────────────────────────────────────────────╮
+// │  ┌●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┐  │
+// │  │                                                            │  │
+// │  ●   ██╗  ██╗    ██╗    ██╗                                   ●  │
+// │  │   ██║  ██║    ██║    ██║           herbiewalker            │  │
+// │  │   ███████║    ██║ █╗ ██║──●──●──●──┐                       │  │
+// │  │   ██╔══██║    ██║███╗██║           │                       │  │
+// │  ●   ██║  ██║    ╚███╔███╔╝           ●───⏣  code · tools     ●  │
+// │  │   ╚═╝  ╚═╝     ╚══╝╚══╝                    homelab         │  │
+// │  │                                                            │  │
+// │  └●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┘  │
+// ╰──────────────────────────────────────────────────────────────────╯
 package app.tryst.ui.partner
 
 import android.content.Context
@@ -237,3 +249,5 @@ class PartnerEditViewModel @Inject constructor(
     /** For staged-uri previews before the pick lands in the DB (used when Save-first-then-photos flow). */
     suspend fun decodeUri(uri: Uri, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { context.contentResolver.openInputStream(uri) }
 }
+
+// ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

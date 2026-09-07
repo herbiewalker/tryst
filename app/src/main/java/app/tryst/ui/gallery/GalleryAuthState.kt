@@ -1,4 +1,16 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
+// ╭──────────────────────────────────────────────────────────────────╮
+// │  ┌●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┐  │
+// │  │                                                            │  │
+// │  ●   ██╗  ██╗    ██╗    ██╗                                   ●  │
+// │  │   ██║  ██║    ██║    ██║           herbiewalker            │  │
+// │  │   ███████║    ██║ █╗ ██║──●──●──●──┐                       │  │
+// │  │   ██╔══██║    ██║███╗██║           │                       │  │
+// │  ●   ██║  ██║    ╚███╔███╔╝           ●───⏣  code · tools     ●  │
+// │  │   ╚═╝  ╚═╝     ╚══╝╚══╝                    homelab         │  │
+// │  │                                                            │  │
+// │  └●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┘  │
+// ╰──────────────────────────────────────────────────────────────────╯
 package app.tryst.ui.gallery
 
 import android.os.SystemClock
@@ -23,3 +35,5 @@ class GalleryAuthState @Inject constructor() {
     /** True if the user re-authed within [graceMs] — i.e. a tab switch shouldn't re-prompt yet. */
     fun isWithinGrace(graceMs: Long): Boolean = lastAuthedAt?.let { SystemClock.elapsedRealtime() - it < graceMs } ?: false
 }
+
+// ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

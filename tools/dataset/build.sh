@@ -1,4 +1,16 @@
 #!/usr/bin/env bash
+# ╭──────────────────────────────────────────────────────────────────╮
+# │  ┌●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┐  │
+# │  │                                                            │  │
+# │  ●   ██╗  ██╗    ██╗    ██╗                                   ●  │
+# │  │   ██║  ██║    ██║    ██║           herbiewalker            │  │
+# │  │   ███████║    ██║ █╗ ██║──●──●──●──┐                       │  │
+# │  │   ██╔══██║    ██║███╗██║           │                       │  │
+# │  ●   ██║  ██║    ╚███╔███╔╝           ●───⏣  code · tools     ●  │
+# │  │   ╚═╝  ╚═╝     ╚══╝╚══╝                    homelab         │  │
+# │  │                                                            │  │
+# │  └●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┘  │
+# ╰──────────────────────────────────────────────────────────────────╯
 # Reproducibly (re)build samples/tryst-test-dataset.tryst.
 #
 #   1. generate_dataset.py  -> data.json + media/<id> PNGs (stdlib only)
@@ -36,3 +48,5 @@ java -cp "$CP$BUILD" Verify "$OUT" "$PASSWORD"
 
 rm -rf "$BUILD"
 echo ">> done: $OUT  (import password: $PASSWORD)"
+
+# ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

@@ -1,3 +1,15 @@
+# ╭──────────────────────────────────────────────────────────────────╮
+# │  ┌●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┐  │
+# │  │                                                            │  │
+# │  ●   ██╗  ██╗    ██╗    ██╗                                   ●  │
+# │  │   ██║  ██║    ██║    ██║           herbiewalker            │  │
+# │  │   ███████║    ██║ █╗ ██║──●──●──●──┐                       │  │
+# │  │   ██╔══██║    ██║███╗██║           │                       │  │
+# │  ●   ██║  ██║    ╚███╔███╔╝           ●───⏣  code · tools     ●  │
+# │  │   ╚═╝  ╚═╝     ╚══╝╚══╝                    homelab         │  │
+# │  │                                                            │  │
+# │  └●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┘  │
+# ╰──────────────────────────────────────────────────────────────────╯
 # Version catalog.
 # AGP/Kotlin/KSP/Gradle are pinned to the Android Studio toolchain (Quail 2026.1.1) — keep
 # them mutually compatible and let the IDE drive their upgrades. SQLCipher and Tink are
@@ -77,3 +89,5 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
+
+# ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣
