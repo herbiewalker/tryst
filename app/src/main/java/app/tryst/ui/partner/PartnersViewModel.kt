@@ -22,6 +22,7 @@ import app.tryst.core.session.SessionManager
 import app.tryst.data.db.entity.BodyType
 import app.tryst.data.db.entity.Ethnicity
 import app.tryst.data.db.entity.Gender
+import app.tryst.data.db.entity.Orientation
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.RelationshipType
 import app.tryst.data.db.entity.Sex
@@ -48,6 +49,7 @@ data class PartnerDraft(
     val note: String,
     val sex: Sex?,
     val gender: Gender?,
+    val orientation: Orientation?,
     val relationshipType: RelationshipType?,
     val birthDate: Long?,
     val ethnicity: Ethnicity?,
@@ -111,6 +113,7 @@ class PartnersViewModel @Inject constructor(
                     note = draft.note.trim().ifBlank { null },
                     sex = draft.sex,
                     gender = draft.gender,
+                    orientation = draft.orientation,
                     relationshipType = draft.relationshipType,
                     photoMediaId = photoMediaId,
                     birthDate = draft.birthDate,
