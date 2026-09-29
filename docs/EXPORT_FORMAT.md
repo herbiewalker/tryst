@@ -1,7 +1,8 @@
 # Tryst — Backup / Export Format
 
-> **Status:** Live — container format **v1** (`TRYSTBK1`). Produced/consumed by
-> `data/backup/BackupManager.kt` + `core/crypto/BackupCrypto.kt`.
+> **Status:** Live — container format **v2** (`TRYSTBK1`), current since **QOL-5** (v0.6.x).
+> v1 backups still import fine (the settings section is purely additive/optional). Produced/consumed
+> by `data/backup/BackupManager.kt` + `core/crypto/BackupCrypto.kt` + `data/backup/PrefsBackup.kt`.
 
 A Tryst backup is a single **password-encrypted** file (suggested name `tryst-backup-<date>.tryst`).
 It contains everything — all encounters, partners, your self profile, your category entries
@@ -21,7 +22,7 @@ derived from the backup password. Restore reverses it and re-encrypts media unde
 ```
 ┌────────────────────────── cleartext header (29 bytes) ──────────────────────────┐
 │ MAGIC      8 bytes   ASCII "TRYSTBK1"                                            │
-│ version    1 byte    format version (currently 1)                               │
+│ version    1 byte    format version (currently 2; 1 still accepted on import)   │
 │ salt       16 bytes  random, for the password KDF                               │
 │ iterations 4 bytes   big-endian int (PBKDF2 iteration count)                    │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -30,6 +31,11 @@ AES-256-GCM-HKDF streaming (Tink `AesGcmHkdfStreaming`, 1 MiB segments,
 associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, iterations) → 32 bytes
         ↓ plaintext of that stream is a ZIP:
   data.json        every table dumped generically: { "schemaVersion": N, "tables": { <table>: [ {col: value, …}, … ] } }
+  settings.json    OPTIONAL (v2, QOL-5) — { <SharedPreferences store name>: { <key>: {"t": type, "v": value}, … } }
+                   for the four non-sensitive plain-prefs stores (tryst_appearance, tryst_general,
+                   tryst_insights, tryst_gallery). Absent entirely on a v1 backup, or when the export
+                   dialog's "Include my settings" toggle was off. Never carries the PIN, vault, or
+                   biometric config — those live outside these stores. See `PrefsBackup.kt`.
   media/<id>       the decrypted bytes of each photo blob (re-encrypted by the container) —
                    both encounter photos (media-table rows) AND partner avatars (referenced
                    only by Partner.photoMediaId, no media-table row)
@@ -48,6 +54,12 @@ associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, i
 - **`recent_searches` is deliberately EXCLUDED** (v13 / SRCH-1 / D-42). Search history is
   among the most sensitive text in the app, so it lives only on the local device; an export
   never carries it and a restore leaves the local table alone.
+- **Settings (v2, QOL-5):** each SharedPreferences value is tagged with its runtime type
+  (`bool`/`int`/`long`/`float`/`string`/`stringset`) so restore can call the matching `putX` —
+  restoring the wrong type would throw `ClassCastException` on the next read. Restore is per-key:
+  a store or key missing from the backup (older export, or the toggle was off) is left exactly as
+  it is on the current device — it's never cleared to make room. An unrecognized type tag from a
+  future format is skipped (forward-compatible).
 - **Media blobs:** export gathers ids from **four** provenance streams — `media` rows (encounter
   photos), `partners.photoMediaId` (partner avatars), `profile.photoMediaId` (the self-profile
   avatar, v7), and `person_photo.mediaBlobId` (per-person portrait album blobs, v15). Everything

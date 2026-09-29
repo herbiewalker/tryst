@@ -459,12 +459,18 @@
     <string name="reset_confirm_instruction">To confirm, type %1$s in the box below.</string>
     <string name="reset_confirm_field_label">Type %1$s to confirm</string>
     <string name="reset_confirm_button">Permanently erase everything</string>
+    <string name="reset_prefs_headline">Reset preferences to default</string>
+    <string name="reset_prefs_message">Resets appearance, general, Insights layout, and Photos layout settings back to their defaults. Your encounters, partners, and photos are not touched, and the Photos privacy gate (blur/re-auth) is left as you set it.</string>
+    <string name="reset_prefs_button">Reset preferences…</string>
+    <string name="reset_prefs_confirm_message">Reset all appearance, general, and layout preferences to their defaults? Your data isn\'t affected.</string>
 
     <!-- Backup password dialog -->
     <string name="settings_backup_pw_set_title">Set a backup password</string>
     <string name="settings_backup_pw_enter_title">Enter backup password</string>
     <string name="settings_backup_wipe_first">Replace my current data with the backup (recommended)</string>
     <string name="settings_backup_wipe_first_desc">When off, the backup is merged on top of what\'s already in the app. Turn off only if you know you want to combine two datasets.</string>
+    <string name="settings_backup_include_settings">Include my settings</string>
+    <string name="settings_backup_include_settings_desc">Carries theme, general, Insights layout, and Photos layout preferences so they survive a restore onto a new phone. Never includes your PIN or biometric setup.</string>
     <string name="settings_password_label">Password</string>
     <string name="settings_confirm_password_label">Confirm password</string>
     <string name="settings_password_mismatch">Passwords don\'t match.</string>

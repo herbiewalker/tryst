@@ -67,7 +67,7 @@ class BackupRestoreRegressionTest {
         runBlocking { manager.setupPin(pin) }
         store = EncryptedMediaStore(context, manager)
         encounters = EncounterRepository(manager, store)
-        backup = BackupManager(manager, store)
+        backup = BackupManager(context, manager, store)
     }
 
     @After

@@ -14,6 +14,7 @@
 package app.tryst.data.backup
 
 import android.content.ContentValues
+import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import app.tryst.core.crypto.BackupCrypto
@@ -21,6 +22,7 @@ import app.tryst.core.security.Pbkdf2
 import app.tryst.core.session.SessionManager
 import app.tryst.data.db.CatalogAdoption
 import app.tryst.data.media.EncryptedMediaStore
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -44,21 +46,27 @@ import org.json.JSONObject
  *
  * File layout: `MAGIC(8) | version(1) | salt(16) | iterations(4 BE)` in the clear, then a
  * [BackupCrypto] stream of a ZIP: `data.json` (every table, generic column dump) + `media/<id>`
- * (decrypted photo bytes). See docs/EXPORT_FORMAT.md.
+ * (decrypted photo bytes) + an optional `settings.json` (v2, QOL-5 — see [PrefsBackup]). See
+ * docs/EXPORT_FORMAT.md.
  */
 @Singleton
 class BackupManager @Inject constructor(
+    @ApplicationContext private val appContext: Context,
     private val session: SessionManager,
     private val mediaStore: EncryptedMediaStore,
 ) {
     @Suppress("CyclomaticComplexMethod") // Straight-line assembly of the backup container (header + zip entries).
-    suspend fun export(password: String, out: OutputStream): Unit = withContext(Dispatchers.IO) {
+    suspend fun export(
+        password: String,
+        out: OutputStream,
+        includeSettings: Boolean = true,
+    ): Unit = withContext(Dispatchers.IO) {
         val db = session.database().openHelper.writableDatabase
         val salt = ByteArray(SALT_BYTES).also { SecureRandom().nextBytes(it) }
         val iterations = Pbkdf2.DEFAULT_ITERATIONS
 
         out.write(MAGIC)
-        out.write(FORMAT_VERSION)
+        out.write(CURRENT_FORMAT_VERSION)
         out.write(salt)
         out.write(ByteBuffer.allocate(4).putInt(iterations).array())
         out.flush()
@@ -68,6 +76,14 @@ class BackupManager @Inject constructor(
             zip.putNextEntry(ZipEntry("data.json"))
             zip.write(dumpDatabase(db).toString().toByteArray(Charsets.UTF_8))
             zip.closeEntry()
+            // App settings (theme/general/Insights-layout/gallery-layout — QOL-5). Optional per the
+            // export dialog's toggle; never includes the PIN/vault/biometric config, which live outside
+            // these plain SharedPreferences stores entirely.
+            if (includeSettings) {
+                zip.putNextEntry(ZipEntry("settings.json"))
+                zip.write(PrefsBackup.dumpAll(appContext).toString().toByteArray(Charsets.UTF_8))
+                zip.closeEntry()
+            }
             // Encounter photos (rows in the media table) AND partner avatars (blobs referenced only by
             // Partner.photoMediaId, with no media-table row) — both must be backed up. They share the
             // media/<id> namespace; import saves any such entry by id, and the restored rows point back.
@@ -107,7 +123,8 @@ class BackupManager @Inject constructor(
     ): Unit = withContext(Dispatchers.IO) {
         val magic = ByteArray(MAGIC.size).also { readFully(input, it) }
         require(magic.contentEquals(MAGIC)) { "Not a Tryst backup file" }
-        require(input.read() == FORMAT_VERSION) { "Unsupported backup version" }
+        val formatVersion = input.read()
+        require(formatVersion in MIN_FORMAT_VERSION..MAX_FORMAT_VERSION) { "Unsupported backup version" }
         val salt = ByteArray(SALT_BYTES).also { readFully(input, it) }
         val iterations = ByteBuffer.wrap(ByteArray(4).also { readFully(input, it) }).int
         // The iteration count comes from the (untrusted) file header. Bound it: a crafted value like
@@ -123,12 +140,14 @@ class BackupManager @Inject constructor(
             // DB commit succeeds. A mid-loop failure here leaves the on-disk media/ dir and the DB
             // untouched (Bundle-C N5).
             var dataJson: JSONObject? = null
+            var settingsJson: JSONObject? = null
             ZipInputStream(BackupCrypto.decryptingStream(key, input)).use { zip ->
                 var entry: ZipEntry? = zip.nextEntry
                 while (entry != null) {
                     val name = entry.name
                     when {
                         name == "data.json" -> dataJson = JSONObject(zip.readBytes().toString(Charsets.UTF_8))
+                        name == "settings.json" -> settingsJson = JSONObject(zip.readBytes().toString(Charsets.UTF_8))
                         name.startsWith("media/") -> {
                             val id = name.removePrefix("media/")
                             mediaStore.saveStaged(id, zip)
@@ -165,6 +184,11 @@ class BackupManager @Inject constructor(
             // Phase 4: (wipe-first only) drop any remaining blob whose id isn't in the restored set —
             // that's the previous user data's media files, orphaned now that no row references them.
             if (wipeFirst) mediaStore.deleteOrphans(stagedIds.toSet())
+
+            // Settings (QOL-5): present only if the export included them. A backup that predates
+            // this feature, or was made with the toggle off, simply leaves the device's current
+            // theme/general/Insights/gallery settings untouched.
+            settingsJson?.let { PrefsBackup.restoreAll(appContext, it) }
 
             // Restore inserts rows raw — it does NOT replay migrations — so a backup made before a
             // catalog trim can reintroduce since-removed built-in act/kink ids. Adopt them into the
@@ -305,7 +329,12 @@ class BackupManager @Inject constructor(
 
     private companion object {
         val MAGIC = "TRYSTBK1".toByteArray(Charsets.US_ASCII) // 8 bytes
-        const val FORMAT_VERSION = 1
+
+        // v1: data.json + media/ only. v2 (QOL-5) adds an optional settings.json entry — purely
+        // additive, so a v1 backup still imports fine (settingsJson is just never populated).
+        const val MIN_FORMAT_VERSION = 1
+        const val MAX_FORMAT_VERSION = 2
+        const val CURRENT_FORMAT_VERSION = MAX_FORMAT_VERSION
         const val SALT_BYTES = 16
 
         // A plain SQL identifier — used to vet untrusted backup column names before they reach the

@@ -51,6 +51,12 @@ class ThemePreferences @Inject constructor(
         _dynamicColor.value = enabled
     }
 
+    fun resetToDefaults() {
+        prefs.edit().clear().apply()
+        _themeMode.value = ThemeMode.SYSTEM
+        _dynamicColor.value = false
+    }
+
     private fun loadMode(): ThemeMode = prefs.getString(KEY_MODE, null)
         ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
         ?: ThemeMode.SYSTEM

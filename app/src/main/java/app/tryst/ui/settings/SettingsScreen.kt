@@ -102,11 +102,12 @@ fun SettingsScreen(
     var showExportPw by remember { mutableStateOf(false) }
     var showImportPw by remember { mutableStateOf(false) }
     var pendingExportPassword by remember { mutableStateOf("") }
+    var pendingExportIncludeSettings by remember { mutableStateOf(true) }
     var pendingImportUri by remember { mutableStateOf<Uri?>(null) }
     val createBackup = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/octet-stream"),
     ) { uri ->
-        uri?.let { backupViewModel.export(it, pendingExportPassword) }
+        uri?.let { backupViewModel.export(it, pendingExportPassword, pendingExportIncludeSettings) }
         pendingExportPassword = ""
     }
     val openBackup = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -442,9 +443,11 @@ fun SettingsScreen(
         BackupPasswordDialog(
             title = stringResource(R.string.settings_backup_pw_set_title),
             requireConfirm = true,
-            onConfirm = { pw, _ ->
+            includeSettingsInitial = true,
+            onConfirm = { pw, _, includeSettings ->
                 showExportPw = false
                 pendingExportPassword = pw
+                pendingExportIncludeSettings = includeSettings
                 backupViewModel.suppressAutoLock()
                 createBackup.launch("tryst-backup-${LocalDate.now()}.tryst")
             },
@@ -457,7 +460,7 @@ fun SettingsScreen(
             title = stringResource(R.string.settings_backup_pw_enter_title),
             requireConfirm = false,
             wipeFirstInitial = true,
-            onConfirm = { pw, wipeFirst ->
+            onConfirm = { pw, wipeFirst, _ ->
                 showImportPw = false
                 pendingImportUri?.let { backupViewModel.import(it, pw, wipeFirst) }
                 pendingImportUri = null
@@ -475,15 +478,18 @@ fun SettingsScreen(
 private fun BackupPasswordDialog(
     title: String,
     requireConfirm: Boolean,
-    onConfirm: (String, Boolean) -> Unit,
+    onConfirm: (password: String, wipeFirst: Boolean, includeSettings: Boolean) -> Unit,
     onDismiss: () -> Unit,
     // Non-null on the import path (Bundle-E Q1): renders a wipe-first checkbox above the password
     // field so users can pick "replace" (default) vs "merge on top" semantics.
     wipeFirstInitial: Boolean? = null,
+    // Non-null on the export path (QOL-5): renders an "include my settings" checkbox.
+    includeSettingsInitial: Boolean? = null,
 ) {
     var password by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
     var wipeFirst by remember { mutableStateOf(wipeFirstInitial ?: false) }
+    var includeSettings by remember { mutableStateOf(includeSettingsInitial ?: true) }
     val mismatch = requireConfirm && confirm.isNotEmpty() && password != confirm
     val valid = password.length >= 6 && (!requireConfirm || password == confirm)
 
@@ -508,6 +514,26 @@ private fun BackupPasswordDialog(
                     }
                     Text(
                         stringResource(R.string.settings_backup_wipe_first_desc),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (includeSettingsInitial != null) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .toggleable(value = includeSettings, role = Role.Switch, onValueChange = { includeSettings = it }),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Switch(checked = includeSettings, onCheckedChange = null)
+                        Text(
+                            stringResource(R.string.settings_backup_include_settings),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+                    Text(
+                        stringResource(R.string.settings_backup_include_settings_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -538,7 +564,7 @@ private fun BackupPasswordDialog(
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { onConfirm(password, wipeFirst) }, enabled = valid) { Text(stringResource(R.string.action_ok)) } },
+        confirmButton = { TextButton(onClick = { onConfirm(password, wipeFirst, includeSettings) }, enabled = valid) { Text(stringResource(R.string.action_ok)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }

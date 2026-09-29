@@ -45,12 +45,12 @@ class BackupViewModel @Inject constructor(
     /** Keep the app unlocked across the system file-picker handoff (same as the photo picker). */
     fun suppressAutoLock() = session.suppressNextAutoLock()
 
-    fun export(uri: Uri, password: String) {
+    fun export(uri: Uri, password: String, includeSettings: Boolean = true) {
         viewModelScope.launch {
             busy = true
             status = null
             try {
-                context.contentResolver.openOutputStream(uri)?.use { backup.export(password, it) }
+                context.contentResolver.openOutputStream(uri)?.use { backup.export(password, it, includeSettings) }
                     ?: throw IOException("Couldn't open the destination file")
                 status = context.getString(R.string.backup_status_export_done)
             } catch (e: Exception) {
