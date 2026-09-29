@@ -185,6 +185,29 @@ class GalleryPreferences @Inject constructor(
         _sort.value = sort
     }
 
+    /**
+     * Resets the cosmetic layout/display prefs only. Deliberately leaves the SEC-2 gate settings
+     * ([blurUntilRevealed], [requireReauthForPhotos], their grace periods) alone — a generic "reset
+     * preferences" tap must never silently turn off a privacy gate the user chose to enable.
+     */
+    fun resetToDefaults() {
+        prefs.edit()
+            .remove(KEY_LAYOUT).remove(KEY_COLUMNS).remove(KEY_SORT).remove(KEY_GRID_SPACING)
+            .remove(KEY_TILE_CAPTIONS).remove(KEY_DEFAULT_FAV_ONLY).remove(KEY_CAMERA_LOOP)
+            .remove(KEY_CAPTION_ENTRY).remove(KEY_SLIDESHOW_INT_S).remove(KEY_SLIDESHOW_SHUFFLE)
+            .apply()
+        _layout.value = DEFAULT_LAYOUT
+        _columns.value = DEFAULT_COLUMNS
+        _sort.value = DEFAULT_SORT
+        _gridSpacing.value = DEFAULT_GRID_SPACING
+        _showTileCaptions.value = false
+        _defaultToFavoritesOnly.value = false
+        _cameraKeepCapturing.value = false
+        _captionEntryPoint.value = DEFAULT_CAPTION_ENTRY_POINT
+        _slideshowIntervalSeconds.value = DEFAULT_SLIDESHOW_INT_S
+        _slideshowShuffle.value = false
+    }
+
     private fun loadLayout(): GalleryLayout = prefs.getString(KEY_LAYOUT, null)?.let { runCatching { GalleryLayout.valueOf(it) }.getOrNull() } ?: DEFAULT_LAYOUT
 
     private fun loadSort(): GallerySort = prefs.getString(KEY_SORT, null)?.let { runCatching { GallerySort.valueOf(it) }.getOrNull() } ?: DEFAULT_SORT

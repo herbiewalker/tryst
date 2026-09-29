@@ -37,6 +37,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -63,7 +64,7 @@ class BackupRoundTripTest {
         runBlocking { manager.setupPin(pin) }
         store = EncryptedMediaStore(context, manager)
         encounters = EncounterRepository(manager, store)
-        backup = BackupManager(manager, store)
+        backup = BackupManager(context, manager, store)
     }
 
     @After
@@ -122,6 +123,57 @@ class BackupRoundTripTest {
         assertThrows(Exception::class.java) {
             runBlocking { backup.import("wrong-password", ByteArrayInputStream(bytes)) }
         }
+    }
+
+    /** QOL-5: settings ride the backup and restore onto a different device's (simulated) prefs. */
+    @Test
+    fun export_import_roundTripsSettings() = runBlocking<Unit> {
+        val theme = context.getSharedPreferences("tryst_appearance", Context.MODE_PRIVATE)
+        theme.edit().putString("theme_mode", "DARK").putBoolean("dynamic_color", true).apply()
+        val insights = context.getSharedPreferences("tryst_insights", Context.MODE_PRIVATE)
+        insights.edit().putStringSet("section_hidden", setOf("streaks", "achievements")).apply()
+
+        val out = ByteArrayOutputStream()
+        backup.export(password, out)
+
+        // Simulate a fresh device: clear the local prefs before restoring.
+        theme.edit().clear().apply()
+        insights.edit().clear().apply()
+
+        backup.import(password, ByteArrayInputStream(out.toByteArray()))
+
+        assertEquals("DARK", theme.getString("theme_mode", null))
+        assertTrue(theme.getBoolean("dynamic_color", false))
+        assertEquals(setOf("streaks", "achievements"), insights.getStringSet("section_hidden", emptySet()))
+    }
+
+    /** The export-dialog toggle (Bundle QOL-5): unchecking "include settings" must leave local prefs alone on restore. */
+    @Test
+    fun export_withSettingsExcluded_restoreLeavesLocalPrefsUntouched() = runBlocking<Unit> {
+        val theme = context.getSharedPreferences("tryst_appearance", Context.MODE_PRIVATE)
+        theme.edit().putString("theme_mode", "LIGHT").apply()
+
+        val out = ByteArrayOutputStream()
+        backup.export(password, out, includeSettings = false)
+
+        theme.edit().putString("theme_mode", "DARK").apply() // local change after the export
+        backup.import(password, ByteArrayInputStream(out.toByteArray()))
+
+        assertEquals("DARK", theme.getString("theme_mode", null)) // untouched by the settings-less restore
+    }
+
+    /**
+     * A pre-QOL-5 (v1) backup has no settings.json and a version byte of 1, not 2. The version byte
+     * sits in the cleartext header (index 8, right after the 8-byte MAGIC), outside the AEAD stream,
+     * so rewriting it to simulate an old export doesn't disturb decryption.
+     */
+    @Test
+    fun import_ofV1BackupWithNoSettings_succeeds() = runBlocking<Unit> {
+        val out = ByteArrayOutputStream()
+        backup.export(password, out, includeSettings = false)
+        val bytes = out.toByteArray()
+        bytes[8] = 1
+        backup.import(password, ByteArrayInputStream(bytes))
     }
 
     /**

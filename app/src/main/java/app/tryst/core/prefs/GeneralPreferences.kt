@@ -70,6 +70,15 @@ class GeneralPreferences @Inject constructor(
         _defaultToCalendar.value = enabled
     }
 
+    /** Resets the user-facing settings only — [KEY_LAST_SEEN_VERSION] is internal What's-new state, not a preference. */
+    fun resetToDefaults() {
+        prefs.edit().remove(KEY_AUTO_LOCK_MS).remove(KEY_HAPTICS).remove(KEY_WEEK_START).remove(KEY_DEFAULT_CALENDAR).apply()
+        _autoLockTimeoutMs.value = 0L
+        _hapticsEnabled.value = true
+        _weekStart.value = WeekStart.SUNDAY
+        _defaultToCalendar.value = false
+    }
+
     /**
      * The app versionCode the user last saw "What's new" for. 0 = never recorded (fresh install or a
      * pre-feature upgrade), which deliberately suppresses the popup the first time — there's no prior

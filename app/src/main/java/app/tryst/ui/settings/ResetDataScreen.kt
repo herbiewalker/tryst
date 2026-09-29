@@ -26,15 +26,19 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -61,11 +65,16 @@ import app.tryst.ui.lock.LockViewModel
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ResetDataScreen(onBack: () -> Unit, viewModel: LockViewModel = hiltViewModel()) {
+fun ResetDataScreen(
+    onBack: () -> Unit,
+    viewModel: LockViewModel = hiltViewModel(),
+    prefsViewModel: PreferencesResetViewModel = hiltViewModel(),
+) {
     val haptics = rememberHaptics()
     val confirmWord = stringResource(R.string.reset_confirm_word)
     var typed by remember { mutableStateOf("") }
     val matches = typed.trim().equals(confirmWord, ignoreCase = true)
+    var showResetPrefsConfirm by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -123,8 +132,40 @@ fun ResetDataScreen(onBack: () -> Unit, viewModel: LockViewModel = hiltViewModel
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.reset_confirm_button)) }
+
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
+            // Lower-severity sibling (QOL-5): only resets layout/appearance prefs, not any data —
+            // trivially reversible, so no type-the-word gate, just a confirm dialog.
+            Text(stringResource(R.string.reset_prefs_headline), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(R.string.reset_prefs_message),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            OutlinedButton(
+                onClick = { showResetPrefsConfirm = true },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(stringResource(R.string.reset_prefs_button)) }
             Spacer(Modifier.height(8.dp))
         }
+    }
+
+    if (showResetPrefsConfirm) {
+        AlertDialog(
+            onDismissRequest = { showResetPrefsConfirm = false },
+            title = { Text(stringResource(R.string.reset_prefs_button)) },
+            text = { Text(stringResource(R.string.reset_prefs_confirm_message)) },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        prefsViewModel.resetAll()
+                        showResetPrefsConfirm = false
+                    },
+                ) { Text(stringResource(R.string.action_ok)) }
+            },
+            dismissButton = { TextButton(onClick = { showResetPrefsConfirm = false }) { Text(stringResource(R.string.action_cancel)) } },
+        )
     }
 }
 
