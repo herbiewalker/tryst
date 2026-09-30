@@ -1,0 +1,5 @@
+Settings backup, a warmer look, and UI polish
+
+* Your theme, Insights layout, and Photos layout settings now survive an encrypted backup, so they come back on a new phone instead of resetting. Optional on export; resettable on its own from Settings → Danger zone.
+* Refreshed color palette pulled from the app icon's own purple-to-pink gradient, in both light and dark mode.
+* Settings screen, Save button, and card corners cleaned up for a more consistent look.

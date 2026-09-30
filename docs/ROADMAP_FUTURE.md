@@ -1,6 +1,6 @@
 # Tryst — Future Roadmap (post-v0.1.0)
 
-> **Status: ACTIVE roadmap (last reviewed 2026-09-28).** Originally a raw idea dump (2026-06-14).
+> **Status: ACTIVE roadmap (last reviewed 2026-09-30).** Originally a raw idea dump (2026-06-14).
 > The **v0.5.x line is closed** — everything through v0.5.8 has shipped. Since the 2026-07-30
 > review: **v0.5.3** CAP-1 captions (schema v16), **v0.5.4** EDIT-1 in-app rotate/crop,
 > **v0.5.5** QOL-7 dialog→route conversions, **v0.5.6** CAP-1b tile caption preview,
@@ -8,10 +8,11 @@
 > F-Droid `icon.png` + About-screen maker credit. Version groupings and ordering remain a
 > *proposal* — reshuffle freely. See "Recommended near-term ordering" under the Engineering backlog
 > section for the current suggested sequence. **Newly open:** D-54 (ejaculation/finish-location
-> model expansion — deferred to a v0.6 design pass). Next line is v0.6.x, now underway:
-> **QOL-5 (settings-in-backup) shipped (2026-09-28, unreleased on `main`)** — backup format v2 +
-> "include my settings" export toggle + "Reset preferences to default" action. Remaining v0.6.x
-> candidates: BKP-1 (automatic local backups), STORE-1 (designer screenshots).
+> model expansion — deferred to a v0.6 design pass). **v0.6.0 shipped (2026-09-30, versionCode
+> 16):** QOL-5 (settings-in-backup, format v2) + a color refresh tying the theme to the launcher
+> icon's own gradient + a UI polish pass (Save button emphasis, borderless Settings rows, unified
+> corner radii). Remaining v0.6.x candidates: BKP-1 (automatic local backups), STORE-1 (designer
+> screenshots).
 
 Every item preserves the **hard constraints** (no network ever, encrypted at rest, `FLAG_SECURE`,
 local-only, additive/nullable migrations only). Anything that would violate them is out of scope by
