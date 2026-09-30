@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
@@ -91,7 +90,7 @@ fun PersonPhotoStrip(
                 Box(
                     Modifier
                         .size(96.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .background(MaterialTheme.colorScheme.surfaceContainer)
                         .clickable { addMenu = true },
                     contentAlignment = Alignment.Center,
@@ -137,7 +136,7 @@ fun PersonPhotoStrip(
                     contentDescription = stringResource(R.string.cd_partner_photo),
                     modifier = Modifier
                         .size(96.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .clickable { selected = photo },
                     contentScale = ContentScale.Crop,
                     load = { decode(photo.mediaBlobId) },

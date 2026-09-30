@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -399,7 +398,7 @@ private fun DetailPanel(
     val media = hit.encounter.media
     Surface(
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shape = RoundedCornerShape(14.dp),
+        shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -435,7 +434,7 @@ private fun DetailPanel(
                         DecodedImage(
                             model = item.id,
                             contentDescription = stringResource(R.string.cd_photo),
-                            modifier = Modifier.size(84.dp).clip(RoundedCornerShape(10.dp)),
+                            modifier = Modifier.size(84.dp).clip(MaterialTheme.shapes.extraSmall),
                             contentScale = ContentScale.Crop,
                             load = { onLoadThumb(item, DETAIL_THUMB_PX) },
                         )

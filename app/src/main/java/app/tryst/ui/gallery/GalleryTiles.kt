@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Favorite
@@ -47,6 +46,7 @@ import app.tryst.R
 import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
+import app.tryst.ui.theme.GridTileShape
 
 /**
  * A photo tile that participates in multi-select: it dims + shows a check when selected, and routes taps
@@ -60,7 +60,7 @@ fun SelectablePhotoTile(
     onLoad: suspend (blobId: String, reqPx: Int) -> ImageBitmap?,
     interaction: TileInteraction,
     modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(4.dp),
+    shape: Shape = GridTileShape,
 ) {
     val selected = photo.id in interaction.selectedIds
     Box(

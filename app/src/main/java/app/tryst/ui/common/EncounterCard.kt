@@ -155,7 +155,7 @@ fun EncounterCard(
                     modifier = Modifier
                         .padding(start = 10.dp)
                         .size(48.dp)
-                        .clip(RoundedCornerShape(10.dp)),
+                        .clip(MaterialTheme.shapes.extraSmall),
                     contentScale = ContentScale.Crop,
                     load = { onLoadThumb(media) },
                 )
@@ -182,7 +182,7 @@ private fun DateBadge(epochMillis: Long) {
     Surface(
         color = MaterialTheme.colorScheme.primaryContainer,
         contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-        shape = RoundedCornerShape(14.dp),
+        shape = MaterialTheme.shapes.medium,
         modifier = Modifier.width(56.dp),
     ) {
         Column(
