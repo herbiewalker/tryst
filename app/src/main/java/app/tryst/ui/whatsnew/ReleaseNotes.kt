@@ -33,6 +33,16 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.6.0",
+            versionCode = 16,
+            date = "2026-09-30",
+            highlights = listOf(
+                "Your theme, Insights layout, and Photos layout settings now survive an encrypted backup — restore them on a new phone instead of starting from scratch. Turn it off per export, or reset just your preferences from Settings → Danger zone without touching any of your data.",
+                "A warmer color palette pulled straight from the app icon's own gradient — purple and pink, in both light and dark mode.",
+                "Settings screen cleanup: plainer rows, a clearer Save button in the encounter editor, and more consistent rounded corners throughout.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.5.8",
             versionCode = 15,
             date = "2026-09-06",

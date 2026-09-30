@@ -13,6 +13,33 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-09-30 (versionCode 16)
+
+### Added
+
+- **Settings survive backup/restore (QOL-5).** Theme, general, Insights-layout, and Photos-layout
+  preferences now ride the encrypted backup — container format bumps to v2, and a v1 backup still
+  imports fine (the settings section is purely additive). An "Include my settings" toggle on the
+  export dialog (default on), and a new "Reset preferences to default" action on the Reset-data
+  page, deliberately scoped to spare the Photos privacy-gate toggles so a casual reset can't
+  silently weaken a chosen privacy setting.
+
+### Changed
+
+- **Color refresh tied to the app icon.** Purple warmed toward the launcher icon's own violet, the
+  icon's pink (sampled directly off its gradient) promoted to secondary, and the app's second,
+  redundant green retired down to one minor tertiary accent. Covers both light and dark themes;
+  dark-mode surfaces now fold into the icon's plum family instead of the previous cooler
+  near-black.
+- **Save gets real weight.** The encounter editor's Save action — the single most-used button in
+  the app — is now bold and primary-tinted instead of matching Cancel's plain text styling.
+- **Settings screen redesigned.** Every row (profile, PIN, backup, category management, danger
+  zone, about) is now a borderless icon-plus-title row instead of a full-width bordered button,
+  matching the standard Android settings pattern instead of reading like a form.
+- **Corner radii unified.** Cards, thumbnails, and chips across the app now route through the
+  theme's shape scale instead of one-off hardcoded radii; the one deliberate exception (dense
+  photo-grid tiles) is now a named constant instead of a repeated literal.
+
 ## [0.5.8] — 2026-09-06 (versionCode 15)
 
 ### Changed
