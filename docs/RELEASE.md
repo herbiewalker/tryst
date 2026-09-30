@@ -4,6 +4,13 @@ Tryst ships through **F-Droid only** (decision D-32). F-Droid builds the app fro
 infrastructure and signs the result with its key, so we never ship a binary ourselves and never commit a
 signing key. This document is the checklist for cutting a release and getting it into F-Droid.
 
+**The release is a script**, not the manual steps below — run `.\release.ps1 -Version X.Y.Z
+-VersionCode N` from the repo root (first used for v0.6.0). It writes the version bump, checks
+`CHANGELOG.md` / the fastlane changelog / `ReleaseNotes.kt` agree, runs the release build + every
+constraint guard, archives the R8 mapping under `archive/vX.Y.Z/`, then commits, tags last, and
+pushes. The steps below are what it automates — read them to understand *why*, or to do a step by
+hand if the script can't (e.g. a first-time fdroiddata submission).
+
 ## Prerequisites (one-time — all satisfied for the live app)
 
 - [x] **The source repository is public.** `herbiewalker/tryst` has been public since the F-Droid

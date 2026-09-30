@@ -10,7 +10,7 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?logo=kotlin&logoColor=white)](#built-with)
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](#built-with)
 [![Offline only](https://img.shields.io/badge/network-none-critical)](#why-tryst)
-[![Release](https://img.shields.io/badge/release-v0.5.8-success)](CHANGELOG.md)
+[![Release](https://img.shields.io/badge/release-v0.6.0-success)](CHANGELOG.md)
 
 Tryst keeps your most personal data on your phone and nowhere else — no account, no sync,
 and **no internet permission at all**, so the app *cannot* send your data anywhere.
@@ -97,16 +97,21 @@ Screenshots are black by design on-device (`FLAG_SECURE`).
 
 ## Status
 
-✅ **Shipped.** Current release **v0.5.8** (versionCode 15, schema v16). Distribution is **F-Droid**,
+✅ **Shipped.** Current release **v0.6.0** (versionCode 16, schema v16). Distribution is **F-Droid**,
 which builds and signs from this source — Tryst ships no binary and commits no signing key. The
-**0.5.x** line delivers the **Photos** tab: a browsable gallery over every image attached to a tryst
-plus every person's portrait album, with search, filters, favourites, bulk actions, a slideshow, and
-a pinch-to-zoom viewer with add-to-person and set-as-avatar actions; a **full-screen partner editor**
-with a per-person photo strip; **atomic encrypted-backup restore** with a "replace my data" checkbox
-default-on; **inline add** for every catalog category directly from the encounter editor; and a raft
-of behaviour + verbiage polish out of a formal 7-lens post-release audit
+**0.6.x** line opens with **settings that survive a backup**: theme, Insights layout, and Photos
+layout preferences now ride the encrypted export (container format v2, backward-compatible with
+v1 backups) instead of resetting on a new phone, plus a color refresh that ties the app's palette
+to its own launcher icon and a pass of button/layout polish (a clearer Save action, borderless
+Settings rows, unified corner radii). The **0.5.x** line before it delivered the **Photos** tab: a
+browsable gallery over every image attached to a tryst plus every person's portrait album, with
+search, filters, favourites, bulk actions, a slideshow, and a pinch-to-zoom viewer with
+add-to-person and set-as-avatar actions; a **full-screen partner editor** with a per-person photo
+strip; **atomic encrypted-backup restore** with a "replace my data" checkbox default-on; **inline
+add** for every catalog category directly from the encounter editor; and a raft of behaviour +
+verbiage polish out of a formal 7-lens post-release audit
 ([docs/audits/2026-07-30-triage.md](docs/audits/2026-07-30-triage.md)). Everything you had already
-logged is preserved across every schema bump (v13→v14→v15, all additive-only).
+logged is preserved across every schema bump (v13→v14→v15→v16, all additive-only).
 
 Full release notes are in [CHANGELOG.md](CHANGELOG.md); the milestone history and pre-release audit
 program live in [docs/ROADMAP.md](docs/ROADMAP.md), and post-1.0 plans in

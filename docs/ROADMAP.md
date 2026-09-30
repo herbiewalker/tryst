@@ -1,8 +1,15 @@
 # Tryst — Roadmap / Milestones
 
-> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.5.8**
+> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.6.0**
 > (schema v16). Each milestone ended runnable & tested. This file is the milestone *history* (see
 > the dated notes below); forward work lives in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
+
+> **Update (2026-09-30):** the v0.6.x line has opened with **v0.6.0** (versionCode 16): QOL-5
+> (settings-in-backup, container format v2 — v1 backups still import), a color refresh tying the
+> theme's purple/pink accents to the launcher icon's own gradient, and a UI polish pass (Save
+> button emphasis, borderless Settings rows, unified corner radii). No schema change. Remaining
+> v0.6.x candidates: BKP-1 (automatic local backups), STORE-1 (designer screenshots). See
+> [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md) for detail.
 
 > **Update (2026-09-07):** the v0.5.x line is closed. Shipped since the 2026-07-30 note below:
 > **v0.5.3** (CAP-1 photo captions — schema v16), **v0.5.4** (EDIT-1 in-app rotate/crop),
