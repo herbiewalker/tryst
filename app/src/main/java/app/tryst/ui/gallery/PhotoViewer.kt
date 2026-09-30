@@ -34,7 +34,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.outlined.Notes
@@ -82,6 +81,7 @@ import app.tryst.data.media.PhotoMeta
 import app.tryst.data.media.PhotoMetadata
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
+import app.tryst.ui.theme.GridTileShape
 import kotlin.math.abs
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -487,7 +487,7 @@ private fun Filmstrip(
                 contentDescription = null,
                 modifier = Modifier
                     .size(48.dp)
-                    .clip(RoundedCornerShape(4.dp))
+                    .clip(GridTileShape)
                     .graphicsLayer { alpha = if (index == currentPage) 1f else 0.55f }
                     .clickable { onSelect(index) },
                 contentScale = ContentScale.Crop,

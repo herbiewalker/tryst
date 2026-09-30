@@ -26,4 +26,13 @@ val Shapes = Shapes(
     extraLarge = RoundedCornerShape(28.dp),
 )
 
+/**
+ * Deliberately tighter than [Shapes.extraSmall] — dense photo grids (Gallery, the photo viewer's
+ * filmstrip) want tiles that read as one continuous mosaic when packed edge-to-edge; the standard
+ * scale's rounding would look noticeably gappy at that density. Named here (rather than a bare
+ * `RoundedCornerShape(4.dp)` literal repeated per call site) so the one intentional exception to
+ * the scale has a single source of truth instead of several.
+ */
+val GridTileShape = RoundedCornerShape(4.dp)
+
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

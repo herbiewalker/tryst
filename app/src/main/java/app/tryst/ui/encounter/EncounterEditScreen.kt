@@ -41,7 +41,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -632,7 +631,7 @@ private fun PhotoThumb(
             contentDescription = stringResource(R.string.cd_photo),
             modifier = Modifier
                 .fillMaxSize()
-                .clip(RoundedCornerShape(12.dp))
+                .clip(MaterialTheme.shapes.small)
                 .clickable(onClick = onClick),
             contentScale = ContentScale.Crop,
             load = load,
@@ -668,7 +667,7 @@ private fun AddPhotoTile(onCamera: () -> Unit, onGallery: () -> Unit) {
         Box(
             modifier = Modifier
                 .size(84.dp)
-                .clip(RoundedCornerShape(12.dp))
+                .clip(MaterialTheme.shapes.small)
                 .background(MaterialTheme.colorScheme.surfaceVariant)
                 .clickable(role = Role.Button) { menuOpen = true }
                 .semantics { contentDescription = addPhotoDesc },
