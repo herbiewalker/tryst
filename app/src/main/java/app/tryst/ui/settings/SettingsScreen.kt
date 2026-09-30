@@ -17,6 +17,7 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,13 +28,25 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.FileDownload
+import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.NewReleases
+import androidx.compose.material.icons.filled.Password
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.TableChart
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -47,6 +60,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -70,6 +85,68 @@ private const val AUTO_LOCK_30S = 30_000L
 private const val AUTO_LOCK_1M = 60_000L
 private const val AUTO_LOCK_5M = 300_000L
 private val AUTO_LOCK_OPTIONS = listOf(0L, AUTO_LOCK_30S, AUTO_LOCK_1M, AUTO_LOCK_5M)
+
+/**
+ * A borderless settings row (leading icon, title, optional one-line description) — replaces the
+ * old full-width bordered [androidx.compose.material3.OutlinedButton] per row, which gave every
+ * navigation/action row the same heavy bordered-rectangle treatment regardless of what it did.
+ * Matches the stock-Android/Signal/Gmail settings pattern: a plain tappable row, dividers between
+ * sections instead of a border per row. A plain [Row] rather than M3's own `ListItem` — `ListItem`
+ * carries its own ~16dp horizontal inset, which would double up against this screen's existing
+ * outer padding.
+ */
+@Composable
+private fun SettingsRow(
+    icon: ImageVector,
+    title: String,
+    onClick: () -> Unit,
+    description: String? = null,
+    enabled: Boolean = true,
+    tint: Color = MaterialTheme.colorScheme.onSurface,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = tint)
+        Column {
+            Text(title, color = tint, style = MaterialTheme.typography.bodyLarge)
+            if (description != null) {
+                Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+/** The toggle counterpart of [SettingsRow] — same row shape, a trailing [Switch] instead of an icon. */
+@Composable
+private fun SettingsToggleRow(
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    description: String? = null,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyLarge)
+            if (description != null) {
+                Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Switch(checked = checked, onCheckedChange = null)
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -151,13 +228,11 @@ fun SettingsScreen(
 
             // ─── You ──────────────────────────────────────────────────────────────
             Text(stringResource(R.string.settings_you), style = MaterialTheme.typography.titleMedium)
-            OutlinedButton(onClick = onOpenProfile, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.settings_profile))
-            }
-            Text(
-                stringResource(R.string.settings_profile_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            SettingsRow(
+                icon = Icons.Filled.Person,
+                title = stringResource(R.string.settings_profile),
+                description = stringResource(R.string.settings_profile_desc),
+                onClick = onOpenProfile,
             )
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
@@ -165,9 +240,7 @@ fun SettingsScreen(
             // ─── Security ─────────────────────────────────────────────────────────
             Text(stringResource(R.string.settings_security), style = MaterialTheme.typography.titleMedium)
 
-            OutlinedButton(onClick = onChangePin, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.settings_change_pin))
-            }
+            SettingsRow(icon = Icons.Filled.Password, title = stringResource(R.string.settings_change_pin), onClick = onChangePin)
 
             Text(stringResource(R.string.settings_autolock), style = MaterialTheme.typography.labelLarge)
             SingleSelectChips(
@@ -196,21 +269,24 @@ fun SettingsScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
 
-                biometricEnabled -> OutlinedButton(
+                biometricEnabled -> SettingsRow(
+                    icon = Icons.Filled.Fingerprint,
+                    title = stringResource(R.string.settings_biometric_disable),
                     onClick = {
                         viewModel.disableBiometric()
                         biometricEnabled = false
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(stringResource(R.string.settings_biometric_disable)) }
+                )
 
-                else -> Button(
+                else -> SettingsRow(
+                    icon = Icons.Filled.Fingerprint,
+                    title = stringResource(R.string.settings_biometric_enable),
                     onClick = {
                         val cipher = try {
                             viewModel.biometricEncryptCipher()
                         } catch (e: Exception) {
                             viewModel.reportError(biometricErrorFmt.format(e.message))
-                            return@Button
+                            return@SettingsRow
                         }
                         BiometricPromptHelper.authenticate(
                             activity = activity,
@@ -222,19 +298,17 @@ fun SettingsScreen(
                             onCancel = { },
                         )
                     },
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(stringResource(R.string.settings_biometric_enable)) }
+                )
             }
 
-            OutlinedButton(
+            SettingsRow(
+                icon = Icons.Filled.Lock,
+                title = stringResource(R.string.settings_lock_now),
                 onClick = {
                     haptics.tick()
                     viewModel.lock()
                 },
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(stringResource(R.string.settings_lock_now))
-            }
+            )
 
             AnimatedVisibility(visible = viewModel.error != null) {
                 viewModel.error?.let {
@@ -259,38 +333,18 @@ fun SettingsScreen(
                 },
                 onSelect = { appearanceViewModel.setThemeMode(it) },
             )
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .toggleable(
-                        value = dynamicColor,
-                        role = Role.Switch,
-                        onValueChange = { appearanceViewModel.setDynamicColor(it) },
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Switch(checked = dynamicColor, onCheckedChange = null)
-                Text(stringResource(R.string.settings_material_you), style = MaterialTheme.typography.bodyMedium)
-            }
-            Text(
-                stringResource(R.string.settings_material_you_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            SettingsToggleRow(
+                title = stringResource(R.string.settings_material_you),
+                description = stringResource(R.string.settings_material_you_desc),
+                checked = dynamicColor,
+                onCheckedChange = { appearanceViewModel.setDynamicColor(it) },
             )
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .toggleable(
-                        value = hapticsEnabled,
-                        role = Role.Switch,
-                        onValueChange = { generalViewModel.setHapticsEnabled(it) },
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Switch(checked = hapticsEnabled, onCheckedChange = null)
-                Text(stringResource(R.string.settings_haptics), style = MaterialTheme.typography.bodyMedium)
-            }
+            SettingsToggleRow(
+                title = stringResource(R.string.settings_haptics),
+                checked = hapticsEnabled,
+                onCheckedChange = { generalViewModel.setHapticsEnabled(it) },
+            )
 
             Text(stringResource(R.string.settings_week_start), style = MaterialTheme.typography.labelLarge)
             SingleSelectChips(
@@ -305,39 +359,27 @@ fun SettingsScreen(
                 onSelect = { generalViewModel.setWeekStart(it) },
             )
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .toggleable(
-                        value = defaultToCalendar,
-                        role = Role.Switch,
-                        onValueChange = { generalViewModel.setDefaultToCalendar(it) },
-                    ),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Switch(checked = defaultToCalendar, onCheckedChange = null)
-                Text(stringResource(R.string.settings_default_calendar), style = MaterialTheme.typography.bodyMedium)
-            }
+            SettingsToggleRow(
+                title = stringResource(R.string.settings_default_calendar),
+                checked = defaultToCalendar,
+                onCheckedChange = { generalViewModel.setDefaultToCalendar(it) },
+            )
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
             // ─── Customize tabs ───────────────────────────────────────────────────
             Text(stringResource(R.string.settings_customize), style = MaterialTheme.typography.titleMedium)
-            OutlinedButton(onClick = onCustomizeInsights, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.settings_customize_insights))
-            }
-            Text(
-                stringResource(R.string.settings_insights_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            SettingsRow(
+                icon = Icons.Filled.Tune,
+                title = stringResource(R.string.settings_customize_insights),
+                description = stringResource(R.string.settings_insights_desc),
+                onClick = onCustomizeInsights,
             )
-            OutlinedButton(onClick = onCustomizeGallery, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.settings_customize_gallery))
-            }
-            Text(
-                stringResource(R.string.settings_gallery_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            SettingsRow(
+                icon = Icons.Filled.GridView,
+                title = stringResource(R.string.settings_customize_gallery),
+                description = stringResource(R.string.settings_gallery_desc),
+                onClick = onCustomizeGallery,
             )
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
@@ -348,93 +390,74 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            OutlinedButton(onClick = { onManageCategory(CatalogCategory.ACTS) }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.settings_manage_acts))
-            }
-            OutlinedButton(onClick = { onManageCategory(CatalogCategory.KINKS) }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.settings_manage_kinks))
-            }
-            OutlinedButton(onClick = { onManageCategory(CatalogCategory.POSITIONS) }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.settings_manage_positions))
-            }
-            OutlinedButton(onClick = { onManageCategory(CatalogCategory.TOYS) }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.settings_manage_toys))
-            }
-            OutlinedButton(onClick = { onManageCategory(CatalogCategory.OCCASIONS) }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.settings_manage_occasions))
-            }
-            OutlinedButton(onClick = { onManageCategory(CatalogCategory.EJACULATION) }, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.settings_manage_ejaculation))
+            val categoryRows = listOf(
+                R.string.settings_manage_acts to CatalogCategory.ACTS,
+                R.string.settings_manage_kinks to CatalogCategory.KINKS,
+                R.string.settings_manage_positions to CatalogCategory.POSITIONS,
+                R.string.settings_manage_toys to CatalogCategory.TOYS,
+                R.string.settings_manage_occasions to CatalogCategory.OCCASIONS,
+                R.string.settings_manage_ejaculation to CatalogCategory.EJACULATION,
+            )
+            for ((label, category) in categoryRows) {
+                SettingsRow(icon = Icons.Filled.Category, title = stringResource(label), onClick = { onManageCategory(category) })
             }
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
             Text(stringResource(R.string.settings_backup), style = MaterialTheme.typography.titleMedium)
-            OutlinedButton(
-                onClick = { showExportPw = true },
+            SettingsRow(
+                icon = Icons.Filled.FileUpload,
+                title = stringResource(R.string.settings_export),
                 enabled = !backupViewModel.busy,
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text(stringResource(R.string.settings_export)) }
-            OutlinedButton(
+                onClick = { showExportPw = true },
+            )
+            SettingsRow(
+                icon = Icons.Filled.FileDownload,
+                title = stringResource(R.string.settings_import),
+                description = stringResource(R.string.settings_backup_desc),
+                enabled = !backupViewModel.busy,
                 onClick = {
                     backupViewModel.suppressAutoLock()
                     openBackup.launch(arrayOf("*/*"))
                 },
-                enabled = !backupViewModel.busy,
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text(stringResource(R.string.settings_import)) }
-            Text(
-                stringResource(R.string.settings_backup_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             AnimatedVisibility(visible = backupViewModel.status != null) {
                 backupViewModel.status?.let {
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
                 }
             }
-            OutlinedButton(
+            SettingsRow(
+                icon = Icons.Filled.TableChart,
+                title = stringResource(R.string.settings_import_csv),
+                description = stringResource(R.string.settings_csv_desc),
                 onClick = onOpenCsvImport,
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text(stringResource(R.string.settings_import_csv)) }
-            Text(
-                stringResource(R.string.settings_csv_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
             Text(stringResource(R.string.settings_danger_zone), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.error)
-            OutlinedButton(
+            SettingsRow(
+                icon = Icons.Filled.DeleteForever,
+                title = stringResource(R.string.settings_delete_all),
+                description = stringResource(R.string.settings_delete_all_desc),
+                tint = MaterialTheme.colorScheme.error,
                 onClick = onOpenReset,
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                modifier = Modifier.fillMaxWidth(),
-            ) { Text(stringResource(R.string.settings_delete_all)) }
-            Text(
-                stringResource(R.string.settings_delete_all_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
             Text(stringResource(R.string.settings_about), style = MaterialTheme.typography.titleMedium)
-            OutlinedButton(onClick = onOpenWhatsNew, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.settings_whats_new))
-            }
-            Text(
-                stringResource(R.string.settings_whats_new_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            SettingsRow(
+                icon = Icons.Filled.NewReleases,
+                title = stringResource(R.string.settings_whats_new),
+                description = stringResource(R.string.settings_whats_new_desc),
+                onClick = onOpenWhatsNew,
             )
-            OutlinedButton(onClick = onOpenAbout, modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.settings_about_button))
-            }
-            Text(
-                stringResource(R.string.settings_about_desc),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            SettingsRow(
+                icon = Icons.Filled.Info,
+                title = stringResource(R.string.settings_about_button),
+                description = stringResource(R.string.settings_about_desc),
+                onClick = onOpenAbout,
             )
         }
     }

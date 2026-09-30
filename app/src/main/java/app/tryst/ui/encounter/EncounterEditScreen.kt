@@ -78,6 +78,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -181,10 +182,18 @@ fun EncounterEditScreen(
                 title = { Text(stringResource(if (ui.isEditing) R.string.encounter_title_edit else R.string.encounter_title_new)) },
                 navigationIcon = { TextButton(onClick = attemptClose) { Text(stringResource(R.string.action_cancel)) } },
                 actions = {
+                    // The one action on this screen that isn't reversible from here — give it real
+                    // weight against "Cancel" instead of matching it exactly (D-59).
                     TextButton(onClick = {
                         haptics.confirm()
                         viewModel.save(onClose)
-                    }) { Text(stringResource(R.string.action_save)) }
+                    }) {
+                        Text(
+                            stringResource(R.string.action_save),
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                 },
             )
         },
