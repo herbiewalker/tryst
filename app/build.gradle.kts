@@ -37,6 +37,10 @@ android {
 
     buildTypes {
         release {
+            // AGP stamps the current git commit into META-INF/version-control-info.textproto. It's
+            // the only thing that made two builds differ, so drop it: the APK then depends only on
+            // the source tree, not on repo state, which keeps release builds reproducible (issue #4).
+            vcsInfo.include = false
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
