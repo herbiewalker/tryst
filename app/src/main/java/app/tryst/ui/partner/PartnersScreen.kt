@@ -199,7 +199,7 @@ private fun PartnerRow(
                 Text(Format.partnerName(partner), style = MaterialTheme.typography.titleMedium)
                 val descriptor = listOfNotNull(
                     partner.relationshipType?.label,
-                    partner.gender?.label ?: partner.sex?.label,
+                    partner.gender?.label ?: partner.sex?.label, partner.orientation?.label,
                     partner.birthDate?.let { Format.age(it) }?.let { stringResource(R.string.demo_age, it) },
                 ).joinToString(" · ")
                 if (descriptor.isNotEmpty()) {

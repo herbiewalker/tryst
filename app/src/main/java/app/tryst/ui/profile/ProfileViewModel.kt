@@ -22,6 +22,7 @@ import app.tryst.core.session.SessionManager
 import app.tryst.data.db.entity.BodyType
 import app.tryst.data.db.entity.Ethnicity
 import app.tryst.data.db.entity.Gender
+import app.tryst.data.db.entity.Orientation
 import app.tryst.data.db.entity.PersonPhotoEntity
 import app.tryst.data.db.entity.ProfileEntity
 import app.tryst.data.db.entity.Sex
@@ -45,6 +46,7 @@ data class ProfileDraft(
     val displayName: String,
     val sex: Sex?,
     val gender: Gender?,
+    val orientation: Orientation?,
     val birthDate: Long?,
     val ethnicity: Ethnicity?,
     val height: String,
@@ -152,6 +154,7 @@ class ProfileViewModel @Inject constructor(
                     photoMediaId = photoMediaId,
                     sex = draft.sex,
                     gender = draft.gender,
+                    orientation = draft.orientation,
                     birthDate = draft.birthDate,
                     ethnicity = draft.ethnicity,
                     height = draft.height.trim().ifBlank { null },

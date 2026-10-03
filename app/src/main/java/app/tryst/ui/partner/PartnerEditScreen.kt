@@ -50,6 +50,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
 import app.tryst.data.db.entity.Gender
+import app.tryst.data.db.entity.Orientation
 import app.tryst.data.db.entity.RelationshipType
 import app.tryst.data.db.entity.Sex
 import app.tryst.ui.common.DemographicFields
@@ -145,6 +146,7 @@ fun PartnerEditScreen(
             }
             OptionalChips(stringResource(R.string.partner_sex), Sex.entries, ui.sex, viewModel::setSex)
             OptionalChips(stringResource(R.string.partner_gender), Gender.entries, ui.gender, viewModel::setGender)
+            OptionalChips(stringResource(R.string.partner_orientation), Orientation.entries, ui.orientation, viewModel::setOrientation)
             OptionalChips(stringResource(R.string.partner_relationship), RelationshipType.entries, ui.relationshipType, viewModel::setRelationship)
             DemographicFields(
                 birthDate = ui.birthDate,

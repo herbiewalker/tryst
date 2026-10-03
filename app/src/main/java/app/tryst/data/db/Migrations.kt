@@ -307,6 +307,14 @@ val MIGRATION_15_16 = object : Migration(15, 16) {
     }
 }
 
+/** v16 -> v17: adds sexual orientation field for ProfileEntity and PartnerEntity */
+val MIGRATION_16_17 = object: Migration(16, 17) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE profile ADD COLUMN orientation TEXT");
+        db.execSQL("ALTER TABLE partners ADD COLUMN orientation TEXT");
+    }
+}
+
 /** All migrations, in order. */
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
@@ -324,6 +332,7 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_13_14,
     MIGRATION_14_15,
     MIGRATION_15_16,
+    MIGRATION_16_17,
 )
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣
