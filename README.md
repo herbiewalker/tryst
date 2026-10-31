@@ -55,7 +55,7 @@ Privacy isn't a setting here — it's the architecture.
   acts, kinks, positions, toys, occasions, and finish locations on a dedicated management page per
   category. Everything you add — or had already logged — counts fully across Insights and Achievements.
 - **Partners & a self profile** — named or anonymous partners with relationship type and optional
-  demographics (age, ethnicity, height, body type, location) and a **portrait album per person** (a set
+  demographics (age, ethnicity, height, body type, orientation from labels you write yourself, location) and a **portrait album per person** (a set
   of photos you can rotate the current avatar from), plus your own profile.
 - **Photos gallery** — a browsable Photos tab over every image attached to a tryst plus every person's
   portrait album, with layouts (date grid, mosaic, by-partner, People avatars, feed), search, filters,
@@ -111,9 +111,11 @@ Screenshots are black by design on-device (`FLAG_SECURE`).
 
 ## Status
 
-✅ **Shipped.** Current release **v0.6.1** (versionCode 17, schema v16). Distribution is **F-Droid**,
+✅ **Shipped.** Current release **v0.6.2** (versionCode 18, schema v17). Distribution is **F-Droid**,
 which builds and signs from this source. Tryst ships no binary and commits no signing key.
 
+- **0.6.2** adds an optional **orientation** field on your profile and partners, picked from labels you write
+  yourself (nothing is preset). It is the first schema bump since 0.5.3 (v17), additive only.
 - **0.6.1** is a photo pass. Swiping between photos in the viewer works again, and you can now delete
   from the viewer, swipe down to close it, drag across photos to select a run, and jump through a long
   timeline with a fast scroller.
@@ -126,7 +128,7 @@ which builds and signs from this source. Tryst ships no binary and commits no si
   encrypted-backup restore, inline add for every catalog category, and the fixes from a formal 7-lens
   post-release audit ([docs/audits/2026-07-30-triage.md](docs/audits/2026-07-30-triage.md)).
 
-Everything you had already logged is preserved across every schema bump (v13→v14→v15→v16, all
+Everything you had already logged is preserved across every schema bump (v13→v14→v15→v16→v17, all
 additive-only).
 
 Full release notes are in [CHANGELOG.md](CHANGELOG.md); the milestone history and pre-release audit
@@ -140,7 +142,7 @@ program live in [docs/ROADMAP.md](docs/ROADMAP.md), and post-1.0 plans in
 | [REQUIREMENTS.md](docs/REQUIREMENTS.md) | Functional & non-functional requirements |
 | [THREAT_MODEL.md](docs/THREAT_MODEL.md) | Adversaries, mitigations, residual risk |
 | [SECURITY_DESIGN.md](docs/SECURITY_DESIGN.md) | Encryption & key management |
-| [DATA_MODEL.md](docs/DATA_MODEL.md) | Entities & fields (schema v16) |
+| [DATA_MODEL.md](docs/DATA_MODEL.md) | Entities & fields (schema v17) |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack & module layout |
 | [FLOWCHARTS.md](docs/FLOWCHARTS.md) | Visual maps of the core logic flows |
 | [ROADMAP.md](docs/ROADMAP.md) | Milestones & the 12-pass pre-release audit |

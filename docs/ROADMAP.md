@@ -1,7 +1,7 @@
 # Tryst — Roadmap / Milestones
 
-> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.6.1**
-> (schema v16). Each milestone ended runnable & tested. This file is the milestone *history* (see
+> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.6.2**
+> (schema v17). Each milestone ended runnable & tested. This file is the milestone *history* (see
 > the dated notes below); forward work lives in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
 
 > **Update (2026-10-31):** **v0.6.1** shipped (photo viewer and grid pass). **Next:** DEMO-1

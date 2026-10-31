@@ -33,6 +33,15 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.6.2",
+            versionCode = 18,
+            date = "2026-10-31",
+            highlights = listOf(
+                "A new optional Orientation field on your profile and on partners. You write the labels yourself under Settings → Manage orientations, so nothing is preset. Clear it any time, and deleting a label removes it from everyone who had it.",
+                "It shows on the Partners list and is included in encrypted backups. A backup made in this version won't restore into older versions of Tryst.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.6.1",
             versionCode = 17,
             date = "2026-10-31",

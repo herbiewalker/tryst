@@ -13,6 +13,20 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.6.2] — 2026-10-31 (versionCode 18)
+
+### Added
+
+- **Orientation on partners and your profile (optional).** Settings → Manage orientations is a list
+  you write yourself, with nothing preset. Pick one on a profile or a partner and clear it any time.
+  Deleting a label removes it from everyone who had it. It shows on the Partners list and is included
+  in encrypted backups; older backups restore with it empty.
+
+### Changed
+
+- **Database schema v17 (additive).** Upgrading keeps all your data. A backup made in this version
+  can't be restored into an older version of Tryst.
+
 ## [0.6.1] — 2026-10-31 (versionCode 17)
 
 ### Fixed
