@@ -452,6 +452,7 @@ fun GalleryScreen(
             bustKey = { blobId -> viewModel.photoBustKey(blobId) },
             onRotate = { photo, degrees -> viewModel.rotate(photo, degrees) },
             onCrop = { photo, rect -> viewModel.crop(photo, rect) },
+            onDelete = viewModel::deletePhoto,
         )
     }
 }

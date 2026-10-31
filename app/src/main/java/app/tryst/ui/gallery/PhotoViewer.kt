@@ -13,6 +13,7 @@
 // ╰──────────────────────────────────────────────────────────────────╯
 package app.tryst.ui.gallery
 
+import androidx.compose.animation.core.animate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -43,8 +44,10 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.outlined.Notes
 import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PersonPin
 import androidx.compose.material.icons.filled.Slideshow
 import androidx.compose.material.icons.outlined.Edit
@@ -77,6 +80,8 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.tryst.R
@@ -96,6 +101,7 @@ private const val VIEWER_PX = 1600
 private const val FILMSTRIP_PX = 160
 private const val MAX_ZOOM = 4f
 private const val PAN_EPSILON = 0.5f
+private val DISMISS_DISTANCE = 120.dp
 
 /** Keeps a zoomed photo's pan inside the room the zoom created, so it can't be dragged off screen. */
 private fun clampPan(offset: Float, extent: Int, scale: Float): Float {
@@ -139,13 +145,23 @@ fun PhotoViewer(
     bustKey: (String) -> Any,
     onRotate: (GalleryPhoto, Int) -> Unit,
     onCrop: (GalleryPhoto, app.tryst.data.media.FractionalRect) -> Unit,
+    onDelete: (GalleryPhoto) -> Unit,
 ) {
     if (photos.isEmpty()) return
     val pagerState = rememberPagerState(
         initialPage = initialIndex.coerceIn(0, photos.lastIndex),
         pageCount = { photos.size },
     )
+    // After a delete the photo list shrinks a frame before the pager re-clamps its page, so every
+    // read of the current photo goes through this clamped index.
+    val page = pagerState.currentPage.coerceIn(0, photos.lastIndex)
     var chromeVisible by remember { mutableStateOf(true) }
+    var moreMenu by remember { mutableStateOf(false) }
+    var confirmDelete by remember { mutableStateOf<GalleryPhoto?>(null) }
+    // Swipe-down-to-close: how far the photo has been dragged vertically (px), and the close threshold.
+    var dismissY by remember { mutableFloatStateOf(0f) }
+    val dismissDistance = with(LocalDensity.current) { DISMISS_DISTANCE.toPx() }
+    val dismissProgress = (abs(dismissY) / (dismissDistance * 2.5f)).coerceIn(0f, 1f)
     var showInfo by remember { mutableStateOf(false) }
     var slideshow by remember { mutableStateOf(false) }
     var avatarMenu by remember { mutableStateOf(false) }
@@ -181,30 +197,49 @@ fun PhotoViewer(
         pagerState.animateScrollToPage(next)
     }
 
-    Box(Modifier.fillMaxSize().background(Color.Black)) {
-        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
+    Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 1f - 0.75f * dismissProgress))) {
+        HorizontalPager(
+            state = pagerState,
+            // Keep the neighbours composed so their images are decoded before you swipe to them.
+            beyondViewportPageCount = 1,
+            key = { index -> photos.getOrNull(index)?.blobId ?: index },
+            modifier = Modifier.fillMaxSize().graphicsLayer {
+                translationY = dismissY
+                val shrink = 1f - 0.15f * dismissProgress
+                scaleX = shrink
+                scaleY = shrink
+            },
+        ) { index ->
             ZoomablePhoto(
-                photo = photos[page],
-                modelKey = bustKey(photos[page].blobId),
+                photo = photos[index],
+                modelKey = bustKey(photos[index].blobId),
                 onLoad = onLoad,
                 onTap = { chromeVisible = !chromeVisible },
                 // Only the settled page reads gestures, so a mid-swipe pinch doesn't fight the pager.
-                zoomEnabled = page == pagerState.currentPage,
+                zoomEnabled = index == pagerState.currentPage,
+                onDismissDrag = { dy -> dismissY += dy },
+                onDismissEnd = {
+                    if (abs(dismissY) > dismissDistance) {
+                        onClose()
+                    } else {
+                        scope.launch { animate(dismissY, 0f) { value, _ -> dismissY = value } }
+                    }
+                },
             )
         }
 
         // Favourite pill sits on the photo itself (bottom-right, safe area) so the top chrome's
         // "N / M" counter is never covered. Stays visible whether or not the chrome is showing —
         // it's a photo-level control, not part of the top bar.
-        val currentPhoto = photos[pagerState.currentPage]
+        val currentPhoto = photos[page]
         FavouritePill(
             favourite = currentPhoto.favorite,
             onToggle = { onToggleFavorite(currentPhoto) },
             modifier = Modifier.align(Alignment.BottomEnd).navigationBarsPadding().padding(bottom = 84.dp, end = 16.dp),
         )
 
-        if (chromeVisible) {
-            val current = photos[pagerState.currentPage]
+        if (chromeVisible && dismissY == 0f) {
+            val current = photos[page]
             Box(
                 Modifier.fillMaxWidth().align(Alignment.TopStart)
                     .background(Color.Black.copy(alpha = 0.35f))
@@ -222,7 +257,7 @@ fun PhotoViewer(
                         Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close), tint = Color.White)
                     }
                     Text(
-                        text = "${pagerState.currentPage + 1} / ${photos.size}",
+                        text = "${page + 1} / ${photos.size}",
                         color = Color.White,
                         style = MaterialTheme.typography.labelLarge,
                     )
@@ -233,48 +268,6 @@ fun PhotoViewer(
                             Icons.Filled.Slideshow,
                             contentDescription = stringResource(R.string.gallery_slideshow),
                             tint = if (slideshow) ACCENT else Color.White,
-                        )
-                    }
-                    Box {
-                        IconButton(
-                            onClick = { addToPersonMenu = true },
-                            enabled = assignablePeople.isNotEmpty(),
-                        ) {
-                            Icon(
-                                Icons.Filled.AddPhotoAlternate,
-                                contentDescription = stringResource(R.string.gallery_add_to_person_photos),
-                                tint = if (assignablePeople.isNotEmpty()) Color.White else Color.White.copy(alpha = 0.4f),
-                            )
-                        }
-                        AddToPersonMenu(
-                            expanded = addToPersonMenu,
-                            people = assignablePeople,
-                            onDismiss = { addToPersonMenu = false },
-                            onPick = { p ->
-                                onAddToPerson(current.blobId, p.kind, p.ownerId)
-                                addToPersonMenu = false
-                            },
-                        )
-                    }
-                    Box {
-                        IconButton(
-                            onClick = { avatarMenu = true },
-                            enabled = current.partners.isNotEmpty(),
-                        ) {
-                            Icon(
-                                Icons.Filled.PersonPin,
-                                contentDescription = stringResource(R.string.gallery_set_avatar),
-                                tint = if (current.partners.isNotEmpty()) Color.White else Color.White.copy(alpha = 0.4f),
-                            )
-                        }
-                        AvatarPartnerMenu(
-                            expanded = avatarMenu,
-                            partners = current.partners,
-                            onDismiss = { avatarMenu = false },
-                            onPick = { partnerId ->
-                                onSetAvatar(current.blobId, partnerId)
-                                avatarMenu = false
-                            },
                         )
                     }
                     if (captionEntryPoint.showsTopRowButton && current.media != null) {
@@ -300,12 +293,70 @@ fun PhotoViewer(
                             tint = if (showInfo) ACCENT else Color.White,
                         )
                     }
-                    val enc = current.encounterId
-                    IconButton(onClick = { enc?.let(onOpenEncounter) }, enabled = enc != null) {
+                    IconButton(onClick = { confirmDelete = current }) {
                         Icon(
-                            Icons.AutoMirrored.Filled.OpenInNew,
-                            contentDescription = stringResource(R.string.gallery_open_tryst),
-                            tint = if (enc != null) Color.White else Color.White.copy(alpha = 0.4f),
+                            Icons.Filled.Delete,
+                            contentDescription = stringResource(R.string.action_delete),
+                            tint = Color.White,
+                        )
+                    }
+                    // Less-used actions live in an overflow menu so the bar never crowds the counter.
+                    val enc = current.encounterId
+                    Box {
+                        IconButton(onClick = { moreMenu = true }) {
+                            Icon(
+                                Icons.Filled.MoreVert,
+                                contentDescription = stringResource(R.string.action_more),
+                                tint = Color.White,
+                            )
+                        }
+                        DropdownMenu(expanded = moreMenu, onDismissRequest = { moreMenu = false }) {
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.gallery_add_to_person_photos)) },
+                                leadingIcon = { Icon(Icons.Filled.AddPhotoAlternate, contentDescription = null) },
+                                enabled = assignablePeople.isNotEmpty(),
+                                onClick = {
+                                    moreMenu = false
+                                    addToPersonMenu = true
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.gallery_set_avatar)) },
+                                leadingIcon = { Icon(Icons.Filled.PersonPin, contentDescription = null) },
+                                enabled = current.partners.isNotEmpty(),
+                                onClick = {
+                                    moreMenu = false
+                                    avatarMenu = true
+                                },
+                            )
+                            DropdownMenuItem(
+                                text = { Text(stringResource(R.string.gallery_open_tryst)) },
+                                leadingIcon = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null) },
+                                enabled = enc != null,
+                                onClick = {
+                                    moreMenu = false
+                                    enc?.let(onOpenEncounter)
+                                },
+                            )
+                        }
+                        // The two pickers open from the overflow button's anchor once chosen above.
+                        AddToPersonMenu(
+                            expanded = addToPersonMenu,
+                            people = assignablePeople,
+                            onDismiss = { addToPersonMenu = false },
+                            onPick = { p ->
+                                onAddToPerson(current.blobId, p.kind, p.ownerId)
+                                addToPersonMenu = false
+                            },
+                        )
+                        AvatarPartnerMenu(
+                            expanded = avatarMenu,
+                            partners = current.partners,
+                            onDismiss = { avatarMenu = false },
+                            onPick = { partnerId ->
+                                onSetAvatar(current.blobId, partnerId)
+                                avatarMenu = false
+                            },
                         )
                     }
                 }
@@ -314,15 +365,15 @@ fun PhotoViewer(
             Column(Modifier.align(Alignment.BottomStart).fillMaxWidth()) {
                 if (showInfo) {
                     PhotoInfoPanel(
-                        photo = photos[pagerState.currentPage],
+                        photo = photos[page],
                         onLoadMeta = onLoadMeta,
                         showCaptionRow = captionEntryPoint.showsInfoPanelField,
-                        onEditCaption = { editingCaption = photos[pagerState.currentPage] },
+                        onEditCaption = { editingCaption = photos[page] },
                     )
                 }
                 Filmstrip(
                     photos = photos,
-                    currentPage = pagerState.currentPage,
+                    currentPage = page,
                     onLoad = onLoad,
                     bustKey = bustKey,
                     onSelect = { index -> scope.launch { pagerState.animateScrollToPage(index) } },
@@ -343,7 +394,7 @@ fun PhotoViewer(
     }
 
     if (editSheetOpen) {
-        val current = photos[pagerState.currentPage]
+        val current = photos[page]
         EditPhotoSheet(
             onDismiss = { editSheetOpen = false },
             onRotate = { deg ->
@@ -366,6 +417,23 @@ fun PhotoViewer(
             onSave = { rect ->
                 onCrop(photo, rect)
                 cropping = null
+            },
+        )
+    }
+
+    confirmDelete?.let { photo ->
+        AlertDialog(
+            onDismissRequest = { confirmDelete = null },
+            title = { Text(pluralStringResource(R.plurals.gallery_delete_title, 1, 1)) },
+            text = { Text(stringResource(R.string.gallery_delete_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmDelete = null
+                    onDelete(photo)
+                }) { Text(stringResource(R.string.action_delete)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmDelete = null }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }
@@ -594,6 +662,8 @@ private fun ZoomablePhoto(
     onLoad: suspend (blobId: String, reqPx: Int) -> ImageBitmap?,
     onTap: () -> Unit,
     zoomEnabled: Boolean,
+    onDismissDrag: (dy: Float) -> Unit,
+    onDismissEnd: () -> Unit,
 ) {
     var scale by remember(modelKey) { mutableFloatStateOf(1f) }
     var offsetX by remember(modelKey) { mutableFloatStateOf(0f) }
@@ -609,6 +679,9 @@ private fun ZoomablePhoto(
                 // or a pan the zoomed photo can still absorb; otherwise it falls through to the pager.
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false)
+                    var dragX = 0f
+                    var dragY = 0f
+                    var dismissing = false
                     do {
                         val event = awaitPointerEvent()
                         if (event.changes.none { it.isConsumed }) {
@@ -635,9 +708,23 @@ private fun ZoomablePhoto(
                                 offsetX = newX
                                 offsetY = newY
                                 if (absorbed) event.changes.forEach { it.consume() }
+                            } else {
+                                // One finger on an un-zoomed photo: a mostly-vertical drag pulls the photo down to close;
+                                // anything else is left alone for the pager.
+                                val pan = event.calculatePan()
+                                dragX += pan.x
+                                dragY += pan.y
+                                if (!dismissing && abs(dragY) > viewConfiguration.touchSlop && abs(dragY) > abs(dragX) * 1.5f) {
+                                    dismissing = true
+                                    onDismissDrag(dragY)
+                                } else if (dismissing) {
+                                    onDismissDrag(pan.y)
+                                }
+                                if (dismissing) event.changes.forEach { it.consume() }
                             }
                         }
                     } while (event.changes.any { it.pressed })
+                    if (dismissing) onDismissEnd()
                 }
             }
             .pointerInput(photo.id) {

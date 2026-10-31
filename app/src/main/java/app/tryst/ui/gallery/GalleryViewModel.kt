@@ -440,12 +440,18 @@ class GalleryViewModel @Inject constructor(
 
     fun deleteSelected() = viewModelScope.launch {
         val ids = _selectedIds.value
-        val selected = uiState.value.photos.filter { it.id in ids }
-        val encounterMedia = selected.mapNotNull { it.media }
-        val portraitBlobIds = selected.filter { it.source is GalleryPhoto.Source.Person }.map { it.blobId }
+        deletePhotos(uiState.value.photos.filter { it.id in ids })
+        clearSelection()
+    }
+
+    /** Deletes one photo from the full-screen viewer (same removal path as bulk delete). */
+    fun deletePhoto(photo: GalleryPhoto) = viewModelScope.launch { deletePhotos(listOf(photo)) }
+
+    private suspend fun deletePhotos(photos: List<GalleryPhoto>) {
+        val encounterMedia = photos.mapNotNull { it.media }
+        val portraitBlobIds = photos.filter { it.source is GalleryPhoto.Source.Person }.map { it.blobId }
         encounterRepository.deleteMedia(encounterMedia)
         portraitBlobIds.forEach { personPhotoRepository.deleteByBlobId(it) }
-        clearSelection()
     }
 
     /** Reassign only applies to encounter photos — portraits belong to a person, not a tryst. */
