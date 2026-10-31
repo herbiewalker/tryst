@@ -10,11 +10,13 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?logo=kotlin&logoColor=white)](#built-with)
 [![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4?logo=jetpackcompose&logoColor=white)](#built-with)
 [![Offline only](https://img.shields.io/badge/network-none-critical)](#why-tryst)
-[![Release](https://img.shields.io/badge/release-v0.6.0-success)](CHANGELOG.md)
+[![Release](https://img.shields.io/github/v/tag/herbiewalker/tryst?label=release&color=success)](CHANGELOG.md)
 
 Tryst keeps your most personal data on your phone and nowhere else — no account, no sync,
 and **no internet permission at all**, so the app *cannot* send your data anywhere.
 Inspired by other tracking apps you need to pay for, and built so privacy is the feature, not a footnote.
+
+<a href="https://f-droid.org/packages/app.tryst/"><img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid" height="80" /></a>
 
 <a href="fastlane/metadata/android/en-US/images/phoneScreenshots/01_trysts_list.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01_trysts_list.png" width="18%" alt="Trysts list" /></a>
 <a href="fastlane/metadata/android/en-US/images/phoneScreenshots/02_trysts_calendar.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02_trysts_calendar.png" width="18%" alt="Calendar heatmap" /></a>
@@ -57,8 +59,10 @@ Privacy isn't a setting here — it's the architecture.
   of photos you can rotate the current avatar from), plus your own profile.
 - **Photos gallery** — a browsable Photos tab over every image attached to a tryst plus every person's
   portrait album, with layouts (date grid, mosaic, by-partner, People avatars, feed), search, filters,
-  favourites, bulk actions, a slideshow, pinch-to-zoom viewer, and — the "add-to-person" action — one
-  tap in the viewer to also file a photo under any partner (or You).
+  favourites, bulk actions, a slideshow, and a full-screen viewer you swipe through, pinch to zoom, swipe down to
+  close, and delete from. Select photos by long-pressing and dragging across a run, and jump around a
+  long timeline with the fast scroller and its month bubble. One tap in the viewer also files a photo
+  under any partner (or You).
 - **Insights** — a pure-Kotlin stats engine: totals, week streaks, averages, monthly & weekday
   trends, and per-attribute breakdowns. Reorder/hide tiles and cards, pick a chart style per card
   (bars / line / donut), with stable per-type colors. Charts are **hand-drawn** — no chart dependency.
@@ -81,6 +85,16 @@ fully FOSS. Architecture is MVVM + repository with a package-by-feature layout; 
 achievements engines are stateless and JVM-unit-tested. See
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/FLOWCHARTS.md](docs/FLOWCHARTS.md).
 
+## Install
+
+Tryst is distributed through **F-Droid**, which builds and signs it from this source:
+
+**[Get Tryst on F-Droid](https://f-droid.org/packages/app.tryst/)** (Android 12 or newer).
+
+There is no APK attached to GitHub releases and no signing key in this repo. To run your own build,
+see [Building](#building) below. F-Droid builds each tagged release, so a new version can take a
+little while to appear there after it is tagged here.
+
 ## Building
 
 Full toolchain notes are in [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md). The essentials:
@@ -98,20 +112,22 @@ Screenshots are black by design on-device (`FLAG_SECURE`).
 ## Status
 
 ✅ **Shipped.** Current release **v0.6.1** (versionCode 17, schema v16). Distribution is **F-Droid**,
-which builds and signs from this source — Tryst ships no binary and commits no signing key. The
-**0.6.x** line opens with **settings that survive a backup**: theme, Insights layout, and Photos
-layout preferences now ride the encrypted export (container format v2, backward-compatible with
-v1 backups) instead of resetting on a new phone, plus a color refresh that ties the app's palette
-to its own launcher icon and a pass of button/layout polish (a clearer Save action, borderless
-Settings rows, unified corner radii). The **0.5.x** line before it delivered the **Photos** tab: a
-browsable gallery over every image attached to a tryst plus every person's portrait album, with
-search, filters, favourites, bulk actions, a slideshow, and a pinch-to-zoom viewer with
-add-to-person and set-as-avatar actions; a **full-screen partner editor** with a per-person photo
-strip; **atomic encrypted-backup restore** with a "replace my data" checkbox default-on; **inline
-add** for every catalog category directly from the encounter editor; and a raft of behaviour +
-verbiage polish out of a formal 7-lens post-release audit
-([docs/audits/2026-07-30-triage.md](docs/audits/2026-07-30-triage.md)). Everything you had already
-logged is preserved across every schema bump (v13→v14→v15→v16, all additive-only).
+which builds and signs from this source. Tryst ships no binary and commits no signing key.
+
+- **0.6.1** is a photo pass. Swiping between photos in the viewer works again, and you can now delete
+  from the viewer, swipe down to close it, drag across photos to select a run, and jump through a long
+  timeline with a fast scroller.
+- **0.6.0** made **settings survive a backup**: theme, Insights layout, and Photos layout preferences
+  ride the encrypted export (container format v2, backward-compatible with v1 backups) instead of
+  resetting on a new phone. It also brought a color refresh tied to the launcher icon and a pass of
+  button and layout polish.
+- **0.5.x** delivered the **Photos** tab (a gallery over every tryst photo and every person's portrait
+  album, with search, filters, favourites and a slideshow), a full-screen partner editor, atomic
+  encrypted-backup restore, inline add for every catalog category, and the fixes from a formal 7-lens
+  post-release audit ([docs/audits/2026-07-30-triage.md](docs/audits/2026-07-30-triage.md)).
+
+Everything you had already logged is preserved across every schema bump (v13→v14→v15→v16, all
+additive-only).
 
 Full release notes are in [CHANGELOG.md](CHANGELOG.md); the milestone history and pre-release audit
 program live in [docs/ROADMAP.md](docs/ROADMAP.md), and post-1.0 plans in
