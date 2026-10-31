@@ -97,7 +97,7 @@ Screenshots are black by design on-device (`FLAG_SECURE`).
 
 ## Status
 
-✅ **Shipped.** Current release **v0.6.0** (versionCode 16, schema v16). Distribution is **F-Droid**,
+✅ **Shipped.** Current release **v0.6.1** (versionCode 17, schema v16). Distribution is **F-Droid**,
 which builds and signs from this source — Tryst ships no binary and commits no signing key. The
 **0.6.x** line opens with **settings that survive a backup**: theme, Insights layout, and Photos
 layout preferences now ride the encrypted export (container format v2, backward-compatible with

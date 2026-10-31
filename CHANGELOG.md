@@ -13,6 +13,8 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.6.1] — 2026-10-31 (versionCode 17)
+
 ### Fixed
 
 - **Swiping between photos works again.** In the full-screen viewer, a one-finger swipe on a photo
