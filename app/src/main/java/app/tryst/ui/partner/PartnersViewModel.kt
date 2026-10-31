@@ -25,6 +25,7 @@ import app.tryst.data.db.entity.Gender
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.RelationshipType
 import app.tryst.data.db.entity.Sex
+import app.tryst.data.repository.OrientationRepository
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.ui.common.MediaImages
 import app.tryst.ui.gallery.GalleryDeepLink
@@ -37,6 +38,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -65,7 +67,15 @@ class PartnersViewModel @Inject constructor(
     private val session: SessionManager,
     private val repository: PartnerRepository,
     private val galleryDeepLink: GalleryDeepLink,
+    orientationRepository: OrientationRepository,
 ) : ViewModel() {
+
+    /** Orientation id → label, so list rows can show the chosen label. */
+    val orientationLabels: StateFlow<Map<String, String>> =
+        orientationRepository.observeAll()
+            .map { rows -> rows.associate { it.id to it.label } }
+            .catch { emit(emptyMap()) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     /** Keep the app unlocked across the photo-picker/camera handoff. */
     fun suppressAutoLock() = session.suppressNextAutoLock()
@@ -117,6 +127,7 @@ class PartnersViewModel @Inject constructor(
                     ethnicity = draft.ethnicity,
                     height = draft.height.trim().ifBlank { null },
                     bodyType = draft.bodyType,
+                    orientation = existing?.orientation,
                     location = draft.location.trim().ifBlank { null },
                     archivedAt = existing?.archivedAt,
                     createdAt = existing?.createdAt ?: now,

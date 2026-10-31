@@ -10,7 +10,9 @@
 
 - **A1** Encounter records (the highly sensitive content).
 - **A2** Partner identities — including the v7 **demographics** (date of birth, ethnicity, height,
-  body type, location) attached to each partner.
+  body type, location, and the optional user-labelled **orientation**) attached to each partner. The
+  orientation labels and the chosen id live only in the encrypted DB and the encrypted backup, so
+  they add no new surface.
 - **A3** Photo attachments — encounter photos, partner avatars, and the self-profile photo.
 - **A4** The mere fact / metadata of usage (timestamps, app presence).
 - **A5** The user's **own** identifying data — the single-row `profile` (name, photo, sex/gender,

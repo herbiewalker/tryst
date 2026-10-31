@@ -483,6 +483,45 @@ class MigrationTest {
     }
 
     /**
+     * v16 → v17 (DEMO-1): adds the `orientations` catalog table plus a nullable `orientation` column on
+     * `partners` and `profile`. Existing rows must survive with the column NULL, the new table starts
+     * empty, its label index is unique, and the columns are writable.
+     */
+    @Test
+    fun migrate16To17_addsOrientationTableAndColumnsDefaultingNull() {
+        helper.createDatabase(dbName, 16).use { db ->
+            db.execSQL(
+                "INSERT INTO partners (id, displayName, isAnonymous, createdAt, updatedAt) VALUES ('p1', 'Sam', 0, 1, 1)",
+            )
+            db.execSQL("INSERT INTO profile (id, updatedAt) VALUES ('self', 1)")
+        }
+
+        helper.runMigrationsAndValidate(dbName, 17, true, MIGRATION_16_17).use { db ->
+            db.query("SELECT displayName, orientation FROM partners WHERE id = 'p1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("Sam", c.getString(0))
+                assertTrue("partner orientation defaults to NULL", c.isNull(1))
+            }
+            db.query("SELECT orientation FROM profile WHERE id = 'self'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertTrue("profile orientation defaults to NULL", c.isNull(0))
+            }
+            db.query("SELECT COUNT(*) FROM orientations").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("catalog starts empty", 0, c.getInt(0))
+            }
+            db.execSQL("INSERT INTO orientations (id, label) VALUES ('o1', 'Label A')")
+            db.execSQL("UPDATE partners SET orientation = 'o1' WHERE id = 'p1'")
+            db.query("SELECT orientation FROM partners WHERE id = 'p1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("o1", c.getString(0))
+            }
+            val duplicate = runCatching { db.execSQL("INSERT INTO orientations (id, label) VALUES ('o2', 'Label A')") }
+            assertTrue("label is unique", duplicate.isFailure)
+        }
+    }
+
+    /**
      * v13 → v14 (GAL-3): adds the `media.favorite` flag. Additive DDL — every existing media row must
      * default to not-favourited (0), existing data is untouched, and the column is writable.
      */

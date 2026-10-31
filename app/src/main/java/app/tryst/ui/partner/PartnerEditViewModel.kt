@@ -30,6 +30,7 @@ import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.PersonPhotoEntity
 import app.tryst.data.db.entity.RelationshipType
 import app.tryst.data.db.entity.Sex
+import app.tryst.data.repository.OrientationRepository
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.data.repository.PersonPhotoRepository
 import app.tryst.ui.common.MediaImages
@@ -42,6 +43,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -61,6 +63,7 @@ data class PartnerEditUiState(
     val ethnicity: Ethnicity? = null,
     val height: String = "",
     val bodyType: BodyType? = null,
+    val orientation: String? = null,
     val location: String = "",
     val existing: PartnerEntity? = null,
 ) {
@@ -75,7 +78,15 @@ class PartnerEditViewModel @Inject constructor(
     private val session: SessionManager,
     private val partnerRepository: PartnerRepository,
     private val personPhotoRepository: PersonPhotoRepository,
+    orientationRepository: OrientationRepository,
 ) : ViewModel() {
+
+    /** The user's orientation labels, as `id → label` pairs for the chip row. */
+    val orientations: StateFlow<List<Pair<String, String>>> =
+        orientationRepository.observeAll()
+            .map { rows -> rows.map { it.id to it.label } }
+            .catch { emit(emptyList()) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** null when creating a new partner. Set once on load; drives auto-save for photo actions. */
     val partnerId: String? = savedStateHandle.get<String>("partnerId")?.takeIf { it != "new" }
@@ -122,6 +133,7 @@ class PartnerEditViewModel @Inject constructor(
                 ethnicity = existing.ethnicity,
                 height = existing.height.orEmpty(),
                 bodyType = existing.bodyType,
+                orientation = existing.orientation,
                 location = existing.location.orEmpty(),
                 existing = existing,
             )
@@ -161,6 +173,9 @@ class PartnerEditViewModel @Inject constructor(
     fun setBodyType(value: BodyType?) {
         uiState = uiState.copy(bodyType = value)
     }
+    fun setOrientation(value: String?) {
+        uiState = uiState.copy(orientation = value)
+    }
     fun setLocation(value: String) {
         uiState = uiState.copy(location = value)
     }
@@ -187,6 +202,7 @@ class PartnerEditViewModel @Inject constructor(
                     ethnicity = s.ethnicity,
                     height = s.height.trim().ifBlank { null },
                     bodyType = s.bodyType,
+                    orientation = s.orientation,
                     location = s.location.trim().ifBlank { null },
                     archivedAt = existing?.archivedAt,
                     createdAt = existing?.createdAt ?: now,

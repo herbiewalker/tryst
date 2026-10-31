@@ -71,10 +71,12 @@ private const val AVATAR_PX = 320
 fun ProfileScreen(onBack: () -> Unit, viewModel: ProfileViewModel = hiltViewModel()) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
     val photos by viewModel.photos.collectAsStateWithLifecycle()
+    val orientations by viewModel.orientations.collectAsStateWithLifecycle()
     key(profile) {
         ProfileEditor(
             initial = profile,
             photos = photos,
+            orientations = orientations,
             onSuppressAutoLock = { viewModel.suppressAutoLock() },
             onAddPhotos = viewModel::addPhotos,
             onDeletePhoto = viewModel::deletePhoto,
@@ -88,10 +90,11 @@ fun ProfileScreen(onBack: () -> Unit, viewModel: ProfileViewModel = hiltViewMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@Suppress("LongParameterList", "LongMethod")
+@Suppress("LongParameterList", "LongMethod", "CyclomaticComplexMethod") // One straight-line form; the dirty check is a flat `||` chain.
 private fun ProfileEditor(
     initial: ProfileEntity?,
     photos: List<app.tryst.data.db.entity.PersonPhotoEntity>,
+    orientations: List<Pair<String, String>>,
     onSuppressAutoLock: () -> Unit,
     onAddPhotos: (List<android.net.Uri>) -> Unit,
     onDeletePhoto: (app.tryst.data.db.entity.PersonPhotoEntity) -> Unit,
@@ -108,6 +111,7 @@ private fun ProfileEditor(
     var ethnicity by remember { mutableStateOf(initial?.ethnicity) }
     var height by remember { mutableStateOf(initial?.height ?: "") }
     var bodyType by remember { mutableStateOf(initial?.bodyType) }
+    var orientation by remember { mutableStateOf(initial?.orientation) }
     var location by remember { mutableStateOf(initial?.location ?: "") }
     var note by remember { mutableStateOf(initial?.note ?: "") }
     var showDiscardConfirm by remember { mutableStateOf(false) }
@@ -120,6 +124,7 @@ private fun ProfileEditor(
         ethnicity != initial?.ethnicity ||
         height != (initial?.height ?: "") ||
         bodyType != initial?.bodyType ||
+        orientation != initial?.orientation ||
         location != (initial?.location ?: "") ||
         note != (initial?.note ?: "")
     val attemptClose = { if (isDirty) showDiscardConfirm = true else onBack() }
@@ -146,6 +151,7 @@ private fun ProfileEditor(
                                 ethnicity = ethnicity,
                                 height = height,
                                 bodyType = bodyType,
+                                orientation = orientation,
                                 location = location,
                                 note = note,
                                 // The strip owns photo lifecycle now; the draft's photo fields are unused.
@@ -199,6 +205,9 @@ private fun ProfileEditor(
                 onHeight = { height = it },
                 bodyType = bodyType,
                 onBodyType = { bodyType = it },
+                orientations = orientations,
+                orientation = orientation,
+                onOrientation = { orientation = it },
                 location = location,
                 onLocation = { location = it },
             )

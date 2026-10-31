@@ -1,6 +1,6 @@
 # Tryst — Data Model
 
-> **Status:** Live — **schema v16** (shipped in v0.5.3), Room over SQLCipher. Matches the entities in
+> **Status:** Live — **schema v17** (v17 in development on `feature/demo-1-orientation`; v16 shipped in v0.5.3), Room over SQLCipher. Matches the entities in
 > `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change ships a
 > non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 >
@@ -78,6 +78,7 @@ position/tag cross-refs are legacy/unused (positions live in the `positions` col
 | ethnicity | Ethnicity? | **v7** demographic |
 | height | String? | **v7** free-text (units the user's choice) |
 | bodyType | BodyType? | **v7** demographic |
+| orientation | String? | **v17** id of an `orientations` row (user-defined label); null = unset |
 | location | String? | **v7** free-text city |
 | color | String? | optional UI accent, local only |
 | note | String? | |
@@ -100,6 +101,7 @@ Partners.
 | ethnicity | Ethnicity? | |
 | height | String? | free-text |
 | bodyType | BodyType? | |
+| orientation | String? | **v17** id of an `orientations` row; null = unset |
 | location | String? | free-text city |
 | note | String? | "about you" |
 | updatedAt | Long | |
@@ -218,5 +220,11 @@ storage — likely a small row in the encrypted DB.)
   entity `defaultValue` mirror is needed (D-53 applies only to NOT-NULL additions). Round-trips via
   the generic `SELECT *` dump (a pre-v16 backup simply has no key → NULL). Also folded into the
   `EncounterSearch` index as `SearchField.PHOTO_CAPTION`.
+- **v17 (`MIGRATION_16_17`, DEMO-1)** adds the **`orientations`** table (`id` PK, `label` with a
+  unique index; no `isBuiltIn`, no built-in rows, so the APK ships no orientation strings) and a
+  nullable **`orientation`** TEXT column on `partners` and `profile` holding a row's id. Additive DDL;
+  existing rows get NULL. Deleting a label clears every reference in one transaction
+  (`OrientationDao.delete`). `orientations` is in `BackupManager.TABLES`; the columns ride the generic
+  `SELECT *` dump, so a pre-v17 backup restores with orientation NULL.
 - Export format (M5) is decoupled from the live schema and versioned independently
   (see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §4).

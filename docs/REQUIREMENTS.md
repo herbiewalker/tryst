@@ -37,7 +37,8 @@ with deeply personal data. Inspired by the iOS app *Nice*.
 - **FR-6** Per-partner stats and history.
 - **FR-7** Merge / archive / delete a partner (with clear handling of their linked encounters).
 - **FR-21** Per-partner **demographics**: date of birth (→ derived age), ethnicity, height, body type,
-  and location, alongside the existing sex / gender / relationship (D-36).
+  and location, alongside the existing sex / gender / relationship (D-36), plus an optional
+  **orientation** picked from labels the user defines themselves (DEMO-1, D-59).
 - **FR-22** A **self profile**: the user's own photo + the same demographics, edited from Settings and a
   "You" card on Partners; stored encrypted on-device like everything else (D-36).
 

@@ -73,6 +73,7 @@ fun PartnerEditScreen(
 ) {
     val ui = viewModel.uiState
     val photos by viewModel.photos.collectAsStateWithLifecycle()
+    val orientations by viewModel.orientations.collectAsStateWithLifecycle()
     var showDiscardConfirm by remember { mutableStateOf(false) }
     val attemptClose = { if (viewModel.hasUnsavedChanges()) showDiscardConfirm = true else onClose() }
     BackHandler(enabled = viewModel.hasUnsavedChanges()) { showDiscardConfirm = true }
@@ -155,6 +156,9 @@ fun PartnerEditScreen(
                 onHeight = viewModel::setHeight,
                 bodyType = ui.bodyType,
                 onBodyType = viewModel::setBodyType,
+                orientations = orientations,
+                orientation = ui.orientation,
+                onOrientation = viewModel::setOrientation,
                 location = ui.location,
                 onLocation = viewModel::setLocation,
             )

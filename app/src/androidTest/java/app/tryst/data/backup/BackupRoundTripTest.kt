@@ -23,12 +23,15 @@ import app.tryst.core.session.SessionManager
 import app.tryst.data.db.TrystDatabase
 import app.tryst.data.db.TrystDatabaseFactory
 import app.tryst.data.db.entity.EncounterEntity
+import app.tryst.data.db.entity.OrientationEntity
 import app.tryst.data.db.entity.PartnerEntity
+import app.tryst.data.db.entity.ProfileEntity
 import app.tryst.data.media.EncryptedMediaStore
 import app.tryst.data.repository.EncounterRepository
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertArrayEquals
@@ -123,6 +126,53 @@ class BackupRoundTripTest {
         assertThrows(Exception::class.java) {
             runBlocking { backup.import("wrong-password", ByteArrayInputStream(bytes)) }
         }
+    }
+
+    /** DEMO-1: the orientation catalog and a partner's chosen label survive export → wipe → import. */
+    @Test
+    fun export_wipe_import_roundTripsOrientation() = runBlocking<Unit> {
+        val now = System.currentTimeMillis()
+        val db = manager.database()
+        db.orientationDao().upsert(OrientationEntity(id = "o1", label = "Label A"))
+        db.partnerDao().upsert(
+            PartnerEntity("p1", "Sam", isAnonymous = false, color = null, note = null, orientation = "o1", archivedAt = null, createdAt = now, updatedAt = now),
+        )
+
+        val out = ByteArrayOutputStream()
+        backup.export(password, out)
+
+        val raw = db.openHelper.writableDatabase
+        raw.execSQL("DELETE FROM partners")
+        raw.execSQL("DELETE FROM orientations")
+        assertNull(db.partnerDao().getById("p1"))
+
+        backup.import(password, ByteArrayInputStream(out.toByteArray()))
+
+        assertEquals("o1", db.partnerDao().getById("p1")?.orientation)
+        assertEquals(listOf("Label A"), db.orientationDao().observeAll().first().map { it.label })
+    }
+
+    /** DEMO-1: deleting a label clears it from partners and the profile instead of leaving a dangling id. */
+    @Test
+    fun deletingOrientation_clearsPartnerAndProfileRefs() = runBlocking<Unit> {
+        val now = System.currentTimeMillis()
+        val db = manager.database()
+        db.orientationDao().upsert(OrientationEntity(id = "o1", label = "Label A"))
+        db.orientationDao().upsert(OrientationEntity(id = "o2", label = "Label B"))
+        db.partnerDao().upsert(
+            PartnerEntity("p1", "Sam", isAnonymous = false, color = null, note = null, orientation = "o1", archivedAt = null, createdAt = now, updatedAt = now),
+        )
+        db.partnerDao().upsert(
+            PartnerEntity("p2", "Alex", isAnonymous = false, color = null, note = null, orientation = "o2", archivedAt = null, createdAt = now, updatedAt = now),
+        )
+        db.profileDao().upsert(ProfileEntity(orientation = "o1", updatedAt = now))
+
+        db.orientationDao().delete("o1")
+
+        assertNull(db.partnerDao().getById("p1")?.orientation)
+        assertEquals("o2", db.partnerDao().getById("p2")?.orientation)
+        assertNull(db.profileDao().get(ProfileEntity.SELF_ID)?.orientation)
+        assertEquals(listOf("o2"), db.orientationDao().observeAll().first().map { it.id })
     }
 
     /** QOL-5: settings ride the backup and restore onto a different device's (simulated) prefs. */

@@ -25,6 +25,7 @@ import app.tryst.data.db.entity.Gender
 import app.tryst.data.db.entity.PersonPhotoEntity
 import app.tryst.data.db.entity.ProfileEntity
 import app.tryst.data.db.entity.Sex
+import app.tryst.data.repository.OrientationRepository
 import app.tryst.data.repository.PersonPhotoRepository
 import app.tryst.data.repository.ProfileRepository
 import app.tryst.ui.common.MediaImages
@@ -36,6 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -49,6 +51,7 @@ data class ProfileDraft(
     val ethnicity: Ethnicity?,
     val height: String,
     val bodyType: BodyType?,
+    val orientation: String?,
     val location: String,
     val note: String,
     val newPhotoUri: Uri?,
@@ -62,7 +65,15 @@ class ProfileViewModel @Inject constructor(
     private val session: SessionManager,
     private val repository: ProfileRepository,
     private val personPhotoRepository: PersonPhotoRepository,
+    orientationRepository: OrientationRepository,
 ) : ViewModel() {
+
+    /** The user's orientation labels, as `id → label` pairs for the chip row. */
+    val orientations: StateFlow<List<Pair<String, String>>> =
+        orientationRepository.observeAll()
+            .map { rows -> rows.map { it.id to it.label } }
+            .catch { emit(emptyList()) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     /** Keep the app unlocked across the photo-picker/camera handoff. */
     fun suppressAutoLock() = session.suppressNextAutoLock()
@@ -156,6 +167,7 @@ class ProfileViewModel @Inject constructor(
                     ethnicity = draft.ethnicity,
                     height = draft.height.trim().ifBlank { null },
                     bodyType = draft.bodyType,
+                    orientation = draft.orientation,
                     location = draft.location.trim().ifBlank { null },
                     note = draft.note.trim().ifBlank { null },
                     updatedAt = now,

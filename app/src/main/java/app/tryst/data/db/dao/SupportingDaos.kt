@@ -16,6 +16,7 @@ package app.tryst.data.db.dao
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import app.tryst.data.db.entity.ActEntity
 import app.tryst.data.db.entity.EjaculationLocationEntity
@@ -23,6 +24,7 @@ import app.tryst.data.db.entity.KinkEntity
 import app.tryst.data.db.entity.LocationEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.OccasionEntity
+import app.tryst.data.db.entity.OrientationEntity
 import app.tryst.data.db.entity.PersonPhotoEntity
 import app.tryst.data.db.entity.PositionEntity
 import app.tryst.data.db.entity.RecentSearchEntity
@@ -126,6 +128,35 @@ interface ToyDao {
 
     @Query("DELETE FROM toys WHERE id = :id")
     suspend fun deleteById(id: String)
+}
+
+@Dao
+interface OrientationDao {
+    @Upsert
+    suspend fun upsert(orientation: OrientationEntity)
+
+    @Query("SELECT * FROM orientations ORDER BY label COLLATE NOCASE")
+    fun observeAll(): Flow<List<OrientationEntity>>
+
+    @Query("UPDATE orientations SET label = :label WHERE id = :id")
+    suspend fun rename(id: String, label: String)
+
+    @Query("UPDATE partners SET orientation = NULL WHERE orientation = :id")
+    suspend fun clearPartnerRefs(id: String)
+
+    @Query("UPDATE profile SET orientation = NULL WHERE orientation = :id")
+    suspend fun clearProfileRefs(id: String)
+
+    @Query("DELETE FROM orientations WHERE id = :id")
+    suspend fun deleteRow(id: String)
+
+    /** Removes the label and clears every partner/profile reference to it, atomically. */
+    @Transaction
+    suspend fun delete(id: String) {
+        clearPartnerRefs(id)
+        clearProfileRefs(id)
+        deleteRow(id)
+    }
 }
 
 @Dao

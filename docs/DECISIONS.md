@@ -1,6 +1,6 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v16** (latest: **D-58**, SEC-2 tier 2 is a
+> **Status:** Live — decisions through **schema v17** (latest: **D-59**, orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
 > presence-only re-auth via BiometricPrompt with device-credential fallback — no CryptoObject,
 > no DEK touch, v0.5.7).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
@@ -679,6 +679,22 @@
     lossy re-encode, and the vault never leaks it anyway), but the moment a user chooses to
     edit, dropping the metadata is the right default. Original creation-date in the tryst
     is unaffected (it's the tryst's own `startAt`, not the photo's EXIF).
+
+- **D-59 (2026-10-31) Orientation is a user-defined catalog, not an enum (DEMO-1, schema v17).**
+  PR #7 proposed a fixed five-value enum with merged categories. Chosen instead: a user-editable
+  catalog with **no built-in rows**, following the acts/kinks/toys pattern (D-41). Three reasons.
+  (1) The APK ships zero orientation strings, so there is no list of categories for the project to
+  get wrong or have to rename later. (2) A user names their own label, so nothing is merged or
+  imposed. (3) A removed or renamed label can't crash a restore, because the column holds an id, not
+  an enum name. Details:
+  - **Storage.** `orientations(id, label)` plus nullable `partners.orientation` / `profile.orientation`
+    holding the row id. No `TypeConverter`, no `isBuiltIn`. Single-select, clearable.
+  - **Delete clears references.** `OrientationDao.delete` nulls the column on partners and the profile
+    in the same transaction, so no dangling id survives.
+  - **UI.** `CatalogChips` (chip row, with an empty-state hint pointing at Settings) sits in the shared
+    `DemographicFields`, so both editors change once. Manage page reuses `CatalogManageScreen`.
+  - **Out of scope.** Filtering, searching or charting by orientation, and CSV import mapping. The
+    broader multi-partner relationship-tracking direction from the PR is a separate product decision.
 
 > **Standing follow-ups (not blockers, tracked here as pointers):**
 > **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;
