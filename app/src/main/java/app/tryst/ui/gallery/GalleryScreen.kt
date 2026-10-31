@@ -34,6 +34,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items as lazyListItems
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -188,6 +189,7 @@ fun GalleryScreen(
         dateScope != DateScope.AllTime
 
     // Tap opens the viewer (or toggles selection when selecting); long-press selects.
+    val tileBounds = remember { TileBounds() }
     val interaction = remember(selectionActive, selectedIds) {
         TileInteraction(
             selectionActive = selectionActive,
@@ -199,7 +201,8 @@ fun GalleryScreen(
                     viewerIndex = viewModel.uiState.value.photos.indexOfFirst { it.id == id }
                 }
             },
-            onLongPress = { id -> viewModel.toggleSelected(id) },
+            onSetSelected = viewModel::setSelected,
+            bounds = tileBounds,
         )
     }
 
@@ -619,36 +622,52 @@ private fun GalleryGrid(
 ) {
     val gap = spacingGapDp(spacing)
     val edge = spacingEdgeDp(spacing)
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(columns),
-        modifier = Modifier.fillMaxSize().pinchColumns(onPinch),
-        contentPadding = PaddingValues(edge),
-        verticalArrangement = Arrangement.spacedBy(gap),
-        horizontalArrangement = Arrangement.spacedBy(gap),
-    ) {
-        sections.forEach { section ->
-            val key = sectionKey(section.group)
-            if (section.group != GalleryGroup.Ungrouped) {
-                item(key = "hdr:$key", span = { GridItemSpan(maxLineSpan) }) {
-                    SectionHeader(section.group, partners, onLoadPartnerPhoto)
-                }
+    val gridState = rememberLazyGridState()
+    // Lazy-item index -> timestamp, so the fast scroller can name the month under the thumb. Mirrors the
+    // item order below: each non-ungrouped section contributes a header, then its photos.
+    val stamps = remember(sections) {
+        buildList<Long?> {
+            sections.forEach { s ->
+                if (s.group != GalleryGroup.Ungrouped) add(s.photos.firstOrNull()?.takenAt)
+                s.photos.forEach { add(it.takenAt) }
             }
-            // The section itself may already name the partner (a Partner header, avatar-and-all) — in
-            // that case echoing the name under every tile is noise. Same for a drill-in "Photos of X".
-            val showPartner = !hidePartnerInCaptions && section.group !is GalleryGroup.Partner
-            items(section.photos, key = { "$key:${it.id}" }) { photo ->
-                Column {
-                    SelectablePhotoTile(
-                        photo = photo,
-                        reqPx = THUMB_PX,
-                        onLoad = onLoad,
-                        interaction = interaction,
-                        modifier = Modifier.aspectRatio(1f),
-                    )
-                    if (showTileCaptions) TileCaption(photo, showPartner = showPartner)
+        }
+    }
+    val fast = rememberFastScroll(gridState) { i -> monthYearLabel(stamps.getOrNull(i)) }
+    Box(Modifier.fillMaxSize()) {
+        LazyVerticalGrid(
+            state = gridState,
+            columns = GridCells.Fixed(columns),
+            modifier = Modifier.fillMaxSize().pinchColumns(onPinch).fastScrollGesture(fast).dragSelect(interaction, gridState),
+            contentPadding = PaddingValues(edge),
+            verticalArrangement = Arrangement.spacedBy(gap),
+            horizontalArrangement = Arrangement.spacedBy(gap),
+        ) {
+            sections.forEach { section ->
+                val key = sectionKey(section.group)
+                if (section.group != GalleryGroup.Ungrouped) {
+                    item(key = "hdr:$key", span = { GridItemSpan(maxLineSpan) }) {
+                        SectionHeader(section.group, partners, onLoadPartnerPhoto)
+                    }
+                }
+                // The section itself may already name the partner (a Partner header, avatar-and-all) — in
+                // that case echoing the name under every tile is noise. Same for a drill-in "Photos of X".
+                val showPartner = !hidePartnerInCaptions && section.group !is GalleryGroup.Partner
+                items(section.photos, key = { "$key:${it.id}" }) { photo ->
+                    Column {
+                        SelectablePhotoTile(
+                            photo = photo,
+                            reqPx = THUMB_PX,
+                            onLoad = onLoad,
+                            interaction = interaction,
+                            modifier = Modifier.aspectRatio(1f),
+                        )
+                        if (showTileCaptions) TileCaption(photo, showPartner = showPartner)
+                    }
                 }
             }
         }
+        FastScrollOverlay(fast, Modifier.fillMaxSize())
     }
 }
 
@@ -668,25 +687,31 @@ private fun GalleryFeed(
     interaction: TileInteraction,
     onLoad: suspend (blobId: String, reqPx: Int) -> ImageBitmap?,
 ) {
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(1),
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        items(photos, key = { it.id }) { photo ->
-            Column {
-                SelectablePhotoTile(
-                    photo = photo,
-                    reqPx = FEED_PX,
-                    onLoad = onLoad,
-                    interaction = interaction,
-                    modifier = Modifier.fillMaxWidth().aspectRatio(4f / 3f),
-                    shape = MaterialTheme.shapes.small,
-                )
-                FeedCaption(photo)
+    val feedState = rememberLazyGridState()
+    val fast = rememberFastScroll(feedState) { i -> monthYearLabel(photos.getOrNull(i)?.takenAt) }
+    Box(Modifier.fillMaxSize()) {
+        LazyVerticalGrid(
+            state = feedState,
+            columns = GridCells.Fixed(1),
+            modifier = Modifier.fillMaxSize().fastScrollGesture(fast).dragSelect(interaction, feedState),
+            contentPadding = PaddingValues(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            items(photos, key = { it.id }) { photo ->
+                Column {
+                    SelectablePhotoTile(
+                        photo = photo,
+                        reqPx = FEED_PX,
+                        onLoad = onLoad,
+                        interaction = interaction,
+                        modifier = Modifier.fillMaxWidth().aspectRatio(4f / 3f),
+                        shape = MaterialTheme.shapes.small,
+                    )
+                    FeedCaption(photo)
+                }
             }
         }
+        FastScrollOverlay(fast, Modifier.fillMaxSize())
     }
 }
 

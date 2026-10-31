@@ -1,4 +1,4 @@
-# Tryst — Future Roadmap (post-v0.1.0)
+**Grid:** **drag-to-select** (long-press a tile, then drag across others; starting on a selected tile deselects the run; edge auto-scroll; works in grid, mosaic and feed via one container gesture that hit-tests registered tile bounds) and a **fast scroller** (thumb appears while scrolling, drag it to jump through the timeline, month-year bubble). A pan that has started on a zoomed photo now stays a pan to its end, so overshooting an edge doesn't flip the page. Tests: `PhotoViewerTest` (13) + `GalleryGridInteractionTest` (8). | Still open from the review: day/month/year pinch levels, animated double-tap zoom, thumbnail-first loading, trash/undo instead of hard delete. |# Tryst — Future Roadmap (post-v0.1.0)
 
 > **Status: ACTIVE roadmap (last reviewed 2026-09-30).** Originally a raw idea dump (2026-06-14).
 > The **v0.5.x line is closed** — everything through v0.5.8 has shipped. Since the 2026-07-30
