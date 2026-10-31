@@ -74,6 +74,7 @@ fun PartnersScreen(
     val partners by viewModel.partners.collectAsStateWithLifecycle()
     val archived by viewModel.archivedPartners.collectAsStateWithLifecycle()
     val profile by profileViewModel.profile.collectAsStateWithLifecycle()
+    val orientationLabels by viewModel.orientationLabels.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = { TopAppBar(title = { Text(stringResource(R.string.partners_title)) }) },
@@ -93,6 +94,7 @@ fun PartnersScreen(
             item(key = "you") {
                 YouCard(
                     profile = profile,
+                    orientationLabel = profile?.orientation?.let { orientationLabels[it] },
                     onLoadPhoto = { profileViewModel.decodePhoto(it, AVATAR_PX) },
                     onClick = onOpenProfile,
                 )
@@ -110,6 +112,7 @@ fun PartnersScreen(
                 items(partners, key = { it.id }) { partner ->
                     PartnerRow(
                         partner = partner,
+                        orientationLabel = partner.orientation?.let { orientationLabels[it] },
                         onLoadPhoto = { viewModel.decodePhoto(it, AVATAR_PX) },
                         onEdit = { onOpenPartnerEdit(partner.id) },
                         onArchive = { viewModel.archive(partner.id) },
@@ -149,6 +152,7 @@ private const val AVATAR_PX = 200
 @Composable
 private fun YouCard(
     profile: ProfileEntity?,
+    orientationLabel: String?,
     onLoadPhoto: suspend (String) -> ImageBitmap?,
     onClick: () -> Unit,
 ) {
@@ -163,6 +167,7 @@ private fun YouCard(
                 Text(name, style = MaterialTheme.typography.titleMedium)
                 val descriptor = listOfNotNull(
                     profile?.gender?.label ?: profile?.sex?.label,
+                    orientationLabel,
                     profile?.birthDate?.let { Format.age(it) }?.let { stringResource(R.string.demo_age, it) },
                 ).joinToString(" · ")
                 Text(
@@ -182,6 +187,7 @@ private fun YouCard(
 @Composable
 private fun PartnerRow(
     partner: PartnerEntity,
+    orientationLabel: String?,
     onLoadPhoto: suspend (String) -> ImageBitmap?,
     onEdit: () -> Unit,
     onArchive: () -> Unit,
@@ -200,6 +206,7 @@ private fun PartnerRow(
                 val descriptor = listOfNotNull(
                     partner.relationshipType?.label,
                     partner.gender?.label ?: partner.sex?.label,
+                    orientationLabel,
                     partner.birthDate?.let { Format.age(it) }?.let { stringResource(R.string.demo_age, it) },
                 ).joinToString(" · ")
                 if (descriptor.isNotEmpty()) {

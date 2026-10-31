@@ -23,6 +23,7 @@ import app.tryst.data.db.dao.KinkDao
 import app.tryst.data.db.dao.LocationDao
 import app.tryst.data.db.dao.MediaDao
 import app.tryst.data.db.dao.OccasionDao
+import app.tryst.data.db.dao.OrientationDao
 import app.tryst.data.db.dao.PartnerDao
 import app.tryst.data.db.dao.PersonPhotoDao
 import app.tryst.data.db.dao.PositionDao
@@ -40,6 +41,7 @@ import app.tryst.data.db.entity.KinkEntity
 import app.tryst.data.db.entity.LocationEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.OccasionEntity
+import app.tryst.data.db.entity.OrientationEntity
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.PersonPhotoEntity
 import app.tryst.data.db.entity.PositionEntity
@@ -61,6 +63,7 @@ import app.tryst.data.db.entity.ToyEntity
         ToyEntity::class,
         OccasionEntity::class,
         EjaculationLocationEntity::class,
+        OrientationEntity::class,
         MediaEntity::class,
         PersonPhotoEntity::class,
         RecentSearchEntity::class,
@@ -68,7 +71,7 @@ import app.tryst.data.db.entity.ToyEntity
         EncounterPositionCrossRef::class,
         EncounterTagCrossRef::class,
     ],
-    version = 16,
+    version = 17,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -82,6 +85,7 @@ abstract class TrystDatabase : RoomDatabase() {
     abstract fun actDao(): ActDao
     abstract fun kinkDao(): KinkDao
     abstract fun toyDao(): ToyDao
+    abstract fun orientationDao(): OrientationDao
     abstract fun occasionDao(): OccasionDao
     abstract fun ejaculationLocationDao(): EjaculationLocationDao
     abstract fun locationDao(): LocationDao

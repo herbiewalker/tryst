@@ -354,7 +354,7 @@ class BackupManager @Inject constructor(
         // drives restore, an import leaves the local search history untouched rather than wiping it.
         val TABLES = listOf(
             "partners", "profile", "locations", "tags", "positions", "acts", "kinks", "toys",
-            "occasions", "ejaculation_locations",
+            "occasions", "ejaculation_locations", "orientations",
             "encounters", "media", "person_photo",
             "encounter_partner", "encounter_position", "encounter_tag",
         )

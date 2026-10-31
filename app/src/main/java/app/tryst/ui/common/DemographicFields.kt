@@ -44,7 +44,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 
 /**
- * The shared demographic block (date of birth → age, ethnicity, height, body type, location) used by
+ * The shared demographic block (date of birth → age, ethnicity, height, body type, orientation, location) used by
  * both the partner editor and the self-profile editor, so the two stay identical. Values are held by
  * the caller; this is a stateless group of fields plus a local date-picker dialog.
  *
@@ -64,6 +64,9 @@ fun DemographicFields(
     onHeight: (String) -> Unit,
     bodyType: BodyType?,
     onBodyType: (BodyType?) -> Unit,
+    orientations: List<Pair<String, String>>,
+    orientation: String?,
+    onOrientation: (String?) -> Unit,
     location: String,
     onLocation: (String) -> Unit,
 ) {
@@ -103,6 +106,14 @@ fun DemographicFields(
     )
 
     OptionalChips(stringResource(R.string.demo_body_type), BodyType.entries, bodyType, onBodyType)
+
+    CatalogChips(
+        label = stringResource(R.string.demo_orientation),
+        options = orientations,
+        selected = orientation,
+        emptyHint = stringResource(R.string.demo_orientation_empty),
+        onSelect = onOrientation,
+    )
 
     OutlinedTextField(
         value = location,

@@ -307,6 +307,26 @@ val MIGRATION_15_16 = object : Migration(15, 16) {
     }
 }
 
+/**
+ * v16 → v17: adds the user-defined **orientation** catalog (DEMO-1) and an `orientation` column on
+ * `partners` and `profile` holding a catalog row's id.
+ *
+ *  - DDL: new `orientations` table (starts empty — no built-in rows, so the APK ships no orientation
+ *    labels) plus two nullable TEXT columns. Existing rows gain NULL ("not set"); nothing is rewritten.
+ *  - Backup: `orientations` joins `BackupManager.TABLES`; the columns ride the generic `SELECT *` dump, so
+ *    pre-v17 backups restore with orientation implicitly NULL.
+ */
+val MIGRATION_16_17 = object : Migration(16, 17) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `orientations` (`id` TEXT NOT NULL, `label` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_orientations_label` ON `orientations` (`label`)")
+        db.execSQL("ALTER TABLE partners ADD COLUMN orientation TEXT")
+        db.execSQL("ALTER TABLE profile ADD COLUMN orientation TEXT")
+    }
+}
+
 /** All migrations, in order. */
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
@@ -324,6 +344,7 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_13_14,
     MIGRATION_14_15,
     MIGRATION_15_16,
+    MIGRATION_16_17,
 )
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

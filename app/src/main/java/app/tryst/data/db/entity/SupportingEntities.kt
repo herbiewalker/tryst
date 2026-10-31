@@ -61,6 +61,17 @@ data class ToyEntity(
     val isBuiltIn: Boolean = false,
 )
 
+/**
+ * A user-defined sexual orientation label (DEMO-1). Fully user-editable with **no built-in rows**, so the
+ * APK ships zero orientation strings (D-41); `partners.orientation` / `profile.orientation` hold the
+ * chosen row's [id] (null = not set). Deleting a row clears every reference to it.
+ */
+@Entity(tableName = "orientations", indices = [Index(value = ["label"], unique = true)])
+data class OrientationEntity(
+    @PrimaryKey val id: String,
+    val label: String,
+)
+
 @Entity(tableName = "occasions", indices = [Index(value = ["label"], unique = true)])
 data class OccasionEntity(
     @PrimaryKey val id: String,

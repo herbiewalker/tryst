@@ -50,4 +50,35 @@ fun <T> OptionalChips(
     }
 }
 
+/**
+ * [OptionalChips] for a user-defined catalog (DEMO-1 orientation): options are `id → label` pairs and the
+ * selection is an id. With no labels defined yet it shows [emptyHint] instead of an empty chip row.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun CatalogChips(
+    label: String,
+    options: List<Pair<String, String>>,
+    selected: String?,
+    emptyHint: String,
+    onSelect: (String?) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(label, style = MaterialTheme.typography.labelLarge)
+        if (options.isEmpty()) {
+            Text(emptyHint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                options.forEach { (id, text) ->
+                    FilterChip(
+                        selected = id == selected,
+                        onClick = { onSelect(if (id == selected) null else id) },
+                        label = { Text(text) },
+                    )
+                }
+            }
+        }
+    }
+}
+
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

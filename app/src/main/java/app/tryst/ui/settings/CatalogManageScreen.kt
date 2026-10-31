@@ -90,6 +90,14 @@ fun CatalogManageRoute(category: String?, onBack: () -> Unit) {
                 rows.map { it.id to it.label }, vm::add, vm::rename, vm::delete, onBack,
             )
         }
+        CatalogCategory.ORIENTATIONS -> {
+            val vm: CustomOrientationsViewModel = hiltViewModel()
+            val rows by vm.customOrientations.collectAsStateWithLifecycle()
+            CatalogManageScreen(
+                R.string.custom_orientations_title, R.string.custom_orientations_desc, R.string.custom_orientations_add_label, R.string.custom_orientations_empty,
+                rows.map { it.id to it.label }, vm::add, vm::rename, vm::delete, onBack,
+            )
+        }
         CatalogCategory.OCCASIONS -> {
             val vm: CustomOccasionsViewModel = hiltViewModel()
             val rows by vm.customOccasions.collectAsStateWithLifecycle()

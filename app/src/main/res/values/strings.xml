@@ -25,6 +25,8 @@
     <string name="demo_set_birth_date">Set date of birth</string>
     <string name="demo_age">Age %1$d</string>
     <string name="demo_ethnicity">Ethnicity</string>
+    <string name="demo_orientation">Orientation</string>
+    <string name="demo_orientation_empty">No labels yet. Add some under Settings > Manage orientations.</string>
     <string name="demo_height">Height</string>
     <string name="demo_height_hint">e.g. 5\'10\" or 178 cm</string>
     <string name="demo_body_type">Body type</string>
@@ -439,6 +441,7 @@
     <string name="settings_manage_toys">Manage toys</string>
     <string name="settings_manage_occasions">Manage occasions</string>
     <string name="settings_manage_ejaculation">Manage finish locations</string>
+    <string name="settings_manage_orientations">Manage orientations</string>
     <string name="settings_backup">Backup &amp; restore</string>
     <string name="settings_export">Export encrypted backup</string>
     <string name="settings_import">Import backup</string>
@@ -492,6 +495,10 @@
     <string name="custom_kinks_desc">Add your own kinks — they show up when logging a tryst. Tap an entry to rename it, or remove ones you don\'t use.</string>
     <string name="custom_kinks_add_label">Add a kink</string>
     <string name="custom_kinks_empty">No kinks yet — add your first one above.</string>
+    <string name="custom_orientations_title">Orientations</string>
+    <string name="custom_orientations_desc">Add the labels you want to choose from on a profile or partner. Nothing is preset. Tap an entry to rename it, or remove ones you don\'t use (removing one clears it from anyone who had it).</string>
+    <string name="custom_orientations_add_label">Add a label</string>
+    <string name="custom_orientations_empty">No labels yet. Add your first one above.</string>
     <string name="custom_toys_title">Toys</string>
     <string name="custom_toys_desc">Add your own toys — they show up when logging a tryst. Tap an entry to rename it, or remove ones you don\'t use.</string>
     <string name="custom_toys_add_label">Add a toy</string>

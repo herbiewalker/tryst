@@ -37,6 +37,8 @@ data class ProfileEntity(
     val bodyType: BodyType? = null,
     /** Free-text location / city. */
     val location: String? = null,
+    /** Id of a user-defined [OrientationEntity] (DEMO-1, schema v17); null when unset. */
+    val orientation: String? = null,
     /** Optional free-text "about you" note. */
     val note: String? = null,
     val updatedAt: Long = 0L,

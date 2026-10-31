@@ -21,6 +21,7 @@ object CatalogCategory {
     const val TOYS = "toys"
     const val OCCASIONS = "occasions"
     const val EJACULATION = "ejaculation"
+    const val ORIENTATIONS = "orientations"
 }
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

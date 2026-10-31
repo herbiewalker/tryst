@@ -40,6 +40,9 @@ data class PartnerEntity(
     val bodyType: BodyType? = null,
     /** Free-text location / city. */
     val location: String? = null,
+    // --- added in schema v17 ---
+    /** Id of a user-defined [OrientationEntity] (DEMO-1); null when unset. */
+    val orientation: String? = null,
     // ---------------------------
     /** Non-null when soft-archived. */
     val archivedAt: Long?,

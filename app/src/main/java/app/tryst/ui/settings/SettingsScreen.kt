@@ -397,6 +397,7 @@ fun SettingsScreen(
                 R.string.settings_manage_toys to CatalogCategory.TOYS,
                 R.string.settings_manage_occasions to CatalogCategory.OCCASIONS,
                 R.string.settings_manage_ejaculation to CatalogCategory.EJACULATION,
+                R.string.settings_manage_orientations to CatalogCategory.ORIENTATIONS,
             )
             for ((label, category) in categoryRows) {
                 SettingsRow(icon = Icons.Filled.Category, title = stringResource(label), onClick = { onManageCategory(category) })
