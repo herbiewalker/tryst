@@ -13,6 +13,34 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+### Fixed
+
+- **Swiping between photos works again.** In the full-screen viewer, a one-finger swipe on a photo
+  did nothing, because the zoom handler swallowed every drag. Swipes now reach the pager, and zoom
+  and pan still work. Once you start panning a zoomed photo, the gesture stays a pan, so
+  overshooting the edge no longer flips to the next photo; a fresh swipe from the edge does.
+
+### Added
+
+- **Delete from the photo viewer.** A trash button in the viewer asks for confirmation, then removes
+  the photo. If it was the last one in the set, you land on the one before it.
+- **Swipe down to close the viewer.** The photo follows your finger and the background fades. Let go
+  early and it snaps back.
+- **Drag to select photos.** Long-press a photo, then drag across others to select a run. Start on a
+  selected photo to deselect a run instead. Dragging to the top or bottom edge scrolls the grid as
+  you go. Works in the date grid, the mosaic and the feed.
+- **Fast scroller for the Photos tab.** A thumb shows at the right edge while you scroll. Grab it
+  and drag to jump through the whole timeline, with a month and year bubble showing where you are.
+
+### Changed
+
+- **Tidier viewer toolbar.** Add to person, set as partner photo and open tryst moved into a More
+  menu so the toolbar no longer crowds the photo counter.
+- **Zoom follows your fingers.** Pinch zooms about the point between your fingers and double-tap
+  zooms about where you tapped, instead of always about the centre. A zoomed photo can no longer be
+  dragged off screen.
+- **Smoother paging.** The photos either side of the current one are prepared ahead of time.
+
 ## [0.6.0] — 2026-09-30 (versionCode 16)
 
 ### Added
