@@ -83,8 +83,8 @@ class PhotoTransformsInstrumentedTest {
         assertEquals(100, out.height)
         // Red top-left → bottom-left after a CCW rotation.
         assertEquals(Color.RED, out.getPixel(0, out.height - 1))
-        // Blue bottom-left → top-left after CCW.
-        assertEquals(Color.BLUE, out.getPixel(0, 0))
+        // Green top-right → top-left after CCW (the CW case above checks the mirror of this).
+        assertEquals(Color.GREEN, out.getPixel(0, 0))
     }
 
     @Test
