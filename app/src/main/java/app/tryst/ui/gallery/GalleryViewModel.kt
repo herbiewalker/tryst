@@ -409,6 +409,8 @@ class GalleryViewModel @Inject constructor(
 
     fun toggleSelected(id: String) = _selectedIds.update { if (id in it) it - id else it + id }
 
+    fun setSelected(id: String, selected: Boolean) = _selectedIds.update { if (selected) it + id else it - id }
+
     fun clearSelection() {
         _selectedIds.value = emptySet()
     }

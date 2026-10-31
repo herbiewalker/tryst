@@ -14,6 +14,7 @@
 package app.tryst.ui.gallery
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -89,17 +91,33 @@ fun GalleryMosaic(
         val items = remember(sections, aspects.toMap(), availableDp, gapDp) {
             buildItems(sections, availableDp, gapDp) { id -> aspects[id] ?: 1f }
         }
-        LazyColumn(
-            Modifier.fillMaxSize(),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(gapDp.dp),
-            verticalArrangement = Arrangement.spacedBy(gapDp.dp),
-        ) {
-            items(items, key = { it.key() }) { item ->
+        val listState = rememberLazyListState()
+        // Lazy-item index -> timestamp for the fast scroller's month bubble: a row is its first photo, and a
+        // month header takes the first photo under it.
+        val stamps = remember(items) {
+            items.mapIndexed { i, item ->
                 when (item) {
-                    is MosaicItem.Header -> MonthHeader(item.group)
-                    is MosaicItem.PhotoRow -> MosaicRowView(item.row, gapDp, onLoad, interaction)
+                    is MosaicItem.PhotoRow -> item.row.cells.first().photo.takenAt
+                    is MosaicItem.Header -> (items.getOrNull(i + 1) as? MosaicItem.PhotoRow)?.row?.cells?.first()?.photo?.takenAt
                 }
             }
+        }
+        val fast = rememberFastScroll(listState) { i -> monthYearLabel(stamps.getOrNull(i)) }
+        Box(Modifier.fillMaxSize()) {
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize().fastScrollGesture(fast).dragSelect(interaction, listState),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(gapDp.dp),
+                verticalArrangement = Arrangement.spacedBy(gapDp.dp),
+            ) {
+                items(items, key = { it.key() }) { item ->
+                    when (item) {
+                        is MosaicItem.Header -> MonthHeader(item.group)
+                        is MosaicItem.PhotoRow -> MosaicRowView(item.row, gapDp, onLoad, interaction)
+                    }
+                }
+            }
+            FastScrollOverlay(fast, Modifier.fillMaxSize())
         }
     }
 }

@@ -13,9 +13,8 @@
 // ╰──────────────────────────────────────────────────────────────────╯
 package app.tryst.ui.gallery
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,6 +31,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +40,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -52,7 +55,6 @@ import app.tryst.ui.theme.GridTileShape
  * A photo tile that participates in multi-select: it dims + shows a check when selected, and routes taps
  * through [interaction]. A small heart marks favourites (GAL-3). Used at any [shape]/aspect by the caller.
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SelectablePhotoTile(
     photo: GalleryPhoto,
@@ -63,13 +65,14 @@ fun SelectablePhotoTile(
     shape: Shape = GridTileShape,
 ) {
     val selected = photo.id in interaction.selectedIds
+    val token = remember { Any() }
+    DisposableEffect(token) { onDispose { interaction.bounds.remove(token) } }
     Box(
         modifier
             .clip(shape)
-            .combinedClickable(
-                onClick = { interaction.onClick(photo.id) },
-                onLongClick = { interaction.onLongPress(photo.id) },
-            ),
+            .onGloballyPositioned { interaction.bounds.update(token, photo.id, it.boundsInWindow()) }
+            // Long-press is owned by the container's [dragSelect] gesture, so a tile only handles taps.
+            .clickable { interaction.onClick(photo.id) },
     ) {
         DecodedImage(
             model = photo.id,

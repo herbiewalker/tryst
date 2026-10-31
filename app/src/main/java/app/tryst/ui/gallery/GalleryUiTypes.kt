@@ -25,7 +25,10 @@ data class TileInteraction(
     val selectionActive: Boolean,
     val selectedIds: Set<String>,
     val onClick: (String) -> Unit,
-    val onLongPress: (String) -> Unit,
+    /** Sets one tile's selection (long-press-and-drag selects or deselects a run; a long-press is the first tile). */
+    val onSetSelected: (id: String, selected: Boolean) -> Unit,
+    /** Where the on-screen tiles are, so the container's drag-select gesture can hit-test them. */
+    val bounds: TileBounds,
 )
 
 /** A person with an avatar — a partner or the self profile — as a browsable gallery item (GAL-1a). */
