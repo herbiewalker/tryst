@@ -4,6 +4,10 @@
 > (schema v16). Each milestone ended runnable & tested. This file is the milestone *history* (see
 > the dated notes below); forward work lives in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
 
+> **Update (2026-10-31):** **v0.6.1** shipped (photo viewer and grid pass). **Next:** DEMO-1
+> (orientation, schema v17) ships first, then **CYC-1, optional cycle tracking** (issue #8; schema
+> v18), is the next feature to build. See [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
+
 > **Update (2026-09-30):** the v0.6.x line has opened with **v0.6.0** (versionCode 16): QOL-5
 > (settings-in-backup, container format v2 — v1 backups still import), a color refresh tying the
 > theme's purple/pink accents to the launcher icon's own gradient, and a UI polish pass (Save
