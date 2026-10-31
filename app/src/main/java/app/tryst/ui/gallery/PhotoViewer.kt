@@ -15,8 +15,12 @@ package app.tryst.ui.gallery
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -66,6 +70,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -89,6 +95,13 @@ import kotlinx.coroutines.launch
 private const val VIEWER_PX = 1600
 private const val FILMSTRIP_PX = 160
 private const val MAX_ZOOM = 4f
+private const val PAN_EPSILON = 0.5f
+
+/** Keeps a zoomed photo's pan inside the room the zoom created, so it can't be dragged off screen. */
+private fun clampPan(offset: Float, extent: Int, scale: Float): Float {
+    val limit = extent * (scale - 1f) / 2f
+    return offset.coerceIn(-limit, limit)
+}
 private val ACCENT = Color(0xFF80CBC4)
 
 /**
@@ -590,24 +603,54 @@ private fun ZoomablePhoto(
         Modifier.fillMaxSize()
             .pointerInput(photo.id, zoomEnabled) {
                 if (!zoomEnabled) return@pointerInput
-                detectTransformGestures { _, pan, zoom, _ ->
-                    scale = (scale * zoom).coerceIn(1f, MAX_ZOOM)
-                    if (scale > 1f) {
-                        offsetX += pan.x
-                        offsetY += pan.y
-                    } else {
-                        offsetX = 0f
-                        offsetY = 0f
-                    }
+                // Hand-rolled instead of detectTransformGestures: that detector consumes EVERY drag,
+                // including a one-finger swipe on an un-zoomed photo, so the pager never saw it and
+                // swiping between photos was dead. Here a gesture is only consumed when it is a pinch,
+                // or a pan the zoomed photo can still absorb; otherwise it falls through to the pager.
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    do {
+                        val event = awaitPointerEvent()
+                        if (event.changes.none { it.isConsumed }) {
+                            val pinching = event.changes.count { it.pressed } > 1
+                            if (pinching || scale > 1f) {
+                                val pan = event.calculatePan()
+                                val newScale = (scale * event.calculateZoom()).coerceIn(1f, MAX_ZOOM)
+                                val ratio = newScale / scale
+                                val centroid = event.calculateCentroid(useCurrent = false)
+                                // Zoom about the fingers, not the screen centre.
+                                val focus = if (centroid.isSpecified) {
+                                    centroid - Offset(size.width / 2f, size.height / 2f)
+                                } else {
+                                    Offset.Zero
+                                }
+                                val newX = clampPan(focus.x + (offsetX - focus.x) * ratio + pan.x, size.width, newScale)
+                                val newY = clampPan(focus.y + (offsetY - focus.y) * ratio + pan.y, size.height, newScale)
+                                // One finger on a zoomed photo: keep it only while it can still move that way,
+                                // so a swipe at the photo's edge turns into a page change.
+                                val absorbed = pinching ||
+                                    abs(newX - offsetX) > PAN_EPSILON ||
+                                    (abs(pan.y) > abs(pan.x) && abs(newY - offsetY) > PAN_EPSILON)
+                                scale = newScale
+                                offsetX = newX
+                                offsetY = newY
+                                if (absorbed) event.changes.forEach { it.consume() }
+                            }
+                        }
+                    } while (event.changes.any { it.pressed })
                 }
             }
             .pointerInput(photo.id) {
                 detectTapGestures(
                     onTap = { onTap() },
                     // Double-tap toggles between fit and 2x.
-                    onDoubleTap = {
+                    onDoubleTap = { tap ->
                         if (abs(scale - 1f) < 0.01f) {
+                            // Zoom in about the tapped point.
+                            val focus = tap - Offset(size.width / 2f, size.height / 2f)
                             scale = 2f
+                            offsetX = clampPan(-focus.x, size.width, scale)
+                            offsetY = clampPan(-focus.y, size.height, scale)
                         } else {
                             scale = 1f
                             offsetX = 0f
