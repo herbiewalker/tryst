@@ -1,6 +1,6 @@
 # Tryst — Data Model
 
-> **Status:** Live — **schema v17** (v17 in development on `feature/demo-1-orientation`; v16 shipped in v0.5.3), Room over SQLCipher. Matches the entities in
+> **Status:** Live — **schema v17** (shipped in v0.6.2; v16 shipped in v0.5.3), Room over SQLCipher. Matches the entities in
 > `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change ships a
 > non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 >

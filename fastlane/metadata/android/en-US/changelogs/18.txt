@@ -1,0 +1,5 @@
+Optional orientation, from labels you write yourself
+
+* A new optional Orientation field on your profile and on partners. You write the labels yourself in Settings, so nothing is preset.
+* Clear it any time. Deleting a label removes it from everyone who had it.
+* Included in encrypted backups. A backup made in this version won't restore into older versions.
