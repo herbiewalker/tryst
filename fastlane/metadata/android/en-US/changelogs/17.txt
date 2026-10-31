@@ -1,0 +1,6 @@
+Photo viewer fixes and faster photo selection
+
+* Swiping between photos works again in the full-screen viewer.
+* Delete a photo from the viewer, or swipe down to close it.
+* Long-press a photo, then drag across others to select a run. The Photos tab has a fast scroller with a month bubble.
+* Zoom follows your fingers, and extra viewer actions moved into a More menu.

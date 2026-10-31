@@ -1,15 +1,15 @@
-// ╭──────────────────────────────────────────────────────────────────╮
-// │  ┌●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┐  │
-// │  │                                                            │  │
-// │  ●   ██╗  ██╗    ██╗    ██╗                                   ●  │
-// │  │   ██║  ██║    ██║    ██║           herbiewalker            │  │
-// │  │   ███████║    ██║ █╗ ██║──●──●──●──┐                       │  │
-// │  │   ██╔══██║    ██║███╗██║           │                       │  │
-// │  ●   ██║  ██║    ╚███╔███╔╝           ●───⏣  code · tools     ●  │
-// │  │   ╚═╝  ╚═╝     ╚══╝╚══╝                    homelab         │  │
-// │  │                                                            │  │
-// │  └●───●───●───●───●───●───●───●───●───●───●───●───●───●───●───┘  │
-// ╰──────────────────────────────────────────────────────────────────╯
+// â•­â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â•®
+// â”‚  â”Œâ—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â”  â”‚
+// â”‚  â”‚                                                            â”‚  â”‚
+// â”‚  â—   â–ˆâ–ˆâ•—  â–ˆâ–ˆâ•—    â–ˆâ–ˆâ•—    â–ˆâ–ˆâ•—                                   â—  â”‚
+// â”‚  â”‚   â–ˆâ–ˆâ•‘  â–ˆâ–ˆâ•‘    â–ˆâ–ˆâ•‘    â–ˆâ–ˆâ•‘           herbiewalker            â”‚  â”‚
+// â”‚  â”‚   â–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ–ˆâ•‘    â–ˆâ–ˆâ•‘ â–ˆâ•— â–ˆâ–ˆâ•‘â”€â”€â—â”€â”€â—â”€â”€â—â”€â”€â”                       â”‚  â”‚
+// â”‚  â”‚   â–ˆâ–ˆâ•”â•â•â–ˆâ–ˆâ•‘    â–ˆâ–ˆâ•‘â–ˆâ–ˆâ–ˆâ•—â–ˆâ–ˆâ•‘           â”‚                       â”‚  â”‚
+// â”‚  â—   â–ˆâ–ˆâ•‘  â–ˆâ–ˆâ•‘    â•šâ–ˆâ–ˆâ–ˆâ•”â–ˆâ–ˆâ–ˆâ•”â•           â—â”€â”€â”€â£  code Â· tools     â—  â”‚
+// â”‚  â”‚   â•šâ•â•  â•šâ•â•     â•šâ•â•â•â•šâ•â•â•                    homelab         â”‚  â”‚
+// â”‚  â”‚                                                            â”‚  â”‚
+// â”‚  â””â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â—â”€â”€â”€â”˜  â”‚
+// â•°â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â•¯
 import com.android.build.api.artifact.SingleArtifact
 
 plugins {
@@ -30,8 +30,8 @@ android {
         applicationId = "app.tryst"
         minSdk = 31
         targetSdk = 36
-        versionCode = 16
-        versionName = "0.6.0"
+        versionCode = 17
+        versionName = "0.6.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -71,19 +71,19 @@ kotlin {
 
 ksp {
     // Export the Room schema so we can write migration tests (non-destructive migrations
-    // are a hard requirement — see docs/DATA_MODEL.md). Schemas are committed under app/schemas.
+    // are a hard requirement â€” see docs/DATA_MODEL.md). Schemas are committed under app/schemas.
     arg("room.schemaLocation", "$projectDir/schemas")
     arg("room.generateKotlin", "true")
 }
 
-// Quality gates (O-5). Detekt runs AST-only (no type resolution) — the plain `detekt` task — so its
+// Quality gates (O-5). Detekt runs AST-only (no type resolution) â€” the plain `detekt` task â€” so its
 // Kotlin-2.0.21 frontend analyses our 2.2.10 source without a compiler-classpath mismatch. ktlint
 // handles formatting (max line length etc.); detekt's MaxLineLength is disabled to avoid double-report.
 detekt {
     config.setFrom("$rootDir/config/detekt/detekt.yml")
     buildUponDefaultConfig = true
     parallel = true
-    // Analyse production code only — test sources legitimately carry helper smells (many-param
+    // Analyse production code only â€” test sources legitimately carry helper smells (many-param
     // data builders etc.) and aren't shipped. ktlint still formats the test sources.
     source.setFrom(files("src/main/java"))
 }
@@ -139,7 +139,7 @@ dependencies {
 
 // ---------------------------------------------------------------------------------------
 // Anti-leak guard (see CLAUDE.md): fail the build if the MERGED manifest declares any
-// network permission — whether we added it or a dependency did. Wired into `check`, so it
+// network permission â€” whether we added it or a dependency did. Wired into `check`, so it
 // runs locally and in CI. This is the enforcement behind "the app cannot leak data".
 // ---------------------------------------------------------------------------------------
 abstract class CheckNoNetworkPermissionTask : DefaultTask() {
@@ -178,4 +178,4 @@ androidComponents {
     }
 }
 
-// ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣
+// â£ HW â£ Â· code Â· tools Â· homelab Â· â£ HW â£

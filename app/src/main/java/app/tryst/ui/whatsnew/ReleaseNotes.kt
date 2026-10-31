@@ -33,6 +33,16 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.6.1",
+            versionCode = 17,
+            date = "2026-10-31",
+            highlights = listOf(
+                "Swiping between photos works again in the full-screen viewer. You can also delete a photo from there, or swipe down to close it.",
+                "Long-press a photo, then drag across others to select a run. The Photos tab now has a fast scroller: grab the thumb at the edge to jump through your timeline, with a month and year bubble.",
+                "Zoom follows your fingers, a zoomed photo can't be dragged off screen, and the viewer's extra actions moved into a More menu so the toolbar stays tidy.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.6.0",
             versionCode = 16,
             date = "2026-09-30",
