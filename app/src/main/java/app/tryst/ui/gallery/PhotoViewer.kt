@@ -682,6 +682,7 @@ private fun ZoomablePhoto(
                     var dragX = 0f
                     var dragY = 0f
                     var dismissing = false
+                    var panned = false // this gesture has already moved the zoomed photo
                     do {
                         val event = awaitPointerEvent()
                         if (event.changes.none { it.isConsumed }) {
@@ -707,7 +708,10 @@ private fun ZoomablePhoto(
                                 scale = newScale
                                 offsetX = newX
                                 offsetY = newY
-                                if (absorbed) event.changes.forEach { it.consume() }
+                                // Once a gesture has panned the photo it stays a pan to its end, so overshooting
+                                // an edge never flips the page; only a swipe that starts at the edge does.
+                                if (absorbed) panned = true
+                                if (absorbed || panned) event.changes.forEach { it.consume() }
                             } else {
                                 // One finger on an un-zoomed photo: a mostly-vertical drag pulls the photo down to close;
                                 // anything else is left alone for the pager.
