@@ -81,6 +81,15 @@ enum class Gender(override val label: String) : DisplayLabel {
     OTHER("Other"),
 }
 
+/** Sexual Orientation */
+enum class Orientation(override val label: String) : DisplayLabel {
+    HETEROSEXUAL("Heterosexual/Straight"),
+    HOMOSEXUAL("Homosexual/Gay/Lesbian"),
+    PANSEXUAL("Pansexual/Bisexual"),
+    ASEXUAL("Asexual"),
+    DEMISEXUAL("Demisexual/Grey-Asexual"),
+}
+
 /** Partner / self ethnicity (single-select demographic). */
 enum class Ethnicity(override val label: String) : DisplayLabel {
     WHITE("White"),

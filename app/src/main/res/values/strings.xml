@@ -373,6 +373,7 @@
     <string name="partner_anonymous">"  Anonymous"</string>
     <string name="partner_sex">Sex</string>
     <string name="partner_gender">Gender</string>
+    <string name="partner_orientation">Sexual Orientation</string>
     <string name="partner_relationship">Relationship</string>
     <string name="partner_note_label">Note (optional)</string>
 

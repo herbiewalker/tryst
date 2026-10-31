@@ -29,6 +29,7 @@ data class ProfileEntity(
     val photoMediaId: String? = null,
     val sex: Sex? = null,
     val gender: Gender? = null,
+    val orientation: Orientation? = null,
     /** Date of birth as epoch millis (date only); age is derived for display. */
     val birthDate: Long? = null,
     val ethnicity: Ethnicity? = null,

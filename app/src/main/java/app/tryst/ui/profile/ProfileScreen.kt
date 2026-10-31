@@ -50,6 +50,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
 import app.tryst.data.db.entity.Gender
+import app.tryst.data.db.entity.Orientation
 import app.tryst.data.db.entity.ProfileEntity
 import app.tryst.data.db.entity.Sex
 import app.tryst.ui.common.DemographicFields
@@ -104,6 +105,7 @@ private fun ProfileEditor(
     var displayName by remember { mutableStateOf(initial?.displayName ?: "") }
     var sex by remember { mutableStateOf(initial?.sex) }
     var gender by remember { mutableStateOf(initial?.gender) }
+    var orientation by remember { mutableStateOf(initial?.orientation) }
     var birthDate by remember { mutableStateOf(initial?.birthDate) }
     var ethnicity by remember { mutableStateOf(initial?.ethnicity) }
     var height by remember { mutableStateOf(initial?.height ?: "") }
@@ -116,6 +118,7 @@ private fun ProfileEditor(
     val isDirty = displayName != (initial?.displayName ?: "") ||
         sex != initial?.sex ||
         gender != initial?.gender ||
+        orientation != initial?.orientation ||
         birthDate != initial?.birthDate ||
         ethnicity != initial?.ethnicity ||
         height != (initial?.height ?: "") ||
@@ -142,6 +145,7 @@ private fun ProfileEditor(
                                 displayName = displayName,
                                 sex = sex,
                                 gender = gender,
+                                orientation = orientation,
                                 birthDate = birthDate,
                                 ethnicity = ethnicity,
                                 height = height,
@@ -190,6 +194,7 @@ private fun ProfileEditor(
             )
             OptionalChips(stringResource(R.string.partner_sex), Sex.entries, sex) { sex = it }
             OptionalChips(stringResource(R.string.partner_gender), Gender.entries, gender) { gender = it }
+            OptionalChips(stringResource(R.string.partner_orientation), Orientation.entries, orientation) { orientation = it }
             DemographicFields(
                 birthDate = birthDate,
                 onBirthDate = { birthDate = it },

@@ -26,6 +26,7 @@ import app.tryst.core.session.SessionManager
 import app.tryst.data.db.entity.BodyType
 import app.tryst.data.db.entity.Ethnicity
 import app.tryst.data.db.entity.Gender
+import app.tryst.data.db.entity.Orientation
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.PersonPhotoEntity
 import app.tryst.data.db.entity.RelationshipType
@@ -56,6 +57,7 @@ data class PartnerEditUiState(
     val note: String = "",
     val sex: Sex? = null,
     val gender: Gender? = null,
+    var orientation: Orientation? = null,
     val relationshipType: RelationshipType? = null,
     val birthDate: Long? = null,
     val ethnicity: Ethnicity? = null,
@@ -117,6 +119,7 @@ class PartnerEditViewModel @Inject constructor(
                 note = existing.note.orEmpty(),
                 sex = existing.sex,
                 gender = existing.gender,
+                orientation = existing.orientation,
                 relationshipType = existing.relationshipType,
                 birthDate = existing.birthDate,
                 ethnicity = existing.ethnicity,
@@ -146,6 +149,11 @@ class PartnerEditViewModel @Inject constructor(
     fun setGender(value: Gender?) {
         uiState = uiState.copy(gender = value)
     }
+
+    fun setOrientation(value: Orientation?) {
+        uiState = uiState.copy(orientation = value)
+    }
+
     fun setRelationship(value: RelationshipType?) {
         uiState = uiState.copy(relationshipType = value)
     }
@@ -181,6 +189,7 @@ class PartnerEditViewModel @Inject constructor(
                     note = s.note.trim().ifBlank { null },
                     sex = s.sex,
                     gender = s.gender,
+                    orientation = s.orientation,
                     relationshipType = s.relationshipType,
                     photoMediaId = existing?.photoMediaId,
                     birthDate = s.birthDate,
