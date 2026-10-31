@@ -182,7 +182,7 @@ fun EncounterEditScreen(
                 navigationIcon = { TextButton(onClick = attemptClose) { Text(stringResource(R.string.action_cancel)) } },
                 actions = {
                     // The one action on this screen that isn't reversible from here — give it real
-                    // weight against "Cancel" instead of matching it exactly (D-59).
+                    // weight against "Cancel" instead of matching it exactly.
                     TextButton(onClick = {
                         haptics.confirm()
                         viewModel.save(onClose)
