@@ -13,9 +13,9 @@ What you can do:
 * Make the categories your own. Tryst ships almost no predefined categories — you build your own acts, kinks, positions, toys, occasions, and finish locations on a dedicated management page for each, and everything you add counts fully in Insights and Achievements.
 * Track partners (named or anonymous) with per-partner stats.
 * Search and filter your history. Find any tryst by note, partner, or category, and narrow by date, partner, place, mood, protection, duration, and more.
-* Browse your Photos. A dedicated Photos tab gathers every image attached to a tryst plus per-partner and self portrait albums, with layouts (date grid, mosaic, by-partner, People, feed), search, filters, favourites, bulk actions (long-press and drag to select a run), a fast scroller with a month bubble, a slideshow, and a full-screen viewer you can swipe through, zoom, and delete from. Optional "blur until tapped" gate keeps photos private when you hand the phone over.
+* Browse your Photos. A dedicated Photos tab gathers every image attached to a tryst plus per-partner and self portrait albums, with layouts (date grid, mosaic, by-partner, People, feed), search, filters, favourites, bulk actions (long-press and drag to select a run), a fast scroller with a month bubble, grouping by day, month or year, a slideshow, and a full-screen viewer you can swipe through, zoom, and delete from (with undo). Optional "blur until tapped" gate keeps photos private when you hand the phone over.
 * Explore Insights: streaks, trends, and per-attribute breakdowns, all computed on-device with hand-drawn charts — and focus them on a year, a quarter, or a custom date range.
-* Earn Achievements derived from your own log.
+* Earn Achievements derived from your own log, including a Completionist badge for finishing them all.
 * Customize the look with light/dark themes and Material You dynamic color.
 
 Important — there is no password recovery. Your PIN is the only key. If you forget it and have not set up biometric unlock, your data cannot be unlocked: there is no email reset, because there is no server. Keep your PIN safe and use the encrypted export to back up your data.

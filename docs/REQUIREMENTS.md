@@ -1,6 +1,6 @@
 # Tryst — Requirements
 
-> **Status:** Live — shipped through **v0.6.2** (schema v17). The v1 scope below is fully
+> **Status:** Live — shipped through **v0.6.3** (schema v17). The v1 scope below is fully
 > implemented; post-1.0 work is tracked in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
 
 ## 1. Vision
@@ -73,7 +73,9 @@ with deeply personal data. Inspired by the iOS app *Nice*.
 - **FR-25** A dedicated **Photos** tab gathering every image in the app: encounter photos plus
   per-partner and self-profile portrait albums (GAL-1..GAL-7, D-50/D-52). Five user-selectable
   layouts (justified date grid, mosaic, by-partner, People avatars, feed), pinch-zoom viewer with
-  favourite, add-to-person, and set-as-avatar actions, plus a filters sheet reusing FR-23's dims.
+  favourite, add-to-person, and set-as-avatar actions, plus a filters sheet reusing FR-23's dims. Selected
+  photos and viewer deletes can be undone for a few seconds; the date layouts group by day, month or
+  year (pinch past the density limits); a one-time tip introduces the gestures.
 - **FR-26** A **portrait album per person** (GAL-6, schema v15). Any partner or the self profile
   can own a set of photos beyond the single active avatar; the avatar is picked from the strip and
   the album round-trips through the encrypted backup.

@@ -13,12 +13,13 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.6.3] — 2026-11-01 (versionCode 19)
+
 ### Added
 
 - **Tooltips on icon-only buttons (QOL-6).** Long-press (or hover, on a tablet or with a stylus) any toolbar or icon button to see what it does. Covers the Photos, Trysts, Insights, Search and Partners screens and the photo viewer.
 - **Themed launcher icon.** The T-heart now has a monochrome layer, so Android 13 and newer tint it with your wallpaper colours when themed icons are on.
 - **Completionist achievement (ACH-1).** A new badge that unlocks once every other achievement is unlocked, dated the day the last one landed. It counts toward the "X of N" total on Insights, and it relocks whenever a release adds new achievements.
-
 - **Group the Photos grid by day, month or year.** In the date and mosaic layouts, keep spreading your fingers past the smallest tiles to group by month, then year; pinch in past the biggest tiles to group by day. The choice is remembered.
 - **A one-time tip on the Photos tab** about long-press-and-drag selecting and the pinch levels. Dismiss it with *Got it* and it never returns.
 

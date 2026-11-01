@@ -33,6 +33,17 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.6.3",
+            versionCode = 19,
+            date = "2026-11-01",
+            highlights = listOf(
+                "Deleting photos can now be undone. The photos disappear at once and an Undo bar stays for six seconds, so there is no confirm dialog to tap through.",
+                "Group the Photos grid by day, month or year by pinching past the tile-size limits. Double-tap zoom now animates, and the viewer shows the grid thumbnail while the full photo loads. A one-time tip on the Photos tab explains the gestures.",
+                "Long-press any icon button to see what it does. The launcher icon now follows your wallpaper colours when themed icons are on.",
+                "A new Completionist achievement unlocks once every other achievement is unlocked. It will relock whenever a release adds new achievements.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.6.2",
             versionCode = 18,
             date = "2026-10-31",

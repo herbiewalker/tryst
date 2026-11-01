@@ -1,0 +1,7 @@
+Photo polish, tooltips and a new badge
+
+* Delete photos with a six-second Undo instead of a confirm dialog.
+* Group the Photos grid by day, month or year: keep pinching past the tile limits. Double-tap zoom now animates and photos open faster.
+* Long-press any icon button to see what it does.
+* The launcher icon now follows your wallpaper colours when themed icons are on.
+* A new Completionist badge for unlocking every other achievement, plus a one-time tip on the Photos tab.
