@@ -13,6 +13,7 @@
 // ╰──────────────────────────────────────────────────────────────────╯
 package app.tryst.ui.gallery
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -155,6 +156,8 @@ fun PhotoViewer(
     onUndoDelete: () -> Unit = {},
 ) {
     if (photos.isEmpty()) return
+    // The viewer is an overlay, not a route, so system back would otherwise pop the whole Photos tab.
+    BackHandler(onBack = onClose)
     val pagerState = rememberPagerState(
         initialPage = initialIndex.coerceIn(0, photos.lastIndex),
         pageCount = { photos.size },
@@ -167,7 +170,8 @@ fun PhotoViewer(
     // Swipe-down-to-close: how far the photo has been dragged vertically (px), and the close threshold.
     var dismissY by remember { mutableFloatStateOf(0f) }
     val dismissDistance = with(LocalDensity.current) { DISMISS_DISTANCE.toPx() }
-    val dismissProgress = (abs(dismissY) / (dismissDistance * 2.5f)).coerceIn(0f, 1f)
+    // Only a downward pull fades the scrim and shrinks the photo; an upward pull is the details gesture.
+    val dismissProgress = (dismissY.coerceAtLeast(0f) / (dismissDistance * 2.5f)).coerceIn(0f, 1f)
     var showInfo by remember { mutableStateOf(false) }
     var slideshow by remember { mutableStateOf(false) }
     var avatarMenu by remember { mutableStateOf(false) }
@@ -231,9 +235,17 @@ fun PhotoViewer(
                 zoomEnabled = index == pagerState.currentPage,
                 onDismissDrag = { dy -> dismissY += dy },
                 onDismissEnd = {
-                    if (abs(dismissY) > dismissDistance) {
+                    val pulledDown = dismissY > dismissDistance
+                    val pulledUp = dismissY < -dismissDistance
+                    if (pulledDown && !showInfo) {
                         onClose()
                     } else {
+                        // Pull down with details open hides them first; pull up reveals them (like Google Photos).
+                        if (pulledDown) showInfo = false
+                        if (pulledUp) {
+                            showInfo = true
+                            chromeVisible = true
+                        }
                         scope.launch { animate(dismissY, 0f) { value, _ -> dismissY = value } }
                     }
                 },
