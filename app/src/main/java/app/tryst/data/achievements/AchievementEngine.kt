@@ -36,12 +36,20 @@ enum class AchievementCategory(val label: String) {
  * - [Distinct]: size of a growing set of keys (e.g. distinct acts/partners/places). The lambda also
  *   receives the encounter's [LocalDate] for time-based keys (weekday, month).
  * - [Streak]: longest run of consecutive ISO weeks with activity.
+ * - [AllOthers]: how many of the other achievements are unlocked (the completionist badge).
  */
 sealed interface Rule
 data class Count(val predicate: (EncounterWithDetails) -> Boolean) : Rule
 data class Sum(val amount: (EncounterWithDetails) -> Int) : Rule
 data class Distinct(val keys: (EncounterWithDetails, LocalDate) -> Set<String>) : Rule
 data object Streak : Rule
+
+/**
+ * Meta rule (ACH-1): progress is how many of the *other* achievements are unlocked. Computed by
+ * [AchievementEngine] after every log-driven rule, so it never counts itself; its [AchievementDef.target]
+ * is a placeholder replaced by the number of other achievements at evaluation time.
+ */
+data object AllOthers : Rule
 
 /** A static, code-defined achievement. Ids are stable; nothing is persisted. */
 data class AchievementDef(
@@ -99,15 +107,30 @@ object AchievementEngine {
         val sorted = encounters.sortedBy { it.encounter.startAt }
         fun dateOf(e: EncounterWithDetails): LocalDate = Instant.ofEpochMilli(e.encounter.startAt).atZone(zone).toLocalDate()
 
-        return Achievements.catalog.map { def ->
+        val (metaDefs, logDefs) = Achievements.catalog.partition { it.rule == AllOthers }
+        val logStatuses = logDefs.map { def ->
             val (current, unlockedAt) = when (val rule = def.rule) {
                 is Count -> replayTotal(sorted, def.target, ::dateOf) { if (rule.predicate(it)) 1 else 0 }
                 is Sum -> replayTotal(sorted, def.target, ::dateOf) { rule.amount(it) }
                 is Distinct -> replayDistinct(sorted, def.target, ::dateOf, rule.keys)
                 Streak -> replayStreak(sorted, def.target, ::dateOf)
+                AllOthers -> error("meta rules are evaluated after the log-driven ones")
             }
             AchievementStatus(def, current, unlocked = current >= def.target, unlockedAt = unlockedAt)
         }
+        return logStatuses + metaDefs.map { completionist(it, logStatuses) }
+    }
+
+    /** Unlocks once every log-driven achievement is unlocked, on the date the last one unlocked. */
+    internal fun completionist(def: AchievementDef, others: List<AchievementStatus>): AchievementStatus {
+        val unlocked = others.count { it.unlocked }
+        val all = unlocked == others.size
+        return AchievementStatus(
+            def = def.copy(target = others.size),
+            current = unlocked,
+            unlocked = all,
+            unlockedAt = if (all) others.mapNotNull { it.unlockedAt }.maxOrNull() else null,
+        )
     }
 
     fun summarize(

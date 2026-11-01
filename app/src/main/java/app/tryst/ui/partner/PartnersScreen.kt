@@ -33,7 +33,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -58,6 +57,7 @@ import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.ProfileEntity
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
+import app.tryst.ui.common.TooltipIconButton
 import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.rememberHaptics
 import app.tryst.ui.profile.ProfileViewModel
@@ -216,7 +216,7 @@ private fun PartnerRow(
                     Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            IconButton(onClick = {
+            TooltipIconButton(label = stringResource(R.string.partner_view_photos), onClick = {
                 haptics.tick()
                 onViewPhotos()
             }) {

@@ -45,7 +45,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -97,6 +96,7 @@ import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.EncounterCard
 import app.tryst.ui.common.Format
 import app.tryst.ui.common.MenuChip
+import app.tryst.ui.common.TooltipIconButton
 
 private const val DETAIL_THUMB_PX = 220
 
@@ -147,7 +147,7 @@ fun SearchScreen(
         topBar = {
             TopAppBar(
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    TooltipIconButton(label = stringResource(R.string.cd_back), onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
@@ -179,7 +179,7 @@ fun SearchScreen(
                 },
                 actions = {
                     if (query.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.setQuery("") }) {
+                        TooltipIconButton(label = stringResource(R.string.search_clear_query), onClick = { viewModel.setQuery("") }) {
                             Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.search_clear_query))
                         }
                     }
@@ -371,7 +371,7 @@ private fun ResultItem(
             } else {
                 Spacer(Modifier.weight(1f))
             }
-            IconButton(onClick = onToggle, modifier = Modifier.size(32.dp)) {
+            TooltipIconButton(label = stringResource(if (expanded) R.string.cd_search_collapse else R.string.cd_search_expand), onClick = onToggle, modifier = Modifier.size(32.dp)) {
                 Icon(
                     imageVector = if (expanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
                     contentDescription = stringResource(if (expanded) R.string.cd_search_collapse else R.string.cd_search_expand),
@@ -503,7 +503,7 @@ private fun IdleState(
                         onClick = { onApply(recent) },
                         label = { Text(recent) },
                         trailingIcon = {
-                            IconButton(onClick = { onDelete(recent) }, modifier = Modifier.size(24.dp)) {
+                            TooltipIconButton(label = stringResource(R.string.cd_search_remove_recent), onClick = { onDelete(recent) }, modifier = Modifier.size(24.dp)) {
                                 Icon(
                                     Icons.Filled.Close,
                                     contentDescription = stringResource(R.string.cd_search_remove_recent),
@@ -662,7 +662,7 @@ private fun FilterChipRow(
 private fun SortMenu(current: SortOrder, onSelect: (SortOrder) -> Unit) {
     var expanded by remember { mutableStateOf(false) }
     Box {
-        IconButton(onClick = { expanded = true }) {
+        TooltipIconButton(label = current.label, onClick = { expanded = true }) {
             Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = current.label)
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {

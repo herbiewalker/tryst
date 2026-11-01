@@ -13,6 +13,16 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+### Added
+
+- **Tooltips on icon-only buttons (QOL-6).** Long-press (or hover, on a tablet or with a stylus) any toolbar or icon button to see what it does. Covers the Photos, Trysts, Insights, Search and Partners screens and the photo viewer.
+- **Themed launcher icon.** The T-heart now has a monochrome layer, so Android 13 and newer tint it with your wallpaper colours when themed icons are on.
+- **Completionist achievement (ACH-1).** A new badge that unlocks once every other achievement is unlocked, dated the day the last one landed. It counts toward the "X of N" total on Insights, and it relocks whenever a release adds new achievements.
+
+### Changed
+
+- **Deleting photos can be undone.** Deleting from the viewer or from a selection no longer asks first. The photos disappear at once, an *N photos deleted · Undo* bar appears for six seconds, and they are removed for good when it closes. Leaving the Photos tab inside that window still deletes them.
+
 ## [0.6.2] — 2026-10-31 (versionCode 18)
 
 ### Added

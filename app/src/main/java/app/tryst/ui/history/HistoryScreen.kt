@@ -46,7 +46,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -85,6 +84,7 @@ import app.tryst.ui.common.CARD_THUMB_PX
 import app.tryst.ui.common.DateHeader
 import app.tryst.ui.common.EncounterCard
 import app.tryst.ui.common.Format
+import app.tryst.ui.common.TooltipIconButton
 import app.tryst.ui.common.encounterSharedKey
 import app.tryst.ui.common.rememberHaptics
 import java.time.DayOfWeek
@@ -121,13 +121,13 @@ fun HistoryScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.history_title)) },
                 actions = {
-                    IconButton(onClick = {
+                    TooltipIconButton(label = stringResource(R.string.cd_search), onClick = {
                         haptics.tick()
                         onOpenSearch()
                     }) {
                         Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.cd_search))
                     }
-                    IconButton(onClick = {
+                    TooltipIconButton(label = stringResource(if (calendarMode) R.string.cd_view_list else R.string.cd_view_calendar), onClick = {
                         haptics.tick()
                         calendarMode = !calendarMode
                     }) {
@@ -354,7 +354,7 @@ private fun CalendarHeader(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = onPrev) {
+            TooltipIconButton(label = stringResource(if (view == CalView.MONTH) R.string.cd_prev_month else R.string.cd_prev_week), onClick = onPrev) {
                 Icon(
                     Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                     contentDescription = stringResource(if (view == CalView.MONTH) R.string.cd_prev_month else R.string.cd_prev_week),
@@ -369,7 +369,7 @@ private fun CalendarHeader(
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
             )
-            IconButton(onClick = onNext) {
+            TooltipIconButton(label = stringResource(if (view == CalView.MONTH) R.string.cd_next_month else R.string.cd_next_week), onClick = onNext) {
                 Icon(
                     Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = stringResource(if (view == CalView.MONTH) R.string.cd_next_month else R.string.cd_next_week),

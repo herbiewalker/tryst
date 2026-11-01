@@ -38,7 +38,6 @@ import androidx.compose.material.icons.filled.Rotate90DegreesCw
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -71,6 +70,7 @@ import app.tryst.R
 import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.data.media.FractionalRect
 import app.tryst.data.media.PhotoTransforms
+import app.tryst.ui.common.TooltipIconButton
 
 private const val CROPPER_LOAD_PX = 1600
 private val HANDLE_DP = 32.dp
@@ -173,7 +173,7 @@ fun PhotoCropper(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                IconButton(onClick = onCancel) {
+                TooltipIconButton(label = stringResource(R.string.action_cancel), onClick = onCancel) {
                     Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_cancel), tint = Color.White)
                 }
                 TextButton(onClick = { onSave(rect) }, enabled = bmp != null) {

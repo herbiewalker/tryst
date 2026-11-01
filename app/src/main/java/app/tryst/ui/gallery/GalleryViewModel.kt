@@ -56,7 +56,11 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -110,6 +114,16 @@ class GalleryViewModel @Inject constructor(
     private val personPhotoRepository: PersonPhotoRepository,
     profileRepository: ProfileRepository,
 ) : ViewModel() {
+
+    // Delete-with-undo: photos in [pendingDeletes] are hidden at once and only really removed once the
+    // undo window passes, so a stray delete is recoverable. Nothing is staged on disk, so a process kill
+    // inside the window just leaves the photos where they were.
+    private val pendingDeletes = MutableStateFlow<List<GalleryPhoto>>(emptyList())
+    private var commitJob: Job? = null
+
+    /** How many photos are waiting out the undo window (0 = nothing to undo). */
+    val pendingDeleteCount: StateFlow<Int> = pendingDeletes.map { it.size }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query.asStateFlow()
@@ -317,10 +331,13 @@ class GalleryViewModel @Inject constructor(
         allPersonPhotos,
         partners,
         profile,
-    ) { encounters, personPhotos, partners, profile ->
+        pendingDeletes,
+    ) { encounters, personPhotos, partners, profile, pending ->
+        // Photos waiting out their undo window are hidden from every layout and from the viewer.
+        val hidden = pending.mapTo(HashSet()) { it.blobId }
         GallerySources(
-            encounters = encounters,
-            personPhotos = personPhotos,
+            encounters = if (hidden.isEmpty()) encounters else encounters.map { e -> e.copy(media = e.media.filter { it.id !in hidden }) },
+            personPhotos = if (hidden.isEmpty()) personPhotos else personPhotos.filter { it.mediaBlobId !in hidden },
             partnerNames = partners.associate { it.id to it.displayName },
             profileName = profile?.displayName,
         )
@@ -440,14 +457,41 @@ class GalleryViewModel @Inject constructor(
         clearSelection()
     }
 
-    fun deleteSelected() = viewModelScope.launch {
+    fun deleteSelected() {
         val ids = _selectedIds.value
-        deletePhotos(uiState.value.photos.filter { it.id in ids })
+        deleteWithUndo(uiState.value.photos.filter { it.id in ids })
         clearSelection()
     }
 
-    /** Deletes one photo from the full-screen viewer (same removal path as bulk delete). */
-    fun deletePhoto(photo: GalleryPhoto) = viewModelScope.launch { deletePhotos(listOf(photo)) }
+    /** Deletes one photo from the full-screen viewer (same undo window as bulk delete). */
+    fun deletePhoto(photo: GalleryPhoto) = deleteWithUndo(listOf(photo))
+
+    /** Brings back everything still inside the undo window. */
+    fun undoDelete() {
+        commitJob?.cancel()
+        commitJob = null
+        pendingDeletes.value = emptyList()
+    }
+
+    private fun deleteWithUndo(photos: List<GalleryPhoto>) {
+        if (photos.isEmpty()) return
+        // A second delete inside the window commits the first batch at once; only the latest is undoable.
+        val earlier = pendingDeletes.value
+        commitJob?.cancel()
+        pendingDeletes.value = photos
+        commitJob = viewModelScope.launch {
+            if (earlier.isNotEmpty()) deletePhotos(earlier)
+            delay(UNDO_WINDOW_MS)
+            deletePhotos(photos)
+            pendingDeletes.value = emptyList()
+        }
+    }
+
+    override fun onCleared() {
+        // Leaving the screen inside the window still deletes: viewModelScope is gone, so finish on a short-lived scope.
+        val pending = pendingDeletes.value
+        if (pending.isNotEmpty()) CoroutineScope(SupervisorJob() + Dispatchers.IO).launch { deletePhotos(pending) }
+    }
 
     private suspend fun deletePhotos(photos: List<GalleryPhoto>) {
         val encounterMedia = photos.mapNotNull { it.media }

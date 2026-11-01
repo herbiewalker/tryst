@@ -35,7 +35,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
@@ -52,6 +51,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import app.tryst.R
+import app.tryst.ui.common.TooltipIconButton
 
 /**
  * Full-screen CSV import route (QOL-7): picks a CSV, previews the detected columns, lets the user
@@ -75,7 +75,7 @@ fun CsvImportScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.csv_import_title)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    TooltipIconButton(label = stringResource(R.string.cd_back), onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },

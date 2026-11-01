@@ -113,6 +113,7 @@ object Achievements {
         AchievementDef("x_safe", "Play It Safe", "Use protection on 25 trysts.", AchievementCategory.MISC, 25, "🦺", Count { e -> e.encounter.protectionUsed.any { it != Protection.NONE } }),
         AchievementDef("x_initme", "Go-Getter", "Initiate 25 trysts.", AchievementCategory.MISC, 25, "🏹", Count { it.encounter.initiator == Initiator.ME }),
         AchievementDef("x_mutual", "In Sync", "Log 10 mutually-initiated trysts.", AchievementCategory.MISC, 10, "🤝", Count { it.encounter.initiator == Initiator.MUTUAL }),
+        AchievementDef("x_completionist", "Completionist", "Unlock every other achievement.", AchievementCategory.MISC, 0, "🏆", AllOthers),
     )
 }
 

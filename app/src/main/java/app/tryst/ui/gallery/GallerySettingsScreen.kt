@@ -27,7 +27,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -49,6 +48,7 @@ import app.tryst.core.prefs.GalleryPreferences
 import app.tryst.data.gallery.GalleryLayout
 import app.tryst.data.gallery.GallerySort
 import app.tryst.data.gallery.GridSpacing
+import app.tryst.ui.common.TooltipIconButton
 import app.tryst.ui.search.FilterSection
 import app.tryst.ui.search.SelectChip
 
@@ -82,7 +82,7 @@ fun GallerySettingsScreen(
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_gallery)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    TooltipIconButton(label = stringResource(R.string.cd_back), onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
