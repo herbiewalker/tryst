@@ -15,11 +15,12 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ### Fixed
 
+- **Photos you import keep their location and camera details.** The old photo picker stripped GPS from every photo; imports now use the system file picker, which hands over the original. The details sheet shows when it was taken, the file name, camera, lens, exposure and coordinates, with *Copy* and *Open in Maps* (after a confirm). The details are stored with the photo, so rotating or cropping no longer loses them, and photos you already have are read the first time you open Photos. Tryst still has no permissions and no network, so there is no place name or map tile.
 - **Back from a photo returns to the photo grid.** The system back gesture in the full-screen viewer used to leave the Photos tab entirely and land on the calendar; it now just closes the viewer, like swiping down.
 
 ### Changed
 
-- **Swipe up on a photo to see its details.** Pulling the photo up opens the details panel instead of closing the viewer, as in Google Photos. Swiping down with the details open hides them first; a second swipe down closes the viewer.
+- **Swipe up on a photo to see its details.** Pulling the photo up slides the details panel in under your finger and lifts the photo with it, instead of closing the viewer, as in Google Photos. Swiping down with the details open hides them first; a second swipe down closes the viewer.
 
 ## [0.6.3] — 2026-11-01 (versionCode 19)
 

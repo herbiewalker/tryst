@@ -136,6 +136,27 @@ data class MediaEntity(
      * dump so no export-format change is needed (a pre-v16 backup simply has no value → NULL).
      */
     val caption: String? = null,
+    /**
+     * Photo details captured from the original file at import time (v18). They live in the encrypted
+     * DB so they survive a rotate/crop (which re-encodes the photo and drops EXIF), so a future map can
+     * query them, and so they ride the backup. All nullable; a pre-v18 backup restores them as NULL and
+     * the gallery re-reads them from the blob.
+     */
+    val capturedAt: Long? = null,
+    /** Minutes east of UTC at capture, when the camera recorded it. */
+    val capturedOffsetMin: Int? = null,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
+    val altitudeM: Double? = null,
+    val camera: String? = null,
+    val lens: String? = null,
+    val aperture: Double? = null,
+    val shutterSeconds: Double? = null,
+    val iso: Int? = null,
+    val focalLengthMm: Double? = null,
+    val originalName: String? = null,
+    /** True once the blob has been read for the fields above (so a photo with no EXIF is not rescanned forever). */
+    @ColumnInfo(defaultValue = "0") val metaScanned: Boolean = false,
 )
 
 /**

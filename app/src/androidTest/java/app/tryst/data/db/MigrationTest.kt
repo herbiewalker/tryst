@@ -549,6 +549,36 @@ class MigrationTest {
             }
         }
     }
+
+    /**
+     * v17 → v18 adds the photo-detail columns to `media`: every one NULL for existing rows, `metaScanned`
+     * defaulting to 0 so the gallery backfills them, and all of them writable.
+     */
+    @Test
+    fun migrate17To18_addsPhotoDetailColumnsDefaultingNull() {
+        helper.createDatabase(dbName, 17).use { db ->
+            db.execSQL("INSERT INTO encounters (id, startAt, protectionUsed, createdAt, updatedAt) VALUES ('e1', 1000, '', 1, 1)")
+            db.execSQL(
+                "INSERT INTO media (id, encounterId, encFilePath, mimeType, createdAt, favorite) " +
+                    "VALUES ('m1', 'e1', '/data/media/m1.enc', 'image/jpeg', 5, 0)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(dbName, 18, true, MIGRATION_17_18).use { db ->
+            db.query("SELECT capturedAt, latitude, longitude, camera, originalName, metaScanned FROM media WHERE id = 'm1'").use { c ->
+                assertTrue(c.moveToFirst())
+                (0..4).forEach { assertTrue("column $it defaults to NULL", c.isNull(it)) }
+                assertEquals("not scanned yet", 0, c.getInt(5))
+            }
+            db.execSQL("UPDATE media SET latitude = 37.69, longitude = -85.85, capturedAt = 99, camera = 'Pixel', metaScanned = 1 WHERE id = 'm1'")
+            db.query("SELECT latitude, longitude, metaScanned FROM media WHERE id = 'm1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(37.69, c.getDouble(0), 0.0001)
+                assertEquals(-85.85, c.getDouble(1), 0.0001)
+                assertEquals(1, c.getInt(2))
+            }
+        }
+    }
 }
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

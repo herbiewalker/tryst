@@ -1,6 +1,6 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v17** (latest: **D-59**, orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
+> **Status:** Live — decisions through **schema v18** (latest: **D-60**, photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
 > presence-only re-auth via BiometricPrompt with device-credential fallback — no CryptoObject,
 > no DEK touch, v0.5.7).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
@@ -695,6 +695,19 @@
     `DemographicFields`, so both editors change once. Manage page reuses `CatalogManageScreen`.
   - **Out of scope.** Filtering, searching or charting by orientation, and CSV import mapping. The
     broader multi-partner relationship-tracking direction from the PR is a separate product decision.
+
+- **D-60 (2026-11-01) Photo details are captured at import and kept on the row; photos come in through the document picker (META-2, schema v18).**
+  A photo's GPS and camera tags were not showing in the details sheet. Causes: the Android Photo Picker (the
+  old importer) strips location by design, and a rotate or crop re-encodes the photo and drops all EXIF. Chosen:
+  (1) import through the system **document picker** (`OpenDocument` / `OpenMultipleDocuments`), which hands over
+  the original file. Verified on the emulator: with no permission granted, the "Images" root delivered the GPS
+  tag. `ACCESS_MEDIA_LOCATION` was tried and dropped, since its prompt asks for broad photo access and was not
+  needed, so the app still declares **no permissions**. (2) Persist the details on `media` at import (13
+  nullable columns) so they outlive edits and can drive a map; read from the decrypted copy, never the one-shot
+  source stream. (3) Lazy backfill for older photos. (4) **No place names and no map tiles**: both need the
+  network. The details sheet shows coordinates with **Copy** and **Open in Maps**, which hands the coordinates
+  to the user's maps app only after a confirm dialog. Camera captures keep whatever the camera app wrote.
+  Portraits (`person_photo`) are not persisted yet; their sheet still reads the blob's EXIF.
 
 > **Standing follow-ups (not blockers, tracked here as pointers):**
 > **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;

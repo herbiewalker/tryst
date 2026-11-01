@@ -28,6 +28,7 @@ import app.tryst.data.db.entity.Sex
 import app.tryst.data.repository.OrientationRepository
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.ui.common.MediaImages
+import app.tryst.ui.common.PhotoSource
 import app.tryst.ui.gallery.GalleryDeepLink
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -101,7 +102,7 @@ class PartnersViewModel @Inject constructor(
             val photoMediaId = when {
                 draft.newPhotoUri != null -> {
                     val newId = withContext(Dispatchers.IO) {
-                        context.contentResolver.openInputStream(draft.newPhotoUri)?.use { repository.savePhoto(it) }
+                        PhotoSource.open(context, draft.newPhotoUri)?.use { repository.savePhoto(it) }
                     }
                     if (newId != null && oldPhotoId != null) repository.deletePhoto(oldPhotoId)
                     newId ?: oldPhotoId

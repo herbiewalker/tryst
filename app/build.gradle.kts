@@ -178,4 +178,30 @@ androidComponents {
     }
 }
 
+// Safety guard: instrumented tests install the app on EVERY attached device and uninstall it again when
+// they finish, which deletes the app's data. On 2026-11-01 that wiped real data from the user's phone.
+// Refuse to run them unless they are pinned to an emulator (ANDROID_SERIAL=emulator-XXXX) or no
+// physical device is attached. Android Studio's own test runner is unaffected.
+val adbExecutable = androidComponents.sdkComponents.adb
+val checkSafeTestDevice = tasks.register("checkSafeTestDevice") {
+    doLast {
+        val out = ProcessBuilder(adbExecutable.get().asFile.absolutePath, "devices")
+            .redirectErrorStream(true).start().inputStream.bufferedReader().readText()
+        val physical = out.lines().drop(1)
+            .map { it.split("\t") }
+            .filter { it.size == 2 && it[1].trim() == "device" && !it[0].startsWith("emulator-") }
+            .map { it[0] }
+        val pinned = System.getenv("ANDROID_SERIAL").orEmpty()
+        if (physical.isNotEmpty() && !pinned.startsWith("emulator-")) {
+            throw org.gradle.api.GradleException(
+                "Refusing to run instrumented tests: physical device(s) attached $physical. Tests uninstall the app " +
+                    "and DELETE its data on every attached device. Set ANDROID_SERIAL=emulator-5554 (or unplug the phone) and retry.",
+            )
+        }
+        logger.lifecycle("Test-device guard OK: tests will not touch a physical device.")
+    }
+}
+tasks.matching { it.name.startsWith("connected") && it.name.endsWith("AndroidTest") }
+    .configureEach { dependsOn(checkSafeTestDevice) }
+
 // ÃƒÂ¢Ã‚ÂÃ‚Â£ HW ÃƒÂ¢Ã‚ÂÃ‚Â£ Ãƒâ€šÃ‚Â· code Ãƒâ€šÃ‚Â· tools Ãƒâ€šÃ‚Â· homelab Ãƒâ€šÃ‚Â· ÃƒÂ¢Ã‚ÂÃ‚Â£ HW ÃƒÂ¢Ã‚ÂÃ‚Â£

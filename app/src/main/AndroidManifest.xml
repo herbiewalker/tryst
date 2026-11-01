@@ -8,7 +8,6 @@
       (see app/build.gradle.kts) fails the build if a network permission ever appears here
       OR in a dependency's merged manifest. Do not add one. See CLAUDE.md.
     -->
-
     <application
         android:name=".TrystApplication"
         android:allowBackup="false"

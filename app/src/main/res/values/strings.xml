@@ -196,6 +196,16 @@
     <string name="gallery_meta_dimensions">Dimensions</string>
     <string name="gallery_meta_camera">Camera</string>
     <string name="gallery_meta_location">Location</string>
+    <string name="gallery_meta_file">File</string>
+    <string name="gallery_meta_lens">Lens</string>
+    <string name="gallery_meta_altitude">Altitude</string>
+    <string name="gallery_location_copy">Copy</string>
+    <string name="gallery_location_copied">Coordinates copied</string>
+    <string name="gallery_location_open">Open in Maps</string>
+    <string name="gallery_location_open_title">Open in a maps app?</string>
+    <string name="gallery_location_open_body">This hands %1$s to the maps app you choose. Tryst stays offline, but that app can see where this photo was taken.</string>
+    <string name="gallery_location_open_confirm">Open</string>
+    <string name="gallery_location_no_maps">No maps app found</string>
     <string name="gallery_meta_shot">Shot</string>
     <string name="gallery_meta_orientation">Orientation</string>
     <string name="gallery_meta_none">No embedded details for this photo.</string>

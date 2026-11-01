@@ -14,7 +14,9 @@
 package app.tryst.ui.gallery
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -67,7 +69,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -81,6 +82,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -90,9 +92,7 @@ import app.tryst.core.prefs.CaptionEntryPoint
 import app.tryst.data.gallery.GalleryPartner
 import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.data.media.PhotoMeta
-import app.tryst.data.media.PhotoMetadata
 import app.tryst.ui.common.DecodedImage
-import app.tryst.ui.common.Format
 import app.tryst.ui.common.TooltipIconButton
 import app.tryst.ui.theme.GridTileShape
 import kotlin.math.abs
@@ -107,6 +107,10 @@ private const val DOUBLE_TAP_ZOOM = 2f
 private const val DOUBLE_TAP_MS = 220
 private const val PAN_EPSILON = 0.5f
 private val DISMISS_DISTANCE = 120.dp
+private val INFO_PANEL_GUESS = 180.dp
+
+/** What the current vertical drag is moving: the details sheet or the photo (to close). */
+private enum class DragMode { NONE, DETAILS, CLOSE }
 
 /** Keeps a zoomed photo's pan inside the room the zoom created, so it can't be dragged off screen. */
 private fun clampPan(offset: Float, extent: Int, scale: Float): Float {
@@ -154,6 +158,7 @@ fun PhotoViewer(
     peekThumb: (blobId: String) -> ImageBitmap? = { null },
     pendingDeleteCount: Int = 0,
     onUndoDelete: () -> Unit = {},
+    onLeaveApp: () -> Unit = {},
 ) {
     if (photos.isEmpty()) return
     // The viewer is an overlay, not a route, so system back would otherwise pop the whole Photos tab.
@@ -173,13 +178,25 @@ fun PhotoViewer(
     // Only a downward pull fades the scrim and shrinks the photo; an upward pull is the details gesture.
     val dismissProgress = (dismissY.coerceAtLeast(0f) / (dismissDistance * 2.5f)).coerceIn(0f, 1f)
     var showInfo by remember { mutableStateOf(false) }
+    // Details sheet progress, 0 (hidden) .. 1 (fully up). A finger drives it directly while dragging, so the
+    // panel slides in under the photo and the photo lifts with it; releasing settles it open or shut.
+    var infoProgress by remember { mutableFloatStateOf(0f) }
+    val density = LocalDensity.current
+    val scope = rememberCoroutineScope()
+    var infoPanelPx by remember { mutableFloatStateOf(with(density) { INFO_PANEL_GUESS.toPx() }) }
+    var infoJob by remember { mutableStateOf<Job?>(null) }
+    var dragMode by remember { mutableStateOf(DragMode.NONE) }
+    fun settleInfo(open: Boolean) {
+        showInfo = open
+        infoJob?.cancel()
+        infoJob = scope.launch { animate(infoProgress, if (open) 1f else 0f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) { v, _ -> infoProgress = v } }
+    }
     var slideshow by remember { mutableStateOf(false) }
     var avatarMenu by remember { mutableStateOf(false) }
     var addToPersonMenu by remember { mutableStateOf(false) }
     var editingCaption by remember { mutableStateOf<GalleryPhoto?>(null) }
     var editSheetOpen by remember { mutableStateOf(false) }
     var cropping by remember { mutableStateOf<GalleryPhoto?>(null) }
-    val scope = rememberCoroutineScope()
 
     // Shuffle order: a Fisher-Yates permutation regenerated every time slideshow flips on OR the set of
     // photos changes. Playing consumes it end-to-end (with the current page slotted first) before reshuffling,
@@ -219,7 +236,7 @@ fun PhotoViewer(
             beyondViewportPageCount = 1,
             key = { index -> photos.getOrNull(index)?.blobId ?: index },
             modifier = Modifier.fillMaxSize().graphicsLayer {
-                translationY = dismissY
+                translationY = dismissY - infoProgress * infoPanelPx * 0.5f
                 val shrink = 1f - 0.15f * dismissProgress
                 scaleX = shrink
                 scaleY = shrink
@@ -233,19 +250,27 @@ fun PhotoViewer(
                 onTap = { chromeVisible = !chromeVisible },
                 // Only the settled page reads gestures, so a mid-swipe pinch doesn't fight the pager.
                 zoomEnabled = index == pagerState.currentPage,
-                onDismissDrag = { dy -> dismissY += dy },
+                onDismissDrag = { dy ->
+                    if (dragMode == DragMode.NONE) {
+                        infoJob?.cancel()
+                        // Pull up, or pull down while the details are open, drags the details sheet; otherwise it drags the photo to close.
+                        dragMode = if (dy < 0f || infoProgress > 0f) DragMode.DETAILS else DragMode.CLOSE
+                    }
+                    if (dragMode == DragMode.DETAILS) {
+                        infoProgress = (infoProgress - dy / infoPanelPx).coerceIn(0f, 1f)
+                        chromeVisible = true
+                    } else {
+                        dismissY = (dismissY + dy).coerceAtLeast(0f)
+                    }
+                },
                 onDismissEnd = {
-                    val pulledDown = dismissY > dismissDistance
-                    val pulledUp = dismissY < -dismissDistance
-                    if (pulledDown && !showInfo) {
+                    val mode = dragMode
+                    dragMode = DragMode.NONE
+                    if (mode == DragMode.DETAILS) {
+                        settleInfo(infoProgress >= 0.5f)
+                    } else if (dismissY > dismissDistance) {
                         onClose()
                     } else {
-                        // Pull down with details open hides them first; pull up reveals them (like Google Photos).
-                        if (pulledDown) showInfo = false
-                        if (pulledUp) {
-                            showInfo = true
-                            chromeVisible = true
-                        }
                         scope.launch { animate(dismissY, 0f) { value, _ -> dismissY = value } }
                     }
                 },
@@ -310,7 +335,7 @@ fun PhotoViewer(
                             tint = Color.White,
                         )
                     }
-                    TooltipIconButton(label = stringResource(R.string.cd_photo_info), onClick = { showInfo = !showInfo }) {
+                    TooltipIconButton(label = stringResource(R.string.cd_photo_info), onClick = { settleInfo(!showInfo) }) {
                         Icon(
                             Icons.Outlined.Info,
                             contentDescription = stringResource(R.string.cd_photo_info),
@@ -387,13 +412,23 @@ fun PhotoViewer(
             }
 
             Column(Modifier.align(Alignment.BottomStart).fillMaxWidth()) {
-                if (showInfo) {
-                    PhotoInfoPanel(
-                        photo = photos[page],
-                        onLoadMeta = onLoadMeta,
-                        showCaptionRow = captionEntryPoint.showsInfoPanelField,
-                        onEditCaption = { editingCaption = photos[page] },
-                    )
+                if (infoProgress > 0f) {
+                    Box(
+                        Modifier
+                            .onSizeChanged { infoPanelPx = it.height.toFloat() }
+                            .graphicsLayer {
+                                translationY = (1f - infoProgress) * size.height
+                                alpha = infoProgress
+                            },
+                    ) {
+                        PhotoInfoPanel(
+                            photo = photos[page],
+                            onLoadMeta = onLoadMeta,
+                            showCaptionRow = captionEntryPoint.showsInfoPanelField,
+                            onEditCaption = { editingCaption = photos[page] },
+                            onLeaveApp = onLeaveApp,
+                        )
+                    }
                 }
                 Filmstrip(
                     photos = photos,
@@ -582,83 +617,6 @@ private fun Filmstrip(
                 load = { onLoad(photo.blobId, FILMSTRIP_PX) },
             )
         }
-    }
-}
-
-/** A photo's embedded metadata, loaded lazily for the current page. Absent fields are simply omitted. */
-@Composable
-private fun PhotoInfoPanel(
-    photo: GalleryPhoto,
-    onLoadMeta: suspend (blobId: String) -> PhotoMeta,
-    showCaptionRow: Boolean,
-    onEditCaption: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val meta by produceState(PhotoMeta(), photo.id) { value = onLoadMeta(photo.blobId) }
-    Column(
-        modifier
-            .fillMaxWidth()
-            .background(Color.Black.copy(alpha = 0.45f))
-            .padding(horizontal = 20.dp, vertical = 14.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        // Caption row (CAP-1) — only for encounter photos (person portraits have no media row).
-        if (showCaptionRow && photo.media != null) {
-            val existing = photo.media?.caption?.takeIf { it.isNotBlank() }
-            Row(
-                modifier = Modifier.fillMaxWidth().clickable(onClick = onEditCaption),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(
-                    text = stringResource(R.string.gallery_caption_label),
-                    color = Color.White.copy(alpha = 0.7f),
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.width(96.dp),
-                )
-                Text(
-                    text = existing ?: stringResource(R.string.gallery_caption_add),
-                    color = if (existing != null) Color.White else Color.White.copy(alpha = 0.6f),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-        }
-        meta.capturedAt?.let { InfoRow(stringResource(R.string.gallery_meta_taken), Format.dateTime(it)) }
-        if (meta.width != null && meta.height != null) {
-            InfoRow(stringResource(R.string.gallery_meta_dimensions), "${meta.width} × ${meta.height}")
-        }
-        meta.camera?.let { InfoRow(stringResource(R.string.gallery_meta_camera), it) }
-        // "50 mm · f/1.8 · 1/125 · ISO 200" — condensed shot-settings row when we have any of them.
-        val shot = buildList {
-            meta.focalLengthMm?.let { add("${it.toInt()} mm") }
-            meta.aperture?.let { add("f/%.1f".format(it)) }
-            meta.shutterSeconds?.let { add(PhotoMetadata.formatShutter(it)) }
-            meta.iso?.let { add("ISO $it") }
-        }.joinToString(" · ")
-        if (shot.isNotBlank()) InfoRow(stringResource(R.string.gallery_meta_shot), shot)
-        meta.orientation?.let { InfoRow(stringResource(R.string.gallery_meta_orientation), PhotoMetadata.orientationLabel(it)) }
-        meta.latLon?.let { (lat, lon) ->
-            InfoRow(stringResource(R.string.gallery_meta_location), "%.5f, %.5f".format(lat, lon))
-        }
-        if (!meta.hasAny) {
-            Text(
-                text = stringResource(R.string.gallery_meta_none),
-                color = Color.White.copy(alpha = 0.7f),
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
-    }
-}
-
-@Composable
-private fun InfoRow(label: String, value: String) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(
-            text = label,
-            color = Color.White.copy(alpha = 0.7f),
-            style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.width(96.dp),
-        )
-        Text(text = value, color = Color.White, style = MaterialTheme.typography.bodyMedium)
     }
 }
 

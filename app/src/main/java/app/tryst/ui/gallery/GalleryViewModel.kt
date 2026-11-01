@@ -116,6 +116,7 @@ class GalleryViewModel @Inject constructor(
     private val personPhotoRepository: PersonPhotoRepository,
     profileRepository: ProfileRepository,
     private val generalPreferences: app.tryst.core.prefs.GeneralPreferences,
+    private val session: app.tryst.core.session.SessionManager,
 ) : ViewModel() {
 
     // Delete-with-undo: photos in [pendingDeletes] are hidden at once and only really removed once the
@@ -275,6 +276,8 @@ class GalleryViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CatalogLabels.EMPTY)
 
     init {
+        // Read details for photos that have none stored yet (older imports, older backups); a no-op once done.
+        viewModelScope.launch(Dispatchers.IO) { runCatching { encounterRepository.backfillMediaMetadata() } }
         // Consume a pending Partners → gallery deep link (open pre-filtered to that partner), GAL-5.
         viewModelScope.launch {
             deepLink.pendingPartnerId.collect { id ->
@@ -407,6 +410,9 @@ class GalleryViewModel @Inject constructor(
     /** The one-time Photos gesture tip (QOL-6): shown until dismissed. */
     val showGestureTip: StateFlow<Boolean> = generalPreferences.seenTips.map { GESTURE_TIP_ID !in it }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    /** Called before handing off to another app (e.g. Maps) so the auto-lock does not fire as we leave. */
+    fun suppressAutoLock() = session.suppressNextAutoLock()
 
     fun dismissGestureTip() = generalPreferences.markTipSeen(GESTURE_TIP_ID)
 

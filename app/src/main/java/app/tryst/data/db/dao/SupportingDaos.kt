@@ -50,6 +50,10 @@ interface MediaDao {
     @Query("UPDATE media SET caption = :caption WHERE id = :id")
     suspend fun setCaption(id: String, caption: String?)
 
+    /** Photos whose details have not been read from the blob yet (imported before v18, or restored from an older backup). */
+    @Query("SELECT * FROM media WHERE metaScanned = 0")
+    suspend fun unscanned(): List<MediaEntity>
+
     /** Moves photos to a different tryst (bulk reassign, GAL-4). The gallery re-derives, so they relocate. */
     @Query("UPDATE media SET encounterId = :encounterId WHERE id IN (:ids)")
     suspend fun reassign(ids: List<String>, encounterId: String)

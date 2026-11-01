@@ -34,6 +34,7 @@ import app.tryst.data.repository.OrientationRepository
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.data.repository.PersonPhotoRepository
 import app.tryst.ui.common.MediaImages
+import app.tryst.ui.common.PhotoSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.UUID
@@ -223,7 +224,7 @@ class PartnerEditViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             uris.forEach { uri ->
                 runCatching {
-                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                    PhotoSource.open(context, uri)?.use { stream ->
                         personPhotoRepository.add(PersonPhotoRepository.KIND_PARTNER, id, stream)
                     }
                 }
