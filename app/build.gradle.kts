@@ -179,7 +179,7 @@ androidComponents {
 }
 
 // Safety guard: instrumented tests install the app on EVERY attached device and uninstall it again when
-// they finish, which deletes the app's data. On 2026-11-01 that wiped real data from the user's phone.
+// they finish, which deletes the app's data.
 // Refuse to run them unless they are pinned to an emulator (ANDROID_SERIAL=emulator-XXXX) or no
 // physical device is attached. Android Studio's own test runner is unaffected.
 val adbExecutable = androidComponents.sdkComponents.adb
