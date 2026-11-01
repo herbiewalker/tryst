@@ -249,6 +249,8 @@
     <string name="gallery_caption_entry_off">Off</string>
     <string name="gallery_caption_label">Caption</string>
     <string name="gallery_caption_add">Add a caption…</string>
+    <string name="coach_got_it">Got it</string>
+    <string name="gallery_gesture_tip">Tip: long-press a photo, then drag across others to select a run. Pinch to change the grid size, and keep pinching to group by day, month or year.</string>
     <string name="gallery_caption_placeholder">A short note about this photo</string>
     <string name="gallery_caption_edit_title">Edit caption</string>
     <string name="gallery_caption_edit_action">Edit caption</string>

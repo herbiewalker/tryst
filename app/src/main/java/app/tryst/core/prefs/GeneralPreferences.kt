@@ -90,6 +90,16 @@ class GeneralPreferences @Inject constructor(
         prefs.edit().putLong(KEY_LAST_SEEN_VERSION, code).apply()
     }
 
+    /** Coach-mark ids the user has dismissed (QOL-6); each tip shows once. */
+    private val _seenTips = MutableStateFlow(prefs.getStringSet(KEY_SEEN_TIPS, emptySet()).orEmpty().toSet())
+    val seenTips: StateFlow<Set<String>> = _seenTips.asStateFlow()
+
+    fun markTipSeen(id: String) {
+        val updated = _seenTips.value + id
+        prefs.edit().putStringSet(KEY_SEEN_TIPS, updated).apply()
+        _seenTips.value = updated
+    }
+
     private fun loadWeekStart(): WeekStart = prefs.getString(KEY_WEEK_START, null)
         ?.let { runCatching { WeekStart.valueOf(it) }.getOrNull() }
         ?: WeekStart.SUNDAY
@@ -100,6 +110,7 @@ class GeneralPreferences @Inject constructor(
         const val KEY_WEEK_START = "week_start"
         const val KEY_DEFAULT_CALENDAR = "default_to_calendar"
         const val KEY_LAST_SEEN_VERSION = "last_seen_version_code"
+        const val KEY_SEEN_TIPS = "seen_tips"
     }
 }
 

@@ -34,7 +34,6 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.tryst.R
@@ -42,8 +41,6 @@ import app.tryst.data.gallery.GalleryGroup
 import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.data.gallery.GallerySection
 import app.tryst.data.gallery.GridSpacing
-import java.time.YearMonth
-import java.time.format.DateTimeFormatter
 
 private const val TARGET_ROW_HEIGHT_DP = 132f
 private const val COMPACT_GAP_DP = 3f
@@ -147,14 +144,7 @@ private fun MosaicRowView(
 
 @Composable
 private fun MonthHeader(group: GalleryGroup) {
-    val label = when (group) {
-        is GalleryGroup.Month -> {
-            val locale = LocalConfiguration.current.locales[0]
-            YearMonth.of(group.year, group.month).format(DateTimeFormatter.ofPattern("LLLL yyyy", locale))
-        }
-        GalleryGroup.Solo -> stringResource(R.string.gallery_group_solo)
-        else -> ""
-    }
+    val label = dateGroupLabel(group) ?: if (group == GalleryGroup.Solo) stringResource(R.string.gallery_group_solo) else ""
     if (label.isNotEmpty()) {
         Text(
             text = label,
@@ -168,6 +158,8 @@ private fun MonthHeader(group: GalleryGroup) {
 private fun MosaicItem.key(): String = when (this) {
     is MosaicItem.Header -> "hdr:" + when (val g = group) {
         is GalleryGroup.Month -> "m${g.year}-${g.month}"
+        is GalleryGroup.Day -> "d${g.year}-${g.month}-${g.day}"
+        is GalleryGroup.Year -> "y${g.year}"
         GalleryGroup.Solo -> "solo"
         else -> "all"
     }

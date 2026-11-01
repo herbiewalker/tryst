@@ -95,6 +95,7 @@ import app.tryst.data.gallery.GalleryGroup
 import app.tryst.data.gallery.GalleryLayout
 import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.data.gallery.GallerySection
+import app.tryst.ui.common.CoachTip
 import app.tryst.ui.common.DateRangePickerDialog
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
@@ -102,8 +103,10 @@ import app.tryst.ui.common.TooltipIconButton
 import app.tryst.ui.lock.findFragmentActivity
 import app.tryst.ui.search.MoreFiltersActions
 import app.tryst.ui.search.RatingFilter
+import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 private const val THUMB_PX = 420
 private const val FEED_PX = 900
@@ -128,6 +131,7 @@ fun GalleryScreen(
     viewModel: GalleryViewModel = hiltViewModel(),
 ) {
     val ui by viewModel.uiState.collectAsStateWithLifecycle()
+    val showGestureTip by viewModel.showGestureTip.collectAsStateWithLifecycle()
     val pendingDelete by viewModel.pendingDeleteCount.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
     val dateScope by viewModel.dateScope.collectAsStateWithLifecycle()
@@ -289,6 +293,10 @@ fun GalleryScreen(
         val gated = blurUntilRevealed && !revealed && ui.photos.isNotEmpty()
         Box(Modifier.fillMaxSize().padding(padding)) {
             Column(Modifier.fillMaxSize().then(if (gated) Modifier.blur(28.dp) else Modifier)) {
+                val tipVisible = showGestureTip && !selectionActive
+                if (tipVisible && ui.photos.isNotEmpty() && !isPeople) {
+                    CoachTip(text = stringResource(R.string.gallery_gesture_tip), onDismiss = viewModel::dismissGestureTip)
+                }
                 when {
                     isPeople -> GalleryPeople(
                         profile = profile,
@@ -437,6 +445,7 @@ fun GalleryScreen(
             onRotate = { photo, degrees -> viewModel.rotate(photo, degrees) },
             onCrop = { photo, rect -> viewModel.crop(photo, rect) },
             onDelete = viewModel::deletePhoto,
+            peekThumb = viewModel::cachedThumb,
             pendingDeleteCount = pendingDelete,
             onUndoDelete = viewModel::undoDelete,
         )
@@ -772,10 +781,7 @@ private fun SectionHeader(
     when (group) {
         GalleryGroup.Ungrouped -> Unit
         GalleryGroup.Solo -> SectionHeaderText(stringResource(R.string.gallery_group_solo))
-        is GalleryGroup.Month -> {
-            val locale = LocalConfiguration.current.locales[0]
-            SectionHeaderText(YearMonth.of(group.year, group.month).format(DateTimeFormatter.ofPattern("LLLL yyyy", locale)))
-        }
+        is GalleryGroup.Month, is GalleryGroup.Day, is GalleryGroup.Year -> dateGroupLabel(group)?.let { SectionHeaderText(it) }
         is GalleryGroup.Partner -> {
             val partner = partners.firstOrNull { it.id == group.id }
             val name = partner?.let { Format.partnerName(it) }
@@ -910,10 +916,24 @@ private fun EmptyState(criteriaActive: Boolean) {
 
 // --- helpers -------------------------------------------------------------------------------------
 
+/** The header text for a date group (day, month or year), localised; null for non-date groups. */
+@Composable
+internal fun dateGroupLabel(group: GalleryGroup): String? {
+    val locale = LocalConfiguration.current.locales[0]
+    return when (group) {
+        is GalleryGroup.Month -> YearMonth.of(group.year, group.month).format(DateTimeFormatter.ofPattern("LLLL yyyy", locale))
+        is GalleryGroup.Day -> LocalDate.of(group.year, group.month, group.day).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale))
+        is GalleryGroup.Year -> group.year.toString()
+        else -> null
+    }
+}
+
 private fun sectionKey(group: GalleryGroup): String = when (group) {
     GalleryGroup.Ungrouped -> "all"
     GalleryGroup.Solo -> "solo"
     is GalleryGroup.Month -> "m${group.year}-${group.month}"
+    is GalleryGroup.Day -> "d${group.year}-${group.month}-${group.day}"
+    is GalleryGroup.Year -> "y${group.year}"
     is GalleryGroup.Partner -> "p${group.id}"
 }
 

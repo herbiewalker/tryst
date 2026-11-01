@@ -71,6 +71,7 @@ fun DecodedImage(
     contentDescription: String?,
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Crop,
+    placeholder: ImageBitmap? = null,
     load: suspend () -> ImageBitmap?,
 ) {
     var bitmap by remember(model) { mutableStateOf<ImageBitmap?>(null) }
@@ -78,6 +79,8 @@ fun DecodedImage(
     val bmp = bitmap
     if (bmp != null) {
         Image(bitmap = bmp, contentDescription = contentDescription, modifier = modifier, contentScale = contentScale)
+    } else if (placeholder != null) {
+        Image(bitmap = placeholder, contentDescription = contentDescription, modifier = modifier, contentScale = contentScale)
     } else {
         Box(modifier.background(MaterialTheme.colorScheme.surfaceVariant))
     }

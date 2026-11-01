@@ -68,12 +68,32 @@ enum class GridSpacing {
  * What a [GallerySection] is grouped by — the header the UI draws (label resolution, which is locale- and
  * string-resource-bound, stays in the UI; this pure layer only carries the identifying data).
  */
+/** How the date-grouped layouts section the timeline; pinching past the density limits steps it. */
+enum class DateGrouping {
+    DAY,
+    MONTH,
+    YEAR,
+    ;
+
+    /** One step toward more photos per header (day -> month -> year); stays put at the end. */
+    fun coarser(): DateGrouping = entries[(ordinal + 1).coerceAtMost(entries.lastIndex)]
+
+    /** One step toward fewer photos per header. */
+    fun finer(): DateGrouping = entries[(ordinal - 1).coerceAtLeast(0)]
+}
+
 sealed interface GalleryGroup {
     /** No header — a single flat run of tiles ([GalleryLayout.SQUARE_GRID], [GalleryLayout.FEED]). */
     data object Ungrouped : GalleryGroup
 
     /** A calendar month; [month] is 1..12. */
     data class Month(val year: Int, val month: Int) : GalleryGroup
+
+    /** A calendar day. */
+    data class Day(val year: Int, val month: Int, val day: Int) : GalleryGroup
+
+    /** A calendar year. */
+    data class Year(val year: Int) : GalleryGroup
 
     /** A named or anonymous partner; [name] is null/blank for anonymous. */
     data class Partner(val id: String, val name: String?) : GalleryGroup

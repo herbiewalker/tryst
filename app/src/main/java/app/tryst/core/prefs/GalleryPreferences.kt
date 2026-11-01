@@ -14,6 +14,7 @@
 package app.tryst.core.prefs
 
 import android.content.Context
+import app.tryst.data.gallery.DateGrouping
 import app.tryst.data.gallery.GalleryLayout
 import app.tryst.data.gallery.GallerySort
 import app.tryst.data.gallery.GridSpacing
@@ -44,6 +45,10 @@ class GalleryPreferences @Inject constructor(
 
     private val _sort = MutableStateFlow(loadSort())
     val sort: StateFlow<GallerySort> = _sort.asStateFlow()
+
+    /** Day / month / year sectioning of the date-grouped layouts; stepped by pinching past the density limits. */
+    private val _dateGrouping = MutableStateFlow(loadGrouping())
+    val dateGrouping: StateFlow<DateGrouping> = _dateGrouping.asStateFlow()
 
     /** When on, the Photos tab opens blurred behind a tap-to-reveal, so it never renders by accident (SEC-2). */
     private val _blurUntilRevealed = MutableStateFlow(prefs.getBoolean(KEY_BLUR, false))
@@ -180,6 +185,11 @@ class GalleryPreferences @Inject constructor(
         _columns.value = clamped
     }
 
+    fun setDateGrouping(grouping: DateGrouping) {
+        prefs.edit().putString(KEY_GROUPING, grouping.name).apply()
+        _dateGrouping.value = grouping
+    }
+
     fun setSort(sort: GallerySort) {
         prefs.edit().putString(KEY_SORT, sort.name).apply()
         _sort.value = sort
@@ -192,13 +202,14 @@ class GalleryPreferences @Inject constructor(
      */
     fun resetToDefaults() {
         prefs.edit()
-            .remove(KEY_LAYOUT).remove(KEY_COLUMNS).remove(KEY_SORT).remove(KEY_GRID_SPACING)
+            .remove(KEY_LAYOUT).remove(KEY_COLUMNS).remove(KEY_SORT).remove(KEY_GROUPING).remove(KEY_GRID_SPACING)
             .remove(KEY_TILE_CAPTIONS).remove(KEY_DEFAULT_FAV_ONLY).remove(KEY_CAMERA_LOOP)
             .remove(KEY_CAPTION_ENTRY).remove(KEY_SLIDESHOW_INT_S).remove(KEY_SLIDESHOW_SHUFFLE)
             .apply()
         _layout.value = DEFAULT_LAYOUT
         _columns.value = DEFAULT_COLUMNS
         _sort.value = DEFAULT_SORT
+        _dateGrouping.value = DEFAULT_GROUPING
         _gridSpacing.value = DEFAULT_GRID_SPACING
         _showTileCaptions.value = false
         _defaultToFavoritesOnly.value = false
@@ -210,6 +221,8 @@ class GalleryPreferences @Inject constructor(
 
     private fun loadLayout(): GalleryLayout = prefs.getString(KEY_LAYOUT, null)?.let { runCatching { GalleryLayout.valueOf(it) }.getOrNull() } ?: DEFAULT_LAYOUT
 
+    private fun loadGrouping(): DateGrouping = prefs.getString(KEY_GROUPING, null)?.let { runCatching { DateGrouping.valueOf(it) }.getOrNull() } ?: DEFAULT_GROUPING
+
     private fun loadSort(): GallerySort = prefs.getString(KEY_SORT, null)?.let { runCatching { GallerySort.valueOf(it) }.getOrNull() } ?: DEFAULT_SORT
 
     private fun loadGridSpacing(): GridSpacing = prefs.getString(KEY_GRID_SPACING, null)?.let { runCatching { GridSpacing.valueOf(it) }.getOrNull() } ?: DEFAULT_GRID_SPACING
@@ -217,6 +230,7 @@ class GalleryPreferences @Inject constructor(
     companion object {
         val DEFAULT_LAYOUT = GalleryLayout.JUSTIFIED_DATE
         val DEFAULT_SORT = GallerySort.NEWEST
+        val DEFAULT_GROUPING = DateGrouping.MONTH
         val DEFAULT_GRID_SPACING = GridSpacing.NORMAL
         val DEFAULT_CAPTION_ENTRY_POINT = CaptionEntryPoint.BOTH
         const val MIN_COLUMNS = 2
@@ -229,6 +243,7 @@ class GalleryPreferences @Inject constructor(
         private const val KEY_LAYOUT = "layout"
         private const val KEY_COLUMNS = "columns"
         private const val KEY_SORT = "sort"
+        private const val KEY_GROUPING = "date_grouping"
         private const val KEY_BLUR = "blur_until_revealed"
         private const val KEY_BLUR_GRACE_S = "blur_grace_seconds"
         private const val KEY_SLIDESHOW_INT_S = "slideshow_interval_seconds"

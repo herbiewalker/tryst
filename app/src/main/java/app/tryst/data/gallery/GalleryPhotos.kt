@@ -20,7 +20,6 @@ import app.tryst.data.filter.EncounterFilter
 import app.tryst.data.search.CatalogLabels
 import app.tryst.data.search.EncounterSearch
 import java.time.Instant
-import java.time.YearMonth
 import java.time.ZoneId
 
 /**
@@ -57,6 +56,7 @@ object GalleryPhotos {
         onlyFavorites: Boolean = false,
         personPhotos: List<PersonPhotoEntity> = emptyList(),
         partnerNamesById: Map<String, String?> = emptyMap(),
+        grouping: DateGrouping = DateGrouping.MONTH,
         profileDisplayName: String? = null,
     ): GalleryResult {
         // PEOPLE draws avatars from the Partners/Profile data, not encounter photos — nothing to build here.
@@ -76,7 +76,7 @@ object GalleryPhotos {
             GalleryLayout.SQUARE_GRID, GalleryLayout.FEED ->
                 if (ordered.isEmpty()) emptyList() else listOf(GallerySection(GalleryGroup.Ungrouped, ordered))
             // The mosaic groups by month exactly like the date grid; only its tile layout differs (UI-side).
-            GalleryLayout.JUSTIFIED_DATE, GalleryLayout.MOSAIC -> groupByMonth(ordered, zone)
+            GalleryLayout.JUSTIFIED_DATE, GalleryLayout.MOSAIC -> groupByDate(ordered, zone, grouping)
             GalleryLayout.BY_PARTNER -> groupByPartner(ordered)
             GalleryLayout.PEOPLE -> emptyList() // unreachable (guarded above); keeps the when exhaustive
         }
@@ -213,11 +213,15 @@ object GalleryPhotos {
         )
     }
 
-    /** Groups already-sorted photos by calendar month; the sorted input keeps months (and their photos) in order. */
-    private fun groupByMonth(photos: List<GalleryPhoto>, zone: ZoneId): List<GallerySection> = photos.groupBy {
+    /** Groups already-sorted photos by day, month or year; the sorted input keeps groups (and their photos) in order. */
+    private fun groupByDate(photos: List<GalleryPhoto>, zone: ZoneId, grouping: DateGrouping): List<GallerySection> = photos.groupBy {
         val date = Instant.ofEpochMilli(it.takenAt).atZone(zone).toLocalDate()
-        YearMonth.of(date.year, date.monthValue)
-    }.map { (ym, list) -> GallerySection(GalleryGroup.Month(ym.year, ym.monthValue), list) }
+        when (grouping) {
+            DateGrouping.DAY -> GalleryGroup.Day(date.year, date.monthValue, date.dayOfMonth)
+            DateGrouping.MONTH -> GalleryGroup.Month(date.year, date.monthValue)
+            DateGrouping.YEAR -> GalleryGroup.Year(date.year)
+        }
+    }.map { (group, list) -> GallerySection(group, list) }
 
     /**
      * Groups by partner: a photo appears under **every** partner its tryst involved (a threesome's photo

@@ -28,6 +28,7 @@ import app.tryst.data.filter.DateRange
 import app.tryst.data.filter.DateScope
 import app.tryst.data.filter.EncounterFilter
 import app.tryst.data.filter.TimeOfDay
+import app.tryst.data.gallery.DateGrouping
 import app.tryst.data.gallery.GalleryLayout
 import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.data.gallery.GalleryPhotos
@@ -83,6 +84,7 @@ data class GalleryUiState(
     val photos: List<GalleryPhoto> = emptyList(),
     val layout: GalleryLayout = GalleryPreferences.DEFAULT_LAYOUT,
     val columns: Int = GalleryPreferences.DEFAULT_COLUMNS,
+    val grouping: DateGrouping = GalleryPreferences.DEFAULT_GROUPING,
     val criteriaActive: Boolean = false,
 ) {
     val totalCount: Int get() = photos.size
@@ -113,6 +115,7 @@ class GalleryViewModel @Inject constructor(
     private val partnerRepository: PartnerRepository,
     private val personPhotoRepository: PersonPhotoRepository,
     profileRepository: ProfileRepository,
+    private val generalPreferences: app.tryst.core.prefs.GeneralPreferences,
 ) : ViewModel() {
 
     // Delete-with-undo: photos in [pendingDeletes] are hidden at once and only really removed once the
@@ -303,11 +306,19 @@ class GalleryViewModel @Inject constructor(
             )
         }
 
-    private val prefs: Flow<Triple<GalleryLayout, Int, GallerySort>> =
-        combine(galleryPreferences.layout, galleryPreferences.columns, galleryPreferences.sort, _drilledPartnerId) { layout, columns, sort, drilledId ->
+    private data class GalleryLook(val layout: GalleryLayout, val columns: Int, val sort: GallerySort, val grouping: DateGrouping)
+
+    private val prefs: Flow<GalleryLook> =
+        combine(
+            galleryPreferences.layout,
+            galleryPreferences.columns,
+            galleryPreferences.sort,
+            galleryPreferences.dateGrouping,
+            _drilledPartnerId,
+        ) { layout, columns, sort, grouping, drilledId ->
             // While drilled from People, force a photo layout so the user actually sees their photos.
             val effectiveLayout = if (drilledId != null) GalleryLayout.JUSTIFIED_DATE else layout
-            Triple(effectiveLayout, columns, sort)
+            GalleryLook(effectiveLayout, columns, sort, grouping)
         }
 
     /** The filter, the free-text query, and the favourites-only toggle — the three query inputs. */
@@ -344,7 +355,11 @@ class GalleryViewModel @Inject constructor(
     }
 
     val uiState: StateFlow<GalleryUiState> =
-        combine(gallerySources, catalogLabels, query3, prefs) { src, labels, (filter, query, onlyFav), (layout, columns, sort) ->
+        combine(gallerySources, catalogLabels, query3, prefs) { src, labels, (filter, query, onlyFav), look ->
+            val layout = look.layout
+            val columns = look.columns
+            val sort = look.sort
+            val grouping = look.grouping
             withContext(Dispatchers.Default) {
                 val result = GalleryPhotos.build(
                     encounters = src.encounters,
@@ -354,6 +369,7 @@ class GalleryViewModel @Inject constructor(
                     layout = layout,
                     sort = sort,
                     onlyFavorites = onlyFav,
+                    grouping = grouping,
                     personPhotos = src.personPhotos,
                     partnerNamesById = src.partnerNames,
                     profileDisplayName = src.profileName,
@@ -363,6 +379,7 @@ class GalleryViewModel @Inject constructor(
                     photos = result.photos,
                     layout = layout,
                     columns = columns,
+                    grouping = grouping,
                     criteriaActive = query.isNotBlank() || filter.isActive || onlyFav,
                 )
             }
@@ -387,8 +404,25 @@ class GalleryViewModel @Inject constructor(
 
     fun setOnlyFavorites(value: Boolean) = _onlyFavorites.update { value }
 
+    /** The one-time Photos gesture tip (QOL-6): shown until dismissed. */
+    val showGestureTip: StateFlow<Boolean> = generalPreferences.seenTips.map { GESTURE_TIP_ID !in it }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+
+    fun dismissGestureTip() = generalPreferences.markTipSeen(GESTURE_TIP_ID)
+
     /** Pinch-to-zoom density: nudge the persisted column count (clamped in [GalleryPreferences]), GAL-5. */
-    fun changeColumns(delta: Int) = galleryPreferences.setColumns(galleryPreferences.columns.value + delta)
+    fun changeColumns(delta: Int) {
+        val columns = galleryPreferences.columns.value
+        val grouping = galleryPreferences.dateGrouping.value
+        val dateLayout = galleryPreferences.layout.value.let { it == GalleryLayout.JUSTIFIED_DATE || it == GalleryLayout.MOSAIC } || _drilledPartnerId.value != null
+        when {
+            // Past the loosest density, keep spreading to section by month, then by year.
+            dateLayout && delta > 0 && columns >= GalleryPreferences.MAX_COLUMNS -> galleryPreferences.setDateGrouping(grouping.coarser())
+            // Past the tightest density, keep pinching in to section by day.
+            dateLayout && delta < 0 && columns <= GalleryPreferences.MIN_COLUMNS -> galleryPreferences.setDateGrouping(grouping.finer())
+            else -> galleryPreferences.setColumns(columns + delta)
+        }
+    }
 
     fun clearAll() {
         _query.value = ""
@@ -488,6 +522,7 @@ class GalleryViewModel @Inject constructor(
     }
 
     override fun onCleared() {
+        thumbCache.evictAll()
         // Leaving the screen inside the window still deletes: viewModelScope is gone, so finish on a short-lived scope.
         val pending = pendingDeletes.value
         if (pending.isNotEmpty()) CoroutineScope(SupervisorJob() + Dispatchers.IO).launch { deletePhotos(pending) }
@@ -556,7 +591,26 @@ class GalleryViewModel @Inject constructor(
 
     // --- decoding (all blobs open through the same EncryptedMediaStore) ----------------------------
 
-    suspend fun decode(blobId: String, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { runCatching { personPhotoRepository.openBlob(blobId) }.getOrNull() }
+    // Small decodes (grid tiles, filmstrip) are kept in memory so scrolling back is instant and the full-screen
+    // viewer can show the tile at once while the large image decodes. Plain bitmaps in RAM only, never on disk;
+    // keyed by edit revision so a rotate or crop is never served stale.
+    private class CachedThumb(val reqPx: Int, val bitmap: ImageBitmap)
+
+    private val thumbCache = object : android.util.LruCache<String, CachedThumb>(THUMB_CACHE_BYTES) {
+        override fun sizeOf(key: String, value: CachedThumb): Int = value.bitmap.width * value.bitmap.height * 4
+    }
+
+    /** The grid tile for [blobId] if it has been decoded already, for use as an instant placeholder. */
+    fun cachedThumb(blobId: String): ImageBitmap? = thumbCache.get(photoBustKey(blobId))?.bitmap
+
+    suspend fun decode(blobId: String, reqPx: Int): ImageBitmap? {
+        val key = photoBustKey(blobId)
+        val cacheable = reqPx <= THUMB_CACHE_MAX_PX
+        if (cacheable) thumbCache.get(key)?.takeIf { it.reqPx >= reqPx }?.let { return it.bitmap }
+        val bmp = MediaImages.decodeSampled(reqPx) { runCatching { personPhotoRepository.openBlob(blobId) }.getOrNull() }
+        if (cacheable && bmp != null) thumbCache.put(key, CachedThumb(reqPx, bmp))
+        return bmp
+    }
 
     /** Decodes an avatar blob (a partner's or the profile's `photoMediaId`) — same encrypted store. */
     suspend fun decodePartnerPhoto(photoMediaId: String, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { runCatching { partnerRepository.openPhoto(photoMediaId) }.getOrNull() }
@@ -623,6 +677,10 @@ class GalleryViewModel @Inject constructor(
     }
 
     companion object {
+        private const val GESTURE_TIP_ID = "gallery_gestures"
+        private const val THUMB_CACHE_BYTES = 24 * 1024 * 1024
+        private const val THUMB_CACHE_MAX_PX = 600
+
         /** Matches [app.tryst.data.db.entity.ProfileEntity.SELF_ID]; using it as a partner-id filter selects portraits owned by the self profile. */
         const val SELF_OWNER_ID = "self"
     }

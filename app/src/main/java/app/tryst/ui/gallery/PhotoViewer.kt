@@ -14,6 +14,7 @@
 package app.tryst.ui.gallery
 
 import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -94,12 +95,15 @@ import app.tryst.ui.common.Format
 import app.tryst.ui.common.TooltipIconButton
 import app.tryst.ui.theme.GridTileShape
 import kotlin.math.abs
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private const val VIEWER_PX = 1600
 private const val FILMSTRIP_PX = 160
 private const val MAX_ZOOM = 4f
+private const val DOUBLE_TAP_ZOOM = 2f
+private const val DOUBLE_TAP_MS = 220
 private const val PAN_EPSILON = 0.5f
 private val DISMISS_DISTANCE = 120.dp
 
@@ -146,6 +150,7 @@ fun PhotoViewer(
     onRotate: (GalleryPhoto, Int) -> Unit,
     onCrop: (GalleryPhoto, app.tryst.data.media.FractionalRect) -> Unit,
     onDelete: (GalleryPhoto) -> Unit,
+    peekThumb: (blobId: String) -> ImageBitmap? = { null },
     pendingDeleteCount: Int = 0,
     onUndoDelete: () -> Unit = {},
 ) {
@@ -220,6 +225,7 @@ fun PhotoViewer(
                 photo = photos[index],
                 modelKey = bustKey(photos[index].blobId),
                 onLoad = onLoad,
+                placeholder = peekThumb(photos[index].blobId),
                 onTap = { chromeVisible = !chromeVisible },
                 // Only the settled page reads gestures, so a mid-swipe pinch doesn't fight the pager.
                 zoomEnabled = index == pagerState.currentPage,
@@ -649,6 +655,7 @@ private fun ZoomablePhoto(
     photo: GalleryPhoto,
     modelKey: Any,
     onLoad: suspend (blobId: String, reqPx: Int) -> ImageBitmap?,
+    placeholder: ImageBitmap?,
     onTap: () -> Unit,
     zoomEnabled: Boolean,
     onDismissDrag: (dy: Float) -> Unit,
@@ -657,6 +664,8 @@ private fun ZoomablePhoto(
     var scale by remember(modelKey) { mutableFloatStateOf(1f) }
     var offsetX by remember(modelKey) { mutableFloatStateOf(0f) }
     var offsetY by remember(modelKey) { mutableFloatStateOf(0f) }
+    val scope = rememberCoroutineScope()
+    var zoomJob by remember(modelKey) { mutableStateOf<Job?>(null) }
 
     Box(
         Modifier.fillMaxSize()
@@ -668,6 +677,7 @@ private fun ZoomablePhoto(
                 // or a pan the zoomed photo can still absorb; otherwise it falls through to the pager.
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false)
+                    zoomJob?.cancel() // a touch takes over from a running double-tap animation
                     var dragX = 0f
                     var dragY = 0f
                     var dismissing = false
@@ -723,18 +733,22 @@ private fun ZoomablePhoto(
             .pointerInput(photo.id) {
                 detectTapGestures(
                     onTap = { onTap() },
-                    // Double-tap toggles between fit and 2x.
+                    // Double-tap toggles between fit and 2x, animated.
                     onDoubleTap = { tap ->
-                        if (abs(scale - 1f) < 0.01f) {
-                            // Zoom in about the tapped point.
-                            val focus = tap - Offset(size.width / 2f, size.height / 2f)
-                            scale = 2f
-                            offsetX = clampPan(-focus.x, size.width, scale)
-                            offsetY = clampPan(-focus.y, size.height, scale)
-                        } else {
-                            scale = 1f
-                            offsetX = 0f
-                            offsetY = 0f
+                        val zoomIn = abs(scale - 1f) < 0.01f
+                        val focus = tap - Offset(size.width / 2f, size.height / 2f)
+                        val toScale = if (zoomIn) DOUBLE_TAP_ZOOM else 1f
+                        // Zoom in about the tapped point; zoom out recentres.
+                        val toX = if (zoomIn) clampPan(-focus.x, size.width, toScale) else 0f
+                        val toY = if (zoomIn) clampPan(-focus.y, size.height, toScale) else 0f
+                        val (fromScale, fromX, fromY) = Triple(scale, offsetX, offsetY)
+                        zoomJob?.cancel()
+                        zoomJob = scope.launch {
+                            animate(0f, 1f, animationSpec = tween(DOUBLE_TAP_MS)) { t, _ ->
+                                scale = fromScale + (toScale - fromScale) * t
+                                offsetX = fromX + (toX - fromX) * t
+                                offsetY = fromY + (toY - fromY) * t
+                            }
                         }
                     },
                 )
@@ -751,6 +765,7 @@ private fun ZoomablePhoto(
                 translationY = offsetY,
             ),
             contentScale = ContentScale.Fit,
+            placeholder = placeholder,
             load = { onLoad(photo.blobId, VIEWER_PX) },
         )
     }
