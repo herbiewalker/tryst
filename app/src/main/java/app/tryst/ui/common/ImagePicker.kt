@@ -15,7 +15,6 @@ package app.tryst.ui.common
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,45 +27,38 @@ import java.io.File
 import java.util.UUID
 
 /**
- * Returns a "pick an image" action. Prefers the modern Android Photo Picker (no permission), but
- * some devices/emulators advertise it without actually providing the activity — so we fall back to
- * ACTION_GET_CONTENT (handled by the system Files/Documents UI) instead of crashing.
+ * Returns a "pick an image" action. Uses the system document picker rather than the Android Photo Picker:
+ * the Photo Picker strips location (and other EXIF) from every photo it returns, while the document
+ * picker hands over the original file, so a photo's GPS and camera details survive for its details sheet
+ * and, later, a map. No permission is needed.
  */
 @Composable
 fun rememberImagePicker(onLaunch: () -> Unit = {}, onPicked: (Uri) -> Unit): () -> Unit {
-    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let(onPicked)
     }
-    val getContent = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let(onPicked)
-    }
-    return remember(photoPicker, getContent, onLaunch) {
+    return remember(picker, onLaunch) {
         {
             onLaunch() // e.g. suppress the auto-lock that the picker handoff would otherwise trigger
-            val launched = runCatching {
-                photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-            }.isSuccess
-            if (!launched) runCatching { getContent.launch("image/*") }
+            runCatching { picker.launch(arrayOf("image/*")) }
+            Unit
         }
     }
 }
 
 /**
  * Multi-pick variant of [rememberImagePicker]: returns URIs for every selected image in one call.
- * Uses the modern Android Photo Picker's [ActivityResultContracts.PickMultipleVisualMedia]; older
- * devices without the picker will still get zero results, which the caller can treat as "cancelled".
  */
 @Composable
 fun rememberMultiImagePicker(onLaunch: () -> Unit = {}, onPicked: (List<Uri>) -> Unit): () -> Unit {
-    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia()) { uris ->
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         if (uris.isNotEmpty()) onPicked(uris)
     }
-    return remember(photoPicker, onLaunch) {
+    return remember(picker, onLaunch) {
         {
             onLaunch()
-            runCatching {
-                photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-            }
+            runCatching { picker.launch(arrayOf("image/*")) }
+            Unit
         }
     }
 }

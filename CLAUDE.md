@@ -72,7 +72,9 @@ Windows (build env not on PATH): set the JVM first, then use the wrapper from th
 $env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"
 .\gradlew.bat assembleDebug              # build debug APK
 .\gradlew.bat checkNoNetworkDebug        # anti-leak guard (no network permission)
-.\gradlew.bat connectedDebugAndroidTest  # instrumented tests on a running emulator/device
+.\gradlew.bat connectedDebugAndroidTest  # instrumented tests on a running emulator
+                                         # !! NEVER with a physical phone attached: tests uninstall the app and DELETE its data.
+                                         # Set $env:ANDROID_SERIAL="emulator-5554" first; the checkSafeTestDevice task enforces it.
 .\gradlew.bat lint
 .\gradlew.bat detekt ktlintCheck         # M8 quality gates (Detekt + ktlint; ktlintFormat to auto-fix)
 ```

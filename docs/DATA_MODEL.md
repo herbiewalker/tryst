@@ -226,5 +226,11 @@ storage — likely a small row in the encrypted DB.)
   existing rows get NULL. Deleting a label clears every reference in one transaction
   (`OrientationDao.delete`). `orientations` is in `BackupManager.TABLES`; the columns ride the generic
   `SELECT *` dump, so a pre-v17 backup restores with orientation NULL.
+- **v18 (`MIGRATION_17_18`, META-2, unreleased)** adds thirteen nullable columns to `media`: `capturedAt`,
+  `capturedOffsetMin`, `latitude`, `longitude`, `altitudeM`, `camera`, `lens`, `aperture`, `shutterSeconds`,
+  `iso`, `focalLengthMm`, `originalName`, plus `metaScanned` (NOT NULL DEFAULT 0, mirrored by an entity
+  `defaultValue` per D-53). They are read from the original file at import and kept on the row so they survive
+  a rotate/crop (which drops EXIF) and can feed a map later. Pre-v18 rows get NULL/0 and are backfilled from the
+  blob the first time the gallery opens. Ride the generic dump, so a pre-v18 backup restores with NULLs.
 - Export format (M5) is decoupled from the live schema and versioned independently
   (see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §4).

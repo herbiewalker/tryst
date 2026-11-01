@@ -18,6 +18,7 @@ import androidx.exifinterface.media.ExifInterface
 import java.io.InputStream
 import java.time.LocalDateTime
 import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 /**
@@ -46,6 +47,14 @@ data class PhotoMeta(
     val focalLengthMm: Double? = null,
     /** EXIF orientation constant (`TAG_ORIENTATION` value, 1..8). */
     val orientation: Int? = null,
+    /** Lens model string (EXIF `LensModel`), e.g. "Pixel 9 Pro XL back camera 6.9mm f/1.7". */
+    val lens: String? = null,
+    /** Minutes east of UTC at capture (EXIF `OffsetTimeOriginal`); null when the camera did not record it. */
+    val offsetMinutes: Int? = null,
+    /** GPS altitude in metres above sea level, when recorded. */
+    val altitudeM: Double? = null,
+    /** The file name it was imported under (not an EXIF tag; filled from the stored row). */
+    val fileName: String? = null,
 ) {
     val hasAny: Boolean get() =
         capturedAt != null ||
@@ -56,7 +65,10 @@ data class PhotoMeta(
             shutterSeconds != null ||
             iso != null ||
             focalLengthMm != null ||
-            orientation != null
+            orientation != null ||
+            lens != null ||
+            altitudeM != null ||
+            fileName != null
 }
 
 /**
@@ -72,9 +84,12 @@ object PhotoMetadata {
 
     fun read(openStream: () -> InputStream?): PhotoMeta {
         val exif = runCatching { openStream()?.use { ExifInterface(it) } }.getOrNull()
+        val offsetMinutes = parseOffsetMinutes(exif?.getAttribute(ExifInterface.TAG_OFFSET_TIME_ORIGINAL) ?: exif?.getAttribute(ExifInterface.TAG_OFFSET_TIME))
+        // Prefer the camera-recorded UTC offset so the instant is right even if the phone has since changed zone.
+        val zone = offsetMinutes?.let { ZoneOffset.ofTotalSeconds(it * 60) } ?: ZoneId.systemDefault()
         val capturedAt = parseExifDateTime(
             exif?.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL) ?: exif?.getAttribute(ExifInterface.TAG_DATETIME),
-            ZoneId.systemDefault(),
+            zone,
         )
         val camera = camera(exif?.getAttribute(ExifInterface.TAG_MAKE), exif?.getAttribute(ExifInterface.TAG_MODEL))
         val latLon = exif?.latLong?.let { it[0] to it[1] }
@@ -83,6 +98,8 @@ object PhotoMetadata {
         val iso = exif?.getAttribute(ExifInterface.TAG_PHOTOGRAPHIC_SENSITIVITY)?.toIntOrNull()
             ?: exif?.getAttribute(ExifInterface.TAG_ISO_SPEED_RATINGS)?.toIntOrNull()
         val focalLength = exif?.getAttributeDouble(ExifInterface.TAG_FOCAL_LENGTH, -1.0)?.takeIf { it > 0 }
+        val lens = exif?.getAttribute(ExifInterface.TAG_LENS_MODEL)?.trim()?.ifBlank { null }
+        val altitude = exif?.getAltitude(Double.NaN)?.takeIf { !it.isNaN() }
         val orientation = exif?.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED)
             ?.takeIf { it != ExifInterface.ORIENTATION_UNDEFINED }
         val (width, height) = readDimensions(openStream)
@@ -97,6 +114,9 @@ object PhotoMetadata {
             iso = iso,
             focalLengthMm = focalLength,
             orientation = orientation,
+            lens = lens,
+            offsetMinutes = offsetMinutes,
+            altitudeM = altitude,
         )
     }
 
@@ -114,6 +134,13 @@ object PhotoMetadata {
             mk != null && md != null -> if (md.startsWith(mk, ignoreCase = true)) md else "$mk $md"
             else -> md ?: mk
         }
+    }
+
+    /** Parses an EXIF offset such as `-04:00` or `+05:30` into minutes east of UTC; null if absent or malformed. */
+    fun parseOffsetMinutes(raw: String?): Int? {
+        val m = OFFSET_REGEX.matchEntire(raw?.trim().orEmpty()) ?: return null
+        val sign = if (m.groupValues[1] == "-") -1 else 1
+        return sign * (m.groupValues[2].toInt() * 60 + m.groupValues[3].toInt())
     }
 
     /** Parses EXIF's `yyyy:MM:dd HH:mm:ss` (local, zoneless) into epoch millis at [zone]; null if unparseable. */
@@ -146,6 +173,8 @@ object PhotoMetadata {
         ExifInterface.ORIENTATION_ROTATE_270 -> "Rotated 270° clockwise"
         else -> "Unknown"
     }
+
+    private val OFFSET_REGEX = Regex("""([+-])(\d{2}):(\d{2})""")
 
     private val EXIF_FORMATTER = DateTimeFormatter.ofPattern("yyyy:MM:dd HH:mm:ss")
 }

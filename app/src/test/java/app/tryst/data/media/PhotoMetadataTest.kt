@@ -30,6 +30,27 @@ class PhotoMetadataTest {
     }
 
     @Test
+    fun parsesExifUtcOffsets() {
+        assertEquals(-240, PhotoMetadata.parseOffsetMinutes("-04:00"))
+        assertEquals(330, PhotoMetadata.parseOffsetMinutes("+05:30"))
+        assertEquals(0, PhotoMetadata.parseOffsetMinutes("+00:00"))
+        assertNull(PhotoMetadata.parseOffsetMinutes(null))
+        assertNull(PhotoMetadata.parseOffsetMinutes("EST"))
+    }
+
+    @Test
+    fun storedDetailsWinButDimensionsStayLive() {
+        val live = PhotoMeta(width = 100, height = 200)
+        val stored = PhotoMeta(capturedAt = 5L, camera = "Pixel", latLon = 37.7 to -85.8, fileName = "a.jpg", width = 1, height = 1)
+        val merged = live.preferring(stored)
+        assertEquals(37.7 to -85.8, merged.latLon)
+        assertEquals("a.jpg", merged.fileName)
+        assertEquals(100, merged.width)
+        assertEquals(200, merged.height)
+        assertEquals(live, live.preferring(null))
+    }
+
+    @Test
     fun badOrMissingDateTimeIsNull() {
         assertNull(PhotoMetadata.parseExifDateTime(null, utc))
         assertNull(PhotoMetadata.parseExifDateTime("", utc))

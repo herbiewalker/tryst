@@ -18,6 +18,8 @@ import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.relation.EncounterWithDetails
 import app.tryst.data.media.EncryptedMediaStore
+import app.tryst.data.media.PhotoMetadata
+import app.tryst.data.media.withMeta
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.util.UUID
@@ -55,6 +57,7 @@ class EncounterRepository @Inject constructor(
         mimeType: String,
         source: InputStream,
         now: Long = System.currentTimeMillis(),
+        originalName: String? = null,
     ): MediaEntity {
         val id = UUID.randomUUID().toString()
         val file = mediaStore.save(id, source)
@@ -65,8 +68,21 @@ class EncounterRepository @Inject constructor(
             mimeType = mimeType,
             createdAt = now,
         )
-        mediaDao.upsert(media)
-        return media
+        // Read the details from the encrypted copy (in-memory decrypt) rather than the one-shot source stream,
+        // and keep them on the row so they outlive a rotate/crop and can drive a map later.
+        val withMeta = media.withMeta(PhotoMetadata.read { mediaStore.open(id) }, originalName)
+        mediaDao.upsert(withMeta)
+        return withMeta
+    }
+
+    /**
+     * Reads details for photos that have none stored yet (imported before v18, or restored from an older
+     * backup). Idempotent: rows are flagged scanned even when a photo carries no EXIF. Returns how many were updated.
+     */
+    suspend fun backfillMediaMetadata(): Int {
+        val pending = mediaDao.unscanned()
+        pending.forEach { m -> mediaDao.upsert(m.withMeta(PhotoMetadata.read { runCatching { mediaStore.open(m.id) }.getOrNull() })) }
+        return pending.size
     }
 
     fun openMedia(media: MediaEntity): InputStream = mediaStore.open(media.id)

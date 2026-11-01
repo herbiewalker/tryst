@@ -46,6 +46,7 @@ import app.tryst.data.repository.PositionRepository
 import app.tryst.data.repository.ToyRepository
 import app.tryst.data.stats.OptionUsage
 import app.tryst.ui.common.MediaImages
+import app.tryst.ui.common.PhotoSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -413,8 +414,8 @@ class EncounterEditViewModel @Inject constructor(
             // encounter row exists, so the media FK is satisfied).
             withContext(Dispatchers.IO) {
                 s.pendingPhotos.forEach { photo ->
-                    context.contentResolver.openInputStream(photo.uri)?.use {
-                        encounters.attachMedia(id, photo.mimeType, it, now)
+                    PhotoSource.open(context, photo.uri)?.use {
+                        encounters.attachMedia(id, photo.mimeType, it, now, originalName = PhotoSource.displayName(context, photo.uri))
                     }
                 }
                 removedExisting.forEach { encounters.deleteMedia(it) }

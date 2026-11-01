@@ -448,6 +448,7 @@ fun GalleryScreen(
             peekThumb = viewModel::cachedThumb,
             pendingDeleteCount = pendingDelete,
             onUndoDelete = viewModel::undoDelete,
+            onLeaveApp = viewModel::suppressAutoLock,
         )
     }
 }

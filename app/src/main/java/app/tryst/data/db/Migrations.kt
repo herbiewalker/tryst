@@ -327,6 +327,21 @@ val MIGRATION_16_17 = object : Migration(16, 17) {
     }
 }
 
+/**
+ * v17 → v18: photo details persisted on the media row (capture time + offset, GPS, camera, lens, exposure,
+ * original file name) plus a `metaScanned` flag for the lazy backfill. Additive nullable columns only.
+ * Pre-v18 backups restore with these NULL/0 and the gallery backfills them from the blobs.
+ */
+val MIGRATION_17_18 = object : Migration(17, 18) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        listOf(
+            "capturedAt INTEGER", "capturedOffsetMin INTEGER", "latitude REAL", "longitude REAL", "altitudeM REAL",
+            "camera TEXT", "lens TEXT", "aperture REAL", "shutterSeconds REAL", "iso INTEGER", "focalLengthMm REAL",
+            "originalName TEXT", "metaScanned INTEGER NOT NULL DEFAULT 0",
+        ).forEach { db.execSQL("ALTER TABLE media ADD COLUMN $it") }
+    }
+}
+
 /** All migrations, in order. */
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
@@ -345,6 +360,7 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_14_15,
     MIGRATION_15_16,
     MIGRATION_16_17,
+    MIGRATION_17_18,
 )
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

@@ -29,6 +29,7 @@ import app.tryst.data.repository.OrientationRepository
 import app.tryst.data.repository.PersonPhotoRepository
 import app.tryst.data.repository.ProfileRepository
 import app.tryst.ui.common.MediaImages
+import app.tryst.ui.common.PhotoSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
@@ -109,7 +110,7 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             uris.forEach { uri ->
                 runCatching {
-                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                    PhotoSource.open(context, uri)?.use { stream ->
                         personPhotoRepository.add(PersonPhotoRepository.KIND_PROFILE, ProfileEntity.SELF_ID, stream)
                     }
                 }
@@ -145,7 +146,7 @@ class ProfileViewModel @Inject constructor(
             val photoMediaId = when {
                 draft.newPhotoUri != null -> {
                     val newId = withContext(Dispatchers.IO) {
-                        context.contentResolver.openInputStream(draft.newPhotoUri)?.use { repository.savePhoto(it) }
+                        PhotoSource.open(context, draft.newPhotoUri)?.use { repository.savePhoto(it) }
                     }
                     if (newId != null && oldPhotoId != null) repository.deletePhoto(oldPhotoId)
                     newId ?: oldPhotoId

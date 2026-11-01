@@ -75,7 +75,7 @@ with deeply personal data. Inspired by the iOS app *Nice*.
   layouts (justified date grid, mosaic, by-partner, People avatars, feed), pinch-zoom viewer with
   favourite, add-to-person, and set-as-avatar actions, plus a filters sheet reusing FR-23's dims. Selected
   photos and viewer deletes can be undone for a few seconds; the date layouts group by day, month or
-  year (pinch past the density limits); a one-time tip introduces the gestures.
+  year (pinch past the density limits); a one-time tip introduces the gestures. The details sheet shows when it was taken, the file name, camera, lens, exposure and GPS coordinates (copy, or open in a maps app after a confirm), captured at import and kept through edits (META-2, D-60).
 - **FR-26** A **portrait album per person** (GAL-6, schema v15). Any partner or the self profile
   can own a set of photos beyond the single active avatar; the avatar is picked from the strip and
   the album round-trips through the encrypted backup.

@@ -63,6 +63,11 @@
   this adds nothing to what R2 already accepts for decrypted content on screen. A deleted photo waits
   out a 6-second undo window before its blob is removed; nothing is staged on disk, so a process kill
   in that window just leaves the photo in place.
+- **R-GEO** A photo's GPS coordinates (and capture time, camera, lens) are stored on the `media` row in the
+  encrypted DB and stay inside the encrypted photo file, so they get the same at-rest protection as everything
+  else and ride the encrypted backup. They are shown only inside the unlocked app. The one way they can leave
+  the device is **Open in Maps**, which hands the coordinates to the user's maps app after an explicit
+  confirm; there is no reverse geocoding, map tile or other lookup, so the app itself stays offline.
 - **R-LOCK** Auto-lock defaults to **immediate** on background. If the user raises the auto-lock timeout
   (Settings → General), the DEK and open DB stay in memory for that window while backgrounded, so a
   curious person (T1) who picks the phone up within the window finds it unlocked. Opt-in; the default
