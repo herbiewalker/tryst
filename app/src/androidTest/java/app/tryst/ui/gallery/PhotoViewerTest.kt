@@ -67,6 +67,7 @@ class PhotoViewerTest {
     )
 
     private var closed = false
+    private var metaLoads = 0
     private val deleted = mutableListOf<String>()
 
     private fun show() {
@@ -77,7 +78,10 @@ class PhotoViewerTest {
                 onClose = { closed = true },
                 onOpenEncounter = {},
                 onLoad = { _, _ -> null },
-                onLoadMeta = { PhotoMeta() },
+                onLoadMeta = {
+                    metaLoads++
+                    PhotoMeta()
+                },
                 onToggleFavorite = {},
                 onSetAvatar = { _, _ -> },
                 assignablePeople = emptyList(),
@@ -186,6 +190,37 @@ class PhotoViewerTest {
     }
 
     @Test
+    fun draggingUpRevealsDetailsInsteadOfClosing() {
+        show()
+        compose.onRoot().performTouchInput {
+            swipe(start = center, end = center.copy(y = center.y - height * 0.4f))
+        }
+        compose.waitForIdle()
+        assertFalse("pulling up must not close the viewer", closed)
+        assertTrue("pulling up should open the details panel", metaLoads > 0)
+        counter("1 / 3").assertExists()
+    }
+
+    @Test
+    fun draggingDownWithDetailsOpenHidesThemFirst() {
+        show()
+        compose.onRoot().performTouchInput {
+            swipe(start = center, end = center.copy(y = center.y - height * 0.4f))
+        }
+        compose.waitForIdle()
+        compose.onRoot().performTouchInput {
+            swipe(start = center, end = center.copy(y = center.y + height * 0.4f))
+        }
+        compose.waitForIdle()
+        assertFalse("first pull down only hides the details", closed)
+        compose.onRoot().performTouchInput {
+            swipe(start = center, end = center.copy(y = center.y + height * 0.4f))
+        }
+        compose.waitForIdle()
+        assertTrue("second pull down closes the viewer", closed)
+    }
+
+    @Test
     fun shortDownDragSnapsBackAndStaysOpen() {
         show()
         compose.onRoot().performTouchInput {
@@ -225,6 +260,14 @@ class PhotoViewerTest {
         compose.mainClock.advanceTimeBy(1_000)
         compose.waitForIdle()
         counter("1 / 3").assertExists()
+    }
+
+    @Test
+    fun systemBackClosesTheViewer() {
+        show()
+        androidx.test.espresso.Espresso.pressBack()
+        compose.waitForIdle()
+        assertTrue("back should close the viewer, not leave the tab", closed)
     }
 
     // --- delete ---------------------------------------------------------------------------

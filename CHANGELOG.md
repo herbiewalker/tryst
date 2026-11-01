@@ -13,6 +13,14 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+### Fixed
+
+- **Back from a photo returns to the photo grid.** The system back gesture in the full-screen viewer used to leave the Photos tab entirely and land on the calendar; it now just closes the viewer, like swiping down.
+
+### Changed
+
+- **Swipe up on a photo to see its details.** Pulling the photo up opens the details panel instead of closing the viewer, as in Google Photos. Swiping down with the details open hides them first; a second swipe down closes the viewer.
+
 ## [0.6.3] — 2026-11-01 (versionCode 19)
 
 ### Added
