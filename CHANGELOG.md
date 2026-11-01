@@ -19,9 +19,13 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 - **Themed launcher icon.** The T-heart now has a monochrome layer, so Android 13 and newer tint it with your wallpaper colours when themed icons are on.
 - **Completionist achievement (ACH-1).** A new badge that unlocks once every other achievement is unlocked, dated the day the last one landed. It counts toward the "X of N" total on Insights, and it relocks whenever a release adds new achievements.
 
+- **Group the Photos grid by day, month or year.** In the date and mosaic layouts, keep spreading your fingers past the smallest tiles to group by month, then year; pinch in past the biggest tiles to group by day. The choice is remembered.
+- **A one-time tip on the Photos tab** about long-press-and-drag selecting and the pinch levels. Dismiss it with *Got it* and it never returns.
+
 ### Changed
 
 - **Deleting photos can be undone.** Deleting from the viewer or from a selection no longer asks first. The photos disappear at once, an *N photos deleted · Undo* bar appears for six seconds, and they are removed for good when it closes. Leaving the Photos tab inside that window still deletes them.
+- **Smoother photo viewing.** Double-tap zoom now animates, and the viewer shows the grid thumbnail at once while the full photo decodes. Grid thumbnails are cached in memory for the session, so scrolling back is instant.
 
 ## [0.6.2] — 2026-10-31 (versionCode 18)
 

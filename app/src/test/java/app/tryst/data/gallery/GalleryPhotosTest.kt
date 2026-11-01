@@ -81,9 +81,10 @@ class GalleryPhotosTest {
         personPhotos: List<PersonPhotoEntity> = emptyList(),
         partnerNamesById: Map<String, String?> = emptyMap(),
         profileDisplayName: String? = null,
+        grouping: DateGrouping = DateGrouping.MONTH,
     ) = GalleryPhotos.build(
         encounters, filter, query, CatalogLabels.EMPTY, layout, sort, zone, onlyFavorites,
-        personPhotos, partnerNamesById, profileDisplayName,
+        personPhotos, partnerNamesById, profileDisplayName = profileDisplayName, grouping = grouping,
     )
 
     private fun portrait(id: String, ownerKind: String, ownerId: String, blobId: String = id, addedAt: Long = 0L) = PersonPhotoEntity(id = id, ownerKind = ownerKind, ownerId = ownerId, mediaBlobId = blobId, addedAt = addedAt)
@@ -107,6 +108,34 @@ class GalleryPhotosTest {
         )
         assertEquals(listOf("p_new", "p_old"), build(log, sort = GallerySort.NEWEST).photos.map { it.id })
         assertEquals(listOf("p_old", "p_new"), build(log, sort = GallerySort.OLDEST).photos.map { it.id })
+    }
+
+    @Test
+    fun dateGroupingSectionsByDayOrYear() {
+        val log = listOf(
+            encounter("a", LocalDateTime.of(2025, 12, 31, 9, 0), media = listOf(media("a1", "a"))),
+            encounter("b", LocalDateTime.of(2026, 5, 10, 9, 0), media = listOf(media("b1", "b"))),
+            encounter("c", LocalDateTime.of(2026, 5, 10, 22, 0), media = listOf(media("c1", "c"))),
+            encounter("d", LocalDateTime.of(2026, 6, 1, 9, 0), media = listOf(media("d1", "d"))),
+        )
+        val days = build(log, layout = GalleryLayout.JUSTIFIED_DATE, grouping = DateGrouping.DAY).sections
+        assertEquals(
+            listOf(GalleryGroup.Day(2026, 6, 1), GalleryGroup.Day(2026, 5, 10), GalleryGroup.Day(2025, 12, 31)),
+            days.map { it.group },
+        )
+        assertEquals(2, days[1].photos.size)
+        val years = build(log, layout = GalleryLayout.MOSAIC, grouping = DateGrouping.YEAR).sections
+        assertEquals(listOf(GalleryGroup.Year(2026), GalleryGroup.Year(2025)), years.map { it.group })
+        assertEquals(3, years[0].photos.size)
+    }
+
+    @Test
+    fun dateGroupingStepsAndClampsAtTheEnds() {
+        assertEquals(DateGrouping.MONTH, DateGrouping.DAY.coarser())
+        assertEquals(DateGrouping.YEAR, DateGrouping.MONTH.coarser())
+        assertEquals(DateGrouping.YEAR, DateGrouping.YEAR.coarser())
+        assertEquals(DateGrouping.DAY, DateGrouping.MONTH.finer())
+        assertEquals(DateGrouping.DAY, DateGrouping.DAY.finer())
     }
 
     @Test
