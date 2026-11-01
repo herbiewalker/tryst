@@ -1,6 +1,6 @@
 # Tryst — Threat Model
 
-> **Status:** Live — **v0.6.2 / schema v17**, aligned with the *implemented* security model
+> **Status:** Live — **v0.6.3 / schema v17**, aligned with the *implemented* security model
 > (Keystore-only + distinct app PIN; see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §1, Option B). The
 > v9–v11 changes (kinks then toys made id-based, and the acts/kinks then positions/toys catalog trims —
 > FDP-2/FDP-4, D-41) are category-data only and add **no new attack surface** over the v7 demographics +
@@ -57,6 +57,12 @@
   setup. (An optional passphrase-root mode could be added later behind the same key seam.)
 - **R2** While the app is unlocked and in the foreground, decrypted content is in memory and on screen
   — vulnerable to live observation or a compromised OS.
+- **R-CACHE** While the Photos tab is open, small decoded thumbnails (grid tiles, filmstrip) are kept
+  in an in-memory cache (24 MB cap) so scrolling and opening the viewer are instant. They are plain
+  bitmaps in RAM only, never written to disk, and are dropped when the gallery screen is torn down;
+  this adds nothing to what R2 already accepts for decrypted content on screen. A deleted photo waits
+  out a 6-second undo window before its blob is removed; nothing is staged on disk, so a process kill
+  in that window just leaves the photo in place.
 - **R-LOCK** Auto-lock defaults to **immediate** on background. If the user raises the auto-lock timeout
   (Settings → General), the DEK and open DB stay in memory for that window while backgrounded, so a
   curious person (T1) who picks the phone up within the window finds it unlocked. Opt-in; the default

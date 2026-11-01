@@ -1,6 +1,6 @@
 # Tryst — Architecture
 
-> **Status:** Live — v0.6.2 / schema v17. Reflects the actual code. See [FLOWCHARTS.md](FLOWCHARTS.md) for visual
+> **Status:** Live — v0.6.3 / schema v17. Reflects the actual code. See [FLOWCHARTS.md](FLOWCHARTS.md) for visual
 > flows and [CLAUDE.md](../CLAUDE.md) for the stack rationale and hard constraints.
 
 ## Stack
@@ -27,26 +27,26 @@ core/
   security/   Vault (DEK double-wrap), SecureKeyStore, BiometricVault, Pbkdf2, SessionKeys
   session/    SessionManager (lock lifecycle, opens/closes the DB), LockState
   crypto/     MediaCrypto (Tink streaming), BackupCrypto (password KDF + AEAD container)
-  prefs/      ThemePreferences, InsightsPreferences, GeneralPreferences (auto-lock/haptics/week-start/last-seen-version), GalleryPreferences (tryst_gallery: layout/columns/sort/blur/slideshow) — all SharedPreferences, non-sensitive, excluded from backup
+  prefs/      ThemePreferences, InsightsPreferences, GeneralPreferences (auto-lock/haptics/week-start/last-seen-version/dismissed coach tips), GalleryPreferences (tryst_gallery: layout/columns/sort/date grouping/blur/slideshow) — all SharedPreferences, non-sensitive, excluded from backup
 data/
   db/         TrystDatabase, TrystDatabaseFactory, entities, DAOs, Converters, Migrations, CatalogAdoption (v10–v12 removed-id → custom adoption for acts/kinks/positions/toys/occasions/ejaculation-locations; also run post-restore), CatalogSeeds (v12 fresh-install + upgrade seeding of the neutral starter rows), SqlCipherLibrary
   repository/ Encounter / Partner / Profile / Position / Act / Kink / Toy / Occasion / EjaculationLocation / PersonPhoto repositories (read DAOs from the unlocked session)
   filter/     EncounterFilter + matches() + EncounterQuery (shared JVM-tested filter layer — Search, Insights scope, Gallery all consume it)
   search/     EncounterSearch (accent-folded, AND-across-tokens over note + partner names + resolved category labels)
-  gallery/    GalleryPhotos.build (pure fn folding encounter photos + person_photo portraits into the gallery pipeline), GalleryModels
+  gallery/    GalleryPhotos.build (pure fn folding encounter photos + person_photo portraits into the gallery pipeline, grouped by day/month/year via DateGrouping), GalleryModels
   media/      EncryptedMediaStore (encrypted blobs + staging support for atomic restore), PhotoMetadata (androidx.exifinterface EXIF read at view time)
   backup/     BackupManager (export/restore, atomic wipe+restore in one tx, PRAGMA table_info NOT-NULL backfill), Csv (importer)
   stats/      InsightsEngine + Insights model (pure Kotlin, scope-aware)
 di/           Hilt wiring (most types use @Inject constructors; module is minimal)
 ui/
-  common/     SelectionField/Chips, MediaImages, ImagePicker, Format, Position/Act/Kink/Toy options, ActVisuals, Haptics (LocalHapticsEnabled), WindowSize, AppVersion, DateScopeChips (shared by Search + Insights scope), EncounterCard, DateHeader, PersonPhotoStrip
+  common/     SelectionField/Chips, MediaImages, TooltipIconButton (long-press labels on icon-only buttons, QOL-6), CoachTip (one-time dismissible tips), ImagePicker, Format, Position/Act/Kink/Toy options, ActVisuals, Haptics (LocalHapticsEnabled), WindowSize, AppVersion, DateScopeChips (shared by Search + Insights scope), EncounterCard, DateHeader, PersonPhotoStrip
   lock/        SetupScreen, LockScreen, ChangePinScreen, LockViewModel, BiometricPromptHelper, PinPad
   history/     HistoryScreen (list + calendar), HistoryViewModel
   encounter/   EncounterEditScreen + ViewModel
   partner/     PartnersScreen (+ "You" profile card) + ViewModel; PartnerEditScreen + PartnerEditViewModel (full-screen editor, QOL-3)
   profile/     ProfileScreen + ViewModel (the user's own photo + demographics; single self row)
   search/      SearchScreen + SearchViewModel; MoreFiltersSheet (the advanced-dims sheet, shared with the gallery's filters)
-  gallery/     GalleryScreen + GalleryViewModel; PhotoViewer (pinch-zoom + info panel + add-to-person + set-as-avatar + slideshow); GalleryFiltersSheet; GallerySettingsScreen; AvatarViewer
+  gallery/     GalleryScreen + GalleryViewModel; PhotoViewer (pinch-zoom + animated double-tap + info panel + add-to-person + set-as-avatar + slideshow; shows the cached grid thumbnail while the full image decodes); GalleryUndo (delete-with-undo bar; GalleryViewModel holds the pending-delete window and an in-memory thumbnail LRU); GalleryFiltersSheet; GallerySettingsScreen; AvatarViewer
   insights/    InsightsScreen, charts, StatTiles/InsightSections catalogs, TypeColors, ViewModel
   settings/    SettingsScreen (General/Security/Appearance/Insights/Categories/Backup/Danger/About) + ResetDataScreen (type-to-confirm wipe) + Appearance/General/Backup/CsvImport/CustomActs/CustomKinks/CustomPositions/CustomToys/CustomOccasions/CustomEjaculationLocations VMs
   whatsnew/    ReleaseNotes (bundled notes), WhatsNewScreen + WhatsNewDialog (post-update popup)

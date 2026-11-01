@@ -60,14 +60,14 @@ Privacy isn't a setting here — it's the architecture.
 - **Photos gallery** — a browsable Photos tab over every image attached to a tryst plus every person's
   portrait album, with layouts (date grid, mosaic, by-partner, People avatars, feed), search, filters,
   favourites, bulk actions, a slideshow, and a full-screen viewer you swipe through, pinch to zoom, swipe down to
-  close, and delete from. Select photos by long-pressing and dragging across a run, and jump around a
+  close, and delete from (with undo). Select photos by long-pressing and dragging across a run, group the grid by day, month or year by pinching, and jump around a
   long timeline with the fast scroller and its month bubble. One tap in the viewer also files a photo
   under any partner (or You).
 - **Insights** — a pure-Kotlin stats engine: totals, week streaks, averages, monthly & weekday
   trends, and per-attribute breakdowns. Reorder/hide tiles and cards, pick a chart style per card
   (bars / line / donut), with stable per-type colors. Charts are **hand-drawn** — no chart dependency.
 - **Achievements** — dozens of milestones, streaks, and variety badges, derived from your log with
-  progress bars and unlock dates. No extra storage.
+  progress bars and unlock dates. A Completionist badge rewards unlocking all the rest. No extra storage.
 - **Calendar** — a tonal activity heatmap with per-day markers, month/week toggle, and swipe to
   page. Land on it by default if you like.
 - **Backup & import** — full-fidelity password-encrypted export/restore (photos included), plus a
@@ -111,9 +111,13 @@ Screenshots are black by design on-device (`FLAG_SECURE`).
 
 ## Status
 
-✅ **Shipped.** Current release **v0.6.2** (versionCode 18, schema v17). Distribution is **F-Droid**,
+✅ **Shipped.** Current release **v0.6.3** (versionCode 19, schema v17). Distribution is **F-Droid**,
 which builds and signs from this source. Tryst ships no binary and commits no signing key.
 
+- **0.6.3** is a polish pass. Deleting photos now has a six-second Undo instead of a confirm dialog, the Photos
+  grid can group by day, month or year (keep pinching past the tile limits), double-tap zoom animates, and
+  photos open faster. Long-press any icon button for a tooltip, the launcher icon supports themed (monochrome)
+  icons, and a new Completionist achievement rewards unlocking all the others.
 - **0.6.2** adds an optional **orientation** field on your profile and partners, picked from labels you write
   yourself (nothing is preset). It is the first schema bump since 0.5.3 (v17), additive only.
 - **0.6.1** is a photo pass. Swiping between photos in the viewer works again, and you can now delete

@@ -1,8 +1,13 @@
 # Tryst — Roadmap / Milestones
 
-> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.6.2**
+> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.6.3**
 > (schema v17). Each milestone ended runnable & tested. This file is the milestone *history* (see
 > the dated notes below); forward work lives in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
+
+> **Update (2026-11-01):** **v0.6.3** shipped (QoL pass: tooltips, themed icon, Completionist achievement,
+> delete with undo, animated zoom, day/month/year grouping, a Photos tip). **CYC-1 (cycle tracking)** moved
+> to the 7.x line, after the Insights rework; the rest of 6.x is pre-work for it. See
+> [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
 
 > **Update (2026-10-31):** **v0.6.1** shipped (photo viewer and grid pass). **Next:** DEMO-1
 > (orientation, schema v17) ships first, then **CYC-1, optional cycle tracking** (issue #8; schema
