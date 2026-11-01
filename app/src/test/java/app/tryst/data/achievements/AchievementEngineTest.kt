@@ -210,6 +210,51 @@ class AchievementEngineTest {
         assertTrue(s.recent.any { it.def.id == "m_first" }) // unlocked within the window
         assertTrue(s.nearest.all { !it.unlocked })
     }
+
+    private fun status(id: String, unlocked: Boolean, at: LocalDate?) = AchievementStatus(
+        def = AchievementDef(id, id, "", AchievementCategory.MISC, 1, "x", Count { true }),
+        current = if (unlocked) 1 else 0,
+        unlocked = unlocked,
+        unlockedAt = at,
+    )
+
+    private val completionistDef = Achievements.catalog.first { it.rule == AllOthers }
+
+    @Test
+    fun completionistIsTheOnlyMetaRuleAndCountsOnlyOthers() {
+        assertEquals(1, Achievements.catalog.count { it.rule == AllOthers })
+        val r = AchievementEngine.evaluate(emptyList(), zone, today)
+        val c = r.byId(completionistDef.id)
+        assertEquals(Achievements.catalog.size - 1, c.def.target)
+        assertEquals(0, c.current)
+        assertTrue(!c.unlocked)
+    }
+
+    @Test
+    fun completionistStaysLockedOneShort() {
+        val others = listOf(
+            status("a", true, LocalDate.of(2026, 1, 1)),
+            status("b", true, LocalDate.of(2026, 2, 1)),
+            status("c", false, null),
+        )
+        val c = AchievementEngine.completionist(completionistDef, others)
+        assertEquals(2, c.current)
+        assertEquals(3, c.def.target)
+        assertTrue(!c.unlocked)
+        assertEquals(null, c.unlockedAt)
+    }
+
+    @Test
+    fun completionistUnlocksOnTheLastUnlockDate() {
+        val others = listOf(
+            status("a", true, LocalDate.of(2026, 3, 1)),
+            status("b", true, LocalDate.of(2026, 7, 9)),
+            status("c", true, LocalDate.of(2026, 5, 1)),
+        )
+        val c = AchievementEngine.completionist(completionistDef, others)
+        assertTrue(c.unlocked)
+        assertEquals(LocalDate.of(2026, 7, 9), c.unlockedAt)
+    }
 }
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

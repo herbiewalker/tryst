@@ -43,7 +43,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -75,6 +74,7 @@ import app.tryst.data.stats.Tally
 import app.tryst.ui.achievements.AchievementsTeaser
 import app.tryst.ui.common.DateRangePickerDialog
 import app.tryst.ui.common.DateScopeChips
+import app.tryst.ui.common.TooltipIconButton
 import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.dateScopeDescription
 import app.tryst.ui.common.rememberHaptics
@@ -108,18 +108,18 @@ fun InsightsScreen(
                 title = { Text(stringResource(if (editMode) R.string.settings_customize_insights else R.string.insights_title)) },
                 navigationIcon = {
                     if (onBack != null) {
-                        IconButton(onClick = onBack) {
+                        TooltipIconButton(label = stringResource(R.string.cd_back_to_settings), onClick = onBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back_to_settings))
                         }
                     }
                 },
                 actions = {
                     if (onBack == null && !editMode) {
-                        IconButton(onClick = onOpenAchievements) {
+                        TooltipIconButton(label = stringResource(R.string.achievements_title), onClick = onOpenAchievements) {
                             Icon(Icons.Filled.EmojiEvents, contentDescription = stringResource(R.string.achievements_title))
                         }
                     }
-                    IconButton(onClick = {
+                    TooltipIconButton(label = stringResource(if (editMode) R.string.action_done else R.string.cd_customize), onClick = {
                         haptics.tick()
                         if (onBack != null) onBack() else editMode = !editMode
                     }) {
@@ -509,7 +509,7 @@ private fun SectionsEditor(
                             modifier = Modifier.weight(1f).padding(start = 12.dp),
                             color = if (isHidden) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
                         )
-                        IconButton(onClick = { onToggleHidden(section.id, !isHidden) }) {
+                        TooltipIconButton(label = stringResource(if (isHidden) R.string.cd_show else R.string.cd_hide), onClick = { onToggleHidden(section.id, !isHidden) }) {
                             Icon(
                                 if (isHidden) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
                                 contentDescription = stringResource(if (isHidden) R.string.cd_show else R.string.cd_hide),
@@ -601,7 +601,7 @@ private fun StatEditor(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    IconButton(onClick = { onToggleHidden(tile.id, !isHidden) }) {
+                    TooltipIconButton(label = stringResource(if (isHidden) R.string.cd_show else R.string.cd_hide), onClick = { onToggleHidden(tile.id, !isHidden) }) {
                         Icon(
                             if (isHidden) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
                             contentDescription = stringResource(if (isHidden) R.string.cd_show else R.string.cd_hide),

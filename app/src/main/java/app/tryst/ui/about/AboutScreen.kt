@@ -30,7 +30,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -50,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import app.tryst.R
 import app.tryst.ui.brand.BrandMark
 import app.tryst.ui.common.AppVersion
+import app.tryst.ui.common.TooltipIconButton
 import app.tryst.ui.common.adaptiveContentWidth
 
 /**
@@ -70,7 +70,7 @@ fun AboutScreen(onBack: () -> Unit = {}) {
             TopAppBar(
                 title = { Text(stringResource(R.string.settings_about)) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    TooltipIconButton(label = stringResource(R.string.cd_back), onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },

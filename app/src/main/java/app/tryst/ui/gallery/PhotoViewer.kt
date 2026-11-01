@@ -56,7 +56,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -81,9 +80,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import app.tryst.R
 import app.tryst.core.prefs.CaptionEntryPoint
 import app.tryst.data.gallery.GalleryPartner
@@ -92,6 +91,7 @@ import app.tryst.data.media.PhotoMeta
 import app.tryst.data.media.PhotoMetadata
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
+import app.tryst.ui.common.TooltipIconButton
 import app.tryst.ui.theme.GridTileShape
 import kotlin.math.abs
 import kotlinx.coroutines.delay
@@ -146,6 +146,8 @@ fun PhotoViewer(
     onRotate: (GalleryPhoto, Int) -> Unit,
     onCrop: (GalleryPhoto, app.tryst.data.media.FractionalRect) -> Unit,
     onDelete: (GalleryPhoto) -> Unit,
+    pendingDeleteCount: Int = 0,
+    onUndoDelete: () -> Unit = {},
 ) {
     if (photos.isEmpty()) return
     val pagerState = rememberPagerState(
@@ -157,7 +159,6 @@ fun PhotoViewer(
     val page = pagerState.currentPage.coerceIn(0, photos.lastIndex)
     var chromeVisible by remember { mutableStateOf(true) }
     var moreMenu by remember { mutableStateOf(false) }
-    var confirmDelete by remember { mutableStateOf<GalleryPhoto?>(null) }
     // Swipe-down-to-close: how far the photo has been dragged vertically (px), and the close threshold.
     var dismissY by remember { mutableFloatStateOf(0f) }
     val dismissDistance = with(LocalDensity.current) { DISMISS_DISTANCE.toPx() }
@@ -198,6 +199,11 @@ fun PhotoViewer(
     }
 
     Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 1f - 0.75f * dismissProgress))) {
+        UndoDeleteBar(
+            count = pendingDeleteCount,
+            onUndo = onUndoDelete,
+            modifier = Modifier.align(Alignment.BottomCenter).zIndex(2f),
+        )
         HorizontalPager(
             state = pagerState,
             // Keep the neighbours composed so their images are decoded before you swipe to them.
@@ -253,7 +259,7 @@ fun PhotoViewer(
                     modifier = Modifier.align(Alignment.CenterStart),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    IconButton(onClick = onClose) {
+                    TooltipIconButton(label = stringResource(R.string.action_close), onClick = onClose) {
                         Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close), tint = Color.White)
                     }
                     Text(
@@ -263,7 +269,7 @@ fun PhotoViewer(
                     )
                 }
                 Row(Modifier.align(Alignment.CenterEnd)) {
-                    IconButton(onClick = { slideshow = !slideshow }) {
+                    TooltipIconButton(label = stringResource(R.string.gallery_slideshow), onClick = { slideshow = !slideshow }) {
                         Icon(
                             Icons.Filled.Slideshow,
                             contentDescription = stringResource(R.string.gallery_slideshow),
@@ -271,7 +277,7 @@ fun PhotoViewer(
                         )
                     }
                     if (captionEntryPoint.showsTopRowButton && current.media != null) {
-                        IconButton(onClick = { editingCaption = current }) {
+                        TooltipIconButton(label = stringResource(R.string.gallery_caption_edit_action), onClick = { editingCaption = current }) {
                             Icon(
                                 Icons.AutoMirrored.Outlined.Notes,
                                 contentDescription = stringResource(R.string.gallery_caption_edit_action),
@@ -279,21 +285,21 @@ fun PhotoViewer(
                             )
                         }
                     }
-                    IconButton(onClick = { editSheetOpen = true }) {
+                    TooltipIconButton(label = stringResource(R.string.gallery_edit_photo), onClick = { editSheetOpen = true }) {
                         Icon(
                             Icons.Outlined.Edit,
                             contentDescription = stringResource(R.string.gallery_edit_photo),
                             tint = Color.White,
                         )
                     }
-                    IconButton(onClick = { showInfo = !showInfo }) {
+                    TooltipIconButton(label = stringResource(R.string.cd_photo_info), onClick = { showInfo = !showInfo }) {
                         Icon(
                             Icons.Outlined.Info,
                             contentDescription = stringResource(R.string.cd_photo_info),
                             tint = if (showInfo) ACCENT else Color.White,
                         )
                     }
-                    IconButton(onClick = { confirmDelete = current }) {
+                    TooltipIconButton(label = stringResource(R.string.action_delete), onClick = { onDelete(current) }) {
                         Icon(
                             Icons.Filled.Delete,
                             contentDescription = stringResource(R.string.action_delete),
@@ -303,7 +309,7 @@ fun PhotoViewer(
                     // Less-used actions live in an overflow menu so the bar never crowds the counter.
                     val enc = current.encounterId
                     Box {
-                        IconButton(onClick = { moreMenu = true }) {
+                        TooltipIconButton(label = stringResource(R.string.action_more), onClick = { moreMenu = true }) {
                             Icon(
                                 Icons.Filled.MoreVert,
                                 contentDescription = stringResource(R.string.action_more),
@@ -417,23 +423,6 @@ fun PhotoViewer(
             onSave = { rect ->
                 onCrop(photo, rect)
                 cropping = null
-            },
-        )
-    }
-
-    confirmDelete?.let { photo ->
-        AlertDialog(
-            onDismissRequest = { confirmDelete = null },
-            title = { Text(pluralStringResource(R.plurals.gallery_delete_title, 1, 1)) },
-            text = { Text(stringResource(R.string.gallery_delete_body)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmDelete = null
-                    onDelete(photo)
-                }) { Text(stringResource(R.string.action_delete)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { confirmDelete = null }) { Text(stringResource(R.string.action_cancel)) }
             },
         )
     }

@@ -230,25 +230,12 @@ class PhotoViewerTest {
     // --- delete ---------------------------------------------------------------------------
 
     @Test
-    fun deleteAsksForConfirmationThenDeletesTheCurrentPhoto() {
+    fun deleteRemovesTheCurrentPhotoWithoutAConfirmDialog() {
         show()
         compose.onNodeWithContentDescription("Delete").performClick()
-        assertTrue("nothing deleted before confirming", deleted.isEmpty())
-        counter("Delete 1 photo?").assertExists()
-        compose.onNodeWithText("Delete").performClick()
         compose.waitForIdle()
         assertEquals(listOf("b1"), deleted)
         counter("1 / 2").assertExists()
-    }
-
-    @Test
-    fun cancellingTheDeleteDialogKeepsThePhoto() {
-        show()
-        compose.onNodeWithContentDescription("Delete").performClick()
-        compose.onNodeWithText("Cancel").performClick()
-        compose.waitForIdle()
-        assertTrue(deleted.isEmpty())
-        counter("1 / 3").assertExists()
     }
 
     @Test
@@ -261,7 +248,6 @@ class PhotoViewerTest {
         counter("3 / 3").assertExists()
 
         compose.onNodeWithContentDescription("Delete").performClick()
-        compose.onNodeWithText("Delete").performClick()
         compose.waitForIdle()
 
         assertEquals(listOf("b3"), deleted)

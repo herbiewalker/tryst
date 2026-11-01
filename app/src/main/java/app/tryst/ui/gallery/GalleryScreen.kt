@@ -51,16 +51,13 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -101,6 +98,7 @@ import app.tryst.data.gallery.GallerySection
 import app.tryst.ui.common.DateRangePickerDialog
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
+import app.tryst.ui.common.TooltipIconButton
 import app.tryst.ui.lock.findFragmentActivity
 import app.tryst.ui.search.MoreFiltersActions
 import app.tryst.ui.search.RatingFilter
@@ -130,6 +128,7 @@ fun GalleryScreen(
     viewModel: GalleryViewModel = hiltViewModel(),
 ) {
     val ui by viewModel.uiState.collectAsStateWithLifecycle()
+    val pendingDelete by viewModel.pendingDeleteCount.collectAsStateWithLifecycle()
     val query by viewModel.query.collectAsStateWithLifecycle()
     val dateScope by viewModel.dateScope.collectAsStateWithLifecycle()
     val rating by viewModel.rating.collectAsStateWithLifecycle()
@@ -164,7 +163,6 @@ fun GalleryScreen(
     var showFilters by remember { mutableStateOf(false) }
     var showRangePicker by remember { mutableStateOf(false) }
     var showReassign by remember { mutableStateOf(false) }
-    var showDeleteConfirm by remember { mutableStateOf(false) }
     var viewerIndex by remember { mutableIntStateOf(-1) }
     var revealed by remember { mutableStateOf(viewModel.revealedRecently()) }
     var authed by remember { mutableStateOf(viewModel.authedRecently()) }
@@ -211,6 +209,7 @@ fun GalleryScreen(
     LaunchedEffect(searching) { if (searching) focusRequester.requestFocus() }
 
     Scaffold(
+        snackbarHost = { UndoDeleteBar(count = pendingDelete, onUndo = viewModel::undoDelete) },
         topBar = {
             when {
                 selectionActive -> SelectionBar(
@@ -219,7 +218,7 @@ fun GalleryScreen(
                     onFavorite = { viewModel.favoriteSelected(true) },
                     onUnfavorite = { viewModel.favoriteSelected(false) },
                     onReassign = { showReassign = true },
-                    onDelete = { showDeleteConfirm = true },
+                    onDelete = viewModel::deleteSelected,
                 )
                 drilled -> DrillBar(
                     partnerName = when {
@@ -253,7 +252,7 @@ fun GalleryScreen(
                     },
                     actions = {
                         when {
-                            searching -> IconButton(onClick = {
+                            searching -> TooltipIconButton(label = stringResource(R.string.search_clear_query), onClick = {
                                 viewModel.setQuery("")
                                 searching = false
                             }) {
@@ -262,17 +261,17 @@ fun GalleryScreen(
                             // People (avatars) don't participate in the photo filters.
                             isPeople -> Unit
                             else -> {
-                                IconButton(onClick = { viewModel.setOnlyFavorites(!onlyFavorites) }) {
+                                TooltipIconButton(label = stringResource(R.string.gallery_only_favorites), onClick = { viewModel.setOnlyFavorites(!onlyFavorites) }) {
                                     Icon(
                                         if (onlyFavorites) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                                         contentDescription = stringResource(R.string.gallery_only_favorites),
                                         tint = if (onlyFavorites) MaterialTheme.colorScheme.primary else LocalContentColor.current,
                                     )
                                 }
-                                IconButton(onClick = { searching = true }) {
+                                TooltipIconButton(label = stringResource(R.string.gallery_search_hint), onClick = { searching = true }) {
                                     Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.gallery_search_hint))
                                 }
-                                IconButton(onClick = { showFilters = true }) {
+                                TooltipIconButton(label = stringResource(R.string.search_more_filters), onClick = { showFilters = true }) {
                                     Icon(
                                         Icons.Filled.Tune,
                                         contentDescription = stringResource(R.string.search_more_filters),
@@ -415,24 +414,6 @@ fun GalleryScreen(
         )
     }
 
-    if (showDeleteConfirm) {
-        val n = selectedIds.size
-        AlertDialog(
-            onDismissRequest = { showDeleteConfirm = false },
-            title = { Text(pluralStringResource(R.plurals.gallery_delete_title, n, n)) },
-            text = { Text(stringResource(R.string.gallery_delete_body)) },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.deleteSelected()
-                    showDeleteConfirm = false
-                }) { Text(stringResource(R.string.action_delete)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) { Text(stringResource(R.string.action_cancel)) }
-            },
-        )
-    }
-
     if (viewerIndex in ui.photos.indices) {
         PhotoViewer(
             photos = ui.photos,
@@ -456,6 +437,8 @@ fun GalleryScreen(
             onRotate = { photo, degrees -> viewModel.rotate(photo, degrees) },
             onCrop = { photo, rect -> viewModel.crop(photo, rect) },
             onDelete = viewModel::deletePhoto,
+            pendingDeleteCount = pendingDelete,
+            onUndoDelete = viewModel::undoDelete,
         )
     }
 }
@@ -469,7 +452,7 @@ private fun DrillBar(partnerName: String, onBack: () -> Unit) {
     TopAppBar(
         title = { Text(stringResource(R.string.gallery_drill_title, partnerName)) },
         navigationIcon = {
-            IconButton(onClick = onBack) {
+            TooltipIconButton(label = stringResource(R.string.cd_back), onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
             }
         },
@@ -491,21 +474,21 @@ private fun SelectionBar(
     TopAppBar(
         title = { Text(pluralStringResource(R.plurals.gallery_selected_count, count, count)) },
         navigationIcon = {
-            IconButton(onClick = onClose) {
+            TooltipIconButton(label = stringResource(R.string.action_close), onClick = onClose) {
                 Icon(Icons.Filled.Close, contentDescription = stringResource(R.string.action_close))
             }
         },
         actions = {
-            IconButton(onClick = onFavorite) {
+            TooltipIconButton(label = stringResource(R.string.gallery_favorite_selected), onClick = onFavorite) {
                 Icon(Icons.Filled.Favorite, contentDescription = stringResource(R.string.gallery_favorite_selected))
             }
-            IconButton(onClick = onUnfavorite) {
+            TooltipIconButton(label = stringResource(R.string.gallery_unfavorite_selected), onClick = onUnfavorite) {
                 Icon(Icons.Filled.FavoriteBorder, contentDescription = stringResource(R.string.gallery_unfavorite_selected))
             }
-            IconButton(onClick = onReassign) {
+            TooltipIconButton(label = stringResource(R.string.gallery_reassign), onClick = onReassign) {
                 Icon(Icons.Filled.SwapHoriz, contentDescription = stringResource(R.string.gallery_reassign))
             }
-            IconButton(onClick = onDelete) {
+            TooltipIconButton(label = stringResource(R.string.gallery_delete_selected), onClick = onDelete) {
                 Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.gallery_delete_selected))
             }
         },
@@ -551,7 +534,7 @@ private fun ReassignPicker(
                 androidx.compose.material3.TopAppBar(
                     title = { Text(pluralStringResource(R.plurals.gallery_reassign_title, count, count)) },
                     navigationIcon = {
-                        IconButton(onClick = onDismiss) {
+                        TooltipIconButton(label = stringResource(R.string.cd_back), onClick = onDismiss) {
                             Icon(
                                 androidx.compose.material.icons.Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = stringResource(R.string.cd_back),

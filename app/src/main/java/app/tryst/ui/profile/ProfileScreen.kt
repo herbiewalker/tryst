@@ -30,7 +30,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -55,6 +54,7 @@ import app.tryst.data.db.entity.Sex
 import app.tryst.ui.common.DemographicFields
 import app.tryst.ui.common.OptionalChips
 import app.tryst.ui.common.PersonPhotoStrip
+import app.tryst.ui.common.TooltipIconButton
 import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.rememberHaptics
 
@@ -135,7 +135,7 @@ private fun ProfileEditor(
             TopAppBar(
                 title = { Text(stringResource(R.string.profile_title)) },
                 navigationIcon = {
-                    IconButton(onClick = attemptClose) {
+                    TooltipIconButton(label = stringResource(R.string.cd_back), onClick = attemptClose) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
                     }
                 },
