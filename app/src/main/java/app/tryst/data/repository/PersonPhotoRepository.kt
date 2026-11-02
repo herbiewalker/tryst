@@ -43,6 +43,12 @@ class PersonPhotoRepository @Inject constructor(
 
     suspend fun getForOwner(kind: String, ownerId: String): List<PersonPhotoEntity> = dao.getForOwner(kind, ownerId)
 
+    /** Favourite or un-favourite album photos (v19). */
+    suspend fun setFavorite(ids: List<String>, favorite: Boolean) = dao.setFavorite(ids, favorite)
+
+    /** Sets or clears an album photo's caption; blank text becomes NULL so the empty state stays canonical. */
+    suspend fun setCaption(id: String, caption: String?) = dao.setCaption(id, caption?.trim()?.takeIf { it.isNotEmpty() })
+
     /**
      * Encrypts [source] into a new blob and inserts a `person_photo` row pointing at it. Returns the
      * new entity so callers can offer to promote it as the person's active avatar right after.

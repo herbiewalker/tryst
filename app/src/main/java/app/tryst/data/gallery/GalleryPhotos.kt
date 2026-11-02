@@ -101,9 +101,8 @@ object GalleryPhotos {
      */
     private fun portraitMatchesQuery(photo: GalleryPhoto, tokens: List<String>): Boolean {
         if (tokens.isEmpty()) return true
-        val name = photo.partners.firstOrNull()?.name ?: return false
-        val folded = EncounterSearch.fold(name)
-        return tokens.all { folded.contains(it) }
+        val haystack = EncounterSearch.fold(listOfNotNull(photo.partners.firstOrNull()?.name, photo.caption).joinToString(" "))
+        return tokens.all { haystack.contains(it) }
     }
 
     /**
@@ -154,8 +153,8 @@ object GalleryPhotos {
             takenAt = pp.addedAt,
             partners = listOf(GalleryPartner(id = partnerId, name = partnerName)),
             rating = null,
-            favorite = false,
-            source = GalleryPhoto.Source.Person(ownerKind = pp.ownerKind, ownerId = pp.ownerId, personPhotoId = pp.id),
+            favorite = pp.favorite,
+            source = GalleryPhoto.Source.Person(ownerKind = pp.ownerKind, ownerId = pp.ownerId, personPhotoId = pp.id, caption = pp.caption),
         )
     }
 

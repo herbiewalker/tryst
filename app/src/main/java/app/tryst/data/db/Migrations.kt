@@ -342,6 +342,18 @@ val MIGRATION_17_18 = object : Migration(17, 18) {
     }
 }
 
+/**
+ * v18 → v19: album photos (`person_photo`) gain a `favorite` flag and a `caption`, so they can be favourited and
+ * captioned like encounter photos (previously both silently did nothing for album photos). Additive only; pre-v19
+ * backups restore with favorite = 0 and caption NULL.
+ */
+val MIGRATION_18_19 = object : Migration(18, 19) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE person_photo ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE person_photo ADD COLUMN caption TEXT")
+    }
+}
+
 /** All migrations, in order. */
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
@@ -361,6 +373,7 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_15_16,
     MIGRATION_16_17,
     MIGRATION_17_18,
+    MIGRATION_18_19,
 )
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

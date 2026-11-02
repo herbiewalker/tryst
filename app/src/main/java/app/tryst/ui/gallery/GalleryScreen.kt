@@ -733,7 +733,7 @@ private fun Modifier.pinchColumns(onChange: (delta: Int) -> Unit): Modifier = po
 
 @Composable
 private fun FeedCaption(photo: GalleryPhoto) {
-    val caption = photo.media?.caption?.takeIf { it.isNotBlank() }
+    val caption = photo.caption?.takeIf { it.isNotBlank() }
     Column(Modifier.fillMaxWidth().padding(top = 6.dp, start = 2.dp)) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(10.dp),

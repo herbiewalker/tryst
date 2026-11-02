@@ -232,5 +232,9 @@ storage — likely a small row in the encrypted DB.)
   `defaultValue` per D-53). They are read from the original file at import and kept on the row so they survive
   a rotate/crop (which drops EXIF) and can feed a map later. Pre-v18 rows get NULL/0 and are backfilled from the
   blob the first time the gallery opens. Ride the generic dump, so a pre-v18 backup restores with NULLs.
+- **v19 (`MIGRATION_18_19`, unreleased)** adds **`favorite`** (`INTEGER NOT NULL DEFAULT 0`, mirrored by an entity
+  `defaultValue` per D-53) and a nullable **`caption`** to `person_photo`, so album photos can be favourited and
+  captioned like encounter photos. Both silently did nothing for album photos before. Pre-v19 backups restore with
+  favourite off and no caption.
 - Export format (M5) is decoupled from the live schema and versioned independently
   (see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §4).

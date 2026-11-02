@@ -476,24 +476,31 @@ class GalleryViewModel @Inject constructor(
         _selectedIds.value = uiState.value.photos.mapTo(LinkedHashSet()) { it.id }
     }
 
-    /** Marks/unmarks a single photo (the viewer's star), GAL-3. Only encounter photos are favouritable. */
+    /** Marks/unmarks a single photo (the viewer's heart), GAL-3; album photos too since v19. */
     fun toggleFavorite(photo: GalleryPhoto) = viewModelScope.launch {
-        if (photo.media != null) encounterRepository.setFavorite(photo.id, !photo.favorite)
+        when (val src = photo.source) {
+            is GalleryPhoto.Source.Encounter -> encounterRepository.setFavorite(photo.id, !photo.favorite)
+            is GalleryPhoto.Source.Person -> personPhotoRepository.setFavorite(listOf(src.personPhotoId), !photo.favorite)
+        }
     }
 
     /**
-     * Sets or clears a photo's caption (CAP-1). Only encounter photos carry captions — person portraits
-     * (which have no `media` row) silently no-op. Blank text becomes NULL upstream so the empty-caption
-     * state stays canonical.
+     * Sets or clears a photo's caption (CAP-1; album photos since v19). Blank text becomes NULL upstream so the
+     * empty-caption state stays canonical.
      */
     fun setCaption(photo: GalleryPhoto, caption: String?) = viewModelScope.launch {
-        if (photo.media != null) encounterRepository.setCaption(photo.id, caption)
+        when (val src = photo.source) {
+            is GalleryPhoto.Source.Encounter -> encounterRepository.setCaption(photo.id, caption)
+            is GalleryPhoto.Source.Person -> personPhotoRepository.setCaption(src.personPhotoId, caption)
+        }
     }
 
-    /** Bulk favourite: only the encounter photos in the selection qualify — portraits carry no favourite mark. */
+    /** Bulk favourite for the selection: encounter photos and album photos alike (album photos since v19). */
     fun favoriteSelected(favorite: Boolean) = viewModelScope.launch {
         val encounterIds = encounterBlobsInSelection()
         if (encounterIds.isNotEmpty()) encounterRepository.setFavorite(encounterIds, favorite)
+        val personIds = personPhotoIdsInSelection()
+        if (personIds.isNotEmpty()) personPhotoRepository.setFavorite(personIds, favorite)
         clearSelection()
     }
 
@@ -680,6 +687,11 @@ class GalleryViewModel @Inject constructor(
     private fun encounterBlobsInSelection(): List<String> {
         val ids = _selectedIds.value
         return uiState.value.photos.filter { it.id in ids && it.media != null }.map { it.id }
+    }
+
+    private fun personPhotoIdsInSelection(): List<String> {
+        val ids = _selectedIds.value
+        return uiState.value.photos.filter { it.id in ids }.mapNotNull { (it.source as? GalleryPhoto.Source.Person)?.personPhotoId }
     }
 
     companion object {
