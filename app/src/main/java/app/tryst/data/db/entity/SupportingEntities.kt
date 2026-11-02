@@ -179,6 +179,13 @@ data class PersonPhotoEntity(
     /** The encrypted blob's id (opens via `EncryptedMediaStore.open(mediaBlobId)`). */
     val mediaBlobId: String,
     val addedAt: Long,
+    /**
+     * Favourite mark (v19) — lets album photos be favourited like encounter photos. `defaultValue = "0"`
+     * mirrors the DEFAULT in `MIGRATION_18_19` so a fresh install and an upgrade create the same column.
+     */
+    @ColumnInfo(defaultValue = "0") val favorite: Boolean = false,
+    /** User-typed caption (v19), the same note the viewer offers on encounter photos. Nullable. */
+    val caption: String? = null,
 )
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

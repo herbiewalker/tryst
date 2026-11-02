@@ -87,7 +87,7 @@ class GalleryPhotosTest {
         personPhotos, partnerNamesById, profileDisplayName = profileDisplayName, grouping = grouping,
     )
 
-    private fun portrait(id: String, ownerKind: String, ownerId: String, blobId: String = id, addedAt: Long = 0L) = PersonPhotoEntity(id = id, ownerKind = ownerKind, ownerId = ownerId, mediaBlobId = blobId, addedAt = addedAt)
+    private fun portrait(id: String, ownerKind: String, ownerId: String, blobId: String = id, addedAt: Long = 0L, favorite: Boolean = false, caption: String? = null) = PersonPhotoEntity(id = id, ownerKind = ownerKind, ownerId = ownerId, mediaBlobId = blobId, addedAt = addedAt, favorite = favorite, caption = caption)
 
     @Test
     fun onlyEncountersWithMediaContributeAndEachPhotoIsOneItem() {
@@ -237,6 +237,21 @@ class GalleryPhotosTest {
             listOf(GalleryGroup.Month(2026, 6), GalleryGroup.Month(2026, 5)),
             sections.map { it.group },
         )
+    }
+
+    @Test
+    fun albumPhotosCanBeFavouritedAndFoundByCaption() {
+        val personPhotos = listOf(
+            portrait(id = "pp1", ownerKind = "partner", ownerId = "alex", blobId = "blob-a", favorite = true, caption = "Lakeside weekend"),
+            portrait(id = "pp2", ownerKind = "partner", ownerId = "alex", blobId = "blob-b"),
+        )
+        val names = mapOf<String, String?>("alex" to "Alex")
+        val favs = build(emptyList(), layout = GalleryLayout.SQUARE_GRID, onlyFavorites = true, personPhotos = personPhotos, partnerNamesById = names)
+        assertEquals(listOf("blob-a"), favs.photos.map { it.id })
+        assertTrue(favs.photos.single().favorite)
+        assertEquals("Lakeside weekend", favs.photos.single().caption)
+        val found = build(emptyList(), layout = GalleryLayout.SQUARE_GRID, query = "lakeside", personPhotos = personPhotos, partnerNamesById = names)
+        assertEquals(listOf("blob-a"), found.photos.map { it.id })
     }
 
     @Test

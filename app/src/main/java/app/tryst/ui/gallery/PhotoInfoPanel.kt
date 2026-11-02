@@ -71,9 +71,11 @@ internal fun PhotoInfoPanel(
     showCaptionRow: Boolean,
     onEditCaption: () -> Unit,
     onLeaveApp: () -> Unit,
+    /** Changes when the photo is rotated or cropped, so the sheet re-reads its size. */
+    refreshKey: Any,
     modifier: Modifier = Modifier,
 ) {
-    val meta by produceState(PhotoMeta(), photo.id, photo.media) {
+    val meta by produceState(PhotoMeta(), photo.id, photo.media, refreshKey) {
         val live = onLoadMeta(photo.blobId)
         value = live.preferring(photo.media?.storedMeta())
     }
@@ -86,8 +88,8 @@ internal fun PhotoInfoPanel(
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         // Caption row (CAP-1) — only for encounter photos (person portraits have no media row).
-        if (showCaptionRow && photo.media != null) {
-            val existing = photo.media?.caption?.takeIf { it.isNotBlank() }
+        if (showCaptionRow) {
+            val existing = photo.caption?.takeIf { it.isNotBlank() }
             Row(
                 modifier = Modifier.fillMaxWidth().clickable(onClick = onEditCaption),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),

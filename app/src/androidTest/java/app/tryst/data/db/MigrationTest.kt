@@ -579,6 +579,30 @@ class MigrationTest {
             }
         }
     }
+
+    /** v18 → v19 adds `favorite` (default 0) and `caption` (NULL) to `person_photo`; existing rows keep their data. */
+    @Test
+    fun migrate18To19_addsAlbumPhotoFavoriteAndCaption() {
+        helper.createDatabase(dbName, 18).use { db ->
+            db.execSQL("INSERT INTO partners (id, displayName, isAnonymous, createdAt, updatedAt) VALUES ('p1', 'Sam', 0, 1, 1)")
+            db.execSQL("INSERT INTO person_photo (id, ownerKind, ownerId, mediaBlobId, addedAt) VALUES ('pp1', 'partner', 'p1', 'blob1', 5)")
+        }
+
+        helper.runMigrationsAndValidate(dbName, 19, true, MIGRATION_18_19).use { db ->
+            db.query("SELECT mediaBlobId, favorite, caption FROM person_photo WHERE id = 'pp1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("blob1", c.getString(0))
+                assertEquals("favourite defaults to false", 0, c.getInt(1))
+                assertTrue("caption defaults to NULL", c.isNull(2))
+            }
+            db.execSQL("UPDATE person_photo SET favorite = 1, caption = 'Hello' WHERE id = 'pp1'")
+            db.query("SELECT favorite, caption FROM person_photo WHERE id = 'pp1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals(1, c.getInt(0))
+                assertEquals("Hello", c.getString(1))
+            }
+        }
+    }
 }
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

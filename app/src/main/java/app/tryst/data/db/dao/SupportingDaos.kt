@@ -219,6 +219,14 @@ interface PersonPhotoDao {
     @Query("SELECT * FROM person_photo WHERE mediaBlobId = :blobId LIMIT 1")
     suspend fun getByBlobId(blobId: String): PersonPhotoEntity?
 
+    /** Favourite or un-favourite album photos by row id (v19). */
+    @Query("UPDATE person_photo SET favorite = :favorite WHERE id IN (:ids)")
+    suspend fun setFavorite(ids: List<String>, favorite: Boolean)
+
+    /** Sets or clears an album photo's caption (v19); blank is stored as NULL. */
+    @Query("UPDATE person_photo SET caption = :caption WHERE id = :id")
+    suspend fun setCaption(id: String, caption: String?)
+
     @Query("DELETE FROM person_photo WHERE id = :id")
     suspend fun deleteById(id: String)
 

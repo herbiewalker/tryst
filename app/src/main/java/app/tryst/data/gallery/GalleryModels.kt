@@ -151,9 +151,12 @@ data class GalleryPhoto(
     /** The underlying media row when this is an encounter photo (needed for reassign / favourite / metadata). */
     val media: MediaEntity? get() = (source as? Source.Encounter)?.media
 
+    /** The photo's caption, whichever kind of photo it is. */
+    val caption: String? get() = media?.caption ?: (source as? Source.Person)?.caption
+
     sealed interface Source {
         data class Encounter(val encounterId: String, val media: MediaEntity) : Source
-        data class Person(val ownerKind: String, val ownerId: String, val personPhotoId: String) : Source
+        data class Person(val ownerKind: String, val ownerId: String, val personPhotoId: String, val caption: String? = null) : Source
     }
 }
 

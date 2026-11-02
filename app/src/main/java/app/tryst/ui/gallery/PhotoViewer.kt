@@ -319,12 +319,12 @@ fun PhotoViewer(
                             tint = if (slideshow) ACCENT else Color.White,
                         )
                     }
-                    if (captionEntryPoint.showsTopRowButton && current.media != null) {
+                    if (captionEntryPoint.showsTopRowButton) {
                         TooltipIconButton(label = stringResource(R.string.gallery_caption_edit_action), onClick = { editingCaption = current }) {
                             Icon(
                                 Icons.AutoMirrored.Outlined.Notes,
                                 contentDescription = stringResource(R.string.gallery_caption_edit_action),
-                                tint = if (!current.media?.caption.isNullOrBlank()) ACCENT else Color.White,
+                                tint = if (!current.caption.isNullOrBlank()) ACCENT else Color.White,
                             )
                         }
                     }
@@ -427,6 +427,7 @@ fun PhotoViewer(
                             showCaptionRow = captionEntryPoint.showsInfoPanelField,
                             onEditCaption = { editingCaption = photos[page] },
                             onLeaveApp = onLeaveApp,
+                            refreshKey = bustKey(photos[page].blobId),
                         )
                     }
                 }
@@ -443,7 +444,7 @@ fun PhotoViewer(
 
     editingCaption?.let { photo ->
         CaptionEditDialog(
-            initial = photo.media?.caption.orEmpty(),
+            initial = photo.caption.orEmpty(),
             onDismiss = { editingCaption = null },
             onSave = { text ->
                 onSetCaption(photo, text)

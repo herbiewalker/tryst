@@ -15,6 +15,7 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ### Fixed
 
+- **Album photos can be favourited and captioned.** The heart and the caption note did nothing for photos in a person's album (for example older photos you added to a partner), because only photos attached to a tryst could carry them. Album photos now have both: the viewer's heart works, the Photos tab's favourites filter and bulk favourite include them, and captions are searchable. The photo details sheet also refreshes its size right after you rotate or crop.
 - **Photos you import keep their location and camera details.** The old photo picker stripped GPS from every photo; imports now use the system file picker, which hands over the original. The details sheet shows when it was taken, the file name, camera, lens, exposure and coordinates, with *Copy* and *Open in Maps* (after a confirm). The details are stored with the photo, so rotating or cropping no longer loses them, and photos you already have are read the first time you open Photos. Tryst still has no permissions and no network, so there is no place name or map tile.
 - **Back from a photo returns to the photo grid.** The system back gesture in the full-screen viewer used to leave the Photos tab entirely and land on the calendar; it now just closes the viewer, like swiping down.
 
