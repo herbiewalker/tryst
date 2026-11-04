@@ -1,6 +1,6 @@
 # Tryst — Requirements
 
-> **Status:** Live — shipped through **v0.6.4** (schema v19). The v1 scope below is fully
+> **Status:** Live — shipped through **v0.6.5** (schema v19). The v1 scope below is fully
 > implemented; post-1.0 work is tracked in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
 
 ## 1. Vision

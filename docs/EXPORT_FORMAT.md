@@ -40,6 +40,8 @@ associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, i
                    `date_grouping` and `tryst_general` `seen_tips` (dismissed coach-mark ids).
                    v0.6.4 added columns to two tables, which ride the generic data dump with no format change:
                    `media` (capture time, GPS, camera and file details) and `person_photo` (favourite, caption).
+                   v0.6.5 added two more keys to this section, again with no format change: `tryst_general` `last_backup_at`
+                   and `backup_snoozed_until` (the backup reminder).
   media/<id>       the decrypted bytes of each photo blob (re-encrypted by the container) —
                    both encounter photos (media-table rows) AND partner avatars (referenced
                    only by Partner.photoMediaId, no media-table row)

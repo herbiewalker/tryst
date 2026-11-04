@@ -1,0 +1,7 @@
+Backup reminders, calendar memory and upright photos
+
+* A reminder to back up, and clear progress, results and specific errors when you export or restore.
+* The calendar keeps your place and starts a new tryst on the day you tapped.
+* Old photos stored sideways now draw upright. Rotate photos from the partner and profile photo strip.
+* Setting a profile photo no longer copies it or resets its date.
+* The photo viewer stays open when you rotate the screen.

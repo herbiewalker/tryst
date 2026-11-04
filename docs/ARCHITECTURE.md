@@ -1,6 +1,6 @@
 # Tryst — Architecture
 
-> **Status:** Live — v0.6.4 / schema v19. Reflects the actual code. See [FLOWCHARTS.md](FLOWCHARTS.md) for visual
+> **Status:** Live — v0.6.5 / schema v19. Reflects the actual code. See [FLOWCHARTS.md](FLOWCHARTS.md) for visual
 > flows and [CLAUDE.md](../CLAUDE.md) for the stack rationale and hard constraints.
 
 ## Stack
@@ -34,8 +34,8 @@ data/
   filter/     EncounterFilter + matches() + EncounterQuery (shared JVM-tested filter layer — Search, Insights scope, Gallery all consume it)
   search/     EncounterSearch (accent-folded, AND-across-tokens over note + partner names + resolved category labels)
   gallery/    GalleryPhotos.build (pure fn folding encounter photos + person_photo portraits into the gallery pipeline, grouped by day/month/year via DateGrouping), GalleryModels
-  media/      EncryptedMediaStore (encrypted blobs + staging support for atomic restore), PhotoMetadata (androidx.exifinterface EXIF read at view time)
-  backup/     BackupManager (export/restore, atomic wipe+restore in one tx, PRAGMA table_info NOT-NULL backfill), Csv (importer)
+  media/      ExifOrientation (turns sideways-tagged photos upright at decode), PhotoRevisions (shared edit counts so thumbnails refresh everywhere), EncryptedMediaStore (encrypted blobs + staging support for atomic restore), PhotoMetadata (androidx.exifinterface EXIF read at view time)
+  backup/     BackupManager (export/restore with progress, a result summary and specific errors; BackupReminder is the pure rule behind the back-up nudge, )atomic wipe+restore in one tx, PRAGMA table_info NOT-NULL backfill), Csv (importer)
   stats/      InsightsEngine + Insights model (pure Kotlin, scope-aware)
 di/           Hilt wiring (most types use @Inject constructors; module is minimal)
 ui/
