@@ -1,6 +1,6 @@
 # Tryst — Data Model
 
-> **Status:** Live — **schema v17** (shipped in v0.6.2, unchanged since; v16 shipped in v0.5.3), Room over SQLCipher. Matches the entities in
+> **Status:** Live — **schema v19** (v18 and v19 shipped in v0.6.4; v17 in v0.6.2; v16 in v0.5.3), Room over SQLCipher. Matches the entities in
 > `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change ships a
 > non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 >
@@ -226,13 +226,13 @@ storage — likely a small row in the encrypted DB.)
   existing rows get NULL. Deleting a label clears every reference in one transaction
   (`OrientationDao.delete`). `orientations` is in `BackupManager.TABLES`; the columns ride the generic
   `SELECT *` dump, so a pre-v17 backup restores with orientation NULL.
-- **v18 (`MIGRATION_17_18`, META-2, unreleased)** adds thirteen nullable columns to `media`: `capturedAt`,
+- **v18 (`MIGRATION_17_18`, META-2, 0.6.4)** adds thirteen nullable columns to `media`: `capturedAt`,
   `capturedOffsetMin`, `latitude`, `longitude`, `altitudeM`, `camera`, `lens`, `aperture`, `shutterSeconds`,
   `iso`, `focalLengthMm`, `originalName`, plus `metaScanned` (NOT NULL DEFAULT 0, mirrored by an entity
   `defaultValue` per D-53). They are read from the original file at import and kept on the row so they survive
   a rotate/crop (which drops EXIF) and can feed a map later. Pre-v18 rows get NULL/0 and are backfilled from the
   blob the first time the gallery opens. Ride the generic dump, so a pre-v18 backup restores with NULLs.
-- **v19 (`MIGRATION_18_19`, unreleased)** adds **`favorite`** (`INTEGER NOT NULL DEFAULT 0`, mirrored by an entity
+- **v19 (`MIGRATION_18_19`, GAL-8, 0.6.4)** adds **`favorite`** (`INTEGER NOT NULL DEFAULT 0`, mirrored by an entity
   `defaultValue` per D-53) and a nullable **`caption`** to `person_photo`, so album photos can be favourited and
   captioned like encounter photos. Both silently did nothing for album photos before. Pre-v19 backups restore with
   favourite off and no caption.

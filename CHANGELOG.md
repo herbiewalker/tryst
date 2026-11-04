@@ -13,6 +13,8 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.6.4] — 2026-11-03 (versionCode 20)
+
 ### Fixed
 
 - **Album photos can be favourited and captioned.** The heart and the caption note did nothing for photos in a person's album (for example older photos you added to a partner), because only photos attached to a tryst could carry them. Album photos now have both: the viewer's heart works, the Photos tab's favourites filter and bulk favourite include them, and captions are searchable. The photo details sheet also refreshes its size right after you rotate or crop.

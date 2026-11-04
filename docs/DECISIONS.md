@@ -1,6 +1,6 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v18** (latest: **D-60**, photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
+> **Status:** Live — decisions through **schema v19** (latest: **D-61**, album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
 > presence-only re-auth via BiometricPrompt with device-credential fallback — no CryptoObject,
 > no DEK touch, v0.5.7).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
@@ -708,6 +708,13 @@
   network. The details sheet shows coordinates with **Copy** and **Open in Maps**, which hands the coordinates
   to the user's maps app only after a confirm dialog. Camera captures keep whatever the camera app wrote.
   Portraits (`person_photo`) are not persisted yet; their sheet still reads the blob's EXIF.
+
+- **D-61 (2026-11-01) Album photos get a favourite flag and a caption, in the table that already owns them (GAL-8, schema v19).**
+  Favourite and caption only existed on `media` rows, so the viewer's heart and caption editor silently did nothing
+  for a photo in a person's album. Chosen: add `person_photo.favorite` (NOT NULL DEFAULT 0, mirrored by an entity
+  `defaultValue` per D-53) and a nullable `person_photo.caption`, rather than a shared photo table, which would be a far
+  bigger migration. The gallery, favourites filter, bulk favourite and search read them through one `GalleryPhoto.caption`.
+  A pre-v19 backup restores with favourite off and no caption. Multi-person tagging (PPL-1) stays separate.
 
 > **Standing follow-ups (not blockers, tracked here as pointers):**
 > **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;
