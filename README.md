@@ -111,9 +111,13 @@ Screenshots are black by design on-device (`FLAG_SECURE`).
 
 ## Status
 
-✅ **Shipped.** Current release **v0.6.3** (versionCode 19, schema v17). Distribution is **F-Droid**,
+✅ **Shipped.** Current release **v0.6.4** (versionCode 20, schema v19). Distribution is **F-Droid**,
 which builds and signs from this source. Tryst ships no binary and commits no signing key.
 
+- **0.6.4** keeps the details of every photo you import: when it was taken, the file name, camera, lens
+  and GPS location, shown in the viewer's details sheet with Copy and Open in Maps. Imports use the system file
+  picker, so Tryst still asks for no permissions. Photos in a person's album can now be favourited and captioned,
+  back from a photo returns to the grid, and swiping up opens the details.
 - **0.6.3** is a polish pass. Deleting photos now has a six-second Undo instead of a confirm dialog, the Photos
   grid can group by day, month or year (keep pinching past the tile limits), double-tap zoom animates, and
   photos open faster. Long-press any icon button for a tooltip, the launcher icon supports themed (monochrome)
@@ -146,7 +150,7 @@ program live in [docs/ROADMAP.md](docs/ROADMAP.md), and post-1.0 plans in
 | [REQUIREMENTS.md](docs/REQUIREMENTS.md) | Functional & non-functional requirements |
 | [THREAT_MODEL.md](docs/THREAT_MODEL.md) | Adversaries, mitigations, residual risk |
 | [SECURITY_DESIGN.md](docs/SECURITY_DESIGN.md) | Encryption & key management |
-| [DATA_MODEL.md](docs/DATA_MODEL.md) | Entities & fields (schema v17) |
+| [DATA_MODEL.md](docs/DATA_MODEL.md) | Entities & fields (schema v19) |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack & module layout |
 | [FLOWCHARTS.md](docs/FLOWCHARTS.md) | Visual maps of the core logic flows |
 | [ROADMAP.md](docs/ROADMAP.md) | Milestones & the 12-pass pre-release audit |

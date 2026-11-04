@@ -33,6 +33,17 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.6.4",
+            versionCode = 20,
+            date = "2026-11-03",
+            highlights = listOf(
+                "Photos you import now keep their date, camera, lens and GPS location. The details sheet shows when and where each was taken, with Copy and Open in Maps (after a confirm). Imports use the system file picker, which hands over the original photo. Tryst still asks for no permissions and has no network, so there is no place name or map.",
+                "Photos in a person's album can now be favourited and captioned, like photos on a tryst. The favourites filter and search include them.",
+                "Back from a photo returns to the photo grid, and swiping up on a photo opens its details.",
+                "A backup made in this version won't restore into older versions of Tryst.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.6.3",
             versionCode = 19,
             date = "2026-11-01",

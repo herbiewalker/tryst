@@ -1,0 +1,6 @@
+Photo details, album favourites and viewer fixes
+
+* Photos you import now keep their date, camera, lens and GPS. The details sheet shows them, with Copy and Open in Maps.
+* Album photos can be favourited and captioned.
+* Back from a photo returns to the grid. Swipe up on a photo to see its details.
+* The photo picker is now the system file picker. Tryst still asks for no permissions.
