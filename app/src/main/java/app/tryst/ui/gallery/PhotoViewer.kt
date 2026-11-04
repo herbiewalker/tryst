@@ -71,6 +71,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -157,6 +158,8 @@ fun PhotoViewer(
     onDelete: (GalleryPhoto) -> Unit,
     peekThumb: (blobId: String) -> ImageBitmap? = { null },
     pendingDeleteCount: Int = 0,
+    /** Reports the page the user is on, so the caller can restore it after a rotation or process recreation. */
+    onPageChange: (Int) -> Unit = {},
     onUndoDelete: () -> Unit = {},
     onLeaveApp: () -> Unit = {},
 ) {
@@ -167,20 +170,21 @@ fun PhotoViewer(
         initialPage = initialIndex.coerceIn(0, photos.lastIndex),
         pageCount = { photos.size },
     )
+    LaunchedEffect(pagerState.currentPage) { onPageChange(pagerState.currentPage) }
     // After a delete the photo list shrinks a frame before the pager re-clamps its page, so every
     // read of the current photo goes through this clamped index.
     val page = pagerState.currentPage.coerceIn(0, photos.lastIndex)
-    var chromeVisible by remember { mutableStateOf(true) }
+    var chromeVisible by rememberSaveable { mutableStateOf(true) }
     var moreMenu by remember { mutableStateOf(false) }
     // Swipe-down-to-close: how far the photo has been dragged vertically (px), and the close threshold.
     var dismissY by remember { mutableFloatStateOf(0f) }
     val dismissDistance = with(LocalDensity.current) { DISMISS_DISTANCE.toPx() }
     // Only a downward pull fades the scrim and shrinks the photo; an upward pull is the details gesture.
     val dismissProgress = (dismissY.coerceAtLeast(0f) / (dismissDistance * 2.5f)).coerceIn(0f, 1f)
-    var showInfo by remember { mutableStateOf(false) }
+    var showInfo by rememberSaveable { mutableStateOf(false) }
     // Details sheet progress, 0 (hidden) .. 1 (fully up). A finger drives it directly while dragging, so the
     // panel slides in under the photo and the photo lifts with it; releasing settles it open or shut.
-    var infoProgress by remember { mutableFloatStateOf(0f) }
+    var infoProgress by remember { mutableFloatStateOf(if (showInfo) 1f else 0f) }
     val density = LocalDensity.current
     val scope = rememberCoroutineScope()
     var infoPanelPx by remember { mutableFloatStateOf(with(density) { INFO_PANEL_GUESS.toPx() }) }

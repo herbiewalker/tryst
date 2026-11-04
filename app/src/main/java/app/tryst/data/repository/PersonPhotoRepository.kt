@@ -16,6 +16,7 @@ package app.tryst.data.repository
 import app.tryst.core.session.SessionManager
 import app.tryst.data.db.entity.PersonPhotoEntity
 import app.tryst.data.media.EncryptedMediaStore
+import app.tryst.data.media.PhotoTransforms
 import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.util.UUID
@@ -133,6 +134,17 @@ class PersonPhotoRepository @Inject constructor(
      * `photoMediaId` pointing at this id, if it happens to be a current avatar) all see the new bytes
      * without a schema touch. On failure the live blob is untouched.
      */
+    /**
+     * Turns a stored photo by [degrees] (90, 180 or 270), upright first so an old sideways-tagged photo rotates the way it
+     * looks. Re-encodes in place under the same blob id. Returns false (leaving the photo untouched) if anything fails.
+     */
+    suspend fun rotate(blobId: String, degrees: Int): Boolean = withContext(Dispatchers.IO) {
+        val bytes = runCatching { openBlob(blobId).use { it.readBytes() } }.getOrNull() ?: return@withContext false
+        val upright = PhotoTransforms.decodeUpright(bytes) ?: return@withContext false
+        val rotated = runCatching { PhotoTransforms.rotate(upright, degrees) }.getOrNull() ?: return@withContext false
+        runCatching { replaceBlobBytes(blobId, PhotoTransforms.encodeJpeg(rotated)) }.isSuccess
+    }
+
     suspend fun replaceBlobBytes(blobId: String, newBytes: ByteArray): Unit = withContext(Dispatchers.IO) {
         ByteArrayInputStream(newBytes).use { mediaStore.saveStaged(blobId, it) }
         try {

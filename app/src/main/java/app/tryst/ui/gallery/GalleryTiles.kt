@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -50,11 +51,26 @@ import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.ui.common.DecodedImage
 import app.tryst.ui.common.Format
 import app.tryst.ui.theme.GridTileShape
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 /**
  * A photo tile that participates in multi-select: it dims + shows a check when selected, and routes taps
  * through [interaction]. A small heart marks favourites (GAL-3). Used at any [shape]/aspect by the caller.
  */
+/** What a screen reader says for a photo tile: the date, who is in it, and whether it is a favourite. */
+@Composable
+internal fun photoDescription(photo: GalleryPhoto): String {
+    val locale = LocalConfiguration.current.locales[0]
+    val date = Instant.ofEpochMilli(photo.takenAt).atZone(ZoneId.systemDefault()).toLocalDate()
+        .format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale))
+    val names = photo.partnerNames.joinToString(", ")
+    val base = if (names.isBlank()) stringResource(R.string.cd_photo_on, date) else stringResource(R.string.cd_photo_on_with, date, names)
+    return if (photo.favorite) stringResource(R.string.cd_photo_favourite_suffix, base) else base
+}
+
 @Composable
 fun SelectablePhotoTile(
     photo: GalleryPhoto,
@@ -76,7 +92,7 @@ fun SelectablePhotoTile(
     ) {
         DecodedImage(
             model = photo.id,
-            contentDescription = stringResource(R.string.cd_photo),
+            contentDescription = photoDescription(photo),
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
             load = { onLoad(photo.blobId, reqPx) },

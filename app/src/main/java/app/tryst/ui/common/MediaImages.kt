@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import app.tryst.data.media.ExifOrientation
 import java.io.InputStream
 import kotlin.math.max
 import kotlinx.coroutines.Dispatchers
@@ -48,8 +49,10 @@ object MediaImages {
         val opts = BitmapFactory.Options().apply {
             inSampleSize = sampleSize(bounds.outWidth, bounds.outHeight, reqPx)
         }
-        runCatching { open()?.use { BitmapFactory.decodeStream(it, null, opts) } }
-            .getOrNull()?.asImageBitmap()
+        val decoded = runCatching { open()?.use { BitmapFactory.decodeStream(it, null, opts) } }.getOrNull() ?: return@withContext null
+        // Old photos often store their pixels sideways with an EXIF tag saying how to turn them; honour it.
+        val orientation = runCatching { open()?.use { ExifOrientation.read(it) } }.getOrNull() ?: ExifOrientation.NORMAL
+        ExifOrientation.upright(decoded, orientation).asImageBitmap()
     }
 
     private fun sampleSize(width: Int, height: Int, reqPx: Int): Int {

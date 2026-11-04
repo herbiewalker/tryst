@@ -73,6 +73,7 @@ fun PartnerEditScreen(
 ) {
     val ui = viewModel.uiState
     val photos by viewModel.photos.collectAsStateWithLifecycle()
+    val revisions by viewModel.photoRevisionMap.collectAsStateWithLifecycle()
     val orientations by viewModel.orientations.collectAsStateWithLifecycle()
     var showDiscardConfirm by remember { mutableStateOf(false) }
     val attemptClose = { if (viewModel.hasUnsavedChanges()) showDiscardConfirm = true else onClose() }
@@ -121,6 +122,8 @@ fun PartnerEditScreen(
                     onSetAsAvatar = viewModel::setAsAvatar,
                     onDelete = viewModel::deletePhoto,
                     decode = { blobId -> viewModel.decodePartnerPhoto(blobId, AVATAR_PX) },
+                    onRotate = viewModel::rotatePhoto,
+                    photoRevisions = revisions,
                 )
             }
 

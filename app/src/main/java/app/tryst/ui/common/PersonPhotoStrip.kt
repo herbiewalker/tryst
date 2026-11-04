@@ -72,6 +72,10 @@ fun PersonPhotoStrip(
     onSetAsAvatar: (PersonPhotoEntity) -> Unit,
     onDelete: (PersonPhotoEntity) -> Unit,
     decode: suspend (blobId: String) -> ImageBitmap?,
+    /** Turns a photo by 90 or -90 degrees from its action dialog; the editor does the work and bumps [photoRevisions]. */
+    onRotate: (PersonPhotoEntity, Int) -> Unit = { _, _ -> },
+    /** Per-blob edit counts, so a rotated photo's thumbnail reloads instead of showing the old picture. */
+    photoRevisions: Map<String, Int> = emptyMap(),
     modifier: Modifier = Modifier,
 ) {
     val pickMulti = rememberMultiImagePicker(onLaunch = onSuppressAutoLock) { onAdd(it) }
@@ -132,7 +136,7 @@ fun PersonPhotoStrip(
             val isCurrent = currentAvatarBlobId == photo.mediaBlobId
             Box {
                 DecodedImage(
-                    model = "portrait:${photo.id}",
+                    model = "portrait:${photo.id}#${photoRevisions[photo.mediaBlobId] ?: 0}",
                     contentDescription = stringResource(R.string.cd_partner_photo),
                     modifier = Modifier
                         .size(96.dp)
@@ -172,6 +176,18 @@ fun PersonPhotoStrip(
                         }, modifier = Modifier.fillMaxWidth()) {
                             Text(stringResource(R.string.partner_photo_set_avatar), textAlign = TextAlign.Start)
                         }
+                    }
+                    TextButton(onClick = {
+                        onRotate(photo, -90)
+                        selected = null
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.partner_photo_rotate_left), textAlign = TextAlign.Start)
+                    }
+                    TextButton(onClick = {
+                        onRotate(photo, 90)
+                        selected = null
+                    }, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.partner_photo_rotate_right), textAlign = TextAlign.Start)
                     }
                     TextButton(onClick = {
                         onDelete(photo)

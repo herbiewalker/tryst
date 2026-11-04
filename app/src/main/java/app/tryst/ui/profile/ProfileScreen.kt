@@ -71,6 +71,7 @@ private const val AVATAR_PX = 320
 fun ProfileScreen(onBack: () -> Unit, viewModel: ProfileViewModel = hiltViewModel()) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
     val photos by viewModel.photos.collectAsStateWithLifecycle()
+    val photoRevisions by viewModel.photoRevisionMap.collectAsStateWithLifecycle()
     val orientations by viewModel.orientations.collectAsStateWithLifecycle()
     key(profile) {
         ProfileEditor(
@@ -82,6 +83,8 @@ fun ProfileScreen(onBack: () -> Unit, viewModel: ProfileViewModel = hiltViewMode
             onDeletePhoto = viewModel::deletePhoto,
             onSetAsAvatar = viewModel::setAsAvatar,
             decodePhoto = { id -> viewModel.decodePhoto(id, AVATAR_PX) },
+            onRotatePhoto = viewModel::rotatePhoto,
+            photoRevisions = photoRevisions,
             onBack = onBack,
             onSave = { draft -> viewModel.save(draft, onBack) },
         )
@@ -100,6 +103,8 @@ private fun ProfileEditor(
     onDeletePhoto: (app.tryst.data.db.entity.PersonPhotoEntity) -> Unit,
     onSetAsAvatar: (app.tryst.data.db.entity.PersonPhotoEntity) -> Unit,
     decodePhoto: suspend (String) -> androidx.compose.ui.graphics.ImageBitmap?,
+    onRotatePhoto: (app.tryst.data.db.entity.PersonPhotoEntity, Int) -> Unit,
+    photoRevisions: Map<String, Int>,
     onBack: () -> Unit,
     onSave: (ProfileDraft) -> Unit,
 ) {
@@ -185,6 +190,8 @@ private fun ProfileEditor(
                 onSetAsAvatar = onSetAsAvatar,
                 onDelete = onDeletePhoto,
                 decode = decodePhoto,
+                onRotate = onRotatePhoto,
+                photoRevisions = photoRevisions,
             )
 
             OutlinedTextField(

@@ -406,6 +406,17 @@ fun SettingsScreen(
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
             Text(stringResource(R.string.settings_backup), style = MaterialTheme.typography.titleMedium)
+            val lastBackupAt by backupViewModel.lastBackupAt.collectAsStateWithLifecycle()
+            Text(
+                text = lastBackupAt?.let {
+                    stringResource(
+                        R.string.settings_last_backup,
+                        android.text.format.DateUtils.getRelativeTimeSpanString(it, System.currentTimeMillis(), android.text.format.DateUtils.DAY_IN_MILLIS).toString(),
+                    )
+                } ?: stringResource(R.string.settings_last_backup_never),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             SettingsRow(
                 icon = Icons.Filled.FileUpload,
                 title = stringResource(R.string.settings_export),
@@ -422,11 +433,8 @@ fun SettingsScreen(
                     openBackup.launch(arrayOf("*/*"))
                 },
             )
-            AnimatedVisibility(visible = backupViewModel.status != null) {
-                backupViewModel.status?.let {
-                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                }
-            }
+            backupViewModel.progress?.let { BackupProgressDialog(exporting = backupViewModel.exporting, progress = it) }
+            backupViewModel.outcome?.let { BackupOutcomeDialog(outcome = it, onDismiss = backupViewModel::dismissOutcome) }
             SettingsRow(
                 icon = Icons.Filled.TableChart,
                 title = stringResource(R.string.settings_import_csv),
