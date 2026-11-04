@@ -33,6 +33,17 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.6.5",
+            versionCode = 21,
+            date = "2026-11-03",
+            highlights = listOf(
+                "A reminder to back up your data, and Settings now shows when your last backup was made. Exporting and restoring show progress, a summary of what was saved or brought in, and specific errors when something goes wrong.",
+                "The calendar keeps its place when you open a tryst and come back, and a new tryst starts on the day you tapped.",
+                "Old photos that were stored sideways now draw upright. You can rotate a photo from the partner and profile photo strip.",
+                "Setting a photo as a profile picture no longer copies it or resets its date. The photo viewer stays open when you rotate the screen, and failed actions now say so.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.6.4",
             versionCode = 20,
             date = "2026-11-03",

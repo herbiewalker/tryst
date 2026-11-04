@@ -1,8 +1,11 @@
 # Tryst — Roadmap / Milestones
 
-> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.6.4**
+> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.6.5**
 > (schema v19). Each milestone ended runnable & tested. This file is the milestone *history* (see
 > the dated notes below); forward work lives in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
+
+> **Update (2026-11-03, later):** **v0.6.5** shipped (backup reminder, backup progress and results, calendar memory and
+> day prefill, upright old photos, rotate in the photo strip, avatar fix). No schema change; still v19.
 
 > **Update (2026-11-03):** **v0.6.4** shipped (photo details with GPS, album-photo favourites and captions, viewer
 > back and swipe-up fixes; schema v19). Backup safety work (BKP-2, QOL-9) is next.
