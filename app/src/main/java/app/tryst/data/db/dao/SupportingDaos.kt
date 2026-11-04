@@ -40,6 +40,10 @@ interface MediaDao {
     @Query("SELECT * FROM media WHERE encounterId = :encounterId ORDER BY createdAt")
     suspend fun getForEncounter(encounterId: String): List<MediaEntity>
 
+    /** How many media rows own this blob id (0 = not an encounter photo). Used to avoid deleting a shared avatar blob. */
+    @Query("SELECT COUNT(*) FROM media WHERE id = :id")
+    suspend fun countById(id: String): Int
+
     @Query("UPDATE media SET favorite = :favorite WHERE id = :id")
     suspend fun setFavorite(id: String, favorite: Boolean)
 

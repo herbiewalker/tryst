@@ -23,6 +23,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface PartnerDao {
 
+    /** Clears the avatar pointer when the photo it points at is deleted, so no partner keeps a dangling photo id. */
+    @Query("UPDATE partners SET photoMediaId = NULL WHERE photoMediaId = :blobId")
+    suspend fun clearPhotoRef(blobId: String)
+
     @Upsert
     suspend fun upsert(partner: PartnerEntity)
 

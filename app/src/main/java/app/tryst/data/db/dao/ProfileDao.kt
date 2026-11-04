@@ -22,6 +22,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ProfileDao {
 
+    /** Clears the avatar pointer when the photo it points at is deleted. */
+    @Query("UPDATE profile SET photoMediaId = NULL WHERE photoMediaId = :blobId")
+    suspend fun clearPhotoRef(blobId: String)
+
     @Upsert
     suspend fun upsert(profile: ProfileEntity)
 

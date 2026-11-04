@@ -90,6 +90,7 @@ class EncounterRepository @Inject constructor(
     suspend fun deleteMedia(media: MediaEntity) {
         mediaStore.delete(media.id)
         mediaDao.delete(media)
+        clearAvatarRefs(media.id)
     }
 
     /** Toggles/sets a photo's favourite mark (GAL-3). */
@@ -114,7 +115,15 @@ class EncounterRepository @Inject constructor(
         for (m in media) {
             mediaStore.delete(m.id)
             mediaDao.delete(m)
+            clearAvatarRefs(m.id)
         }
+    }
+
+    /** A partner or profile avatar may point straight at an encounter photo; clear it when that photo is deleted. */
+    private suspend fun clearAvatarRefs(blobId: String) {
+        val db = session.database()
+        db.partnerDao().clearPhotoRef(blobId)
+        db.profileDao().clearPhotoRef(blobId)
     }
 
     /** Moves photos to another tryst — the gallery's bulk reassign (GAL-4). No blob movement; only the row's owner. */

@@ -146,7 +146,7 @@ fun PhotoViewer(
     onToggleFavorite: (GalleryPhoto) -> Unit,
     onSetAvatar: (blobId: String, partnerId: String) -> Unit,
     assignablePeople: List<AssignablePerson>,
-    onAddToPerson: (blobId: String, kind: String, ownerId: String) -> Unit,
+    onAddToPerson: (photo: GalleryPhoto, kind: String, ownerId: String) -> Unit,
     slideshowIntervalSeconds: Int,
     slideshowShuffle: Boolean,
     captionEntryPoint: CaptionEntryPoint,
@@ -394,7 +394,7 @@ fun PhotoViewer(
                             people = assignablePeople,
                             onDismiss = { addToPersonMenu = false },
                             onPick = { p ->
-                                onAddToPerson(current.blobId, p.kind, p.ownerId)
+                                onAddToPerson(current, p.kind, p.ownerId)
                                 addToPersonMenu = false
                             },
                         )
