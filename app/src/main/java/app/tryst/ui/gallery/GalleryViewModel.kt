@@ -17,6 +17,7 @@ import android.graphics.BitmapFactory
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tryst.R
 import app.tryst.core.prefs.GalleryPreferences
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
@@ -34,6 +35,7 @@ import app.tryst.data.gallery.GalleryPhoto
 import app.tryst.data.gallery.GalleryPhotos
 import app.tryst.data.gallery.GallerySection
 import app.tryst.data.gallery.GallerySort
+import app.tryst.data.media.ExifOrientation
 import app.tryst.data.media.FractionalRect
 import app.tryst.data.media.PhotoMeta
 import app.tryst.data.media.PhotoMetadata
@@ -63,9 +65,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
@@ -117,12 +122,17 @@ class GalleryViewModel @Inject constructor(
     profileRepository: ProfileRepository,
     private val generalPreferences: app.tryst.core.prefs.GeneralPreferences,
     private val session: app.tryst.core.session.SessionManager,
+    private val photoRevisions: app.tryst.data.media.PhotoRevisions,
 ) : ViewModel() {
 
     // Delete-with-undo: photos in [pendingDeletes] are hidden at once and only really removed once the
     // undo window passes, so a stray delete is recoverable. Nothing is staged on disk, so a process kill
     // inside the window just leaves the photos where they were.
     private val pendingDeletes = MutableStateFlow<List<GalleryPhoto>>(emptyList())
+
+    // One-off notices for actions that used to fail silently (edit, add to person, set as avatar). The screen shows them.
+    private val noticeFlow = MutableSharedFlow<Int>(extraBufferCapacity = 4)
+    val notices: SharedFlow<Int> = noticeFlow.asSharedFlow()
     private var commitJob: Job? = null
 
     /** How many photos are waiting out the undo window (0 = nothing to undo). */
@@ -573,13 +583,14 @@ class GalleryViewModel @Inject constructor(
      * without touching the encounter's partner list.
      */
     fun addPhotoToPerson(photo: GalleryPhoto, kind: String, ownerId: String) = viewModelScope.launch(Dispatchers.IO) {
-        runCatching {
+        val done = runCatching {
             // The copy keeps the original's date, favourite mark and caption, so it lands in the same spot in the gallery
             // and not at today's date. Its capture details travel with the bytes (EXIF).
             personPhotoRepository.openBlob(photo.blobId).use {
                 personPhotoRepository.add(kind, ownerId, it, now = photo.takenAt, favorite = photo.favorite, caption = photo.caption)
             }
         }
+        noticeFlow.tryEmit(if (done.isSuccess) R.string.gallery_added_to_person else R.string.gallery_add_to_person_failed)
     }
 
     /**
@@ -593,6 +604,7 @@ class GalleryViewModel @Inject constructor(
         val old = partner.photoMediaId
         partnerRepository.upsert(partner.copy(photoMediaId = blobId))
         if (old != null && old != blobId) partnerRepository.deletePhoto(old)
+        noticeFlow.tryEmit(R.string.gallery_avatar_set)
     }
 
     // --- decoding (all blobs open through the same EncryptedMediaStore) ----------------------------
@@ -627,7 +639,9 @@ class GalleryViewModel @Inject constructor(
         val ratio = withContext(Dispatchers.IO) {
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             runCatching { personPhotoRepository.openBlob(blobId).use { BitmapFactory.decodeStream(it, null, bounds) } }
-            if (bounds.outWidth > 0 && bounds.outHeight > 0) bounds.outWidth.toFloat() / bounds.outHeight else 1f
+            val orientation = runCatching { personPhotoRepository.openBlob(blobId).use { ExifOrientation.read(it) } }.getOrDefault(ExifOrientation.NORMAL)
+            val (w, h) = if (ExifOrientation.swapsDimensions(orientation)) bounds.outHeight to bounds.outWidth else bounds.outWidth to bounds.outHeight
+            if (w > 0 && h > 0) w.toFloat() / h else 1f
         }
         aspectCache[blobId] = ratio
         return ratio
@@ -646,11 +660,10 @@ class GalleryViewModel @Inject constructor(
     // re-threaded. The `photoRevision` map bumps per edited blob so caching consumers (DecodedImage
     // keyed by `photoBustKey(blobId)`, the aspect cache below) know to re-load.
 
-    private val _photoRevision = MutableStateFlow<Map<String, Int>>(emptyMap())
-    val photoRevision: StateFlow<Map<String, Int>> = _photoRevision.asStateFlow()
+    val photoRevision: StateFlow<Map<String, Int>> get() = photoRevisions.revisions
 
     /** Cache-busting key for loaders — pairs the blob id with the current edit revision. */
-    fun photoBustKey(blobId: String): String = "$blobId#${_photoRevision.value[blobId] ?: 0}"
+    fun photoBustKey(blobId: String): String = photoRevisions.keyFor(blobId)
 
     /** Rotates a photo by [degrees] (typically ±90) and re-encrypts it in place (EDIT-1). */
     fun rotate(photo: GalleryPhoto, degrees: Int) = viewModelScope.launch(Dispatchers.IO) {
@@ -664,17 +677,27 @@ class GalleryViewModel @Inject constructor(
 
     private suspend fun transformInPlace(photo: GalleryPhoto, transform: (android.graphics.Bitmap) -> android.graphics.Bitmap) {
         val bmp = runCatching {
-            personPhotoRepository.openBlob(photo.blobId).use { PhotoTransforms.decode(it) }
-        }.getOrNull() ?: return
-        val transformed = runCatching { transform(bmp) }.getOrNull() ?: return
+            PhotoTransforms.decodeUpright(personPhotoRepository.openBlob(photo.blobId).use { it.readBytes() })
+        }.getOrNull()
+        val transformed = bmp?.let { runCatching { transform(it) }.getOrNull() }
+        if (transformed == null) {
+            noticeFlow.tryEmit(R.string.gallery_edit_failed)
+            return
+        }
         val jpeg = PhotoTransforms.encodeJpeg(transformed)
-        when (val src = photo.source) {
-            is GalleryPhoto.Source.Encounter -> encounterRepository.replacePhotoBytes(src.media, jpeg)
-            is GalleryPhoto.Source.Person -> personPhotoRepository.replaceBlobBytes(photo.blobId, jpeg)
+        val saved = runCatching {
+            when (val src = photo.source) {
+                is GalleryPhoto.Source.Encounter -> encounterRepository.replacePhotoBytes(src.media, jpeg)
+                is GalleryPhoto.Source.Person -> personPhotoRepository.replaceBlobBytes(photo.blobId, jpeg)
+            }
+        }
+        if (saved.isFailure) {
+            noticeFlow.tryEmit(R.string.gallery_edit_failed)
+            return
         }
         // Invalidate downstream caches keyed by the blob id — decoded ImageBitmap + aspect ratio.
         aspectCache.remove(photo.blobId)
-        _photoRevision.update { current -> current + (photo.blobId to ((current[photo.blobId] ?: 0) + 1)) }
+        photoRevisions.bump(photo.blobId)
     }
 
     private fun encounterBlobsInSelection(): List<String> {

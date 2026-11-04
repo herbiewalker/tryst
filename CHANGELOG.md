@@ -13,7 +13,19 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+### Added
+
+- **A backup reminder (BKP-2).** Settings now shows when your last backup was exported, and the Trysts tab shows a "Back up now / Later" card when you have real data and either have never exported one or the last export is 30 or more days old. "Later" keeps it quiet for a week. It appears only once you have a handful of entries.
+- **Clear progress and results for backups (QOL-9).** Exporting or restoring now shows what stage it is at, with a photo counter, and keeps the screen on until it finishes. When it ends you get a summary: how many trysts, partners and photos were exported or restored, and the file size for an export. Failures say what actually went wrong (wrong password, not a Tryst backup, a newer backup than this app, a damaged file, or a full phone) and that nothing on your phone was changed.
+- **The calendar keeps your place (QOL-8).** Opening a tryst and coming back no longer snaps the calendar to this month or flips you to the list; it stays on the month, week and day you were on. It returns to today after a few minutes away. Tapping a day and then the add button now starts the new tryst on that day.
+- **Rotate from the photo strip.** In the partner and profile editors, tap a photo in the strip and you can now rotate it left or right, as you already could in the full-screen viewer. Its thumbnail refreshes everywhere, including the Photos tab.
+
 ### Fixed
+
+- **Old photos that were stored sideways now draw upright.** Many older phone and scanner photos carry an orientation tag that Tryst used to ignore, so they showed on their side. They now show the right way up in the grid, the viewer, the Photos mosaic and the details sheet, and rotate and crop work on the picture you actually see.
+- **The photo viewer no longer closes when you rotate the screen.** It stays on the same photo.
+- **Failed actions now tell you.** If a rotate or crop fails, a photo can't be added to someone's album, or a photo can't be read when you save a tryst, a short message says so instead of nothing happening.
+- **Photo tiles read better to a screen reader.** Each says the date, who is in it, and whether it is a favourite, not just "Photo".
 
 - **Setting a photo as a profile picture no longer copies it or resets its date.** The avatar now points at the existing photo, so the photo stays in its spot in the gallery with its date, caption, favourite mark and details, and no duplicate appears at today's date. Replacing or deleting an avatar can no longer delete a photo that still lives in an album or on a tryst, and deleting a photo clears any avatar that pointed at it. Adding a photo to another person's album also keeps the original's date, favourite mark and caption.
 

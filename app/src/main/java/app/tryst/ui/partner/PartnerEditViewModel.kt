@@ -79,8 +79,23 @@ class PartnerEditViewModel @Inject constructor(
     private val session: SessionManager,
     private val partnerRepository: PartnerRepository,
     private val personPhotoRepository: PersonPhotoRepository,
+    private val photoRevisions: app.tryst.data.media.PhotoRevisions,
     orientationRepository: OrientationRepository,
 ) : ViewModel() {
+
+    /** Edit counts per photo, so a rotated thumbnail reloads (shared with the Photos tab). */
+    val photoRevisionMap: kotlinx.coroutines.flow.StateFlow<Map<String, Int>> get() = photoRevisions.revisions
+
+    /** Turns an album photo by [degrees] and refreshes every thumbnail of it; says so if it could not. */
+    fun rotatePhoto(photo: app.tryst.data.db.entity.PersonPhotoEntity, degrees: Int) {
+        viewModelScope.launch {
+            if (personPhotoRepository.rotate(photo.mediaBlobId, degrees)) {
+                photoRevisions.bump(photo.mediaBlobId)
+            } else {
+                android.widget.Toast.makeText(context, app.tryst.R.string.gallery_edit_failed, android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     /** The user's orientation labels, as `id → label` pairs for the chip row. */
     val orientations: StateFlow<List<Pair<String, String>>> =

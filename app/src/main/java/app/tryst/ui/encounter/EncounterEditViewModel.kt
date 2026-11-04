@@ -21,6 +21,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tryst.R
 import app.tryst.core.prefs.GalleryPreferences
 import app.tryst.core.session.SessionManager
 import app.tryst.data.db.entity.ActEntity
@@ -186,6 +187,17 @@ class EncounterEditViewModel @Inject constructor(
 
     /** True once the user has changed anything not yet saved — drives the "Discard changes?" guard. */
     fun hasUnsavedChanges(): Boolean = uiState != baseline
+
+    private var prefilled = false
+
+    /** A new tryst begun from a calendar day starts on that day (QOL-8). No-op when editing or when already applied. */
+    fun prefillNewDate(iso: String?) {
+        if (prefilled || iso == null || loadedId != null) return
+        val day = runCatching { java.time.LocalDate.parse(iso) }.getOrNull() ?: return
+        prefilled = true
+        uiState = uiState.copy(startAt = app.tryst.ui.history.NewTrystStart.forDay(day, System.currentTimeMillis()))
+        baseline = uiState // choosing the day is not an edit, so leaving straight away should not ask to discard
+    }
 
     @Suppress("CyclomaticComplexMethod") // straight-line field mapping from the loaded entity.
     fun load(encounterId: String?) {
@@ -412,14 +424,26 @@ class EncounterEditViewModel @Inject constructor(
             encounters.save(entity, partnerIds = s.selectedPartnerIds.toList())
             // Encrypt + attach newly-picked photos and remove any the user dropped (after the
             // encounter row exists, so the media FK is satisfied).
+            var failedPhotos = 0
             withContext(Dispatchers.IO) {
                 s.pendingPhotos.forEach { photo ->
-                    PhotoSource.open(context, photo.uri)?.use {
-                        encounters.attachMedia(id, photo.mimeType, it, now, originalName = PhotoSource.displayName(context, photo.uri))
-                    }
+                    // A photo that cannot be read must not vanish silently: count it and tell the user after saving.
+                    val attached = runCatching {
+                        PhotoSource.open(context, photo.uri)?.use {
+                            encounters.attachMedia(id, photo.mimeType, it, now, originalName = PhotoSource.displayName(context, photo.uri))
+                        }
+                    }.getOrNull()
+                    if (attached == null) failedPhotos++
                 }
                 removedExisting.forEach { encounters.deleteMedia(it) }
                 s.pendingPhotos.forEach { it.tempFile?.delete() } // remove plaintext camera temps
+            }
+            if (failedPhotos > 0) {
+                android.widget.Toast.makeText(
+                    context,
+                    context.resources.getQuantityString(R.plurals.encounter_photos_failed, failedPhotos, failedPhotos),
+                    android.widget.Toast.LENGTH_LONG,
+                ).show()
             }
             onDone()
         }

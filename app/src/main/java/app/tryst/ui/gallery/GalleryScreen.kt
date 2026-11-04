@@ -65,9 +65,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,6 +80,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -133,6 +134,10 @@ fun GalleryScreen(
     val ui by viewModel.uiState.collectAsStateWithLifecycle()
     val showGestureTip by viewModel.showGestureTip.collectAsStateWithLifecycle()
     val pendingDelete by viewModel.pendingDeleteCount.collectAsStateWithLifecycle()
+    val noticeContext = LocalContext.current
+    LaunchedEffect(Unit) {
+        viewModel.notices.collect { android.widget.Toast.makeText(noticeContext, it, android.widget.Toast.LENGTH_SHORT).show() }
+    }
     val query by viewModel.query.collectAsStateWithLifecycle()
     val dateScope by viewModel.dateScope.collectAsStateWithLifecycle()
     val rating by viewModel.rating.collectAsStateWithLifecycle()
@@ -167,7 +172,7 @@ fun GalleryScreen(
     var showFilters by remember { mutableStateOf(false) }
     var showRangePicker by remember { mutableStateOf(false) }
     var showReassign by remember { mutableStateOf(false) }
-    var viewerIndex by remember { mutableIntStateOf(-1) }
+    var viewerIndex by rememberSaveable { mutableStateOf(-1) }
     var revealed by remember { mutableStateOf(viewModel.revealedRecently()) }
     var authed by remember { mutableStateOf(viewModel.authedRecently()) }
     DisposableEffect(Unit) {
@@ -426,6 +431,7 @@ fun GalleryScreen(
         PhotoViewer(
             photos = ui.photos,
             initialIndex = viewerIndex,
+            onPageChange = { viewerIndex = it },
             onClose = { viewerIndex = -1 },
             onOpenEncounter = { id ->
                 viewerIndex = -1

@@ -55,8 +55,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -74,6 +74,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
 import app.tryst.core.prefs.WeekStart
@@ -97,9 +100,11 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun HistoryScreen(
-    onAddEncounter: () -> Unit,
+    /** [LocalDate] is the calendar day the user had selected, so a new tryst starts on it (QOL-8); null otherwise. */
+    onAddEncounter: (LocalDate?) -> Unit,
     onOpenEncounter: (String) -> Unit,
     onOpenSearch: () -> Unit,
+    onOpenBackup: () -> Unit,
     sharedScope: SharedTransitionScope,
     animatedScope: AnimatedVisibilityScope,
     viewModel: HistoryViewModel = hiltViewModel(),
@@ -107,10 +112,28 @@ fun HistoryScreen(
     val encounters by viewModel.encounters.collectAsStateWithLifecycle()
     val weekStart by viewModel.weekStart.collectAsStateWithLifecycle()
     val defaultToCalendar by viewModel.defaultToCalendar.collectAsStateWithLifecycle()
+    val backupNudge by viewModel.backupNudge.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    // The calendar remembers where it was, but starts on today again after a few minutes away (QOL-8).
+    DisposableEffect(lifecycleOwner) {
+        viewModel.onCalendarEntered()
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_STOP -> viewModel.onCalendarLeft()
+                Lifecycle.Event.ON_START -> viewModel.onCalendarEntered()
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            viewModel.onCalendarLeft()
+        }
+    }
     val haptics = rememberHaptics()
     // Initial view follows the user's "default to calendar" setting; keyed on it so changing the
     // setting (then returning here) re-applies the default. The in-session toggle still overrides it.
-    var calendarMode by remember(defaultToCalendar) { mutableStateOf(defaultToCalendar) }
+    val calendarMode = viewModel.calendarModeChoice ?: defaultToCalendar
     // Already sorted by startAt DESC; groupBy keeps that order, one section per day.
     val grouped = remember(encounters) {
         encounters.groupBy { Format.relativeDay(it.encounter.startAt) }
@@ -129,7 +152,7 @@ fun HistoryScreen(
                     }
                     TooltipIconButton(label = stringResource(if (calendarMode) R.string.cd_view_list else R.string.cd_view_calendar), onClick = {
                         haptics.tick()
-                        calendarMode = !calendarMode
+                        viewModel.setCalendarMode(!calendarMode)
                     }) {
                         // Cross-fade the icon so list/calendar toggle reads as one control changing state.
                         Crossfade(targetState = calendarMode, animationSpec = tween(180), label = "viewToggleIcon") { cal ->
@@ -146,7 +169,7 @@ fun HistoryScreen(
         floatingActionButton = {
             with(sharedScope) {
                 FloatingActionButton(
-                    onClick = onAddEncounter,
+                    onClick = { onAddEncounter(if (calendarMode) viewModel.calendarNav.selectedDay else null) },
                     // The "+" morphs into the new-encounter editor (and back) as a container transform.
                     modifier = Modifier.sharedBounds(
                         rememberSharedContentState(encounterSharedKey(null)),
@@ -164,34 +187,39 @@ fun HistoryScreen(
             calendarMode -> "calendar"
             else -> "list"
         }
-        Crossfade(targetState = mode, animationSpec = tween(200), label = "historyMode") { state ->
-            when (state) {
-                "empty" -> EmptyState(Modifier.padding(padding))
-                "calendar" -> CalendarView(
-                    modifier = Modifier.padding(padding),
-                    items = encounters,
-                    weekStart = weekStart,
-                    onLoadThumb = { viewModel.decode(it, CARD_THUMB_PX) },
-                    onOpenEncounter = onOpenEncounter,
-                    sharedScope = sharedScope,
-                    animatedScope = animatedScope,
-                )
-                else -> LazyColumn(
-                    modifier = Modifier.fillMaxSize().padding(padding),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 88.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    grouped.forEach { (label, items) ->
-                        item(key = label) { DateHeader(Modifier.animateItem(), label) }
-                        items(items, key = { it.encounter.id }) { item ->
-                            EncounterCard(
-                                item,
-                                onLoadThumb = { viewModel.decode(it, CARD_THUMB_PX) },
-                                onClick = { onOpenEncounter(item.encounter.id) },
-                                sharedScope = sharedScope,
-                                animatedScope = animatedScope,
-                                modifier = Modifier.animateItem(),
-                            )
+        Column(Modifier.padding(padding)) {
+            BackupReminderCard(nudge = backupNudge, onBackUp = onOpenBackup, onLater = viewModel::snoozeBackupReminder)
+            Crossfade(targetState = mode, animationSpec = tween(200), label = "historyMode", modifier = Modifier.weight(1f)) { state ->
+                when (state) {
+                    "empty" -> EmptyState(Modifier)
+                    "calendar" -> CalendarView(
+                        modifier = Modifier,
+                        items = encounters,
+                        nav = viewModel.calendarNav,
+                        onNavChange = viewModel::updateCalendar,
+                        weekStart = weekStart,
+                        onLoadThumb = { viewModel.decode(it, CARD_THUMB_PX) },
+                        onOpenEncounter = onOpenEncounter,
+                        sharedScope = sharedScope,
+                        animatedScope = animatedScope,
+                    )
+                    else -> LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 88.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        grouped.forEach { (label, items) ->
+                            item(key = label) { DateHeader(Modifier.animateItem(), label) }
+                            items(items, key = { it.encounter.id }) { item ->
+                                EncounterCard(
+                                    item,
+                                    onLoadThumb = { viewModel.decode(it, CARD_THUMB_PX) },
+                                    onClick = { onOpenEncounter(item.encounter.id) },
+                                    sharedScope = sharedScope,
+                                    animatedScope = animatedScope,
+                                    modifier = Modifier.animateItem(),
+                                )
+                            }
                         }
                     }
                 }
@@ -207,6 +235,8 @@ private val selectedDayFormatter = DateTimeFormatter.ofPattern("EEEE, MMM d")
 private fun CalendarView(
     modifier: Modifier = Modifier,
     items: List<EncounterWithDetails>,
+    nav: CalendarNav,
+    onNavChange: (CalendarNav) -> Unit,
     weekStart: WeekStart,
     onLoadThumb: suspend (MediaEntity) -> ImageBitmap?,
     onOpenEncounter: (String) -> Unit,
@@ -225,19 +255,22 @@ private fun CalendarView(
     // Encounter count per day — drives the heatmap fill intensity.
     val dayCounts = remember(byDay) { byDay.mapValues { it.value.size } }
 
-    var view by remember { mutableStateOf(CalView.MONTH) }
-    var month by remember { mutableStateOf(YearMonth.now()) }
-    var weekAnchor by remember { mutableStateOf(LocalDate.now()) }
-    var selectedDay by remember { mutableStateOf<LocalDate?>(null) }
+    // The month, week and chosen day live in the ViewModel (see [CalendarNav]) so they survive opening a tryst.
+    val view = nav.view
+    val month = nav.month
+    val weekAnchor = nav.weekAnchor
+    val selectedDay = nav.selectedDay
     val dayItems = selectedDay?.let { byDay[it] }.orEmpty()
-    val onSelect: (LocalDate) -> Unit = { selectedDay = if (it == selectedDay) null else it }
+    val onSelect: (LocalDate) -> Unit = { onNavChange(nav.copy(selectedDay = if (it == selectedDay) null else it)) }
     val goPrev = {
-        if (view == CalView.MONTH) month = month.minusMonths(1) else weekAnchor = weekAnchor.minusWeeks(1)
-        selectedDay = null
+        onNavChange(
+            if (view == CalView.MONTH) nav.copy(month = month.minusMonths(1), selectedDay = null) else nav.copy(weekAnchor = weekAnchor.minusWeeks(1), selectedDay = null),
+        )
     }
     val goNext = {
-        if (view == CalView.MONTH) month = month.plusMonths(1) else weekAnchor = weekAnchor.plusWeeks(1)
-        selectedDay = null
+        onNavChange(
+            if (view == CalView.MONTH) nav.copy(month = month.plusMonths(1), selectedDay = null) else nav.copy(weekAnchor = weekAnchor.plusWeeks(1), selectedDay = null),
+        )
     }
 
     Column(modifier = modifier.fillMaxSize().padding(horizontal = 16.dp)) {
@@ -250,8 +283,7 @@ private fun CalendarView(
             onPrev = goPrev,
             onNext = goNext,
             onSelectView = {
-                view = it
-                if (it == CalView.WEEK) weekAnchor = selectedDay ?: LocalDate.now()
+                onNavChange(nav.copy(view = it, weekAnchor = if (it == CalView.WEEK) selectedDay ?: LocalDate.now() else weekAnchor))
             },
         )
         Spacer(Modifier.height(8.dp))
@@ -299,8 +331,6 @@ private fun CalendarView(
         }
     }
 }
-
-private enum class CalView { MONTH, WEEK }
 
 /** First day of the week containing [date], honouring the user's week-start preference. */
 private fun startOfWeek(date: LocalDate, weekStart: WeekStart): LocalDate {

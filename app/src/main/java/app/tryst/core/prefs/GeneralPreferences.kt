@@ -90,6 +90,24 @@ class GeneralPreferences @Inject constructor(
         prefs.edit().putLong(KEY_LAST_SEEN_VERSION, code).apply()
     }
 
+    /** When the last encrypted backup was exported from this install (BKP-2); null if never. Rides the settings backup. */
+    private val _lastBackupAt = MutableStateFlow(prefs.getLong(KEY_LAST_BACKUP_AT, 0L).takeIf { it > 0L })
+    val lastBackupAt: StateFlow<Long?> = _lastBackupAt.asStateFlow()
+
+    fun setLastBackupAt(at: Long?) {
+        if (at == null) prefs.edit().remove(KEY_LAST_BACKUP_AT).apply() else prefs.edit().putLong(KEY_LAST_BACKUP_AT, at).apply()
+        _lastBackupAt.value = at
+    }
+
+    /** The backup reminder stays quiet until this time (BKP-2 "Later"). */
+    private val _backupSnoozedUntil = MutableStateFlow(prefs.getLong(KEY_BACKUP_SNOOZED_UNTIL, 0L))
+    val backupSnoozedUntil: StateFlow<Long> = _backupSnoozedUntil.asStateFlow()
+
+    fun snoozeBackupReminder(until: Long) {
+        prefs.edit().putLong(KEY_BACKUP_SNOOZED_UNTIL, until).apply()
+        _backupSnoozedUntil.value = until
+    }
+
     /** Coach-mark ids the user has dismissed (QOL-6); each tip shows once. */
     private val _seenTips = MutableStateFlow(prefs.getStringSet(KEY_SEEN_TIPS, emptySet()).orEmpty().toSet())
     val seenTips: StateFlow<Set<String>> = _seenTips.asStateFlow()
@@ -111,6 +129,8 @@ class GeneralPreferences @Inject constructor(
         const val KEY_DEFAULT_CALENDAR = "default_to_calendar"
         const val KEY_LAST_SEEN_VERSION = "last_seen_version_code"
         const val KEY_SEEN_TIPS = "seen_tips"
+        const val KEY_LAST_BACKUP_AT = "last_backup_at"
+        const val KEY_BACKUP_SNOOZED_UNTIL = "backup_snoozed_until"
     }
 }
 

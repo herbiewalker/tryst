@@ -106,8 +106,13 @@ private object Routes {
     const val WHATS_NEW = "whats-new"
     const val PROFILE = "profile"
     const val ENCOUNTER_NEW = "encounter/new"
+
+    /** A new tryst that starts on a given day (QOL-8): `encounter/new/2026-06-12`. */
+    const val ENCOUNTER_NEW_ON = "encounter/new/{date}"
     const val ENCOUNTER_EDIT = "encounter/{encounterId}"
     fun encounterEdit(id: String) = "encounter/$id"
+
+    fun encounterNewOn(date: java.time.LocalDate) = "encounter/new/$date"
     const val PARTNER_EDIT = "partner/{partnerId}"
     fun partnerEdit(id: String?) = "partner/${id ?: "new"}"
 }
@@ -218,14 +223,16 @@ fun TrystApp() {
                         if (width == WidthClass.EXPANDED) {
                             HistoryTwoPane(
                                 onOpenSearch = { navController.navigate(Routes.SEARCH) },
+                                onOpenBackup = { navController.navigateTop(Routes.SETTINGS) },
                                 sharedScope = this@SharedTransitionLayout,
                                 animatedScope = this,
                             )
                         } else {
                             HistoryScreen(
-                                onAddEncounter = { navController.navigate(Routes.ENCOUNTER_NEW) },
+                                onAddEncounter = { date -> navController.navigate(if (date == null) Routes.ENCOUNTER_NEW else Routes.encounterNewOn(date)) },
                                 onOpenEncounter = { id -> navController.navigate(Routes.encounterEdit(id)) },
                                 onOpenSearch = { navController.navigate(Routes.SEARCH) },
+                                onOpenBackup = { navController.navigateTop(Routes.SETTINGS) },
                                 sharedScope = this@SharedTransitionLayout,
                                 animatedScope = this,
                             )
@@ -312,6 +319,15 @@ fun TrystApp() {
                             animatedScope = this,
                         )
                     }
+                    composable(Routes.ENCOUNTER_NEW_ON) { entry ->
+                        EncounterEditScreen(
+                            encounterId = null,
+                            onClose = { navController.popBackStack() },
+                            sharedScope = this@SharedTransitionLayout,
+                            animatedScope = this,
+                            prefillDate = entry.arguments?.getString("date"),
+                        )
+                    }
                     composable(Routes.ENCOUNTER_EDIT) { entry ->
                         EncounterEditScreen(
                             encounterId = entry.arguments?.getString("encounterId"),
@@ -339,18 +355,21 @@ fun TrystApp() {
 @Composable
 private fun HistoryTwoPane(
     onOpenSearch: () -> Unit,
+    onOpenBackup: () -> Unit,
     sharedScope: SharedTransitionScope,
     animatedScope: AnimatedVisibilityScope,
 ) {
     // detailId == null && !detailNew → nothing selected (placeholder). detailNew → blank "new" form.
     var detailId by rememberSaveable { mutableStateOf<String?>(null) }
     var detailNew by rememberSaveable { mutableStateOf(false) }
+    var detailNewDate by rememberSaveable { mutableStateOf<String?>(null) }
 
     Row(Modifier.fillMaxSize()) {
         Box(Modifier.weight(1f).fillMaxHeight()) {
             HistoryScreen(
-                onAddEncounter = {
+                onAddEncounter = { date ->
                     detailNew = true
+                    detailNewDate = date?.toString()
                     detailId = null
                 },
                 onOpenEncounter = {
@@ -358,6 +377,7 @@ private fun HistoryTwoPane(
                     detailNew = false
                 },
                 onOpenSearch = onOpenSearch,
+                onOpenBackup = onOpenBackup,
                 sharedScope = sharedScope,
                 animatedScope = animatedScope,
             )
@@ -375,6 +395,7 @@ private fun HistoryTwoPane(
                         },
                         sharedScope = null,
                         animatedScope = null,
+                        prefillDate = detailNewDate,
                     )
                 }
             } else {

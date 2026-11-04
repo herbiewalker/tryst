@@ -27,6 +27,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.ByteBuffer
+import java.security.GeneralSecurityException
 import java.security.SecureRandom
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
@@ -60,19 +61,24 @@ class BackupManager @Inject constructor(
         password: String,
         out: OutputStream,
         includeSettings: Boolean = true,
-    ): Unit = withContext(Dispatchers.IO) {
+        onProgress: (BackupProgress) -> Unit = {},
+    ): ExportResult = withContext(Dispatchers.IO) {
+        onProgress(BackupProgress(BackupStage.PREPARING))
+        val counted = CountingOutputStream(out)
         val db = session.database().openHelper.writableDatabase
         val salt = ByteArray(SALT_BYTES).also { SecureRandom().nextBytes(it) }
         val iterations = Pbkdf2.DEFAULT_ITERATIONS
 
-        out.write(MAGIC)
-        out.write(CURRENT_FORMAT_VERSION)
-        out.write(salt)
-        out.write(ByteBuffer.allocate(4).putInt(iterations).array())
-        out.flush()
+        counted.write(MAGIC)
+        counted.write(CURRENT_FORMAT_VERSION)
+        counted.write(salt)
+        counted.write(ByteBuffer.allocate(4).putInt(iterations).array())
+        counted.flush()
 
+        var photoCount = 0
         val key = Pbkdf2.derive(password, salt, iterations)
-        ZipOutputStream(BackupCrypto.encryptingStream(key, out)).use { zip ->
+        ZipOutputStream(BackupCrypto.encryptingStream(key, counted)).use { zip ->
+            onProgress(BackupProgress(BackupStage.DATABASE))
             zip.putNextEntry(ZipEntry("data.json"))
             zip.write(dumpDatabase(db).toString().toByteArray(Charsets.UTF_8))
             zip.closeEntry()
@@ -100,13 +106,18 @@ class BackupManager @Inject constructor(
             db.query("SELECT mediaBlobId FROM person_photo").use { c ->
                 while (c.moveToNext()) blobIds.add(c.getString(0))
             }
+            photoCount = blobIds.size
+            var done = 0
             for (id in blobIds) {
                 if (!mediaStore.fileFor(id).exists()) continue // skip a dangling reference rather than fail
                 zip.putNextEntry(ZipEntry("media/$id"))
                 mediaStore.open(id).use { it.copyTo(zip) } // decrypt → re-encrypted by the container
                 zip.closeEntry()
+                onProgress(BackupProgress(BackupStage.PHOTOS, ++done, blobIds.size))
             }
+            onProgress(BackupProgress(BackupStage.FINISHING))
         }
+        ExportResult(counted.count, countRows(db, "encounters"), countRows(db, "partners"), photoCount)
     }
 
     /**
@@ -115,25 +126,61 @@ class BackupManager @Inject constructor(
      * single DB transaction so a failure rolls both halves back. When false (advanced), the previous
      * `INSERT OR REPLACE` merge semantics apply (with the known cascade side-effect on cross-refs).
      */
-    @Suppress("CyclomaticComplexMethod", "NestedBlockDepth", "LongMethod") // Multi-phase restore is clearer inline than split.
     suspend fun import(
         password: String,
         input: InputStream,
         wipeFirst: Boolean = false,
-    ): Unit = withContext(Dispatchers.IO) {
+        onProgress: (BackupProgress) -> Unit = {},
+    ): ImportResult {
+        val tracker = ReadTracker()
+        try {
+            return importInternal(password, input, wipeFirst, onProgress, tracker)
+        } catch (e: BackupException) {
+            throw e
+        } catch (e: Exception) {
+            throw classify(e, tracker)
+        }
+    }
+
+    /** Turns whatever went wrong into a [BackupException] the screen can explain. */
+    private fun classify(e: Exception, tracker: ReadTracker): BackupException = when {
+        e.message?.contains("ENOSPC", ignoreCase = true) == true || e.message?.contains("No space left", ignoreCase = true) == true ->
+            BackupException(BackupError.DISK_FULL, e)
+        // Nothing decrypted yet: the key was wrong (or the file is broken from the first byte).
+        (e is GeneralSecurityException || e is IOException) && tracker.entries == 0 -> BackupException(BackupError.WRONG_PASSWORD, e)
+        e is GeneralSecurityException || e is IOException -> BackupException(BackupError.DAMAGED, e)
+        else -> BackupException(BackupError.OTHER, e)
+    }
+
+    /** How many zip entries have been read, so a failure can be told apart: wrong password (none) vs damaged file (some). */
+    private class ReadTracker {
+        var entries = 0
+    }
+
+    @Suppress("CyclomaticComplexMethod", "NestedBlockDepth", "LongMethod") // Multi-phase restore is clearer inline than split.
+    private suspend fun importInternal(
+        password: String,
+        input: InputStream,
+        wipeFirst: Boolean,
+        onProgress: (BackupProgress) -> Unit,
+        tracker: ReadTracker,
+    ): ImportResult = withContext(Dispatchers.IO) {
+        onProgress(BackupProgress(BackupStage.PREPARING))
         val magic = ByteArray(MAGIC.size).also { readFully(input, it) }
-        require(magic.contentEquals(MAGIC)) { "Not a Tryst backup file" }
+        if (!magic.contentEquals(MAGIC)) throw BackupException(BackupError.NOT_A_BACKUP)
         val formatVersion = input.read()
-        require(formatVersion in MIN_FORMAT_VERSION..MAX_FORMAT_VERSION) { "Unsupported backup version" }
+        if (formatVersion > MAX_FORMAT_VERSION) throw BackupException(BackupError.NEWER_VERSION)
+        if (formatVersion < MIN_FORMAT_VERSION) throw BackupException(BackupError.NOT_A_BACKUP)
         val salt = ByteArray(SALT_BYTES).also { readFully(input, it) }
         val iterations = ByteBuffer.wrap(ByteArray(4).also { readFully(input, it) }).int
         // The iteration count comes from the (untrusted) file header. Bound it: a crafted value like
         // Int.MAX_VALUE would otherwise hang the app for minutes deriving the key (DoS).
-        require(iterations in MIN_ITERATIONS..MAX_ITERATIONS) { "Unsupported backup version" }
+        if (iterations !in MIN_ITERATIONS..MAX_ITERATIONS) throw BackupException(BackupError.NOT_A_BACKUP)
 
         val key = Pbkdf2.derive(password, salt, iterations)
         val db = session.database().openHelper.writableDatabase
         val stagedIds = mutableListOf<String>()
+        var result: ImportResult? = null
         try {
             // Phase 1: drain the ZIP. Read data.json into memory; write every media blob to its
             // STAGING path (`<id>.enc.staging`) — never touching the live `<id>.enc` until after the
@@ -141,24 +188,33 @@ class BackupManager @Inject constructor(
             // untouched (Bundle-C N5).
             var dataJson: JSONObject? = null
             var settingsJson: JSONObject? = null
+            var expectedPhotos: Int? = null
             ZipInputStream(BackupCrypto.decryptingStream(key, input)).use { zip ->
                 var entry: ZipEntry? = zip.nextEntry
                 while (entry != null) {
                     val name = entry.name
                     when {
-                        name == "data.json" -> dataJson = JSONObject(zip.readBytes().toString(Charsets.UTF_8))
+                        name == "data.json" -> {
+                            val json = JSONObject(zip.readBytes().toString(Charsets.UTF_8))
+                            dataJson = json
+                            expectedPhotos = expectedPhotoCount(json)
+                            onProgress(BackupProgress(BackupStage.DATABASE))
+                        }
                         name == "settings.json" -> settingsJson = JSONObject(zip.readBytes().toString(Charsets.UTF_8))
                         name.startsWith("media/") -> {
                             val id = name.removePrefix("media/")
                             mediaStore.saveStaged(id, zip)
                             stagedIds += id
+                            onProgress(BackupProgress(BackupStage.PHOTOS, stagedIds.size, expectedPhotos))
                         }
                     }
+                    tracker.entries++
                     zip.closeEntry()
                     entry = zip.nextEntry
                 }
             }
             val root = dataJson ?: throw IOException("Backup missing data.json")
+            onProgress(BackupProgress(BackupStage.FINISHING))
 
             // Phase 2: DB transaction — wipe (if requested) + restore. Both halves commit as one
             // atomic unit, so a mid-restore failure rolls the wipe back and leaves the user's data
@@ -194,12 +250,26 @@ class BackupManager @Inject constructor(
             // catalog trim can reintroduce since-removed built-in act/kink ids. Adopt them into the
             // custom tables exactly like MIGRATION_9_10 does; no-op for current backups (idempotent).
             CatalogAdoption.adoptUnknownIds(db)
+            result = ImportResult(
+                trysts = tableRows(root, "encounters"),
+                partners = tableRows(root, "partners"),
+                photos = stagedIds.size,
+                withSettings = settingsJson != null,
+            )
         } finally {
             // Any staging file left over (loop-fail before Phase 3, or Phase-3 rename failure) is
             // just accumulated junk if we don't clean it. Best-effort sweep — doesn't touch live blobs.
             mediaStore.clearAllStaged()
         }
+        result ?: throw BackupException(BackupError.OTHER)
     }
+
+    private fun tableRows(root: JSONObject, table: String): Int = root.optJSONObject("tables")?.optJSONArray(table)?.length() ?: 0
+
+    /** Roughly how many photo blobs a backup holds, from its row counts, so import can show a real progress bar. */
+    private fun expectedPhotoCount(root: JSONObject): Int = tableRows(root, "media") + tableRows(root, "person_photo")
+
+    private fun countRows(db: androidx.sqlite.db.SupportSQLiteDatabase, table: String): Int = db.query("SELECT COUNT(*) FROM $table").use { if (it.moveToFirst()) it.getInt(0) else 0 }
 
     @Suppress("NestedBlockDepth")
     private fun dumpDatabase(db: androidx.sqlite.db.SupportSQLiteDatabase): JSONObject {
@@ -359,6 +429,26 @@ class BackupManager @Inject constructor(
             "encounter_partner", "encounter_position", "encounter_tag",
         )
     }
+}
+
+/** Counts the bytes that pass through, so an export can report how big the file it wrote is. */
+private class CountingOutputStream(private val inner: OutputStream) : OutputStream() {
+    var count = 0L
+        private set
+
+    override fun write(b: Int) {
+        inner.write(b)
+        count++
+    }
+
+    override fun write(b: ByteArray, off: Int, len: Int) {
+        inner.write(b, off, len)
+        count += len
+    }
+
+    override fun flush() = inner.flush()
+
+    override fun close() = inner.close()
 }
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

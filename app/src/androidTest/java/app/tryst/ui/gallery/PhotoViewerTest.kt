@@ -69,6 +69,7 @@ class PhotoViewerTest {
     private var closed = false
     private var metaLoads = 0
     private val deleted = mutableListOf<String>()
+    private var currentPage = -1
 
     private fun show() {
         compose.setContent {
@@ -93,6 +94,7 @@ class PhotoViewerTest {
                 bustKey = { it },
                 onRotate = { _, _ -> },
                 onCrop = { _, _ -> },
+                onPageChange = { currentPage = it },
                 onDelete = { photo ->
                     deleted += photo.blobId
                     photos.value = photos.value.filterNot { it.blobId == photo.blobId }
@@ -175,6 +177,16 @@ class PhotoViewerTest {
         compose.onRoot().performTouchInput { swipeLeft() }
         compose.waitForIdle()
         counter("2 / 3").assertExists()
+    }
+
+    @Test
+    fun reportsThePageItIsOnSoARotationCanRestoreIt() {
+        show()
+        compose.waitForIdle()
+        assertEquals(0, currentPage)
+        compose.onRoot().performTouchInput { swipeLeft() }
+        compose.waitForIdle()
+        assertEquals(1, currentPage)
     }
 
     // --- dismiss --------------------------------------------------------------------------

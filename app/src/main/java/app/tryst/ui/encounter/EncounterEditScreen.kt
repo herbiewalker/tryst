@@ -121,9 +121,14 @@ fun EncounterEditScreen(
     // the editor lives in a side pane with no morph, so both scopes are null and sharedBounds is skipped.
     sharedScope: SharedTransitionScope?,
     animatedScope: AnimatedVisibilityScope?,
+    /** ISO date a new tryst should start on, when begun from a calendar day (QOL-8); ignored when editing. */
+    prefillDate: String? = null,
     viewModel: EncounterEditViewModel = hiltViewModel(),
 ) {
-    LaunchedEffect(encounterId) { viewModel.load(encounterId) }
+    LaunchedEffect(encounterId) {
+        viewModel.load(encounterId)
+        viewModel.prefillNewDate(prefillDate)
+    }
 
     val haptics = rememberHaptics()
     val ui = viewModel.uiState

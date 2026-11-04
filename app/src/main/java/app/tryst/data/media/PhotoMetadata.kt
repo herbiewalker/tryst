@@ -102,7 +102,10 @@ object PhotoMetadata {
         val altitude = exif?.getAltitude(Double.NaN)?.takeIf { !it.isNaN() }
         val orientation = exif?.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED)
             ?.takeIf { it != ExifInterface.ORIENTATION_UNDEFINED }
-        val (width, height) = readDimensions(openStream)
+        // Dimensions as the photo is drawn: a sideways-stored photo (EXIF 5 to 8) is taller than its stored pixel grid says.
+        val (rawWidth, rawHeight) = readDimensions(openStream)
+        val swapped = orientation != null && ExifOrientation.swapsDimensions(orientation)
+        val (width, height) = if (swapped) rawHeight to rawWidth else rawWidth to rawHeight
         return PhotoMeta(
             capturedAt = capturedAt,
             width = width,

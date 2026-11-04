@@ -255,9 +255,77 @@ class BackupRoundTripTest {
             write(ByteArray(16)) // salt
             write(byteArrayOf(0x7F, -1, -1, -1)) // iterations = Int.MAX_VALUE (big-endian)
         }.toByteArray()
-        assertThrows(IllegalArgumentException::class.java) {
+        val e = assertThrows(BackupException::class.java) {
             runBlocking { backup.import(password, ByteArrayInputStream(header)) }
         }
+        assertEquals(BackupError.NOT_A_BACKUP, e.kind)
+    }
+
+    private suspend fun exportedBytes(): ByteArray = ByteArrayOutputStream().also { backup.export(password, it) }.toByteArray()
+
+    private suspend fun seedOneTryst(): Long {
+        val now = System.currentTimeMillis()
+        manager.database().partnerDao().upsert(
+            PartnerEntity("p1", "Sam", isAnonymous = false, color = null, note = null, archivedAt = null, createdAt = now, updatedAt = now),
+        )
+        encounters.save(EncounterEntity(id = "e1", startAt = now, createdAt = now, updatedAt = now), partnerIds = listOf("p1"))
+        encounters.attachMedia("e1", "image/jpeg", ByteArrayInputStream("photo-bytes".repeat(500).toByteArray()))
+        return now
+    }
+
+    @Test
+    fun import_wrongPassword_isReportedAsWrongPassword_andChangesNothing() = runBlocking<Unit> {
+        seedOneTryst()
+        val bytes = exportedBytes()
+        val e = assertThrows(BackupException::class.java) { runBlocking { backup.import("not-it", ByteArrayInputStream(bytes), wipeFirst = true) } }
+        assertEquals(BackupError.WRONG_PASSWORD, e.kind)
+        assertNotNull("existing data must survive a failed restore", encounters.get("e1"))
+    }
+
+    @Test
+    fun import_ofANonBackupFile_isReportedAsNotABackup() {
+        val e = assertThrows(BackupException::class.java) { runBlocking { backup.import(password, ByteArrayInputStream("hello world this is not a backup".toByteArray())) } }
+        assertEquals(BackupError.NOT_A_BACKUP, e.kind)
+    }
+
+    @Test
+    fun import_ofANewerFormat_isReportedAsNewerVersion() = runBlocking<Unit> {
+        seedOneTryst()
+        val bytes = exportedBytes()
+        bytes[8] = 99 // a format version this build has never heard of
+        val e = assertThrows(BackupException::class.java) { runBlocking { backup.import(password, ByteArrayInputStream(bytes)) } }
+        assertEquals(BackupError.NEWER_VERSION, e.kind)
+    }
+
+    @Test
+    fun import_ofATruncatedFile_isReportedAsDamaged_orWrongKey_andChangesNothing() = runBlocking<Unit> {
+        seedOneTryst()
+        val bytes = exportedBytes()
+        val cut = bytes.copyOf(bytes.size / 2)
+        val e = assertThrows(BackupException::class.java) { runBlocking { backup.import(password, ByteArrayInputStream(cut), wipeFirst = true) } }
+        assertTrue("a cut-off file is damaged (or unreadable), never OTHER", e.kind == BackupError.DAMAGED || e.kind == BackupError.WRONG_PASSWORD)
+        assertNotNull(encounters.get("e1"))
+    }
+
+    @Test
+    fun export_andImport_reportCountsAndProgress() = runBlocking<Unit> {
+        seedOneTryst()
+        val exportStages = mutableListOf<BackupStage>()
+        val out = ByteArrayOutputStream()
+        val exported = backup.export(password, out) { exportStages += it.stage }
+        assertEquals(1, exported.trysts)
+        assertEquals(1, exported.partners)
+        assertEquals(1, exported.photos)
+        assertEquals("the reported size is the real size of the file", out.size().toLong(), exported.bytes)
+        assertTrue(exportStages.containsAll(listOf(BackupStage.PREPARING, BackupStage.DATABASE, BackupStage.PHOTOS, BackupStage.FINISHING)))
+
+        val importStages = mutableListOf<BackupStage>()
+        val imported = backup.import(password, ByteArrayInputStream(out.toByteArray()), wipeFirst = true) { importStages += it.stage }
+        assertEquals(1, imported.trysts)
+        assertEquals(1, imported.partners)
+        assertEquals(1, imported.photos)
+        assertTrue(imported.withSettings)
+        assertTrue(importStages.containsAll(listOf(BackupStage.PREPARING, BackupStage.DATABASE, BackupStage.PHOTOS, BackupStage.FINISHING)))
     }
 }
 

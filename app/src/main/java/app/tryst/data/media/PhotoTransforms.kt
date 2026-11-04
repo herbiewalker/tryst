@@ -37,6 +37,16 @@ object PhotoTransforms {
     /** Fully decodes a decrypted image stream into a Bitmap. Caller closes the stream. */
     fun decode(stream: InputStream): Bitmap? = BitmapFactory.decodeStream(stream)
 
+    /**
+     * Fully decodes [bytes] and turns the result upright per its EXIF orientation tag, so rotate and crop act on the
+     * picture the user sees. The re-encoded result carries no tag, which bakes the orientation in for good.
+     */
+    fun decodeUpright(bytes: ByteArray): Bitmap? {
+        val bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.size) ?: return null
+        val orientation = bytes.inputStream().use { ExifOrientation.read(it) }
+        return ExifOrientation.upright(bmp, orientation)
+    }
+
     /** Applies a 90/180/270-degree rotation. Non-cardinal degrees still work but aren't exposed in the UI. */
     fun rotate(bmp: Bitmap, degrees: Int): Bitmap {
         if (degrees % 360 == 0) return bmp
