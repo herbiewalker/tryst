@@ -13,6 +13,10 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+### Fixed
+
+- **Setting a photo as a profile picture no longer copies it or resets its date.** The avatar now points at the existing photo, so the photo stays in its spot in the gallery with its date, caption, favourite mark and details, and no duplicate appears at today's date. Replacing or deleting an avatar can no longer delete a photo that still lives in an album or on a tryst, and deleting a photo clears any avatar that pointed at it. Adding a photo to another person's album also keeps the original's date, favourite mark and caption.
+
 ## [0.6.4] — 2026-11-03 (versionCode 20)
 
 ### Fixed

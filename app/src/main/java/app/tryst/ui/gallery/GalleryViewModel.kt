@@ -572,34 +572,27 @@ class GalleryViewModel @Inject constructor(
      * Cheap way to fix a mis-attributed photo (e.g. Alex was on the shot but not listed on the tryst)
      * without touching the encounter's partner list.
      */
-    fun addPhotoToPerson(blobId: String, kind: String, ownerId: String) = viewModelScope.launch(Dispatchers.IO) {
+    fun addPhotoToPerson(photo: GalleryPhoto, kind: String, ownerId: String) = viewModelScope.launch(Dispatchers.IO) {
         runCatching {
-            personPhotoRepository.openBlob(blobId).use { personPhotoRepository.add(kind, ownerId, it) }
+            // The copy keeps the original's date, favourite mark and caption, so it lands in the same spot in the gallery
+            // and not at today's date. Its capture details travel with the bytes (EXIF).
+            personPhotoRepository.openBlob(photo.blobId).use {
+                personPhotoRepository.add(kind, ownerId, it, now = photo.takenAt, favorite = photo.favorite, caption = photo.caption)
+            }
         }
     }
 
     /**
-     * Copies a gallery photo into a partner's avatar (GAL-5). Works for encounter photos AND portraits —
-     * both are just encrypted blobs. The fresh copy is added to the partner's **portrait album** (not
-     * just to `partners.photoMediaId`) so PersonPhotoStrip can render the checkmark on the current
-     * avatar and the user can delete the copy from the strip later. Cleans up the previous avatar's
-     * blob (and its portrait row if it had one) so we don't accumulate orphan encrypted files.
+     * Makes a gallery photo a partner's avatar (GAL-5) **without copying it**: the partner's avatar simply points at the photo's
+     * existing encrypted blob. The photo therefore stays exactly where it is in the gallery, with its date, caption,
+     * favourite mark and details intact, and nothing new appears at today's date. The previous avatar is left alone when
+     * it is still a photo in an album or on a tryst; only a leftover blob that nothing else owns is cleaned up.
      */
     fun setAsPartnerAvatar(blobId: String, partnerId: String) = viewModelScope.launch(Dispatchers.IO) {
         val partner = partnerRepository.getById(partnerId) ?: return@launch
-        val newPortrait = runCatching {
-            personPhotoRepository.openBlob(blobId).use { input ->
-                personPhotoRepository.add(PersonPhotoRepository.KIND_PARTNER, partnerId, input)
-            }
-        }.getOrNull() ?: return@launch
-        val newId = newPortrait.mediaBlobId
         val old = partner.photoMediaId
-        partnerRepository.upsert(partner.copy(photoMediaId = newId))
-        if (old != null && old != newId) {
-            // If old was a portrait, deleteByBlobId removes both the row and the blob; if it wasn't
-            // tracked (legacy pre-v15 avatar), fall back to the raw-blob delete.
-            if (!personPhotoRepository.deleteByBlobId(old)) partnerRepository.deletePhoto(old)
-        }
+        partnerRepository.upsert(partner.copy(photoMediaId = blobId))
+        if (old != null && old != blobId) partnerRepository.deletePhoto(old)
     }
 
     // --- decoding (all blobs open through the same EncryptedMediaStore) ----------------------------

@@ -53,11 +53,14 @@ class PersonPhotoRepository @Inject constructor(
      * Encrypts [source] into a new blob and inserts a `person_photo` row pointing at it. Returns the
      * new entity so callers can offer to promote it as the person's active avatar right after.
      */
+    @Suppress("LongParameterList") // The row's own fields: owner, source bytes, date, favourite mark and caption.
     suspend fun add(
         kind: String,
         ownerId: String,
         source: InputStream,
         now: Long = System.currentTimeMillis(),
+        favorite: Boolean = false,
+        caption: String? = null,
     ): PersonPhotoEntity = withContext(Dispatchers.IO) {
         val blobId = UUID.randomUUID().toString()
         mediaStore.save(blobId, source)
@@ -67,6 +70,8 @@ class PersonPhotoRepository @Inject constructor(
             ownerId = ownerId,
             mediaBlobId = blobId,
             addedAt = now,
+            favorite = favorite,
+            caption = caption,
         )
         dao.upsert(row)
         row
@@ -99,6 +104,14 @@ class PersonPhotoRepository @Inject constructor(
     suspend fun delete(entity: PersonPhotoEntity) {
         mediaStore.delete(entity.mediaBlobId)
         dao.deleteById(entity.id)
+        clearAvatarRefs(entity.mediaBlobId)
+    }
+
+    /** An avatar may point straight at a photo; once that photo is gone the pointer must not dangle. */
+    private suspend fun clearAvatarRefs(blobId: String) {
+        val db = session.database()
+        db.partnerDao().clearPhotoRef(blobId)
+        db.profileDao().clearPhotoRef(blobId)
     }
 
     /**

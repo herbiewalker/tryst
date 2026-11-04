@@ -50,8 +50,14 @@ class ProfileRepository @Inject constructor(
 
     fun openPhoto(id: String): InputStream = mediaStore.open(id)
 
-    fun deletePhoto(id: String) {
-        mediaStore.delete(id)
+    /**
+     * Deletes an avatar blob, but only when nothing else owns it. An avatar can point at a photo that also lives in an
+     * album or on a tryst, and replacing the avatar must never delete that photo (it keeps its date and details).
+     */
+    suspend fun deletePhoto(id: String) {
+        val db = session.database()
+        val shared = db.personPhotoDao().getByBlobId(id) != null || db.mediaDao().countById(id) > 0
+        if (!shared) mediaStore.delete(id)
     }
 }
 
