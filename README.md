@@ -42,9 +42,11 @@ Privacy isn't a setting here — it's the architecture.
   Keystore key (StrongBox when available).
 - 📵 **Zero tracking.** No analytics, ads, or crash-reporting SDKs of any kind — none are in the build.
 - 📤 **Your data is yours.** The only way it leaves the device is a manual, password-encrypted
-  backup you control (keep them wherever you like, or on your own server with the optional,
-  separate [Sanctum](https://github.com/herbiewalker/sanctum)). There is no password recovery,
-  because there is no server.
+  backup that you create and store yourself. There is no Tryst cloud, account or company server
+  holding a copy, so there is also no password recovery: if you forget a backup's password, nobody,
+  including the developer, can open it. If you want a safe home for those backup files, you can keep
+  them on your own home server with [Sanctum](https://github.com/herbiewalker/sanctum), a separate,
+  optional companion project (see [Companion](#companion-keep-your-backups-on-your-own-server-optional)).
 - 🔍 **Verifiable.** GPLv3 and fully open source, so every promise above is auditable — and F-Droid
   builds it from this source.
 
