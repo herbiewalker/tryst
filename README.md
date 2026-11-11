@@ -42,7 +42,9 @@ Privacy isn't a setting here — it's the architecture.
   Keystore key (StrongBox when available).
 - 📵 **Zero tracking.** No analytics, ads, or crash-reporting SDKs of any kind — none are in the build.
 - 📤 **Your data is yours.** The only way it leaves the device is a manual, password-encrypted
-  backup you control. There is no password recovery, because there is no server.
+  backup you control (keep them wherever you like, or on your own server with the optional,
+  separate [Sanctum](https://github.com/herbiewalker/sanctum)). There is no password recovery,
+  because there is no server.
 - 🔍 **Verifiable.** GPLv3 and fully open source, so every promise above is auditable — and F-Droid
   builds it from this source.
 
@@ -75,6 +77,19 @@ Privacy isn't a setting here — it's the architecture.
 - **Thoughtful polish** — light/dark themes + Material You, tablet/foldable adaptive layouts, a
   discard-changes guard so a stray tap never eats a half-finished entry, a type-to-confirm reset,
   and an in-app *What's new*.
+
+## Companion: keep your backups on your own server (optional)
+
+Tryst never goes online and has no cloud backup, so the only safety net is the encrypted `.tryst` file
+you export. If you would rather not rely on remembering to make one and remembering where it went,
+there is a separate companion project: **[Sanctum](https://github.com/herbiewalker/sanctum)**, a small
+Docker container you run on your own home server (Unraid or any Docker host).
+
+Sanctum takes the backups you export, checks that each one really opens, keeps a history of them, and
+reminds you when it has been too long since the last one. It is a separate project: Tryst itself stays
+offline and needs no changes. Getting the file from your phone to the server is up to you (Syncthing, a
+shared folder, or a browser upload). It is entirely optional and meant for people who already run their
+own server.
 
 ## Built with
 
