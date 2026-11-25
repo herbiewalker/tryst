@@ -128,9 +128,12 @@ Screenshots are black by design on-device (`FLAG_SECURE`).
 
 ## Status
 
-✅ **Shipped.** Current release **v0.6.6** (versionCode 22, schema v19). Distribution is **F-Droid**,
+✅ **Shipped.** Current release **v0.7.0** (versionCode 23, schema v20). Distribution is **F-Droid**,
 which builds and signs from this source. Tryst ships no binary and commits no signing key.
 
+- **0.7.0** adds optional cycle tracking, off by default. Turn it on in Settings to get a Cycle tab, then log periods
+  for yourself or a partner. Tryst fills in the most likely length and flow and marks them as estimated until you
+  change them. Cycle data is encrypted, backed up, and has its own delete action.
 - **0.6.6** fixes the Insights charts: bar heights now follow the numbers, and each section only offers the chart
   styles it can draw (issue #9). It also adds an end-to-end smoke test of the app.
 - **0.6.5** is a quality-of-life release. Tryst reminds you to back up, and exporting or restoring now shows progress, a

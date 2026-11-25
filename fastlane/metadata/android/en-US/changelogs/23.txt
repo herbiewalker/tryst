@@ -1,0 +1,5 @@
+Optional cycle tracking
+
+* Off by default. Turn it on in Settings, Cycle tracking, to add a Cycle tab.
+* Log a period for yourself or a partner with one tap. Tryst fills in the most likely length and flow and marks those days as estimated until you change them.
+* Cycle data is encrypted, included in backups, and has its own delete action in Settings.

@@ -33,6 +33,16 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.7.0",
+            versionCode = 23,
+            date = "2026-11-25",
+            highlights = listOf(
+                "Optional cycle tracking. It's off until you turn it on in Settings, Cycle tracking, which adds a Cycle tab.",
+                "Log a period for yourself or a partner with one tap. Tryst fills in the most likely length and flow for each day and marks them as estimated until you change them.",
+                "Cycle data is encrypted like everything else, is included in backups, and has its own Delete cycle data action in Settings.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.6.6",
             versionCode = 22,
             date = "2026-11-24",
