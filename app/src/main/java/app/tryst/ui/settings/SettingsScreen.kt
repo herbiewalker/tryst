@@ -39,10 +39,12 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Password
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.TableChart
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -75,6 +77,7 @@ import app.tryst.core.prefs.WeekStart
 import app.tryst.ui.common.SingleSelectChips
 import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.rememberHaptics
+import app.tryst.ui.cycle.CyclePersonChoice
 import app.tryst.ui.cycle.CycleSettingsViewModel
 import app.tryst.ui.lock.BiometricPromptHelper
 import app.tryst.ui.lock.LockViewModel
@@ -175,6 +178,10 @@ fun SettingsScreen(
     val cycleViewModel: CycleSettingsViewModel = hiltViewModel()
     val cycleEnabled by cycleViewModel.enabled.collectAsStateWithLifecycle()
     val cyclePredictions by cycleViewModel.predictions.collectAsStateWithLifecycle()
+    val cycleCalendar by cycleViewModel.calendar.collectAsStateWithLifecycle()
+    val cycleCalendarOwners by cycleViewModel.calendarOwners.collectAsStateWithLifecycle()
+    val cyclePeople by cycleViewModel.people.collectAsStateWithLifecycle()
+    var pickCyclePeople by remember { mutableStateOf(false) }
     var confirmDeleteCycle by remember { mutableStateOf(false) }
     val hapticsEnabled by generalViewModel.hapticsEnabled.collectAsStateWithLifecycle()
     val weekStart by generalViewModel.weekStart.collectAsStateWithLifecycle()
@@ -403,6 +410,37 @@ fun SettingsScreen(
                     description = stringResource(R.string.settings_cycle_predictions_desc),
                     checked = cyclePredictions,
                     onCheckedChange = { cycleViewModel.setPredictions(it) },
+                )
+                SettingsToggleRow(
+                    title = stringResource(R.string.settings_cycle_calendar),
+                    description = stringResource(R.string.settings_cycle_calendar_desc),
+                    checked = cycleCalendar,
+                    onCheckedChange = { cycleViewModel.setCalendar(it) },
+                )
+                if (cycleCalendar) {
+                    val you = stringResource(R.string.profile_you)
+                    val chosen = cyclePeople.filter { it.key in cycleCalendarOwners }
+                    SettingsRow(
+                        icon = Icons.Filled.People,
+                        title = stringResource(R.string.settings_cycle_calendar_people),
+                        description = if (chosen.isEmpty()) {
+                            stringResource(R.string.settings_cycle_calendar_everyone)
+                        } else {
+                            chosen.joinToString { it.name ?: you }
+                        },
+                        onClick = { pickCyclePeople = true },
+                    )
+                }
+            }
+            if (pickCyclePeople) {
+                CyclePeopleDialog(
+                    people = cyclePeople,
+                    initial = cycleCalendarOwners,
+                    onDone = {
+                        cycleViewModel.setCalendarOwners(it)
+                        pickCyclePeople = false
+                    },
+                    onDismiss = { pickCyclePeople = false },
                 )
             }
 
@@ -643,6 +681,47 @@ private fun BackupPasswordDialog(
             }
         },
         confirmButton = { TextButton(onClick = { onConfirm(password, wipeFirst, includeSettings) }, enabled = valid) { Text(stringResource(R.string.action_ok)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
+    )
+}
+
+/** Whose periods the Trysts calendar shows (CYC-1, 0.7.2). Nobody ticked means everyone. */
+@Composable
+private fun CyclePeopleDialog(
+    people: List<CyclePersonChoice>,
+    initial: Set<String>,
+    onDone: (Set<String>) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var chosen by remember { mutableStateOf(initial.filter { key -> people.any { it.key == key } }.toSet()) }
+    val you = stringResource(R.string.profile_you)
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.settings_cycle_calendar_people)) },
+        text = {
+            Column {
+                Text(
+                    stringResource(R.string.settings_cycle_calendar_people_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                people.forEach { person ->
+                    val checked = person.key in chosen
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .toggleable(value = checked, role = Role.Checkbox) {
+                                chosen = if (it) chosen + person.key else chosen - person.key
+                            },
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Checkbox(checked = checked, onCheckedChange = null)
+                        Text(person.name ?: you, modifier = Modifier.padding(start = 12.dp))
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = { onDone(chosen) }) { Text(stringResource(R.string.action_ok)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
     )
 }

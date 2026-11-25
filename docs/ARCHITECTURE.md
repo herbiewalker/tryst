@@ -38,7 +38,7 @@ data/
   backup/     BackupManager (export/restore with progress, a result summary and specific errors; BackupReminder is the pure rule behind the back-up nudge; atomic wipe+restore in one tx, PRAGMA table_info NOT-NULL backfill), PrefsBackup (settings stores carried in the backup), Csv (importer)
   stats/      InsightsEngine + Insights model (pure Kotlin, scope-aware)
   achievements/ AchievementEngine + Achievements catalog (pure; badges derived from the log, no storage)
-  cycle/      CycleDefaults ("most likely" length and per-day flow for a new period, estimates flagged) and CyclePredictor (cycle stats + next-period range), both pure and JVM-tested (CYC-1, D-64, D-65)
+  cycle/      CycleDefaults ("most likely" length and per-day flow for a new period, estimates flagged) , CyclePredictor (cycle stats + next-period range) and CycleOverlay (period and predicted days for the Trysts calendar), all pure and JVM-tested (CYC-1, D-64, D-65, D-66)
 di/           Hilt wiring (most types use @Inject constructors; module is minimal)
 ui/
   common/     SelectionField/Chips, MediaImages, TooltipIconButton (long-press labels on icon-only buttons, QOL-6), CoachTip (one-time dismissible tips), ImagePicker, Format, Position/Act/Kink/Toy options, ActVisuals, Haptics (LocalHapticsEnabled), WindowSize, AppVersion, DateScopeChips (shared by Search + Insights scope), EncounterCard, DateHeader, PersonPhotoStrip
@@ -92,8 +92,8 @@ one-time **post-update What's-new popup** (installed `versionCode` vs `GeneralPr
   (`StatTilesTest`, `InsightSectionsTest`), filter/search/date scope (`EncounterFilterTest`, `EncounterSearchTest`,
   `DateScopeTest`, `CalendarNavTest`), CSV parser (`CsvParseTest`), catalog adoption, gallery folding and photo
   helpers (`GalleryPhotosTest`, `ExifOrientationTest`, `PhotoMetadataTest`, `PhotoTransformsTest`,
-  `PhotoDetailsFormatTest`), the backup reminder rule (`BackupReminderTest`), and cycle defaults and predictions
-  (`CycleDefaultsTest`, `CyclePredictorTest`).
+  `PhotoDetailsFormatTest`), the backup reminder rule (`BackupReminderTest`), and cycle defaults, predictions and the calendar overlay
+  (`CycleDefaultsTest`, `CyclePredictorTest`, `CycleOverlayTest`).
 - **Instrumented (emulator, real Keystore/SQLCipher):** vault, DB-encrypted-on-disk, media crypto,
   session lifecycle, Room migrations (v1→v20, incl. the v7→v8/v9→v10/v10→v11/v11→v12 data migrations plus additive DDL from v13 on), media attachment round-trip, backup round-trip, and
   backup/restore regression edge cases (`BackupRestoreRegressionTest`: restore-over-existing,

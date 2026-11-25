@@ -1,6 +1,6 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v20** (latest: **D-65**, cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
+> **Status:** Live — decisions through **schema v20** (latest: **D-66**, periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
 > presence-only re-auth via BiometricPrompt with device-credential fallback — no CryptoObject,
 > no DEK touch, v0.5.7).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
@@ -760,6 +760,16 @@
   saying why. Past the range, the card says how many days ago it was expected (no alarm, no notification).
   Settings → Cycle tracking → **Show predictions** (on by default once tracking is on) switches it off. Mid-period the
   Cycle card shows no guess; the person screen shows the stats and the estimate. Pure `CyclePredictor`, JVM-tested.
+
+- **D-66 (2026-11-25) Periods on the Trysts calendar: a strip per person, behind its own switch (CYC-1, 0.7.2).**
+  The calendar keeps its tryst heatmap; periods go in a thin strip along the bottom of each day so the two never fight
+  over the cell color. One segment per person, colored with the stable per-name color Insights already uses, so a
+  person reads the same everywhere. Logged days are solid (an estimated end still counts, it's the best guess there
+  is); the predicted start range is outlined and faint, and only drawn from today on, since a passed window says
+  nothing useful on a calendar. A logged day is never also predicted for the same person. Settings → Cycle tracking →
+  "Show on the Trysts calendar" (off by default, separate from tracking itself, because the Trysts tab is the one most
+  likely to be on screen around other people) and "Whose periods to show" (none ticked = everyone). Archived partners
+  are left out. Pure `CycleOverlay`, JVM-tested.
 
 > **Standing follow-ups (not blockers, tracked here as pointers):**
 > **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;

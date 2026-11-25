@@ -21,10 +21,13 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -34,8 +37,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
@@ -61,6 +66,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
@@ -90,6 +96,7 @@ import app.tryst.ui.common.Format
 import app.tryst.ui.common.TooltipIconButton
 import app.tryst.ui.common.encounterSharedKey
 import app.tryst.ui.common.rememberHaptics
+import app.tryst.ui.insights.TypeColors
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -113,6 +120,7 @@ fun HistoryScreen(
     val weekStart by viewModel.weekStart.collectAsStateWithLifecycle()
     val defaultToCalendar by viewModel.defaultToCalendar.collectAsStateWithLifecycle()
     val backupNudge by viewModel.backupNudge.collectAsStateWithLifecycle()
+    val cycleMarks by viewModel.cycleMarks.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
     // The calendar remembers where it was, but starts on today again after a few minutes away (QOL-8).
     DisposableEffect(lifecycleOwner) {
@@ -198,6 +206,7 @@ fun HistoryScreen(
                         nav = viewModel.calendarNav,
                         onNavChange = viewModel::updateCalendar,
                         weekStart = weekStart,
+                        cycleMarks = cycleMarks,
                         onLoadThumb = { viewModel.decode(it, CARD_THUMB_PX) },
                         onOpenEncounter = onOpenEncounter,
                         sharedScope = sharedScope,
@@ -238,6 +247,7 @@ private fun CalendarView(
     nav: CalendarNav,
     onNavChange: (CalendarNav) -> Unit,
     weekStart: WeekStart,
+    cycleMarks: Map<LocalDate, List<CalendarCycleMark>>,
     onLoadThumb: suspend (MediaEntity) -> ImageBitmap?,
     onOpenEncounter: (String) -> Unit,
     sharedScope: SharedTransitionScope,
@@ -295,10 +305,12 @@ private fun CalendarView(
                 month = month,
                 dayIcons = dayIcons,
                 dayCounts = dayCounts,
+                cycleMarks = cycleMarks,
                 selected = selectedDay,
                 weekStart = weekStart,
                 onSelect = onSelect,
             )
+            CycleLegend(cycleMarks, (1..month.lengthOfMonth()).map { month.atDay(it) })
             SelectedDayEntries(
                 modifier = Modifier.weight(1f),
                 selectedDay = selectedDay,
@@ -314,10 +326,12 @@ private fun CalendarView(
                 anchor = weekAnchor,
                 dayIcons = dayIcons,
                 dayCounts = dayCounts,
+                cycleMarks = cycleMarks,
                 selected = selectedDay,
                 weekStart = weekStart,
                 onSelect = onSelect,
             )
+            CycleLegend(cycleMarks, (0..6L).map { startOfWeek(weekAnchor, weekStart).plusDays(it) })
             Spacer(Modifier.height(6.dp))
             SelectedDayEntries(
                 modifier = Modifier.weight(1f),
@@ -507,6 +521,7 @@ private fun MonthGrid(
     month: YearMonth,
     dayIcons: Map<LocalDate, Int>,
     dayCounts: Map<LocalDate, Int>,
+    cycleMarks: Map<LocalDate, List<CalendarCycleMark>>,
     selected: LocalDate?,
     weekStart: WeekStart,
     onSelect: (LocalDate) -> Unit,
@@ -537,6 +552,7 @@ private fun MonthGrid(
                                 date = date,
                                 icon = dayIcons[date],
                                 count = dayCounts[date] ?: 0,
+                                marks = cycleMarks[date].orEmpty(),
                                 selected = date == selected,
                                 isToday = date == today,
                                 onClick = { onSelect(date) },
@@ -555,6 +571,7 @@ private fun WeekRow(
     anchor: LocalDate,
     dayIcons: Map<LocalDate, Int>,
     dayCounts: Map<LocalDate, Int>,
+    cycleMarks: Map<LocalDate, List<CalendarCycleMark>>,
     selected: LocalDate?,
     weekStart: WeekStart,
     onSelect: (LocalDate) -> Unit,
@@ -569,6 +586,7 @@ private fun WeekRow(
                     date = date,
                     icon = dayIcons[date],
                     count = dayCounts[date] ?: 0,
+                    marks = cycleMarks[date].orEmpty(),
                     selected = date == selected,
                     isToday = date == today,
                     onClick = { onSelect(date) },
@@ -583,6 +601,7 @@ private fun DayCell(
     date: LocalDate,
     @DrawableRes icon: Int?,
     count: Int,
+    marks: List<CalendarCycleMark>,
     selected: Boolean,
     isToday: Boolean,
     onClick: () -> Unit,
@@ -606,6 +625,8 @@ private fun DayCell(
     val locale = LocalConfiguration.current.locales[0]
     val todaySuffix = stringResource(R.string.cd_day_today)
     val hasTrystsSuffix = stringResource(R.string.cd_day_has_trysts)
+    val periodSuffix = stringResource(R.string.cd_day_period)
+    val likelySuffix = stringResource(R.string.cd_day_period_likely)
     val cellDescription = buildString {
         append(date.month.getDisplayName(TextStyle.FULL, locale))
         append(' ')
@@ -617,6 +638,13 @@ private fun DayCell(
         if (icon != null) {
             append(", ")
             append(hasTrystsSuffix)
+        }
+        if (marks.any { !it.predicted }) {
+            append(", ")
+            append(periodSuffix)
+        } else if (marks.isNotEmpty()) {
+            append(", ")
+            append(likelySuffix)
         }
     }
     Surface(
@@ -638,28 +666,86 @@ private fun DayCell(
                 this.selected = selected
             },
     ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Text(
-                date.dayOfMonth.toString(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-            )
-            if (icon != null) {
-                Spacer(Modifier.height(2.dp))
-                Icon(
-                    painterResource(icon),
-                    contentDescription = null,
-                    tint = iconTint,
-                    modifier = Modifier.size(30.dp),
+        Box(Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier.fillMaxSize().padding(4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                Text(
+                    date.dayOfMonth.toString(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
                 )
+                if (icon != null) {
+                    Spacer(Modifier.height(2.dp))
+                    Icon(
+                        painterResource(icon),
+                        contentDescription = null,
+                        tint = iconTint,
+                        modifier = Modifier.size(30.dp),
+                    )
+                }
+            }
+            if (marks.isNotEmpty()) {
+                CycleStrip(marks, Modifier.align(Alignment.BottomCenter).padding(start = 6.dp, end = 6.dp, bottom = 5.dp))
             }
         }
     }
 }
+
+/** A person's stable color, the same one Insights gives them (CYC-1, 0.7.2). */
+@Composable
+private fun cycleColor(mark: CalendarCycleMark): Color = TypeColors.colorFor(mark.name ?: stringResource(R.string.profile_you))
+
+/** One segment per person along the bottom of a day: solid for a logged period day, faint and outlined when predicted. */
+@Composable
+private fun CycleStrip(marks: List<CalendarCycleMark>, modifier: Modifier = Modifier) {
+    val shape = RoundedCornerShape(2.dp)
+    Row(modifier.fillMaxWidth().height(5.dp), horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+        marks.forEach { mark ->
+            val color = cycleColor(mark)
+            val segment = Modifier.weight(1f).fillMaxHeight()
+            Box(
+                if (mark.predicted) {
+                    segment.background(color.copy(alpha = PREDICTED_ALPHA), shape).border(1.dp, color, shape)
+                } else {
+                    segment.background(color, shape)
+                },
+            )
+        }
+    }
+}
+
+/** Explains the strips, only when the visible month or week has any. Names each person shown, in their color. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+private fun CycleLegend(marks: Map<LocalDate, List<CalendarCycleMark>>, visibleDays: List<LocalDate>) {
+    val shown = visibleDays.flatMap { marks[it].orEmpty() }
+    if (shown.isEmpty()) return
+    val people = shown.distinctBy { it.name to it.isSelf }
+    val anyPredicted = shown.any { it.predicted }
+    val style = MaterialTheme.typography.labelSmall
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    FlowRow(
+        Modifier.fillMaxWidth().padding(top = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        people.forEach { mark ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.width(14.dp).height(5.dp).background(cycleColor(mark), RoundedCornerShape(2.dp)))
+                Spacer(Modifier.width(4.dp))
+                Text(mark.name ?: stringResource(R.string.profile_you), style = style, color = muted)
+            }
+        }
+        if (anyPredicted) {
+            Text(stringResource(R.string.history_cycle_legend_likely), style = style, color = muted)
+        }
+    }
+}
+
+private const val PREDICTED_ALPHA = 0.3f
 
 @Composable
 private fun EmptyState(modifier: Modifier = Modifier) {

@@ -13,6 +13,10 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+### Added
+
+- **Periods on the Trysts calendar (CYC-1).** Settings → Cycle tracking → Show on the Trysts calendar adds a thin strip along the bottom of each period day, in each person's color (the same color Insights uses for them). With predictions on, an outlined strip marks the days the next period is likely to start, from today on. A short legend under the calendar names who is shown. "Whose periods to show" picks people; picking nobody shows everyone. Off by default, and the switch rides the settings backup.
+
 ## [0.7.1] — 2026-11-25 (versionCode 24)
 
 ### Added

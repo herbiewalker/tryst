@@ -758,6 +758,14 @@
     </plurals>
     <string name="settings_cycle_predictions">Show predictions</string>
     <string name="settings_cycle_predictions_desc">Estimates the next period from the cycles you\'ve logged. Needs 3 cycles and stays hidden when they vary a lot. A guide only, not medical advice.</string>
+    <string name="settings_cycle_calendar">Show on the Trysts calendar</string>
+    <string name="settings_cycle_calendar_desc">Marks period days along the bottom of each day, in each person\'s color. With predictions on, a faint outline marks when the next one is likely.</string>
+    <string name="settings_cycle_calendar_people">Whose periods to show</string>
+    <string name="settings_cycle_calendar_everyone">Everyone</string>
+    <string name="settings_cycle_calendar_people_hint">Pick nobody to show everyone.</string>
+    <string name="history_cycle_legend_likely">Outlined: likely next period</string>
+    <string name="cd_day_period">period day</string>
+    <string name="cd_day_period_likely">next period likely</string>
     <string name="settings_cycle_delete">Delete cycle data</string>
     <string name="settings_cycle_delete_desc">Removes every logged period, for everyone. Trysts are not touched.</string>
     <string name="settings_cycle_delete_confirm_title">Delete all cycle data?</string>

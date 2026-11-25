@@ -255,5 +255,7 @@ flowchart TD
     SPR -->|no| RANGE["next start ≈ last + median<br/>range covers shortest..longest (≥ 2 days each side)"]
     RANGE --> SHOW{"Show predictions on?"}
     SHOW -->|yes| UI["Cycle card + person stats"]
+    SHOW -->|yes, and calendar switch on| CAL["Trysts calendar: outlined strip<br/>on likely days from today on"]
+    SAVE --> LOGCAL["Trysts calendar (if its switch is on):<br/>solid strip per person on logged days"]
     SHOW -->|no| HIDE["stats only"]
 ```

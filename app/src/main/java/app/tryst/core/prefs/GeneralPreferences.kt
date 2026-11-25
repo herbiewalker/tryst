@@ -72,9 +72,11 @@ class GeneralPreferences @Inject constructor(
 
     /** Resets the user-facing settings only — [KEY_LAST_SEEN_VERSION] is internal What's-new state, not a preference. */
     fun resetToDefaults() {
-        prefs.edit().remove(KEY_AUTO_LOCK_MS).remove(KEY_HAPTICS).remove(KEY_WEEK_START).remove(KEY_DEFAULT_CALENDAR).remove(KEY_CYCLE_ENABLED).remove(KEY_CYCLE_PREDICTIONS).apply()
+        prefs.edit().remove(KEY_AUTO_LOCK_MS).remove(KEY_HAPTICS).remove(KEY_WEEK_START).remove(KEY_DEFAULT_CALENDAR).remove(KEY_CYCLE_ENABLED).remove(KEY_CYCLE_PREDICTIONS).remove(KEY_CYCLE_CALENDAR).remove(KEY_CYCLE_CALENDAR_OWNERS).apply()
         _cycleEnabled.value = false
         _cyclePredictions.value = true
+        _cycleCalendar.value = false
+        _cycleCalendarOwners.value = emptySet()
         _autoLockTimeoutMs.value = 0L
         _hapticsEnabled.value = true
         _weekStart.value = WeekStart.SUNDAY
@@ -131,6 +133,24 @@ class GeneralPreferences @Inject constructor(
         _cyclePredictions.value = enabled
     }
 
+    /** Period days and the predicted range on the Trysts calendar (CYC-1, 0.7.2). Off by default; rides the settings backup. */
+    private val _cycleCalendar = MutableStateFlow(prefs.getBoolean(KEY_CYCLE_CALENDAR, false))
+    val cycleCalendar: StateFlow<Boolean> = _cycleCalendar.asStateFlow()
+
+    fun setCycleCalendar(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_CYCLE_CALENDAR, enabled).apply()
+        _cycleCalendar.value = enabled
+    }
+
+    /** Whose periods the calendar shows, as "kind:id" keys. Empty means everyone. */
+    private val _cycleCalendarOwners = MutableStateFlow(prefs.getStringSet(KEY_CYCLE_CALENDAR_OWNERS, emptySet()).orEmpty().toSet())
+    val cycleCalendarOwners: StateFlow<Set<String>> = _cycleCalendarOwners.asStateFlow()
+
+    fun setCycleCalendarOwners(keys: Set<String>) {
+        prefs.edit().putStringSet(KEY_CYCLE_CALENDAR_OWNERS, keys).apply()
+        _cycleCalendarOwners.value = keys
+    }
+
     /** Coach-mark ids the user has dismissed (QOL-6); each tip shows once. */
     private val _seenTips = MutableStateFlow(prefs.getStringSet(KEY_SEEN_TIPS, emptySet()).orEmpty().toSet())
     val seenTips: StateFlow<Set<String>> = _seenTips.asStateFlow()
@@ -156,6 +176,8 @@ class GeneralPreferences @Inject constructor(
         const val KEY_BACKUP_SNOOZED_UNTIL = "backup_snoozed_until"
         const val KEY_CYCLE_ENABLED = "cycle_enabled"
         const val KEY_CYCLE_PREDICTIONS = "cycle_predictions"
+        const val KEY_CYCLE_CALENDAR = "cycle_calendar"
+        const val KEY_CYCLE_CALENDAR_OWNERS = "cycle_calendar_owners"
     }
 }
 

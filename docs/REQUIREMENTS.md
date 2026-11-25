@@ -106,6 +106,9 @@ with deeply personal data. Inspired by the iOS app *Nice*.
   of the last 6 start-to-start gaps, with shortest and longest) and a usual period length. The next period is
   estimated as a range once 3 cycles are logged, labelled an estimate, hidden when recent cycles vary by more
   than 9 days, and switchable off in Settings. No fertile-window or contraception estimates.
+- **FR-30** **Periods on the calendar** (CYC-1, 0.7.2). Behind its own Settings switch (off by default), the Trysts
+  calendar marks logged period days per person in that person's Insights color and, with predictions on, the likely
+  start range of the next period from today on. The user picks whose periods show (none picked means everyone).
 
 ## 5. Non-functional requirements
 
