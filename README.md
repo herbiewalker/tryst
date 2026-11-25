@@ -128,9 +128,11 @@ Screenshots are black by design on-device (`FLAG_SECURE`).
 
 ## Status
 
-✅ **Shipped.** Current release **v0.6.5** (versionCode 21, schema v19). Distribution is **F-Droid**,
+✅ **Shipped.** Current release **v0.6.6** (versionCode 22, schema v19). Distribution is **F-Droid**,
 which builds and signs from this source. Tryst ships no binary and commits no signing key.
 
+- **0.6.6** fixes the Insights charts: bar heights now follow the numbers, and each section only offers the chart
+  styles it can draw (issue #9). It also adds an end-to-end smoke test of the app.
 - **0.6.5** is a quality-of-life release. Tryst reminds you to back up, and exporting or restoring now shows progress, a
   summary of what was saved or brought in, and specific errors. The calendar keeps its place and starts a new tryst on
   the day you tapped. Old photos stored sideways draw upright, and you can rotate photos from the partner and profile

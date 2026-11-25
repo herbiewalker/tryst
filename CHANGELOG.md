@@ -13,6 +13,8 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.6.6] — 2026-11-24 (versionCode 22)
+
 ### Fixed
 
 - **Bar charts in Insights show the real heights (issue #9).** Every bar used to fill the chart, so the bars all looked the same even though the numbers above them differed. Each bar is now sized against the tallest one.

@@ -1,0 +1,4 @@
+Insights chart fixes
+
+* Bar charts now show the real heights. Every bar used to fill the chart.
+* Each Insights section only offers chart styles it can draw. Picking Donut on Activity used to show bars instead.

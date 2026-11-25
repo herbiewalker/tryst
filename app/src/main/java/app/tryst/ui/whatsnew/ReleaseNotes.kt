@@ -33,6 +33,15 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.6.6",
+            versionCode = 22,
+            date = "2026-11-24",
+            highlights = listOf(
+                "Bar charts in Insights now show the real heights. Every bar used to fill the chart, even though the numbers above them were different.",
+                "Each Insights section only offers the chart styles it can draw. Activity and Satisfaction offer Bars and Line, the breakdowns offer Bars and Donut. Picking Donut on Activity used to quietly show bars instead.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.6.5",
             versionCode = 21,
             date = "2026-11-03",
