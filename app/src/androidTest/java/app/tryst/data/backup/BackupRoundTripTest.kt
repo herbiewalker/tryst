@@ -342,25 +342,103 @@ class BackupRoundTripTest {
     @Test
     fun import_ofANewerSchema_isRefused_andChangesNothing() = runBlocking<Unit> {
         seedOneTryst()
+        val future = org.json.JSONObject()
+            .put("schemaVersion", dbVersion() + 1)
+            .put("tables", org.json.JSONObject())
+            .put("meta", org.json.JSONObject().put("appVersion", "9.9.9"))
+        val file = handMadeBackup(future)
+
+        val e = assertThrows(BackupException::class.java) {
+            runBlocking { backup.import(password, ByteArrayInputStream(file), wipeFirst = true) }
+        }
+        assertEquals("the refusal names the version it needs", "9.9.9", e.madeWith)
+        assertEquals(BackupError.NEWER_VERSION, e.kind)
+        assertNotNull("existing data must be untouched", encounters.get("e1"))
+    }
+
+    private fun dbVersion(): Int = manager.database().openHelper.writableDatabase.version
+
+    /** A real, password-encrypted backup container whose data.json is [root]: the header comes from a fresh export. */
+    private suspend fun handMadeBackup(root: org.json.JSONObject): ByteArray {
         val header = exportedBytes().copyOfRange(0, HEADER_BYTES)
         val salt = header.copyOfRange(MAGIC_BYTES + 1, MAGIC_BYTES + 1 + SALT_BYTES)
         val iterations = java.nio.ByteBuffer.wrap(header, MAGIC_BYTES + 1 + SALT_BYTES, 4).int
         val key = app.tryst.core.security.Pbkdf2.derive(password, salt, iterations)
-        val future = org.json.JSONObject()
-            .put("schemaVersion", manager.database().openHelper.writableDatabase.version + 1)
-            .put("tables", org.json.JSONObject())
         val out = ByteArrayOutputStream().apply { write(header) }
         java.util.zip.ZipOutputStream(app.tryst.core.crypto.BackupCrypto.encryptingStream(key, out)).use { zip ->
             zip.putNextEntry(java.util.zip.ZipEntry("data.json"))
-            zip.write(future.toString().toByteArray(Charsets.UTF_8))
+            zip.write(root.toString().toByteArray(Charsets.UTF_8))
             zip.closeEntry()
         }
+        return out.toByteArray()
+    }
 
+    /** BKP-3: a fresh export describes itself, and a quick look at it finds nothing to warn about. */
+    @Test
+    fun inspect_describesAFreshExport() = runBlocking<Unit> {
+        seedOneTryst()
+        val summary = backup.inspect(password, ByteArrayInputStream(exportedBytes()))
+        assertEquals(dbVersion(), summary.schemaVersion)
+        assertEquals(1, summary.trysts)
+        assertEquals(1, summary.partners)
+        assertEquals(1, summary.photos)
+        assertNotNull("new backups record when they were made", summary.createdAt)
+        assertFalse(summary.newerThanApp)
+        assertFalse(summary.olderThanApp)
+        assertTrue(summary.replaceWouldRemove.isEmpty())
+        assertNull("a quick look doesn't read the photos", summary.photosFound)
+    }
+
+    /** BKP-3: "Check a backup" reads every byte and counts the photos it actually holds. */
+    @Test
+    fun inspect_fullCheck_readsEveryPhoto_andCatchesACutShortFile() = runBlocking<Unit> {
+        seedOneTryst()
+        val bytes = exportedBytes()
+        assertEquals(1, backup.inspect(password, ByteArrayInputStream(bytes), fullCheck = true).photosFound)
+
+        val cut = bytes.copyOf(bytes.size - 200)
         val e = assertThrows(BackupException::class.java) {
-            runBlocking { backup.import(password, ByteArrayInputStream(out.toByteArray()), wipeFirst = true) }
+            runBlocking { backup.inspect(password, ByteArrayInputStream(cut), fullCheck = true) }
         }
-        assertEquals(BackupError.NEWER_VERSION, e.kind)
-        assertNotNull("existing data must be untouched", encounters.get("e1"))
+        // A small backup is one encrypted segment, so the cut shows up on the first read (reported as a wrong key).
+        assertTrue(e.kind == BackupError.DAMAGED || e.kind == BackupError.WRONG_PASSWORD)
+    }
+
+    /**
+     * BKP-3: an older backup with no cycle tables at all, looked at on a phone that has periods, says a replace
+     * would delete them. This is the data loss the restore preview warns about.
+     */
+    @Test
+    fun inspect_ofAnOlderBackup_saysReplaceWouldDeletePeriods() = runBlocking<Unit> {
+        val cycles = app.tryst.data.repository.CycleRepository(manager)
+        val owner = app.tryst.data.repository.CycleOwner(app.tryst.data.db.entity.CyclePeriodEntity.OWNER_PROFILE, ProfileEntity.SELF_ID)
+        checkNotNull(cycles.startPeriod(owner, startEpochDay = 20_000))
+        // Two user-made kinks; the backup's one tryst uses the first, so a restore re-adopts it and only the
+        // second would really be lost.
+        manager.database().openHelper.writableDatabase.execSQL(
+            "INSERT INTO kinks (id, label, isBuiltIn) VALUES ('K_USED', 'Used', 0), ('K_UNUSED', 'Unused', 0)",
+        )
+        val tryst = org.json.JSONObject().put("id", "e1").put("kinks", "custom:K_USED")
+        val old = org.json.JSONObject()
+            .put("schemaVersion", 19)
+            .put("tables", org.json.JSONObject().put("encounters", org.json.JSONArray().put(tryst)).put("partners", org.json.JSONArray()))
+
+        val summary = backup.inspect(password, ByteArrayInputStream(handMadeBackup(old)))
+
+        assertTrue(summary.olderThanApp)
+        assertNull("pre-0.7.2 backups don't say who made them", summary.appVersion)
+        assertEquals(1, summary.replaceWouldRemove["cycle_period"])
+        assertEquals("a kink the backup's trysts use comes back; the other doesn't", 1, summary.replaceWouldRemove["kinks"])
+    }
+
+    /** BKP-3: the restore result counts periods too. */
+    @Test
+    fun import_reportsPeriods() = runBlocking<Unit> {
+        val cycles = app.tryst.data.repository.CycleRepository(manager)
+        val owner = app.tryst.data.repository.CycleOwner(app.tryst.data.db.entity.CyclePeriodEntity.OWNER_PROFILE, ProfileEntity.SELF_ID)
+        checkNotNull(cycles.startPeriod(owner, startEpochDay = 20_000))
+        val result = backup.import(password, ByteArrayInputStream(exportedBytes()), wipeFirst = true)
+        assertEquals(1, result.periods)
     }
 
     private companion object {

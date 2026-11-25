@@ -1,6 +1,6 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v20** (latest: **D-67**, pickable person colors; D-66: periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
+> **Status:** Live — decisions through **schema v20** (latest: **D-68**, restore preview and data-loss warning; D-67: pickable person colors; D-66: periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
 > presence-only re-auth via BiometricPrompt with device-credential fallback — no CryptoObject,
 > no DEK touch, v0.5.7).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
@@ -778,6 +778,15 @@
   never set or read); the profile gets `color` in v21. The picked color drives the calendar strip (D-66) and the
   Insights People chart; every other breakdown keeps the name-based colors. A stored color outside the palette (from
   an import) shows as "Current color" so the picker never claims Automatic while something else is drawn.
+
+- **D-68 (2026-11-25) Look before restoring: a preview, a data-loss warning, and Check a backup (BKP-3).**
+  "Replace" empties every table, including ones an older backup has no entry for, so a pre-cycle backup silently
+  deleted every period. A restore now reads the backup first (`inspect()`, `data.json` only) and shows who made
+  it, when, and what it holds; when a replace would delete rows the backup has nothing to put back for, it names
+  them and offers Merge instead or Replace anyway. A newer backup (schemaVersion above this build) is refused
+  before anything is written and names the version it needs. Exports now carry `meta` (app version, code, time)
+  for this. "Check a backup" reads every byte without restoring. Deliberately not done here: an explicit foreign
+  key check and merge-overlap handling, tracked as BKP-4.
 
 > **Standing follow-ups (not blockers, tracked here as pointers):**
 > **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;

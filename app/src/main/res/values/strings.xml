@@ -298,6 +298,52 @@
     <string name="backup_error_wrong_password">The password is wrong, or the file is damaged right at the start. Nothing on this phone was changed.</string>
     <string name="backup_error_not_a_backup">That file isn\'t a Tryst backup. Nothing on this phone was changed.</string>
     <string name="backup_error_newer_version">This backup was made by a newer version of Tryst. Update Tryst, then try again. Nothing on this phone was changed.</string>
+    <string name="backup_error_newer_version_named">This backup was made with Tryst %1$s, which is newer than this one. Update Tryst, then try again. Nothing on this phone was changed.</string>
+    <string name="backup_progress_check_title">Checking the backup</string>
+    <string name="backup_check_ok_title">Backup checks out</string>
+    <string name="backup_check_ok_body">Every part of the file opened correctly, including %1$d photos. Nothing on this phone was changed.</string>
+    <string name="backup_check_fail_title">Couldn\'t check the backup</string>
+    <string name="settings_check_backup">Check a backup</string>
+    <string name="settings_check_backup_desc">Opens a backup file with its password and reads every part of it, without restoring anything. Use it to make sure a backup you\'ve saved somewhere still works.</string>
+    <string name="backup_summary_made">Made %1$s with Tryst %2$s.</string>
+    <string name="backup_summary_made_version">Made with Tryst %1$s.</string>
+    <string name="backup_summary_made_unknown">Made with a version of Tryst from before 0.7.2, which didn\'t record when.</string>
+    <string name="backup_summary_counts">It holds %1$d trysts, %2$d partners and %3$d photos.</string>
+    <plurals name="backup_summary_periods">
+        <item quantity="one">Also %d logged period.</item>
+        <item quantity="other">Also %d logged periods.</item>
+    </plurals>
+    <string name="backup_summary_settings">Your app settings are included.</string>
+    <string name="backup_preview_title">Restore this backup?</string>
+    <string name="backup_preview_replace">Replace: everything on this phone is removed first, then the backup is brought in.</string>
+    <string name="backup_preview_merge">Merge: the backup is added on top of what\'s on this phone.</string>
+    <string name="backup_preview_loss">This backup is older than some of what\'s on this phone. Replacing would delete these for good, because the backup has nothing to put back: %1$s. Merge instead keeps them.</string>
+    <string name="backup_preview_older">It was made by an older Tryst, so anything added since then, like person colors, will be empty after replacing.</string>
+    <string name="backup_preview_restore">Restore</string>
+    <string name="backup_preview_replace_anyway">Replace anyway</string>
+    <string name="backup_preview_merge_instead">Merge instead</string>
+    <plurals name="backup_loss_periods">
+        <item quantity="one">%d period</item>
+        <item quantity="other">%d periods</item>
+    </plurals>
+    <plurals name="backup_loss_album_photos">
+        <item quantity="one">%d album photo</item>
+        <item quantity="other">%d album photos</item>
+    </plurals>
+    <plurals name="backup_loss_orientations">
+        <item quantity="one">%d orientation label</item>
+        <item quantity="other">%d orientation labels</item>
+    </plurals>
+    <string name="backup_loss_profile">your profile</string>
+    <plurals name="backup_loss_categories">
+        <item quantity="one">%d category entry (ones its trysts use come back)</item>
+        <item quantity="other">%d category entries (ones its trysts use come back)</item>
+    </plurals>
+    <string name="backup_loss_other">other saved details</string>
+    <plurals name="backup_result_import_periods">
+        <item quantity="one">Also %d period.</item>
+        <item quantity="other">Also %d periods.</item>
+    </plurals>
     <string name="backup_error_damaged">The file looks damaged or was cut short, so it can\'t be restored. Nothing on this phone was changed.</string>
     <string name="backup_error_disk_full">The phone ran out of storage. Free some space and try again. Nothing was changed.</string>
     <string name="backup_error_import_other">Something went wrong reading the backup (%1$s). Nothing on this phone was changed.</string>

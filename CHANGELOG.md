@@ -15,13 +15,17 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ### Added
 
+- **See a backup before you restore it.** After you enter the password, Tryst now shows what the backup holds (when it was made and by which version, how many trysts, partners, photos and periods, and whether your settings are in it) and asks before changing anything.
+- **A warning before a restore would lose data.** If you choose Replace with a backup made before something you now use (for example a backup from before cycle tracking, on a phone with periods logged), the preview says exactly what would be deleted and offers Merge instead.
+- **Check a backup.** Settings → Backup & restore → Check a backup opens a backup file with its password and reads every part of it, including every photo, without restoring anything. Use it to make sure a backup you've stored somewhere still works.
+- **Backups now record when and with which version they were made**, and the restore summary counts periods too.
 - **Pick a color for each person.** Partners and your own profile now have a Color choice (16 colors, or Automatic, which keeps the color picked from the name as before). The color is used for that person's period strip on the calendar and in the Insights People chart. A color that came in from an import shows as "Current color" until you change it.
 - **Periods on the Trysts calendar (CYC-1).** Settings → Cycle tracking → Show on the Trysts calendar adds a thin strip along the bottom of each period day, in each person's color (the same color Insights uses for them). With predictions on, an outlined strip marks the days the next period is likely to start, from today on. A short legend under the calendar names who is shown. "Whose periods to show" picks people; picking nobody shows everyone. Off by default, and the switch rides the settings backup.
 
 ### Fixed
 
 - **Restored settings take effect right away.** Restoring a backup that includes your settings used to leave the theme, cycle tracking and the rest unchanged on screen until Tryst was restarted. They now apply as soon as the restore finishes.
-- **A backup from a newer Tryst is refused clearly.** Restoring a backup made by a newer version now stops with "this backup is from a newer version" before anything changes, instead of failing with an unclear error or quietly leaving out data this version doesn't know about.
+- **A backup from a newer Tryst is refused clearly.** Restoring a backup made by a newer version now stops with "this backup is from a newer version", naming the version it needs when the backup says, before anything changes, instead of failing with an unclear error or quietly leaving out data this version doesn't know about.
 - **The calendar no longer goes blank after a restore.** If the people picked under "Whose periods to show" no longer exist (after a restore or Delete all data), the calendar shows everyone again, matching what Settings says.
 
 ### Changed

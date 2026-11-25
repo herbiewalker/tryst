@@ -21,7 +21,9 @@ import app.tryst.core.crypto.BackupCrypto
 import app.tryst.core.security.Pbkdf2
 import app.tryst.core.session.SessionManager
 import app.tryst.data.db.CatalogAdoption
+import app.tryst.data.db.CatalogSeeds
 import app.tryst.data.media.EncryptedMediaStore
+import app.tryst.ui.common.AppVersion
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.IOException
 import java.io.InputStream
@@ -80,7 +82,16 @@ class BackupManager @Inject constructor(
         ZipOutputStream(BackupCrypto.encryptingStream(key, counted)).use { zip ->
             onProgress(BackupProgress(BackupStage.DATABASE))
             zip.putNextEntry(ZipEntry("data.json"))
-            zip.write(dumpDatabase(db).toString().toByteArray(Charsets.UTF_8))
+            // "meta" (0.7.2, BKP-3) says what made the backup and when, so a restore can describe it first and
+            // a too-new backup can name the version it needs. Older apps never read it.
+            val root = dumpDatabase(db).put(
+                "meta",
+                JSONObject()
+                    .put("appVersion", AppVersion.name(appContext))
+                    .put("appVersionCode", AppVersion.code(appContext))
+                    .put("createdAt", System.currentTimeMillis()),
+            )
+            zip.write(root.toString().toByteArray(Charsets.UTF_8))
             zip.closeEntry()
             // App settings (theme/general/Insights-layout/gallery-layout — QOL-5). Optional per the
             // export dialog's toggle; never includes the PIN/vault/biometric config, which live outside
@@ -142,6 +153,161 @@ class BackupManager @Inject constructor(
         }
     }
 
+    /**
+     * Reads what a backup holds without changing anything (BKP-3). The quick form ([fullCheck] false) decrypts
+     * only `data.json`, enough to describe the backup before a restore and to spot what a "replace" would lose.
+     * The full form decrypts every byte, so a damaged or cut-short file is caught, and counts the photos it
+     * actually holds: that's "Check a backup".
+     */
+    suspend fun inspect(
+        password: String,
+        input: InputStream,
+        fullCheck: Boolean = false,
+        onProgress: (BackupProgress) -> Unit = {},
+    ): BackupSummary {
+        val tracker = ReadTracker()
+        try {
+            return inspectInternal(password, input, fullCheck, onProgress, tracker)
+        } catch (e: BackupException) {
+            throw e
+        } catch (e: Exception) {
+            throw classify(e, tracker)
+        }
+    }
+
+    @Suppress("NestedBlockDepth")
+    private suspend fun inspectInternal(
+        password: String,
+        input: InputStream,
+        fullCheck: Boolean,
+        onProgress: (BackupProgress) -> Unit,
+        tracker: ReadTracker,
+    ): BackupSummary = withContext(Dispatchers.IO) {
+        onProgress(BackupProgress(BackupStage.PREPARING))
+        val key = readHeaderAndDeriveKey(password, input)
+        var root: JSONObject? = null
+        var hasSettings = false
+        var photosFound = 0
+        ZipInputStream(BackupCrypto.decryptingStream(key, input)).use { zip ->
+            // data.json comes first and settings.json, when present, right after it. A quick look stops at the
+            // first photo instead of decrypting them all.
+            var entry: ZipEntry? = zip.nextEntry
+            while (entry != null && (fullCheck || !entry.name.startsWith("media/"))) {
+                tracker.entries++
+                when {
+                    entry.name == "data.json" -> {
+                        root = JSONObject(zip.readBytes().toString(Charsets.UTF_8))
+                        onProgress(BackupProgress(BackupStage.DATABASE))
+                    }
+                    entry.name == "settings.json" -> hasSettings = true
+                    entry.name.startsWith("media/") -> {
+                        // Reading through is what proves the bytes decrypt (each segment is authenticated).
+                        zip.copyTo(DiscardingOutputStream)
+                        photosFound++
+                        onProgress(BackupProgress(BackupStage.PHOTOS, photosFound, root?.let(::expectedPhotoCount)))
+                    }
+                }
+                zip.closeEntry()
+                entry = zip.nextEntry
+            }
+        }
+        val data = root ?: throw BackupException(BackupError.DAMAGED)
+        summarize(data, hasSettings, if (fullCheck) photosFound else null)
+    }
+
+    private fun summarize(root: JSONObject, hasSettings: Boolean, photosFound: Int?): BackupSummary {
+        val db = session.database().openHelper.writableDatabase
+        val schema = root.optInt("schemaVersion", 0)
+        val backupTables = root.optJSONObject("tables")
+        val meta = root.optJSONObject("meta")
+        val comesBack = idsReferencedByTrysts(root)
+        // A table the backup has no entry for at all predates it; "replace" empties it here and refills nothing.
+        val wouldRemove = TABLES
+            .filter { backupTables?.has(it) != true }
+            .associateWith { countUserRows(db, it, comesBack) }
+            .filterValues { it > 0 }
+        return BackupSummary(
+            schemaVersion = schema,
+            appVersion = appVersionOf(root),
+            createdAt = meta?.optLong("createdAt", 0L)?.takeIf { it > 0L },
+            trysts = tableRows(root, "encounters"),
+            partners = tableRows(root, "partners"),
+            photos = expectedPhotoCount(root),
+            periods = tableRows(root, "cycle_period"),
+            hasSettings = hasSettings,
+            newerThanApp = schema > db.version,
+            olderThanApp = schema < db.version,
+            replaceWouldRemove = wouldRemove,
+            photosFound = photosFound,
+        )
+    }
+
+    /**
+     * Rows in [table] that a "replace" would really lose: starter entries seeded on install don't count (a fresh
+     * install puts them back), and neither do category entries the backup's own trysts refer to, because restore
+     * re-adopts those from the trysts that use them (`CatalogAdoption`). What's left is what the user made and
+     * the backup knows nothing about.
+     */
+    private fun countUserRows(db: androidx.sqlite.db.SupportSQLiteDatabase, table: String, comesBack: Set<String>): Int {
+        // Join tables and cycle_day have no single id column; every row of theirs counts.
+        if (!hasIdColumn(db, table)) return countRows(db, table)
+        val skip = CatalogSeeds.seededIds(table) + comesBack
+        var count = 0
+        db.query("SELECT id FROM $table").use { c ->
+            while (c.moveToNext()) if (c.getString(0) !in skip) count++
+        }
+        return count
+    }
+
+    private fun hasIdColumn(db: androidx.sqlite.db.SupportSQLiteDatabase, table: String): Boolean = db.query("PRAGMA table_info(`$table`)").use { c ->
+        val name = c.getColumnIndex("name")
+        generateSequence { if (c.moveToNext()) c.getString(name) else null }.any { it == "id" }
+    }
+
+    /**
+     * Every id the backup's trysts mention in any column, with the `custom:` prefix dropped so it matches a
+     * catalog row id. Splitting every text value on non-id characters is enough.
+     */
+    private fun idsReferencedByTrysts(root: JSONObject): Set<String> {
+        val rows = root.optJSONObject("tables")?.optJSONArray("encounters") ?: return emptySet()
+        val ids = HashSet<String>()
+        for (i in 0 until rows.length()) {
+            val row = rows.optJSONObject(i) ?: continue
+            for (key in row.keys()) {
+                val value = row.opt(key) as? String ?: continue
+                // Lists are "A,B", maps are "0=A,1=B", user entries are "custom:<uuid>"; ids themselves are only
+                // letters, digits, '_' and '-', so splitting on anything else finds them all.
+                value.replace(CUSTOM_ID_PREFIX, "").split(ID_SEPARATORS).filterTo(ids) { it.isNotEmpty() }
+            }
+        }
+        return ids
+    }
+
+    /** The app version a backup says made it ("meta", 0.7.2+); null for older backups. */
+    private fun appVersionOf(root: JSONObject): String? = root.optJSONObject("meta")?.optString("appVersion")?.takeIf { it.isNotBlank() }
+
+    /**
+     * Reads the clear header (`MAGIC | version | salt | iterations`), rejects what isn't a backup this build
+     * understands, and derives the key. Leaves [input] positioned at the encrypted stream.
+     */
+    private fun readHeaderAndDeriveKey(password: String, input: InputStream): ByteArray {
+        val magic = ByteArray(MAGIC.size).also { readFully(input, it) }
+        if (!magic.contentEquals(MAGIC)) throw BackupException(BackupError.NOT_A_BACKUP)
+        val formatVersion = input.read()
+        val salt = ByteArray(SALT_BYTES).also { readFully(input, it) }
+        val iterations = ByteBuffer.wrap(ByteArray(4).also { readFully(input, it) }).int
+        val problem = when {
+            formatVersion > MAX_FORMAT_VERSION -> BackupError.NEWER_VERSION
+            formatVersion < MIN_FORMAT_VERSION -> BackupError.NOT_A_BACKUP
+            // The iteration count comes from the (untrusted) file header. Bound it: a crafted value like
+            // Int.MAX_VALUE would otherwise hang the app for minutes deriving the key (DoS).
+            iterations !in MIN_ITERATIONS..MAX_ITERATIONS -> BackupError.NOT_A_BACKUP
+            else -> null
+        }
+        if (problem != null) throw BackupException(problem)
+        return Pbkdf2.derive(password, salt, iterations)
+    }
+
     /** Turns whatever went wrong into a [BackupException] the screen can explain. */
     private fun classify(e: Exception, tracker: ReadTracker): BackupException = when {
         e.message?.contains("ENOSPC", ignoreCase = true) == true || e.message?.contains("No space left", ignoreCase = true) == true ->
@@ -166,18 +332,7 @@ class BackupManager @Inject constructor(
         tracker: ReadTracker,
     ): ImportResult = withContext(Dispatchers.IO) {
         onProgress(BackupProgress(BackupStage.PREPARING))
-        val magic = ByteArray(MAGIC.size).also { readFully(input, it) }
-        if (!magic.contentEquals(MAGIC)) throw BackupException(BackupError.NOT_A_BACKUP)
-        val formatVersion = input.read()
-        if (formatVersion > MAX_FORMAT_VERSION) throw BackupException(BackupError.NEWER_VERSION)
-        if (formatVersion < MIN_FORMAT_VERSION) throw BackupException(BackupError.NOT_A_BACKUP)
-        val salt = ByteArray(SALT_BYTES).also { readFully(input, it) }
-        val iterations = ByteBuffer.wrap(ByteArray(4).also { readFully(input, it) }).int
-        // The iteration count comes from the (untrusted) file header. Bound it: a crafted value like
-        // Int.MAX_VALUE would otherwise hang the app for minutes deriving the key (DoS).
-        if (iterations !in MIN_ITERATIONS..MAX_ITERATIONS) throw BackupException(BackupError.NOT_A_BACKUP)
-
-        val key = Pbkdf2.derive(password, salt, iterations)
+        val key = readHeaderAndDeriveKey(password, input)
         val db = session.database().openHelper.writableDatabase
         val stagedIds = mutableListOf<String>()
         var result: ImportResult? = null
@@ -217,7 +372,9 @@ class BackupManager @Inject constructor(
             // A backup from a newer Tryst can carry tables and columns this build doesn't have: inserting it would
             // either fail on an unknown column or quietly drop whole tables (a v20 backup into 0.6.x loses every
             // period). Refuse it up front, before anything is written.
-            if (root.optInt("schemaVersion", 0) > db.version) throw BackupException(BackupError.NEWER_VERSION)
+            if (root.optInt("schemaVersion", 0) > db.version) {
+                throw BackupException(BackupError.NEWER_VERSION, madeWith = appVersionOf(root))
+            }
             onProgress(BackupProgress(BackupStage.FINISHING))
 
             // Phase 2: DB transaction — wipe (if requested) + restore. Both halves commit as one
@@ -259,6 +416,7 @@ class BackupManager @Inject constructor(
                 partners = tableRows(root, "partners"),
                 photos = stagedIds.size,
                 withSettings = settingsJson != null,
+                periods = tableRows(root, "cycle_period"),
             )
         } finally {
             // Any staging file left over (loop-fail before Phase 3, or Phase-3 rename failure) is
@@ -270,8 +428,26 @@ class BackupManager @Inject constructor(
 
     private fun tableRows(root: JSONObject, table: String): Int = root.optJSONObject("tables")?.optJSONArray(table)?.length() ?: 0
 
-    /** Roughly how many photo blobs a backup holds, from its row counts, so import can show a real progress bar. */
-    private fun expectedPhotoCount(root: JSONObject): Int = tableRows(root, "media") + tableRows(root, "person_photo")
+    /**
+     * How many photo blobs a backup holds, worked out the same way export gathers them: distinct ids across
+     * tryst photos, portrait-album rows and partner and profile avatars (older backups have avatars with no
+     * album row). Used for the restore preview and the progress bars.
+     */
+    private fun expectedPhotoCount(root: JSONObject): Int {
+        val tables = root.optJSONObject("tables") ?: return 0
+        val ids = HashSet<String>()
+        fun collect(table: String, column: String) {
+            val rows = tables.optJSONArray(table) ?: return
+            for (i in 0 until rows.length()) {
+                rows.optJSONObject(i)?.optString(column)?.takeIf { it.isNotBlank() && it != "null" }?.let(ids::add)
+            }
+        }
+        collect("media", "id")
+        collect("person_photo", "mediaBlobId")
+        collect("partners", "photoMediaId")
+        collect("profile", "photoMediaId")
+        return ids.size
+    }
 
     private fun countRows(db: androidx.sqlite.db.SupportSQLiteDatabase, table: String): Int = db.query("SELECT COUNT(*) FROM $table").use { if (it.moveToFirst()) it.getInt(0) else 0 }
 
@@ -411,6 +587,12 @@ class BackupManager @Inject constructor(
         const val CURRENT_FORMAT_VERSION = MAX_FORMAT_VERSION
         const val SALT_BYTES = 16
 
+        // How a tryst refers to a user-made catalog entry: "custom:<row id>".
+        const val CUSTOM_ID_PREFIX = "custom:"
+
+        // Anything that can't be part of a catalog id (enum-style names or UUIDs).
+        val ID_SEPARATORS = Regex("[^A-Za-z0-9_-]+")
+
         // A plain SQL identifier — used to vet untrusted backup column names before they reach the
         // framework's (unquoted) INSERT column list.
         val COLUMN_NAME = Regex("[A-Za-z_][A-Za-z0-9_]*")
@@ -435,6 +617,13 @@ class BackupManager @Inject constructor(
             "cycle_period", "cycle_day",
         )
     }
+}
+
+/** Swallows bytes; reading a photo entry through it is what verifies it without storing it anywhere. */
+private object DiscardingOutputStream : OutputStream() {
+    override fun write(b: Int) = Unit
+
+    override fun write(b: ByteArray, off: Int, len: Int) = Unit
 }
 
 /** Counts the bytes that pass through, so an export can report how big the file it wrote is. */

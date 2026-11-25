@@ -38,6 +38,9 @@ object CatalogSeeds {
         "ejaculation_locations" to listOf("NONE" to "Didn't finish", "IN_CONDOM" to "In condom"),
     )
 
+    /** The stable ids seeded into [table], so a restore preview can tell starter rows from entries the user made. */
+    fun seededIds(table: String): Set<String> = SEEDS[table].orEmpty().mapTo(mutableSetOf()) { it.first }
+
     fun seed(db: SupportSQLiteDatabase) {
         for ((table, rows) in SEEDS) {
             for ((id, label) in rows) {

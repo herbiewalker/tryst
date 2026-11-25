@@ -30,6 +30,7 @@ import app.tryst.data.backup.BackupException
 import app.tryst.data.backup.BackupManager
 import app.tryst.data.backup.BackupProgress
 import app.tryst.data.backup.BackupStage
+import app.tryst.data.backup.BackupSummary
 import app.tryst.data.backup.ExportResult
 import app.tryst.data.backup.ImportResult
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,15 +40,24 @@ import javax.inject.Inject
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-/** What to tell the user once an export or import has ended (QOL-9). */
+/** Which kind of backup run is going on, for the progress and result titles. */
+enum class BackupRun { EXPORT, IMPORT, CHECK }
+
+/** What to tell the user once an export, import or check has ended (QOL-9, BKP-3). */
 sealed interface BackupOutcome {
     data class Exported(val result: ExportResult) : BackupOutcome
 
     data class Restored(val result: ImportResult) : BackupOutcome
 
+    /** "Check a backup" read the whole file and it's fine. */
+    data class Checked(val summary: BackupSummary) : BackupOutcome
+
     /** [messageRes] explains the cause; [detail] fills its `%1$s` when it has one. */
-    data class Failed(val exporting: Boolean, val messageRes: Int, val detail: String? = null) : BackupOutcome
+    data class Failed(val run: BackupRun, val messageRes: Int, val detail: String? = null) : BackupOutcome
 }
+
+/** A restore that has been read and described but not started: the user confirms it from the preview. */
+data class RestorePreview(val uri: Uri, val password: String, val wipeFirst: Boolean, val summary: BackupSummary)
 
 @HiltViewModel
 class BackupViewModel @Inject constructor(
@@ -69,8 +79,12 @@ class BackupViewModel @Inject constructor(
     var progress by mutableStateOf<BackupProgress?>(null)
         private set
 
-    /** True while an export (not an import) is the thing running, for the progress title. */
-    var exporting by mutableStateOf(false)
+    /** What is running, for the progress title. */
+    var running by mutableStateOf(BackupRun.EXPORT)
+        private set
+
+    /** Set once a backup has been read for a restore and is waiting on the user's go-ahead. */
+    var preview by mutableStateOf<RestorePreview?>(null)
         private set
 
     var busy by mutableStateOf(false)
@@ -86,7 +100,7 @@ class BackupViewModel @Inject constructor(
     fun export(uri: Uri, password: String, includeSettings: Boolean = true) {
         viewModelScope.launch {
             busy = true
-            exporting = true
+            running = BackupRun.EXPORT
             outcome = null
             progress = BackupProgress(BackupStage.PREPARING)
             // Stamp the time first so the exported settings carry it too; put the old value back if the export fails.
@@ -101,9 +115,9 @@ class BackupViewModel @Inject constructor(
                 generalPreferences.setLastBackupAt(previous)
                 Log.e("TRYSTEXPORT", "export failed: ${e.javaClass.name}", e)
                 outcome = if (isDiskFull(e)) {
-                    BackupOutcome.Failed(exporting = true, messageRes = R.string.backup_error_disk_full)
+                    BackupOutcome.Failed(BackupRun.EXPORT, messageRes = R.string.backup_error_disk_full)
                 } else {
-                    BackupOutcome.Failed(exporting = true, messageRes = R.string.backup_error_export_other, detail = e.message)
+                    BackupOutcome.Failed(BackupRun.EXPORT, messageRes = R.string.backup_error_export_other, detail = e.message)
                 }
             } finally {
                 progress = null
@@ -112,10 +126,79 @@ class BackupViewModel @Inject constructor(
         }
     }
 
-    fun import(uri: Uri, password: String, wipeFirst: Boolean) {
+    /**
+     * Step one of a restore (BKP-3): read the backup's description without changing anything, then show it.
+     * A backup from a newer Tryst is refused right here, naming the version it needs when it says.
+     */
+    fun prepareRestore(uri: Uri, password: String, wipeFirst: Boolean) {
         viewModelScope.launch {
             busy = true
-            exporting = false
+            outcome = null
+            try {
+                val summary = inspect(uri, password, fullCheck = false)
+                preview = if (summary.newerThanApp) {
+                    outcome = newerVersionOutcome(BackupRun.IMPORT, summary.appVersion)
+                    null
+                } else {
+                    RestorePreview(uri, password, wipeFirst, summary)
+                }
+            } catch (e: Exception) {
+                outcome = failure(BackupRun.IMPORT, e)
+            } finally {
+                busy = false
+            }
+        }
+    }
+
+    /** The user went ahead from the preview, possibly switching between replace and merge there. */
+    fun confirmRestore(wipeFirst: Boolean) {
+        val p = preview ?: return
+        preview = null
+        import(p.uri, p.password, wipeFirst)
+    }
+
+    fun cancelRestore() {
+        preview = null
+    }
+
+    /** "Check a backup": decrypt every byte of the file and describe it, changing nothing (BKP-3). */
+    fun check(uri: Uri, password: String) {
+        viewModelScope.launch {
+            busy = true
+            running = BackupRun.CHECK
+            outcome = null
+            progress = BackupProgress(BackupStage.PREPARING)
+            try {
+                val summary = inspect(uri, password, fullCheck = true) { progress = it }
+                outcome = if (summary.newerThanApp) newerVersionOutcome(BackupRun.CHECK, summary.appVersion) else BackupOutcome.Checked(summary)
+            } catch (e: Exception) {
+                outcome = failure(BackupRun.CHECK, e)
+            } finally {
+                progress = null
+                busy = false
+            }
+        }
+    }
+
+    private suspend fun inspect(uri: Uri, password: String, fullCheck: Boolean, onProgress: (BackupProgress) -> Unit = {}): BackupSummary = context.contentResolver.openInputStream(uri)?.use { input -> backup.inspect(password, input, fullCheck, onProgress) }
+        ?: throw IOException("Couldn't open the file")
+
+    private fun newerVersionOutcome(run: BackupRun, madeWith: String?) = if (madeWith != null) {
+        BackupOutcome.Failed(run, R.string.backup_error_newer_version_named, madeWith)
+    } else {
+        BackupOutcome.Failed(run, R.string.backup_error_newer_version)
+    }
+
+    private fun failure(run: BackupRun, e: Exception): BackupOutcome {
+        Log.e("TRYSTIMPORT", "backup read failed: ${e.javaClass.name}", e)
+        val be = e as? BackupException
+        return if (be?.kind == BackupError.NEWER_VERSION) newerVersionOutcome(run, be.madeWith) else BackupOutcome.Failed(run, messageFor(e), e.message)
+    }
+
+    private fun import(uri: Uri, password: String, wipeFirst: Boolean) {
+        viewModelScope.launch {
+            busy = true
+            running = BackupRun.IMPORT
             outcome = null
             progress = BackupProgress(BackupStage.PREPARING)
             try {
@@ -127,8 +210,7 @@ class BackupViewModel @Inject constructor(
                 if (result.withSettings) preferenceStores.reloadAll()
                 outcome = BackupOutcome.Restored(result)
             } catch (e: Exception) {
-                Log.e("TRYSTIMPORT", "import failed: ${e.javaClass.name}: ${e.message}", e)
-                outcome = BackupOutcome.Failed(exporting = false, messageRes = messageFor(e), detail = e.message)
+                outcome = failure(BackupRun.IMPORT, e)
             } finally {
                 progress = null
                 busy = false

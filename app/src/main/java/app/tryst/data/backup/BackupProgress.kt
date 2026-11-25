@@ -40,12 +40,39 @@ enum class BackupError {
     OTHER,
 }
 
-class BackupException(val kind: BackupError, cause: Throwable? = null) : IOException(cause?.message ?: kind.name, cause)
+/** [madeWith] is the newer app version named in a refused backup, when it says. */
+class BackupException(val kind: BackupError, cause: Throwable? = null, val madeWith: String? = null) : IOException(cause?.message ?: kind.name, cause)
 
 /** What an export wrote. */
 data class ExportResult(val bytes: Long, val trysts: Int, val partners: Int, val photos: Int)
 
 /** What an import brought in. */
-data class ImportResult(val trysts: Int, val partners: Int, val photos: Int, val withSettings: Boolean)
+data class ImportResult(val trysts: Int, val partners: Int, val photos: Int, val withSettings: Boolean, val periods: Int = 0)
+
+/**
+ * What a backup holds, read without changing anything (BKP-3): shown before a restore and by "Check a backup".
+ * [appVersion] and [createdAt] are null for backups made before 0.7.2, which didn't record them.
+ */
+data class BackupSummary(
+    val schemaVersion: Int,
+    val appVersion: String?,
+    val createdAt: Long?,
+    val trysts: Int,
+    val partners: Int,
+    val photos: Int,
+    val periods: Int,
+    val hasSettings: Boolean,
+    /** Made by a newer Tryst; restoring it is refused. */
+    val newerThanApp: Boolean,
+    /** Made by an older Tryst: details added since then come back empty after a "replace". */
+    val olderThanApp: Boolean,
+    /**
+     * Data on this phone that a "replace" restore would delete without bringing anything back, because the backup
+     * predates it: table name → rows on this phone. Empty when nothing would be lost that way.
+     */
+    val replaceWouldRemove: Map<String, Int>,
+    /** Photos actually found in the file; only set by a full check, which reads every byte. */
+    val photosFound: Int? = null,
+)
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

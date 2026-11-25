@@ -31,6 +31,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.FactCheck
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.filled.Fingerprint
@@ -193,6 +194,7 @@ fun SettingsScreen(
     var pendingExportPassword by remember { mutableStateOf("") }
     var pendingExportIncludeSettings by remember { mutableStateOf(true) }
     var pendingImportUri by remember { mutableStateOf<Uri?>(null) }
+    var pendingCheckUri by remember { mutableStateOf<Uri?>(null) }
     val createBackup = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/octet-stream"),
     ) { uri ->
@@ -204,6 +206,9 @@ fun SettingsScreen(
             pendingImportUri = uri
             showImportPw = true
         }
+    }
+    val openBackupToCheck = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        pendingCheckUri = uri
     }
 
     val biometricEnableTitle = stringResource(R.string.settings_biometric_enable)
@@ -495,7 +500,20 @@ fun SettingsScreen(
                     openBackup.launch(arrayOf("*/*"))
                 },
             )
-            backupViewModel.progress?.let { BackupProgressDialog(exporting = backupViewModel.exporting, progress = it) }
+            SettingsRow(
+                icon = Icons.Filled.FactCheck,
+                title = stringResource(R.string.settings_check_backup),
+                description = stringResource(R.string.settings_check_backup_desc),
+                enabled = !backupViewModel.busy,
+                onClick = {
+                    backupViewModel.suppressAutoLock()
+                    openBackupToCheck.launch(arrayOf("*/*"))
+                },
+            )
+            backupViewModel.progress?.let { BackupProgressDialog(run = backupViewModel.running, progress = it) }
+            backupViewModel.preview?.let {
+                RestorePreviewDialog(preview = it, onRestore = backupViewModel::confirmRestore, onCancel = backupViewModel::cancelRestore)
+            }
             backupViewModel.outcome?.let { BackupOutcomeDialog(outcome = it, onDismiss = backupViewModel::dismissOutcome) }
             SettingsRow(
                 icon = Icons.Filled.TableChart,
@@ -571,6 +589,18 @@ fun SettingsScreen(
         )
     }
 
+    pendingCheckUri?.let { uri ->
+        BackupPasswordDialog(
+            title = stringResource(R.string.settings_backup_pw_enter_title),
+            requireConfirm = false,
+            onConfirm = { pw, _, _ ->
+                pendingCheckUri = null
+                backupViewModel.check(uri, pw)
+            },
+            onDismiss = { pendingCheckUri = null },
+        )
+    }
+
     if (showImportPw) {
         BackupPasswordDialog(
             title = stringResource(R.string.settings_backup_pw_enter_title),
@@ -578,7 +608,7 @@ fun SettingsScreen(
             wipeFirstInitial = true,
             onConfirm = { pw, wipeFirst, _ ->
                 showImportPw = false
-                pendingImportUri?.let { backupViewModel.import(it, pw, wipeFirst) }
+                pendingImportUri?.let { backupViewModel.prepareRestore(it, pw, wipeFirst) }
                 pendingImportUri = null
             },
             onDismiss = {

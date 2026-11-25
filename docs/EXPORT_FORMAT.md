@@ -31,6 +31,8 @@ AES-256-GCM-HKDF streaming (Tink `AesGcmHkdfStreaming`, 1 MiB segments,
 associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, iterations) → 32 bytes
         ↓ plaintext of that stream is a ZIP:
   data.json        every table dumped generically: { "schemaVersion": N, "tables": { <table>: [ {col: value, …}, … ] } }
+                   plus, from 0.7.2, "meta": { "appVersion": "0.7.2", "appVersionCode": 25, "createdAt": <epoch ms> }
+                   (BKP-3). Older apps ignore it; a backup without it is just described as "from before 0.7.2".
   settings.json    OPTIONAL (v2, QOL-5) — { <SharedPreferences store name>: { <key>: {"t": type, "v": value}, … } }
                    for the four non-sensitive plain-prefs stores (tryst_appearance, tryst_general,
                    tryst_insights, tryst_gallery). Absent entirely on a v1 backup, or when the export
@@ -58,6 +60,12 @@ associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, i
   media, person_photo (v15 portrait-album rows), encounter_partner, encounter_position, encounter_tag,
   cycle_period, cycle_day (v20 cycle tracking; a period before its days).
   Rows are inserted with `INSERT OR REPLACE` (idempotent re-import).
+- **Inspect before restore (0.7.2, BKP-3):** `BackupManager.inspect()` reads a backup without writing anything.
+  The quick form decrypts only `data.json` (and notes whether `settings.json` follows); the restore preview uses
+  it to describe the backup and to list tables the phone has rows in but the backup has no entry for, which a
+  "replace" would empty for good. It leaves out the starter entries seeded on install and any category entry the
+  backup's own trysts refer to, since restore re-adopts those; what remains is data the backup can't put back. The full form ("Check a backup") decrypts every byte, so every AEAD segment is
+  authenticated, and counts the photo entries.
 - **Schema check (0.7.2):** `data.json`'s `schemaVersion` must not be higher than this build's database version;
   a newer backup is refused as "newer version" before anything is written. Older backups restore fine: columns
   they lack come back NULL or with their column default (for example `profile.color`, v21), and tables they lack

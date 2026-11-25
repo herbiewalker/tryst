@@ -182,6 +182,9 @@ flowchart TD
         X5 --> X6[(".tryst file via SAF")]
     end
     subgraph Import
+        I0["inspect(): read data.json only"] --> PV{"preview: what it holds;<br/>replace would delete newer data?"}
+        PV -- "cancel" --> STOP["nothing changes"]
+        PV -- "restore / merge instead / replace anyway" --> I1
         I1[(".tryst file")] --> I2["BackupCrypto: decrypt stream<br/>(wrong password → AEAD auth fail)"]
         I2 --> I3["unzip data.json + media"]
         I3 --> SV{"backup schemaVersion<br/>newer than this app?"}

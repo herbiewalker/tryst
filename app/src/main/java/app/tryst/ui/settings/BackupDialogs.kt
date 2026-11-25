@@ -15,6 +15,7 @@ package app.tryst.ui.settings
 
 import android.text.format.Formatter
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
@@ -27,18 +28,24 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.tryst.R
 import app.tryst.data.backup.BackupProgress
 import app.tryst.data.backup.BackupStage
+import app.tryst.data.backup.BackupSummary
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
 /**
  * Shown while an export or import runs (QOL-9): what stage it is at, a real bar once the photo count is known, and a
  * reminder to keep the app open. The screen is held awake for the duration so a long restore is never interrupted.
  */
 @Composable
-fun BackupProgressDialog(exporting: Boolean, progress: BackupProgress) {
+fun BackupProgressDialog(run: BackupRun, progress: BackupProgress) {
     val view = LocalView.current
     DisposableEffect(Unit) {
         view.keepScreenOn = true
@@ -46,7 +53,17 @@ fun BackupProgressDialog(exporting: Boolean, progress: BackupProgress) {
     }
     AlertDialog(
         onDismissRequest = {}, // not dismissible: leaving mid-way would only hide that it is still working
-        title = { Text(stringResource(if (exporting) R.string.backup_progress_export_title else R.string.backup_progress_import_title)) },
+        title = {
+            Text(
+                stringResource(
+                    when (run) {
+                        BackupRun.EXPORT -> R.string.backup_progress_export_title
+                        BackupRun.IMPORT -> R.string.backup_progress_import_title
+                        BackupRun.CHECK -> R.string.backup_progress_check_title
+                    },
+                ),
+            )
+        },
         text = {
             Column(Modifier.fillMaxWidth()) {
                 Text(stageText(progress), style = MaterialTheme.typography.bodyLarge)
@@ -93,12 +110,22 @@ fun BackupOutcomeDialog(outcome: BackupOutcome, onDismiss: () -> Unit) {
         }
         is BackupOutcome.Restored -> {
             val r = outcome.result
-            val base = stringResource(R.string.backup_result_import_body, r.trysts, r.partners, r.photos)
-            stringResource(R.string.backup_result_import_title) to
-                if (r.withSettings) base + " " + stringResource(R.string.backup_result_import_settings) else base
+            val parts = buildList {
+                add(stringResource(R.string.backup_result_import_body, r.trysts, r.partners, r.photos))
+                if (r.periods > 0) add(pluralStringResource(R.plurals.backup_result_import_periods, r.periods, r.periods))
+                if (r.withSettings) add(stringResource(R.string.backup_result_import_settings))
+            }
+            stringResource(R.string.backup_result_import_title) to parts.joinToString(" ")
         }
+        is BackupOutcome.Checked -> stringResource(R.string.backup_check_ok_title) to summaryText(outcome.summary, checked = true)
         is BackupOutcome.Failed -> {
-            val title = stringResource(if (outcome.exporting) R.string.backup_result_export_fail_title else R.string.backup_result_import_fail_title)
+            val title = stringResource(
+                when (outcome.run) {
+                    BackupRun.EXPORT -> R.string.backup_result_export_fail_title
+                    BackupRun.IMPORT -> R.string.backup_result_import_fail_title
+                    BackupRun.CHECK -> R.string.backup_check_fail_title
+                },
+            )
             title to (outcome.detail?.let { stringResource(outcome.messageRes, it) } ?: stringResource(outcome.messageRes))
         }
     }
@@ -107,6 +134,95 @@ fun BackupOutcomeDialog(outcome: BackupOutcome, onDismiss: () -> Unit) {
         title = { Text(title) },
         text = { Text(body) },
         confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_ok)) } },
+    )
+}
+
+/** Describes a backup in a sentence or three: who made it and when, what's in it, and for a check, that it read cleanly. */
+@Composable
+private fun summaryText(s: BackupSummary, checked: Boolean): String = buildList {
+    val made = s.createdAt?.let { Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate().format(madeOnFormatter) }
+    add(
+        when {
+            made != null && s.appVersion != null -> stringResource(R.string.backup_summary_made, made, s.appVersion)
+            s.appVersion != null -> stringResource(R.string.backup_summary_made_version, s.appVersion)
+            else -> stringResource(R.string.backup_summary_made_unknown)
+        },
+    )
+    add(stringResource(R.string.backup_summary_counts, s.trysts, s.partners, s.photos))
+    if (s.periods > 0) add(pluralStringResource(R.plurals.backup_summary_periods, s.periods, s.periods))
+    if (s.hasSettings) add(stringResource(R.string.backup_summary_settings))
+    if (checked) add(stringResource(R.string.backup_check_ok_body, s.photosFound ?: 0))
+}.joinToString(" ")
+
+private val madeOnFormatter: DateTimeFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
+
+/** What a "replace" would delete for good, in words: "12 periods, 3 album photos". */
+@Composable
+private fun lossText(removals: Map<String, Int>): String = buildList {
+    removals["cycle_period"]?.let { add(pluralStringResource(R.plurals.backup_loss_periods, it, it)) }
+    removals["person_photo"]?.let { add(pluralStringResource(R.plurals.backup_loss_album_photos, it, it)) }
+    removals["orientations"]?.let { add(pluralStringResource(R.plurals.backup_loss_orientations, it, it)) }
+    removals["profile"]?.let { add(stringResource(R.string.backup_loss_profile)) }
+    removals.filterKeys { it in CATALOG_TABLES }.values.sum().takeIf { it > 0 }
+        ?.let { add(pluralStringResource(R.plurals.backup_loss_categories, it, it)) }
+    // Days belong to their periods; anything else this list doesn't name yet still gets a mention.
+    if (removals.keys.any { it !in NAMED_LOSSES }) add(stringResource(R.string.backup_loss_other))
+}.joinToString(", ")
+
+// The user-built category lists (D-41). A restore re-adopts the ones its own trysts use, so name them plainly.
+private val CATALOG_TABLES = setOf("acts", "kinks", "positions", "toys", "occasions", "ejaculation_locations", "locations", "tags")
+
+private val NAMED_LOSSES = setOf("cycle_period", "cycle_day", "person_photo", "orientations", "profile") + CATALOG_TABLES
+
+/**
+ * The go-ahead for a restore (BKP-3): what the backup holds and what the chosen mode will do. When a "replace"
+ * would delete data the backup predates, it says what and offers to merge instead.
+ */
+@Composable
+fun RestorePreviewDialog(preview: RestorePreview, onRestore: (wipeFirst: Boolean) -> Unit, onCancel: () -> Unit) {
+    val s = preview.summary
+    val losing = preview.wipeFirst && s.replaceWouldRemove.keys.any { it != "cycle_day" }
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text(stringResource(R.string.backup_preview_title)) },
+        text = {
+            Column {
+                Text(summaryText(s, checked = false))
+                Text(
+                    stringResource(if (preview.wipeFirst) R.string.backup_preview_replace else R.string.backup_preview_merge),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 12.dp),
+                )
+                when {
+                    losing -> Text(
+                        stringResource(R.string.backup_preview_loss, lossText(s.replaceWouldRemove)),
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(top = 12.dp),
+                    )
+                    preview.wipeFirst && s.olderThanApp -> Text(
+                        stringResource(R.string.backup_preview_older),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 12.dp),
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            if (losing) {
+                TextButton(onClick = { onRestore(true) }) {
+                    Text(stringResource(R.string.backup_preview_replace_anyway), color = MaterialTheme.colorScheme.error)
+                }
+            } else {
+                TextButton(onClick = { onRestore(preview.wipeFirst) }) { Text(stringResource(R.string.backup_preview_restore)) }
+            }
+        },
+        dismissButton = {
+            Row {
+                if (losing) TextButton(onClick = { onRestore(false) }) { Text(stringResource(R.string.backup_preview_merge_instead)) }
+                TextButton(onClick = onCancel) { Text(stringResource(R.string.action_cancel)) }
+            }
+        },
     )
 }
 
