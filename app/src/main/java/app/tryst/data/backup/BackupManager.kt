@@ -214,6 +214,10 @@ class BackupManager @Inject constructor(
                 }
             }
             val root = dataJson ?: throw IOException("Backup missing data.json")
+            // A backup from a newer Tryst can carry tables and columns this build doesn't have: inserting it would
+            // either fail on an unknown column or quietly drop whole tables (a v20 backup into 0.6.x loses every
+            // period). Refuse it up front, before anything is written.
+            if (root.optInt("schemaVersion", 0) > db.version) throw BackupException(BackupError.NEWER_VERSION)
             onProgress(BackupProgress(BackupStage.FINISHING))
 
             // Phase 2: DB transaction — wipe (if requested) + restore. Both halves commit as one

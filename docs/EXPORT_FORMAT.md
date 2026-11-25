@@ -58,6 +58,10 @@ associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, i
   media, person_photo (v15 portrait-album rows), encounter_partner, encounter_position, encounter_tag,
   cycle_period, cycle_day (v20 cycle tracking; a period before its days).
   Rows are inserted with `INSERT OR REPLACE` (idempotent re-import).
+- **Schema check (0.7.2):** `data.json`'s `schemaVersion` must not be higher than this build's database version;
+  a newer backup is refused as "newer version" before anything is written. Older backups restore fine: columns
+  they lack come back NULL or with their column default (for example `profile.color`, v21), and tables they lack
+  stay empty (for example the cycle tables before v20).
 - **`recent_searches` is deliberately EXCLUDED** (v13 / SRCH-1 / D-42). Search history is
   among the most sensitive text in the app, so it lives only on the local device; an export
   never carries it and a restore leaves the local table alone.
@@ -67,6 +71,8 @@ associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, i
   a store or key missing from the backup (older export, or the toggle was off) is left exactly as
   it is on the current device — it's never cleared to make room. An unrecognized type tag from a
   future format is skipped (forward-compatible).
+  After a restore that carried settings, the app reloads every settings store in memory
+  (`PreferenceStores.reloadAll`) so they take effect without a restart.
 - **Media blobs:** export gathers ids from **four** provenance streams — `media` rows (encounter
   photos), `partners.photoMediaId` (partner avatars), `profile.photoMediaId` (the self-profile
   avatar, v7), and `person_photo.mediaBlobId` (per-person portrait album blobs, v15). Everything

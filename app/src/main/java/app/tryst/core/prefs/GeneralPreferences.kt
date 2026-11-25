@@ -165,6 +165,24 @@ class GeneralPreferences @Inject constructor(
         ?.let { runCatching { WeekStart.valueOf(it) }.getOrNull() }
         ?: WeekStart.SUNDAY
 
+    /**
+     * Re-reads every value from storage. A backup restore writes these prefs behind this object's back
+     * (`PrefsBackup.restoreAll`), so it calls this to make restored settings take effect without a restart.
+     */
+    fun reload() {
+        _autoLockTimeoutMs.value = prefs.getLong(KEY_AUTO_LOCK_MS, 0L)
+        _hapticsEnabled.value = prefs.getBoolean(KEY_HAPTICS, true)
+        _weekStart.value = loadWeekStart()
+        _defaultToCalendar.value = prefs.getBoolean(KEY_DEFAULT_CALENDAR, false)
+        _lastBackupAt.value = prefs.getLong(KEY_LAST_BACKUP_AT, 0L).takeIf { it > 0L }
+        _backupSnoozedUntil.value = prefs.getLong(KEY_BACKUP_SNOOZED_UNTIL, 0L)
+        _cycleEnabled.value = prefs.getBoolean(KEY_CYCLE_ENABLED, false)
+        _cyclePredictions.value = prefs.getBoolean(KEY_CYCLE_PREDICTIONS, true)
+        _cycleCalendar.value = prefs.getBoolean(KEY_CYCLE_CALENDAR, false)
+        _cycleCalendarOwners.value = prefs.getStringSet(KEY_CYCLE_CALENDAR_OWNERS, emptySet()).orEmpty().toSet()
+        _seenTips.value = prefs.getStringSet(KEY_SEEN_TIPS, emptySet()).orEmpty().toSet()
+    }
+
     private companion object {
         const val KEY_AUTO_LOCK_MS = "auto_lock_ms"
         const val KEY_HAPTICS = "haptics_enabled"

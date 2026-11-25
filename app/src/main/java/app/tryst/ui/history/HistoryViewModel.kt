@@ -136,8 +136,7 @@ class HistoryViewModel @Inject constructor(
                         put(self, profile?.color)
                         partners.forEach { put(CycleOwner(CyclePeriodEntity.OWNER_PARTNER, it.id), it.color) }
                     }
-                    val chosen = ownerKeys.mapNotNull(CycleOverlay::ownerFromKey).toSet().ifEmpty { null }
-                    val visible = chosen?.intersect(names.keys) ?: names.keys
+                    val visible = CycleOverlay.visibleOwners(ownerKeys, names.keys)
                     CycleOverlay.build(periods, LocalDate.now().toEpochDay(), predict, visible)
                         .entries.associate { (day, marks) ->
                             LocalDate.ofEpochDay(day) to marks.map { CalendarCycleMark(names[it.owner], it.owner.isSelf, it.predicted, colors[it.owner]) }

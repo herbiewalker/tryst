@@ -288,6 +288,87 @@ class BackupRoundTripTest {
         assertEquals(BackupError.NOT_A_BACKUP, e.kind)
     }
 
+    /** D-67: a partner's and the profile's picked colors survive export → wipe-first import. */
+    @Test
+    fun export_wipe_import_roundTripsPersonColors() = runBlocking<Unit> {
+        val now = System.currentTimeMillis()
+        val db = manager.database()
+        db.partnerDao().upsert(
+            PartnerEntity("p1", "Sam", isAnonymous = false, color = "#2D9CFF", note = null, archivedAt = null, createdAt = now, updatedAt = now),
+        )
+        db.profileDao().upsert(ProfileEntity(displayName = "Me", color = "#FF2D6F", updatedAt = now))
+
+        val bytes = exportedBytes()
+        val raw = db.openHelper.writableDatabase
+        raw.execSQL("DELETE FROM partners")
+        raw.execSQL("DELETE FROM profile")
+
+        backup.import(password, ByteArrayInputStream(bytes), wipeFirst = true)
+
+        assertEquals("#2D9CFF", db.partnerDao().getById("p1")?.color)
+        assertEquals("#FF2D6F", db.profileDao().get(ProfileEntity.SELF_ID)?.color)
+    }
+
+    /** CYC-1: the cycle switches and the "whose periods" picks ride the settings backup, and reload() picks them up. */
+    @Test
+    fun export_import_roundTripsCycleSettings_andReloadAppliesThem() = runBlocking<Unit> {
+        val general = GeneralPreferences(context)
+        general.setCycleEnabled(true)
+        general.setCyclePredictions(false)
+        general.setCycleCalendar(true)
+        general.setCycleCalendarOwners(setOf("partner:p1", "profile:self"))
+
+        val bytes = exportedBytes()
+        general.resetToDefaults() // a fresh device: everything back to defaults
+        assertFalse(general.cycleEnabled.value)
+
+        backup.import(password, ByteArrayInputStream(bytes))
+
+        // The store holds the restored values, but this live object still shows the old ones until reloaded.
+        assertFalse(general.cycleEnabled.value)
+        general.reload()
+        assertTrue(general.cycleEnabled.value)
+        assertFalse(general.cyclePredictions.value)
+        assertTrue(general.cycleCalendar.value)
+        assertEquals(setOf("partner:p1", "profile:self"), general.cycleCalendarOwners.value)
+        general.resetToDefaults()
+    }
+
+    /**
+     * A backup made by a newer Tryst (higher schemaVersion in data.json) is refused as NEWER_VERSION before
+     * anything is written, even with "replace my data" on. Built by hand: the real header and key, but a
+     * data.json that claims a schema from the future.
+     */
+    @Test
+    fun import_ofANewerSchema_isRefused_andChangesNothing() = runBlocking<Unit> {
+        seedOneTryst()
+        val header = exportedBytes().copyOfRange(0, HEADER_BYTES)
+        val salt = header.copyOfRange(MAGIC_BYTES + 1, MAGIC_BYTES + 1 + SALT_BYTES)
+        val iterations = java.nio.ByteBuffer.wrap(header, MAGIC_BYTES + 1 + SALT_BYTES, 4).int
+        val key = app.tryst.core.security.Pbkdf2.derive(password, salt, iterations)
+        val future = org.json.JSONObject()
+            .put("schemaVersion", manager.database().openHelper.writableDatabase.version + 1)
+            .put("tables", org.json.JSONObject())
+        val out = ByteArrayOutputStream().apply { write(header) }
+        java.util.zip.ZipOutputStream(app.tryst.core.crypto.BackupCrypto.encryptingStream(key, out)).use { zip ->
+            zip.putNextEntry(java.util.zip.ZipEntry("data.json"))
+            zip.write(future.toString().toByteArray(Charsets.UTF_8))
+            zip.closeEntry()
+        }
+
+        val e = assertThrows(BackupException::class.java) {
+            runBlocking { backup.import(password, ByteArrayInputStream(out.toByteArray()), wipeFirst = true) }
+        }
+        assertEquals(BackupError.NEWER_VERSION, e.kind)
+        assertNotNull("existing data must be untouched", encounters.get("e1"))
+    }
+
+    private companion object {
+        const val MAGIC_BYTES = 8
+        const val SALT_BYTES = 16
+        const val HEADER_BYTES = MAGIC_BYTES + 1 + SALT_BYTES + 4
+    }
+
     private suspend fun exportedBytes(): ByteArray = ByteArrayOutputStream().also { backup.export(password, it) }.toByteArray()
 
     private suspend fun seedOneTryst(): Long {

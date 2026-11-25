@@ -227,6 +227,28 @@ class GalleryPreferences @Inject constructor(
 
     private fun loadGridSpacing(): GridSpacing = prefs.getString(KEY_GRID_SPACING, null)?.let { runCatching { GridSpacing.valueOf(it) }.getOrNull() } ?: DEFAULT_GRID_SPACING
 
+    /**
+     * Re-reads every value from storage. A backup restore writes these prefs behind this object's back
+     * (`PrefsBackup.restoreAll`), so it calls this to make restored settings take effect without a restart.
+     */
+    fun reload() {
+        _layout.value = loadLayout()
+        _columns.value = prefs.getInt(KEY_COLUMNS, DEFAULT_COLUMNS).coerceIn(MIN_COLUMNS, MAX_COLUMNS)
+        _sort.value = loadSort()
+        _dateGrouping.value = loadGrouping()
+        _blurUntilRevealed.value = prefs.getBoolean(KEY_BLUR, false)
+        _blurGraceSeconds.value = prefs.getInt(KEY_BLUR_GRACE_S, DEFAULT_BLUR_GRACE_S).coerceIn(0, MAX_BLUR_GRACE_S)
+        _slideshowIntervalSeconds.value = prefs.getInt(KEY_SLIDESHOW_INT_S, DEFAULT_SLIDESHOW_INT_S)
+        _slideshowShuffle.value = prefs.getBoolean(KEY_SLIDESHOW_SHUFFLE, false)
+        _gridSpacing.value = loadGridSpacing()
+        _showTileCaptions.value = prefs.getBoolean(KEY_TILE_CAPTIONS, false)
+        _defaultToFavoritesOnly.value = prefs.getBoolean(KEY_DEFAULT_FAV_ONLY, false)
+        _cameraKeepCapturing.value = prefs.getBoolean(KEY_CAMERA_LOOP, false)
+        _captionEntryPoint.value = loadCaptionEntryPoint()
+        _requireReauthForPhotos.value = prefs.getBoolean(KEY_REAUTH, false)
+        _reauthGraceSeconds.value = prefs.getInt(KEY_REAUTH_GRACE_S, DEFAULT_REAUTH_GRACE_S).coerceIn(0, MAX_BLUR_GRACE_S)
+    }
+
     companion object {
         val DEFAULT_LAYOUT = GalleryLayout.JUSTIFIED_DATE
         val DEFAULT_SORT = GallerySort.NEWEST

@@ -61,6 +61,15 @@ class ThemePreferences @Inject constructor(
         ?.let { runCatching { ThemeMode.valueOf(it) }.getOrNull() }
         ?: ThemeMode.SYSTEM
 
+    /**
+     * Re-reads every value from storage. A backup restore writes these prefs behind this object's back
+     * (`PrefsBackup.restoreAll`), so it calls this to make restored settings take effect without a restart.
+     */
+    fun reload() {
+        _themeMode.value = loadMode()
+        _dynamicColor.value = prefs.getBoolean(KEY_DYNAMIC, false)
+    }
+
     private companion object {
         const val KEY_MODE = "theme_mode"
         const val KEY_DYNAMIC = "dynamic_color"

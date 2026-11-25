@@ -23,6 +23,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tryst.R
 import app.tryst.core.prefs.GeneralPreferences
+import app.tryst.core.prefs.PreferenceStores
 import app.tryst.core.session.SessionManager
 import app.tryst.data.backup.BackupError
 import app.tryst.data.backup.BackupException
@@ -54,6 +55,7 @@ class BackupViewModel @Inject constructor(
     private val session: SessionManager,
     private val backup: BackupManager,
     private val generalPreferences: GeneralPreferences,
+    private val preferenceStores: PreferenceStores,
 ) : ViewModel() {
 
     /** When the last backup was exported from this install (BKP-2); null if never. */
@@ -120,6 +122,9 @@ class BackupViewModel @Inject constructor(
                 val result = context.contentResolver.openInputStream(uri)?.use { input ->
                     backup.import(password, input, wipeFirst) { progress = it }
                 } ?: throw IOException("Couldn't open the file")
+                // The restore wrote the settings stores directly; refresh what the app holds in memory so the
+                // restored theme, cycle switches and the rest apply now rather than after a restart.
+                if (result.withSettings) preferenceStores.reloadAll()
                 outcome = BackupOutcome.Restored(result)
             } catch (e: Exception) {
                 Log.e("TRYSTIMPORT", "import failed: ${e.javaClass.name}: ${e.message}", e)

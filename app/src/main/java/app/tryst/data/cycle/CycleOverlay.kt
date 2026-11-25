@@ -57,6 +57,17 @@ object CycleOverlay {
         return maxOf(next.earliest, todayEpochDay)..next.latest
     }
 
+    /**
+     * Whose periods the calendar shows: the picked people who still exist in [available], or everyone in
+     * [available] when none of them do. Picks go stale when a restore or "Delete all data" replaces the
+     * people they point at; falling back to everyone keeps the calendar in step with Settings, which shows
+     * "Everyone" in that case, instead of quietly drawing nobody.
+     */
+    fun visibleOwners(chosenKeys: Set<String>, available: Set<CycleOwner>): Set<CycleOwner> {
+        val chosen = chosenKeys.mapNotNull(::ownerFromKey).filterTo(mutableSetOf()) { it in available }
+        return chosen.ifEmpty { available }
+    }
+
     /** "kind:id", the form the calendar's person filter is stored in. */
     fun key(owner: CycleOwner): String = "${owner.kind}:${owner.id}"
 

@@ -134,6 +134,19 @@ class InsightsPreferences @Inject constructor(
         ?.toMap()
         ?: emptyMap()
 
+    /**
+     * Re-reads every value from storage. A backup restore writes these prefs behind this object's back
+     * (`PrefsBackup.restoreAll`), so it calls this to make restored settings take effect without a restart.
+     */
+    fun reload() {
+        _statOrder.value = loadList(KEY_STAT_ORDER)
+        _hiddenStats.value = loadSet(KEY_STAT_HIDDEN)
+        _sectionOrder.value = loadList(KEY_SECTION_ORDER)
+        _hiddenSections.value = loadSet(KEY_SECTION_HIDDEN)
+        _sectionStyles.value = loadStyles()
+        _scope.value = DateScope.decode(prefs.getString(KEY_SCOPE, null))
+    }
+
     private companion object {
         val DEFAULT_STYLE = ChartStyle.BARS
         const val KEY_STAT_ORDER = "stat_order"

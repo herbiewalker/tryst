@@ -18,6 +18,12 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 - **Pick a color for each person.** Partners and your own profile now have a Color choice (16 colors, or Automatic, which keeps the color picked from the name as before). The color is used for that person's period strip on the calendar and in the Insights People chart. A color that came in from an import shows as "Current color" until you change it.
 - **Periods on the Trysts calendar (CYC-1).** Settings → Cycle tracking → Show on the Trysts calendar adds a thin strip along the bottom of each period day, in each person's color (the same color Insights uses for them). With predictions on, an outlined strip marks the days the next period is likely to start, from today on. A short legend under the calendar names who is shown. "Whose periods to show" picks people; picking nobody shows everyone. Off by default, and the switch rides the settings backup.
 
+### Fixed
+
+- **Restored settings take effect right away.** Restoring a backup that includes your settings used to leave the theme, cycle tracking and the rest unchanged on screen until Tryst was restarted. They now apply as soon as the restore finishes.
+- **A backup from a newer Tryst is refused clearly.** Restoring a backup made by a newer version now stops with "this backup is from a newer version" before anything changes, instead of failing with an unclear error or quietly leaving out data this version doesn't know about.
+- **The calendar no longer goes blank after a restore.** If the people picked under "Whose periods to show" no longer exist (after a restore or Delete all data), the calendar shows everyone again, matching what Settings says.
+
 ### Changed
 
 - **Database schema v21.** The profile gets an optional color column; nothing existing changes. A backup made in this version won't restore into older versions of Tryst.

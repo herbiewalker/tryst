@@ -82,6 +82,27 @@ class CycleOverlayTest {
     }
 
     @Test
+    fun noPicksMeansEveryone() {
+        assertEquals(setOf(a, b), CycleOverlay.visibleOwners(emptySet(), setOf(a, b)))
+    }
+
+    @Test
+    fun picksThatStillExistAreKept() {
+        assertEquals(setOf(b), CycleOverlay.visibleOwners(setOf(CycleOverlay.key(b)), setOf(a, b)))
+    }
+
+    @Test
+    fun picksThatAllWentStaleFallBackToEveryone() {
+        // After a restore or "Delete all data", the stored ids can point at people who no longer exist.
+        assertEquals(setOf(a, b), CycleOverlay.visibleOwners(setOf("partner:gone", "junk"), setOf(a, b)))
+    }
+
+    @Test
+    fun aMixOfStaleAndLivePicksKeepsOnlyTheLiveOnes() {
+        assertEquals(setOf(a), CycleOverlay.visibleOwners(setOf("partner:gone", CycleOverlay.key(a)), setOf(a, b)))
+    }
+
+    @Test
     fun keysRoundTrip() {
         assertEquals(a, CycleOverlay.ownerFromKey(CycleOverlay.key(a)))
         assertNull(CycleOverlay.ownerFromKey("nokey"))

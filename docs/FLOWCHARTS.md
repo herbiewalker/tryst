@@ -184,10 +184,12 @@ flowchart TD
     subgraph Import
         I1[(".tryst file")] --> I2["BackupCrypto: decrypt stream<br/>(wrong password → AEAD auth fail)"]
         I2 --> I3["unzip data.json + media"]
-        I3 --> I8{"Replace my current data?<br/>(default on)"}
+        I3 --> SV{"backup schemaVersion<br/>newer than this app?"}
+        SV -- yes --> REJ["refuse: newer version<br/>(nothing written)"]
+        SV -- no --> I8{"Replace my current data?<br/>(default on)"}
         I8 -- yes --> I9["wipe + restore in one transaction<br/>(media staged, swapped in on success)"]
         I8 -- no --> I4["INSERT OR REPLACE rows on top<br/>(defer_foreign_keys)"]
-        I3 --> I10["PrefsBackup: apply settings.json if present"]
+        I3 --> I10["PrefsBackup: apply settings.json if present,<br/>then reload every settings store in memory"]
         I3 --> I5["re-encrypt media under this device's key"]
     end
 ```
