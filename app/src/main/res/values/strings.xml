@@ -735,6 +735,29 @@
     <string name="settings_cycle">Cycle tracking</string>
     <string name="settings_cycle_enable">Track periods</string>
     <string name="settings_cycle_enable_desc">Adds a Cycle tab to log periods for you or a partner. Turning it off hides the tab and keeps the data.</string>
+    <string name="cycle_prediction_next">Next period likely around %1$s (%2$s to %3$s). An estimate only.</string>
+    <plurals name="cycle_prediction_late">
+        <item quantity="one">Next period was expected %1$s to %2$s, %3$d day ago. An estimate only.</item>
+        <item quantity="other">Next period was expected %1$s to %2$s, %3$d days ago. An estimate only.</item>
+    </plurals>
+    <plurals name="cycle_prediction_need_more">
+        <item quantity="one">Predictions start after %d more cycle is logged.</item>
+        <item quantity="other">Predictions start after %d more cycles are logged.</item>
+    </plurals>
+    <string name="cycle_prediction_irregular">Recent cycles vary too much to predict the next one.</string>
+    <string name="cycle_stats_title">Cycle stats</string>
+    <string name="cycle_stats_cycle">Usual cycle: %1$d days (%2$d to %3$d)</string>
+    <string name="cycle_stats_cycle_unknown">Usual cycle: needs a few more periods logged</string>
+    <plurals name="cycle_stats_based_on">
+        <item quantity="one">From the last %d cycle</item>
+        <item quantity="other">From the last %d cycles</item>
+    </plurals>
+    <plurals name="cycle_stats_period">
+        <item quantity="one">Usual period: %d day</item>
+        <item quantity="other">Usual period: %d days</item>
+    </plurals>
+    <string name="settings_cycle_predictions">Show predictions</string>
+    <string name="settings_cycle_predictions_desc">Estimates the next period from the cycles you\'ve logged. Needs 3 cycles and stays hidden when they vary a lot. A guide only, not medical advice.</string>
     <string name="settings_cycle_delete">Delete cycle data</string>
     <string name="settings_cycle_delete_desc">Removes every logged period, for everyone. Trysts are not touched.</string>
     <string name="settings_cycle_delete_confirm_title">Delete all cycle data?</string>

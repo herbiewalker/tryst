@@ -102,6 +102,10 @@ with deeply personal data. Inspired by the iOS app *Nice*.
   filled-in value as estimated until someone enters it. Periods can't overlap for one person. Cycle data
   rides the encrypted backup and has its own "Delete cycle data" action; it stays out of Search and
   Photos. No fertile-window or contraception estimates, ever (not medical advice).
+- **FR-29** **Cycle stats and predictions** (CYC-1, 0.7.1). Each person shows a usual cycle length (median
+  of the last 6 start-to-start gaps, with shortest and longest) and a usual period length. The next period is
+  estimated as a range once 3 cycles are logged, labelled an estimate, hidden when recent cycles vary by more
+  than 9 days, and switchable off in Settings. No fertile-window or contraception estimates.
 
 ## 5. Non-functional requirements
 

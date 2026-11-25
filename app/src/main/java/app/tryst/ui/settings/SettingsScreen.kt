@@ -174,6 +174,7 @@ fun SettingsScreen(
     val generalViewModel: GeneralSettingsViewModel = hiltViewModel()
     val cycleViewModel: CycleSettingsViewModel = hiltViewModel()
     val cycleEnabled by cycleViewModel.enabled.collectAsStateWithLifecycle()
+    val cyclePredictions by cycleViewModel.predictions.collectAsStateWithLifecycle()
     var confirmDeleteCycle by remember { mutableStateOf(false) }
     val hapticsEnabled by generalViewModel.hapticsEnabled.collectAsStateWithLifecycle()
     val weekStart by generalViewModel.weekStart.collectAsStateWithLifecycle()
@@ -396,6 +397,14 @@ fun SettingsScreen(
                 checked = cycleEnabled,
                 onCheckedChange = { cycleViewModel.setEnabled(it) },
             )
+            if (cycleEnabled) {
+                SettingsToggleRow(
+                    title = stringResource(R.string.settings_cycle_predictions),
+                    description = stringResource(R.string.settings_cycle_predictions_desc),
+                    checked = cyclePredictions,
+                    onCheckedChange = { cycleViewModel.setPredictions(it) },
+                )
+            }
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 

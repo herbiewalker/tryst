@@ -1,6 +1,6 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v20** (latest: **D-64**, cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
+> **Status:** Live — decisions through **schema v20** (latest: **D-65**, cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
 > presence-only re-auth via BiometricPrompt with device-credential fallback — no CryptoObject,
 > no DEK touch, v0.5.7).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
@@ -751,6 +751,15 @@
   days, end inclusive; one person's periods can't overlap. (6) "Delete cycle data" in the danger zone wipes
   both tables. Predictions (0.7.1), calendar overlay, symptoms and encounter links come later; no fertility
   or contraception estimates, ever.
+
+- **D-65 (2026-11-25) Cycle predictions: median of recent cycles, shown as a range, withheld when irregular (CYC-1, 0.7.1).**
+  A cycle is the gap between two logged starts; the last 6 count, and a gap over 90 days reads as a break in logging,
+  not a cycle. Estimated ends still count (cycle length only needs starts); period length still needs real ends.
+  The estimate needs **3 cycles**, is the **median**, and is shown as a range covering the shortest and longest recent
+  cycle, at least 2 days either side. It is **hidden** when recent cycles differ by more than 9 days, with a line
+  saying why. Past the range, the card says how many days ago it was expected (no alarm, no notification).
+  Settings → Cycle tracking → **Show predictions** (on by default once tracking is on) switches it off. Mid-period the
+  Cycle card shows no guess; the person screen shows the stats and the estimate. Pure `CyclePredictor`, JVM-tested.
 
 > **Standing follow-ups (not blockers, tracked here as pointers):**
 > **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;

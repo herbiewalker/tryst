@@ -19,6 +19,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tryst.core.prefs.GeneralPreferences
+import app.tryst.data.cycle.CyclePrediction
+import app.tryst.data.cycle.CyclePredictor
+import app.tryst.data.cycle.CycleStats
 import app.tryst.data.cycle.CycleStatus
 import app.tryst.data.db.entity.CycleDayEntity
 import app.tryst.data.db.entity.CycleFlow
@@ -43,7 +47,13 @@ import kotlinx.coroutines.launch
 internal fun todayEpochDay(): Long = LocalDate.now().toEpochDay()
 
 /** One person on the Cycle tab. [name] is null for the self profile with no name (the UI says "You"). */
-data class CyclePerson(val owner: CycleOwner, val name: String?, val status: CycleStatus)
+data class CyclePerson(
+    val owner: CycleOwner,
+    val name: String?,
+    val status: CycleStatus,
+    /** Null when predictions are switched off in Settings. */
+    val prediction: CyclePrediction? = null,
+)
 
 /** Why a period couldn't be saved; the screen turns it into text. */
 enum class CycleProblem { OVERLAP, END_BEFORE_START }
@@ -53,21 +63,27 @@ class CycleViewModel @Inject constructor(
     private val repository: CycleRepository,
     profileRepository: ProfileRepository,
     partnerRepository: PartnerRepository,
+    prefs: GeneralPreferences,
 ) : ViewModel() {
 
     val people: StateFlow<List<CyclePerson>> = combine(
         profileRepository.observe(),
         partnerRepository.observeActive(),
         repository.observeAllPeriods(),
-    ) { profile, partners, periods ->
+        prefs.cyclePredictions,
+    ) { profile, partners, periods, predict ->
         val today = todayEpochDay()
         val byOwner = periods.groupBy { CycleOwner(it.ownerKind, it.ownerId) }
         val self = CycleOwner(CyclePeriodEntity.OWNER_PROFILE, ProfileEntity.SELF_ID)
+        fun person(owner: CycleOwner, name: String?): CyclePerson {
+            val mine = byOwner[owner].orEmpty()
+            val prediction = if (predict) CyclePredictor.predict(mine, today) else null
+            return CyclePerson(owner, name, CycleStatus.of(mine, today), prediction)
+        }
         buildList {
-            add(CyclePerson(self, profile?.displayName?.takeIf { it.isNotBlank() }, CycleStatus.of(byOwner[self].orEmpty(), today)))
+            add(person(self, profile?.displayName?.takeIf { it.isNotBlank() }))
             for (p in partners) {
-                val owner = CycleOwner(CyclePeriodEntity.OWNER_PARTNER, p.id)
-                add(CyclePerson(owner, Format.partnerName(p), CycleStatus.of(byOwner[owner].orEmpty(), today)))
+                add(person(CycleOwner(CyclePeriodEntity.OWNER_PARTNER, p.id), Format.partnerName(p)))
             }
         }
     }
@@ -105,6 +121,7 @@ class CyclePersonViewModel @Inject constructor(
     private val repository: CycleRepository,
     profileRepository: ProfileRepository,
     partnerRepository: PartnerRepository,
+    prefs: GeneralPreferences,
 ) : ViewModel() {
 
     val owner = CycleOwner(
@@ -124,6 +141,14 @@ class CyclePersonViewModel @Inject constructor(
     val periods: StateFlow<List<CyclePeriodEntity>> = repository.observePeriods(owner)
         .catch { emit(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val stats: StateFlow<CycleStats?> = periods.map { if (it.isEmpty()) null else CyclePredictor.stats(it) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    /** Null when predictions are switched off or nothing is logged. */
+    val prediction: StateFlow<CyclePrediction?> = combine(periods, prefs.cyclePredictions) { list, on ->
+        if (on && list.isNotEmpty()) CyclePredictor.predict(list, todayEpochDay()) else null
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     var problem by mutableStateOf<CycleProblem?>(null)
         private set

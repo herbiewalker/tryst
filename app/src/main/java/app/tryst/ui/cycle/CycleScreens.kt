@@ -58,6 +58,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
+import app.tryst.data.cycle.CyclePrediction
+import app.tryst.data.cycle.CycleStats
 import app.tryst.data.cycle.CycleStatus
 import app.tryst.data.db.entity.CycleDayEntity
 import app.tryst.data.db.entity.CycleFlow
@@ -71,10 +73,13 @@ import java.time.format.FormatStyle
 
 private val dayFormatter: DateTimeFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)
 private val shortDayFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE d MMM")
+private val monthDayFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("MMM d")
 
 internal fun formatDay(epochDay: Long): String = LocalDate.ofEpochDay(epochDay).format(dayFormatter)
 
 private fun formatShortDay(epochDay: Long): String = LocalDate.ofEpochDay(epochDay).format(shortDayFormatter)
+
+private fun formatMonthDay(epochDay: Long): String = LocalDate.ofEpochDay(epochDay).format(monthDayFormatter)
 
 private const val MILLIS_PER_DAY = 86_400_000L
 
@@ -185,6 +190,10 @@ private fun PersonCard(
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(personName(person.name), style = MaterialTheme.typography.titleMedium)
             Text(statusLine(person.status), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            // Mid-period the next-period guess is noise; show it once the period is over.
+            if (person.status is CycleStatus.Between) {
+                person.prediction?.let { PredictionText(it) }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 when (val s = person.status) {
                     // Once the real end is set there's nothing to end; a new period can't start inside this one.
@@ -212,6 +221,58 @@ private fun statusLine(status: CycleStatus): String = when (status) {
     is CycleStatus.Between -> stringResource(R.string.cycle_status_between, formatDay(status.last.startEpochDay), status.cycleDay)
 }
 
+/** The next-period estimate in words. Always says it's an estimate; never a single hard date. */
+@Composable
+private fun PredictionText(prediction: CyclePrediction) {
+    val text = when (prediction) {
+        is CyclePrediction.NotEnoughData -> {
+            val more = prediction.need - prediction.have
+            pluralStringResource(R.plurals.cycle_prediction_need_more, more, more)
+        }
+        is CyclePrediction.Irregular -> stringResource(R.string.cycle_prediction_irregular)
+        is CyclePrediction.Next -> if (prediction.lateByDays > 0) {
+            pluralStringResource(
+                R.plurals.cycle_prediction_late,
+                prediction.lateByDays,
+                formatMonthDay(prediction.earliest),
+                formatMonthDay(prediction.latest),
+                prediction.lateByDays,
+            )
+        } else {
+            stringResource(
+                R.string.cycle_prediction_next,
+                formatMonthDay(prediction.likely),
+                formatMonthDay(prediction.earliest),
+                formatMonthDay(prediction.latest),
+            )
+        }
+    }
+    Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+}
+
+/** Cycle and period length for one person, plus the estimate when predictions are on. */
+@Composable
+private fun StatsCard(stats: CycleStats, prediction: CyclePrediction?) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(stringResource(R.string.cycle_stats_title), style = MaterialTheme.typography.titleSmall)
+            val usual = stats.usualCycle
+            if (usual != null) {
+                Text(stringResource(R.string.cycle_stats_cycle, usual, stats.shortestCycle ?: usual, stats.longestCycle ?: usual))
+                Text(
+                    pluralStringResource(R.plurals.cycle_stats_based_on, stats.cycleLengths.size, stats.cycleLengths.size),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                Text(stringResource(R.string.cycle_stats_cycle_unknown), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            stats.usualPeriod?.let { Text(pluralStringResource(R.plurals.cycle_stats_period, it, it)) }
+            prediction?.let { PredictionText(it) }
+        }
+    }
+}
+
 // ---------------------------------------------------------------------------------------
 // One person's periods
 // ---------------------------------------------------------------------------------------
@@ -225,6 +286,8 @@ fun CyclePersonScreen(
 ) {
     val name by viewModel.name.collectAsStateWithLifecycle()
     val periods by viewModel.periods.collectAsStateWithLifecycle()
+    val stats by viewModel.stats.collectAsStateWithLifecycle()
+    val prediction by viewModel.prediction.collectAsStateWithLifecycle()
     var picking by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -251,6 +314,7 @@ fun CyclePersonScreen(
             contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            stats?.let { s -> item { StatsCard(s, prediction) } }
             if (periods.isEmpty()) {
                 item { Text(stringResource(R.string.cycle_person_empty), color = MaterialTheme.colorScheme.onSurfaceVariant) }
             }

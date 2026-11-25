@@ -33,6 +33,10 @@ class CycleSettingsViewModel @Inject constructor(
 
     fun setEnabled(enabled: Boolean) = prefs.setCycleEnabled(enabled)
 
+    val predictions: StateFlow<Boolean> = prefs.cyclePredictions
+
+    fun setPredictions(enabled: Boolean) = prefs.setCyclePredictions(enabled)
+
     fun deleteAll(onDone: () -> Unit) {
         viewModelScope.launch {
             repository.deleteAll()
