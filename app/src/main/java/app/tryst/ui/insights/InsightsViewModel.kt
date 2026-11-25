@@ -23,6 +23,7 @@ import app.tryst.data.repository.EjaculationLocationRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.KinkRepository
 import app.tryst.data.repository.OccasionRepository
+import app.tryst.data.repository.PartnerRepository
 import app.tryst.data.repository.PositionRepository
 import app.tryst.data.repository.ToyRepository
 import app.tryst.data.stats.Insights
@@ -50,8 +51,15 @@ class InsightsViewModel @Inject constructor(
     toyRepository: ToyRepository,
     occasionRepository: OccasionRepository,
     ejaculationLocationRepository: EjaculationLocationRepository,
+    partnerRepository: PartnerRepository,
     private val prefs: InsightsPreferences,
 ) : ViewModel() {
+
+    /** Picked partner colors by the label People shows ("Anonymous" for unnamed), for the People chart. */
+    val partnerColors: StateFlow<Map<String, String>> = partnerRepository.observeAll()
+        .map { list -> list.mapNotNull { p -> p.color?.let { app.tryst.ui.common.Format.partnerName(p) to it } }.toMap() }
+        .catch { emit(emptyMap()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     /** The INS-2 time window. Remembered across visits (`InsightsPreferences`). */
     val scope: StateFlow<DateScope> = prefs.scope

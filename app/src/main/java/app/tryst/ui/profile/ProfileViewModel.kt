@@ -55,6 +55,8 @@ data class ProfileDraft(
     val orientation: String?,
     val location: String,
     val note: String,
+    /** Picked "#RRGGBB", or null for the name-based color. */
+    val color: String?,
     val newPhotoUri: Uri?,
     val removePhoto: Boolean,
     val captureTempFile: File?,
@@ -186,6 +188,7 @@ class ProfileViewModel @Inject constructor(
                     orientation = draft.orientation,
                     location = draft.location.trim().ifBlank { null },
                     note = draft.note.trim().ifBlank { null },
+                    color = draft.color,
                     updatedAt = now,
                 ),
             )

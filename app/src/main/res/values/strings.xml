@@ -766,6 +766,11 @@
     <string name="history_cycle_legend_likely">Outlined: likely next period</string>
     <string name="cd_day_period">period day</string>
     <string name="cd_day_period_likely">next period likely</string>
+    <string name="person_color_label">Color</string>
+    <string name="person_color_hint">Used for this person on the calendar and in Insights. Automatic picks one from the name.</string>
+    <string name="person_color_auto">Automatic</string>
+    <string name="person_color_auto_badge">A</string>
+    <string name="person_color_current">Current color</string>
     <string name="settings_cycle_delete">Delete cycle data</string>
     <string name="settings_cycle_delete_desc">Removes every logged period, for everyone. Trysts are not touched.</string>
     <string name="settings_cycle_delete_confirm_title">Delete all cycle data?</string>

@@ -694,9 +694,9 @@ private fun DayCell(
     }
 }
 
-/** A person's stable color, the same one Insights gives them (CYC-1, 0.7.2). */
+/** A person's color: the one picked for them, else the stable name-based one Insights also uses (CYC-1). */
 @Composable
-private fun cycleColor(mark: CalendarCycleMark): Color = TypeColors.colorFor(mark.name ?: stringResource(R.string.profile_you))
+private fun cycleColor(mark: CalendarCycleMark): Color = TypeColors.personColor(mark.name ?: stringResource(R.string.profile_you), mark.colorHex)
 
 /** One segment per person along the bottom of a day: solid for a logged period day, faint and outlined when predicted. */
 @Composable
@@ -723,7 +723,7 @@ private fun CycleStrip(marks: List<CalendarCycleMark>, modifier: Modifier = Modi
 private fun CycleLegend(marks: Map<LocalDate, List<CalendarCycleMark>>, visibleDays: List<LocalDate>) {
     val shown = visibleDays.flatMap { marks[it].orEmpty() }
     if (shown.isEmpty()) return
-    val people = shown.distinctBy { it.name to it.isSelf }
+    val people = shown.distinctBy { Triple(it.name, it.isSelf, it.colorHex) }
     val anyPredicted = shown.any { it.predicted }
     val style = MaterialTheme.typography.labelSmall
     val muted = MaterialTheme.colorScheme.onSurfaceVariant

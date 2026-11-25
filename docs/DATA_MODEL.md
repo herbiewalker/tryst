@@ -1,6 +1,6 @@
 # Tryst — Data Model
 
-> **Status:** Live — **schema v20** (v20 in v0.7.0; v18 and v19 shipped in v0.6.4; v17 in v0.6.2; v16 in v0.5.3), Room over SQLCipher. Matches the entities in
+> **Status:** Live — **schema v21** (v21 unreleased on `main`, profile color; v20 in v0.7.0; v18 and v19 shipped in v0.6.4; v17 in v0.6.2; v16 in v0.5.3), Room over SQLCipher. Matches the entities in
 > `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change ships a
 > non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 >
@@ -80,7 +80,7 @@ position/tag cross-refs are legacy/unused (positions live in the `positions` col
 | bodyType | BodyType? | **v7** demographic |
 | orientation | String? | **v17** id of an `orientations` row (user-defined label); null = unset |
 | location | String? | **v7** free-text city |
-| color | String? | optional UI accent, local only |
+| color | String? | picked accent color `#RRGGBB` (set from the partner editor since 0.7.2, D-67); null = color from the name |
 | note | String? | |
 | archivedAt | Long? | soft-archive |
 | createdAt / updatedAt | Long | |
@@ -104,6 +104,7 @@ Partners.
 | orientation | String? | **v17** id of an `orientations` row; null = unset |
 | location | String? | free-text city |
 | note | String? | "about you" |
+| color | String? | **v21** picked accent color `#RRGGBB` for the calendar and charts; null = color from the name |
 | updatedAt | Long | |
 
 ## Category tables (fully user-owned)
@@ -245,5 +246,8 @@ storage — likely a small row in the encrypted DB.)
   so an unknown value reads as "not set"), `estimated` (NOT NULL DEFAULT 0); FK to `cycle_period` with
   `ON DELETE CASCADE`. No FK to partners: partners are archived, not deleted, and archived partners keep
   their cycle data. Both tables ride the generic backup dump; a pre-v20 backup restores with no cycle data.
+- **v21 (`MIGRATION_20_21`, 0.7.2)** adds `profile.color TEXT NULL`, the self profile's picked accent color, matching the
+  `partners.color` column that has existed since v1 and is now set from the partner editor. Additive and nullable; a
+  pre-v21 backup restores with no profile color.
 - Export format (M5) is decoupled from the live schema and versioned independently
   (see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §4).

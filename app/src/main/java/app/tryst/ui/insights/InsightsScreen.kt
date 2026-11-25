@@ -56,6 +56,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -95,6 +96,7 @@ fun InsightsScreen(
     val sectionOrder by viewModel.sectionOrder.collectAsStateWithLifecycle()
     val hiddenSections by viewModel.hiddenSections.collectAsStateWithLifecycle()
     val sectionStyles by viewModel.sectionStyles.collectAsStateWithLifecycle()
+    val partnerColors by viewModel.partnerColors.collectAsStateWithLifecycle()
     val scope by viewModel.scope.collectAsStateWithLifecycle()
     val availableYears by viewModel.availableYears.collectAsStateWithLifecycle()
     val haptics = rememberHaptics()
@@ -161,6 +163,7 @@ fun InsightsScreen(
                     sectionOrder = sectionOrder,
                     hiddenSections = hiddenSections,
                     sectionStyles = sectionStyles,
+                    partnerColors = partnerColors,
                     onOpenAchievements = onOpenAchievements,
                     viewModel = viewModel,
                 )
@@ -214,6 +217,7 @@ private fun InsightsList(
     sectionOrder: List<String>,
     hiddenSections: Set<String>,
     sectionStyles: Map<String, ChartStyle>,
+    partnerColors: Map<String, String>,
     onOpenAchievements: () -> Unit,
     viewModel: InsightsViewModel,
 ) {
@@ -279,7 +283,7 @@ private fun InsightsList(
                             )
                         }
                         else -> SectionCard(section.title) {
-                            SectionContent(section.id, insights, section.resolve(sectionStyles[section.id]))
+                            SectionContent(section.id, insights, section.resolve(sectionStyles[section.id]), partnerColors)
                         }
                     }
                 }
@@ -350,10 +354,14 @@ private sealed interface Sub {
     val label: String
 }
 private data class TrendSub(override val label: String, val data: List<Bucket>) : Sub
-private data class BreakSub(override val label: String, val data: List<Tally>) : Sub
+private data class BreakSub(
+    override val label: String,
+    val data: List<Tally>,
+    val colorFor: (String) -> Color = TypeColors::colorFor,
+) : Sub
 
 @Composable
-private fun SectionContent(id: String, insights: Insights, style: ChartStyle) {
+private fun SectionContent(id: String, insights: Insights, style: ChartStyle, partnerColors: Map<String, String> = emptyMap()) {
     when (id) {
         InsightSections.ACTIVITY -> GroupedSubCharts(
             style,
@@ -366,7 +374,10 @@ private fun SectionContent(id: String, insights: Insights, style: ChartStyle) {
             style,
             listOf(TrendSub("", insights.ratingHistogram.mapIndexed { i, c -> Bucket("${i + 1}★", c) })),
         )
-        InsightSections.PEOPLE -> GroupedSubCharts(style, listOf(BreakSub("", insights.topPartners)))
+        InsightSections.PEOPLE -> GroupedSubCharts(
+            style,
+            listOf(BreakSub("", insights.topPartners) { TypeColors.personColor(it, partnerColors[it]) }),
+        )
         InsightSections.ACTS_POSITIONS -> GroupedSubCharts(
             style,
             listOf(
@@ -434,7 +445,7 @@ private fun GroupedSubCharts(style: ChartStyle, subs: List<Sub>) {
                 }
                 when (sub) {
                     is TrendSub -> TrendChart(style, sub.data)
-                    is BreakSub -> BreakdownChart(style, sub.data)
+                    is BreakSub -> BreakdownChart(style, sub.data, colorFor = sub.colorFor)
                 }
             }
         }

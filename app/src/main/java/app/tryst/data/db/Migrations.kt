@@ -380,6 +380,13 @@ val MIGRATION_19_20 = object : Migration(19, 20) {
 }
 
 /** All migrations, in order. */
+/** v20 → v21: the self profile gets a picked color, like partners already have (additive, nullable). */
+val MIGRATION_20_21 = object : Migration(20, 21) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `profile` ADD COLUMN `color` TEXT")
+    }
+}
+
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
     MIGRATION_2_3,
@@ -400,6 +407,7 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_17_18,
     MIGRATION_18_19,
     MIGRATION_19_20,
+    MIGRATION_20_21,
 )
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

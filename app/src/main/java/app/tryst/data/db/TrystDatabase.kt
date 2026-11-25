@@ -76,7 +76,7 @@ import app.tryst.data.db.entity.ToyEntity
         CyclePeriodEntity::class,
         CycleDayEntity::class,
     ],
-    version = 20,
+    version = 21,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

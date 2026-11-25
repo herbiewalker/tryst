@@ -1,6 +1,6 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v20** (latest: **D-66**, periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
+> **Status:** Live — decisions through **schema v20** (latest: **D-67**, pickable person colors; D-66: periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
 > presence-only re-auth via BiometricPrompt with device-credential fallback — no CryptoObject,
 > no DEK touch, v0.5.7).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
@@ -770,6 +770,14 @@
   "Show on the Trysts calendar" (off by default, separate from tracking itself, because the Trysts tab is the one most
   likely to be on screen around other people) and "Whose periods to show" (none ticked = everyone). Archived partners
   are left out. Pure `CycleOverlay`, JVM-tested.
+
+- **D-67 (2026-11-25) Each person's color can be picked; the name-based color stays as Automatic (schema v21).**
+  Colors came only from hashing the name into the 16-color Insights palette, so a rename changed the color, two
+  people could collide, and nobody could choose. Now the partner editor and the profile editor offer the same 16
+  colors plus Automatic (null, the old behavior). Partners reuse the `color` column they have had since v1 (it was
+  never set or read); the profile gets `color` in v21. The picked color drives the calendar strip (D-66) and the
+  Insights People chart; every other breakdown keeps the name-based colors. A stored color outside the palette (from
+  an import) shows as "Current color" so the picker never claims Automatic while something else is drawn.
 
 > **Standing follow-ups (not blockers, tracked here as pointers):**
 > **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;

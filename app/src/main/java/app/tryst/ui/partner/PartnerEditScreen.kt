@@ -53,8 +53,10 @@ import app.tryst.data.db.entity.RelationshipType
 import app.tryst.data.db.entity.Sex
 import app.tryst.ui.common.DemographicFields
 import app.tryst.ui.common.OptionalChips
+import app.tryst.ui.common.PersonColorPicker
 import app.tryst.ui.common.PersonPhotoStrip
 import app.tryst.ui.common.TooltipIconButton
+import app.tryst.ui.insights.TypeColors
 
 private const val AVATAR_PX = 320
 
@@ -170,6 +172,11 @@ fun PartnerEditScreen(
                 onValueChange = viewModel::setNote,
                 label = { Text(stringResource(R.string.partner_note_label)) },
                 modifier = Modifier.fillMaxWidth(),
+            )
+            PersonColorPicker(
+                selectedHex = ui.color,
+                autoColor = TypeColors.colorFor(if (ui.anonymous) "Anonymous" else ui.name.trim().ifBlank { "Anonymous" }),
+                onPick = viewModel::setColor,
             )
         }
     }

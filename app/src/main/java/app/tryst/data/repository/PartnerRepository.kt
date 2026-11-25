@@ -35,6 +35,9 @@ class PartnerRepository @Inject constructor(
 
     fun observeArchived(): Flow<List<PartnerEntity>> = dao.observeArchived()
 
+    /** Active and archived partners alike (Insights still counts archived ones). */
+    fun observeAll(): Flow<List<PartnerEntity>> = dao.observeAll()
+
     suspend fun upsert(partner: PartnerEntity) = dao.upsert(partner)
 
     suspend fun getById(id: String): PartnerEntity? = dao.getById(id)

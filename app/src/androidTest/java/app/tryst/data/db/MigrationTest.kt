@@ -637,6 +637,26 @@ class MigrationTest {
             }
         }
     }
+
+    @Test
+    fun migrate20To21_addsProfileColor() {
+        helper.createDatabase(dbName, 20).use { db ->
+            db.execSQL("INSERT INTO profile (id, displayName, updatedAt) VALUES ('self', 'Me', 1)")
+        }
+
+        helper.runMigrationsAndValidate(dbName, 21, true, MIGRATION_20_21).use { db ->
+            db.query("SELECT displayName, color FROM profile WHERE id = 'self'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("Me", c.getString(0))
+                assertTrue("existing profile has no picked color", c.isNull(1))
+            }
+            db.execSQL("UPDATE profile SET color = '#FF2D6F' WHERE id = 'self'")
+            db.query("SELECT color FROM profile").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("#FF2D6F", c.getString(0))
+            }
+        }
+    }
 }
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

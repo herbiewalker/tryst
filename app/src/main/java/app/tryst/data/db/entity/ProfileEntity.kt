@@ -41,6 +41,8 @@ data class ProfileEntity(
     val orientation: String? = null,
     /** Optional free-text "about you" note. */
     val note: String? = null,
+    /** Picked accent color "#RRGGBB" for the calendar and charts (schema v21); null means the name-based color. */
+    val color: String? = null,
     val updatedAt: Long = 0L,
 ) {
     companion object {

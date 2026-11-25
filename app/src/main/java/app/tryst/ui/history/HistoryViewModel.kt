@@ -132,11 +132,15 @@ class HistoryViewModel @Inject constructor(
                         put(self, profile?.displayName?.takeIf { it.isNotBlank() })
                         partners.forEach { put(CycleOwner(CyclePeriodEntity.OWNER_PARTNER, it.id), Format.partnerName(it)) }
                     }
+                    val colors: Map<CycleOwner, String?> = buildMap {
+                        put(self, profile?.color)
+                        partners.forEach { put(CycleOwner(CyclePeriodEntity.OWNER_PARTNER, it.id), it.color) }
+                    }
                     val chosen = ownerKeys.mapNotNull(CycleOverlay::ownerFromKey).toSet().ifEmpty { null }
                     val visible = chosen?.intersect(names.keys) ?: names.keys
                     CycleOverlay.build(periods, LocalDate.now().toEpochDay(), predict, visible)
                         .entries.associate { (day, marks) ->
-                            LocalDate.ofEpochDay(day) to marks.map { CalendarCycleMark(names[it.owner], it.owner.isSelf, it.predicted) }
+                            LocalDate.ofEpochDay(day) to marks.map { CalendarCycleMark(names[it.owner], it.owner.isSelf, it.predicted, colors[it.owner]) }
                         }
                 }
             }
@@ -147,7 +151,7 @@ class HistoryViewModel @Inject constructor(
     suspend fun decode(media: MediaEntity, reqPx: Int): ImageBitmap? = MediaImages.decodeSampled(reqPx) { runCatching { repository.openMedia(media) }.getOrNull() }
 }
 
-/** One person's period mark on a calendar day. [name] is null for the self profile with no name (the UI says "You"). */
-data class CalendarCycleMark(val name: String?, val isSelf: Boolean, val predicted: Boolean)
+/** One person's period mark on a calendar day. [name] is null for the self profile with no name (the UI says "You"); [colorHex] is their picked color, if any. */
+data class CalendarCycleMark(val name: String?, val isSelf: Boolean, val predicted: Boolean, val colorHex: String? = null)
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

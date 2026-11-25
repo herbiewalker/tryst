@@ -87,10 +87,11 @@ fun BreakdownChart(
     items: List<Tally>,
     modifier: Modifier = Modifier,
     max: Int = 8,
+    colorFor: (String) -> Color = TypeColors::colorFor,
 ) {
     when (style) {
-        ChartStyle.DONUT -> DonutChart(items, modifier, max)
-        else -> RankedBars(items, modifier, max)
+        ChartStyle.DONUT -> DonutChart(items, modifier, max, colorFor)
+        else -> RankedBars(items, modifier, max, colorFor)
     }
 }
 
@@ -202,6 +203,7 @@ fun RankedBars(
     items: List<Tally>,
     modifier: Modifier = Modifier,
     max: Int = 8,
+    colorFor: (String) -> Color = TypeColors::colorFor,
 ) {
     if (items.isEmpty()) return
     val shown = items.take(max)
@@ -212,7 +214,7 @@ fun RankedBars(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         shown.forEach { item ->
-            val color = TypeColors.colorFor(item.label)
+            val color = colorFor(item.label)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(10.dp).clip(CircleShape).background(color))
                 Text(
@@ -351,6 +353,7 @@ fun DonutChart(
     items: List<Tally>,
     modifier: Modifier = Modifier,
     max: Int = 6,
+    colorFor: (String) -> Color = TypeColors::colorFor,
 ) {
     if (items.isEmpty()) return
     // Collapse the long tail into "Other" so the donut stays readable.
@@ -360,7 +363,7 @@ fun DonutChart(
         addAll(head)
         if (tail > 0) add(Tally("Other", tail))
     }
-    val colors = slices.map { TypeColors.colorFor(it.label) }
+    val colors = slices.map { colorFor(it.label) }
     val total = slices.sumOf { it.count }.coerceAtLeast(1)
     val reveal = rememberChartReveal()
 

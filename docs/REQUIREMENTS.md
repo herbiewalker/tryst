@@ -109,6 +109,9 @@ with deeply personal data. Inspired by the iOS app *Nice*.
 - **FR-30** **Periods on the calendar** (CYC-1, 0.7.2). Behind its own Settings switch (off by default), the Trysts
   calendar marks logged period days per person in that person's Insights color and, with predictions on, the likely
   start range of the next period from today on. The user picks whose periods show (none picked means everyone).
+- **FR-31** **Person colors** (0.7.2, schema v21). Each partner and the self profile can have a color picked from the
+  16-color palette, or Automatic (from the name). The picked color is used on the calendar strip and the Insights
+  People chart.
 
 ## 5. Non-functional requirements
 

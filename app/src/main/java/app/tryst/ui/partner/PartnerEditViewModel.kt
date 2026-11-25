@@ -66,6 +66,8 @@ data class PartnerEditUiState(
     val bodyType: BodyType? = null,
     val orientation: String? = null,
     val location: String = "",
+    /** Picked "#RRGGBB", or null for the name-based color. */
+    val color: String? = null,
     val existing: PartnerEntity? = null,
 ) {
     val hasAnyName: Boolean get() = anonymous || name.isNotBlank()
@@ -151,6 +153,7 @@ class PartnerEditViewModel @Inject constructor(
                 bodyType = existing.bodyType,
                 orientation = existing.orientation,
                 location = existing.location.orEmpty(),
+                color = existing.color,
                 existing = existing,
             )
             baseline = uiState
@@ -195,6 +198,9 @@ class PartnerEditViewModel @Inject constructor(
     fun setLocation(value: String) {
         uiState = uiState.copy(location = value)
     }
+    fun setColor(value: String?) {
+        uiState = uiState.copy(color = value)
+    }
 
     /** Persist the field edits + return the (possibly new) partner id for downstream actions. */
     fun save(onDone: (String) -> Unit) {
@@ -208,7 +214,7 @@ class PartnerEditViewModel @Inject constructor(
                     id = id,
                     displayName = if (s.anonymous) null else s.name.trim().ifBlank { null },
                     isAnonymous = s.anonymous,
-                    color = existing?.color,
+                    color = s.color,
                     note = s.note.trim().ifBlank { null },
                     sex = s.sex,
                     gender = s.gender,

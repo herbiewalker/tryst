@@ -53,10 +53,12 @@ import app.tryst.data.db.entity.ProfileEntity
 import app.tryst.data.db.entity.Sex
 import app.tryst.ui.common.DemographicFields
 import app.tryst.ui.common.OptionalChips
+import app.tryst.ui.common.PersonColorPicker
 import app.tryst.ui.common.PersonPhotoStrip
 import app.tryst.ui.common.TooltipIconButton
 import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.rememberHaptics
+import app.tryst.ui.insights.TypeColors
 
 private const val AVATAR_PX = 320
 
@@ -119,6 +121,7 @@ private fun ProfileEditor(
     var orientation by remember { mutableStateOf(initial?.orientation) }
     var location by remember { mutableStateOf(initial?.location ?: "") }
     var note by remember { mutableStateOf(initial?.note ?: "") }
+    var color by remember { mutableStateOf(initial?.color) }
     var showDiscardConfirm by remember { mutableStateOf(false) }
 
     // Photos auto-save via the strip — they never contribute to isDirty.
@@ -131,7 +134,8 @@ private fun ProfileEditor(
         bodyType != initial?.bodyType ||
         orientation != initial?.orientation ||
         location != (initial?.location ?: "") ||
-        note != (initial?.note ?: "")
+        note != (initial?.note ?: "") ||
+        color != initial?.color
     val attemptClose = { if (isDirty) showDiscardConfirm = true else onBack() }
     BackHandler(enabled = isDirty) { showDiscardConfirm = true }
 
@@ -159,6 +163,7 @@ private fun ProfileEditor(
                                 orientation = orientation,
                                 location = location,
                                 note = note,
+                                color = color,
                                 // The strip owns photo lifecycle now; the draft's photo fields are unused.
                                 newPhotoUri = null,
                                 removePhoto = false,
@@ -223,6 +228,11 @@ private fun ProfileEditor(
                 onValueChange = { note = it },
                 label = { Text(stringResource(R.string.profile_note_label)) },
                 modifier = Modifier.fillMaxWidth(),
+            )
+            PersonColorPicker(
+                selectedHex = color,
+                autoColor = TypeColors.colorFor(displayName.trim().ifBlank { stringResource(R.string.profile_you) }),
+                onPick = { color = it },
             )
             Spacer(Modifier.height(8.dp))
         }
