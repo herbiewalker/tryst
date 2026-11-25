@@ -11,23 +11,28 @@ constraint guard, archives the R8 mapping under `archive/vX.Y.Z/`, then commits,
 pushes. The steps below are what it automates — read them to understand *why*, or to do a step by
 hand if the script can't (e.g. a first-time fdroiddata submission).
 
+**Known quirk:** the script can end with exit code 1 at the push step even though the push worked. GitHub prints a
+large-file warning on stderr (the archived R8 mappings are big), and Windows PowerShell treats any stderr from a native
+command as an error. Check with `git ls-remote origin refs/heads/main "refs/tags/vX.Y.Z^{}"`: both should show the
+release commit.
+
 ## Prerequisites (one-time — all satisfied for the live app)
 
 - [x] **The source repository is public.** `herbiewalker/tryst` has been public since the F-Droid
       submission ran in July 2026 (`AutoUpdateMode: Version` requires it). GitHub auto-detects the
       license as GPL-3.0.
-- [ ] All dependencies are FOSS and there are no proprietary blobs (verified in pre-release Pass 10; the
+- [x] All dependencies are FOSS and there are no proprietary blobs (verified in pre-release Pass 10; the
       `OssLicenses` list + the banned-SDK grep guard this). F-Droid will reject non-free dependencies or
       `anti-features` we haven't declared. Tryst has **no anti-features** (no tracking, no non-free deps,
       no non-free network services — it has no network at all).
-- [ ] The build is clean from source with no Google-proprietary Gradle plugins (no
+- [x] The build is clean from source with no Google-proprietary Gradle plugins (no
       `com.google.gms`, no Firebase, no Play Services). Confirmed.
 
 ## Per-release steps
 
 1. **Bump the version** in [`app/build.gradle.kts`](../app/build.gradle.kts):
-   - `versionCode` — integer, +1 every release (currently `9`).
-   - `versionName` — human string (currently `0.5.2`).
+   - `versionCode` — integer, +1 every release (currently `24`).
+   - `versionName` — human string (currently `0.7.1`).
 2. **Add the release notes in all three synced places** (kept in lock-step on purpose — see D-35):
    - `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` (e.g. `2.txt`) — F-Droid's "What's New"
      text. Keep the existing `1.txt` for the first release.
@@ -107,9 +112,16 @@ Notes:
   updates.
 - Screenshots + store `icon.png` live under `fastlane/metadata/android/en-US/images/`.
   Capturing them needs the temporary FLAG_SECURE-off procedure from pre-release Pass 5. The
-  set was pulled 2026-08-19 pending a design refresh (QOL-4) and reshipped 2026-08-31 from
-  a v0.5.2 build; the fresh `icon.png` shipped in v0.5.8 (T-heart on pink-to-purple gradient),
-  and a full designer screenshot swap remains as STORE-1.
+  set was pulled 2026-08-19 pending a design refresh (QOL-4), reshipped 2026-08-31 from a v0.5.2 build, and
+  refreshed 2026-11-25 from v0.7.1 (nine shots). The fresh `icon.png` shipped in v0.5.8 (T-heart on pink-to-purple
+  gradient). A designer framing pass remains as STORE-1.
+- **Screenshot recipe (2026-11-25):** restore `samples/tryst-test-dataset.tryst` (see `tools/dataset/README.md`)
+  into a fresh emulator install with `FLAG_SECURE` temporarily off, turn on the system UI demo mode for a clean
+  status bar (`adb shell settings put global sysui_demo_allowed 1`, then `am broadcast -a com.android.systemui.demo
+  -e command enter`, `-e command clock -e hhmm 0930`, `-e command network -e wifi show -e level 4 -e fully true
+  -e mobile hide`, `-e command notifications -e visible false`), capture with `adb exec-out screencap -p`, and keep
+  every shot all-ages (issue #3): no explicit catalog labels on screen. Exit demo mode and restore `FLAG_SECURE`
+  before committing.
 
 ## Ongoing releases (post-first-submission)
 

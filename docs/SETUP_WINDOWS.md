@@ -40,7 +40,12 @@ on an emulator or phone. Do these roughly in order; check each box as you go.
       redacted — that's intentional, so screen captures of the running app appear black.
 
 ## 6. Sanity checks (optional but recommended)
-- [ ] `.\gradlew testDebugUnitTest` → the JVM unit tests pass (stats/achievements engines, CSV parser, Insights catalogs).
+- [ ] `.\gradlew testDebugUnitTest` → the JVM unit tests pass (stats/achievements engines, cycle defaults and
+      predictions, filters, CSV parser, Insights catalogs).
+- [ ] `$env:ANDROID_SERIAL="emulator-5554"; .\gradlew connectedDebugAndroidTest` → the instrumented tests pass on
+      the **emulator**. Never run them with a real phone attached: they uninstall the app, which deletes its data.
+      The `checkSafeTestDevice` task refuses to run while a physical device is attached unless `ANDROID_SERIAL`
+      names an emulator.
 - [ ] `.\gradlew checkNoNetworkDebug` → prints "Anti-leak guard OK". Try temporarily adding
       `<uses-permission android:name="android.permission.INTERNET"/>` to the manifest and
       re-running — the build should **fail**. (Then remove it.)
@@ -48,6 +53,6 @@ on an emulator or phone. Do these roughly in order; check each box as you go.
 ## Notes / gotchas
 - **Don't add a network permission.** The anti-leak guard (and CI) will fail the build by design.
 - First Gradle sync downloads a lot (Gradle dist, AGP, SDK bits) — give it time on first run.
-- The launcher icon is a placeholder flame; a refreshed icon set is tracked as **QOL-4** in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
+- The launcher icon is the T-heart set from v0.5.8 (QOL-4), with a monochrome layer for themed icons.
 - Running from a plain terminal (no Studio env): set `JAVA_HOME` to the bundled JBR first, e.g.
   `$env:JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"`, then `.\gradlew.bat assembleDebug`.

@@ -27,16 +27,18 @@ core/
   security/   Vault (DEK double-wrap), SecureKeyStore, BiometricVault, Pbkdf2, SessionKeys
   session/    SessionManager (lock lifecycle, opens/closes the DB), LockState
   crypto/     MediaCrypto (Tink streaming), BackupCrypto (password KDF + AEAD container)
-  prefs/      ThemePreferences, InsightsPreferences, GeneralPreferences (auto-lock/haptics/week-start/last-seen-version/dismissed coach tips), GalleryPreferences (tryst_gallery: layout/columns/sort/date grouping/blur/slideshow) — all SharedPreferences, non-sensitive, excluded from backup
+  prefs/      ThemePreferences, InsightsPreferences, GeneralPreferences (auto-lock/haptics/week-start/last-seen-version/dismissed coach tips/backup reminder/cycle tracking and predictions), GalleryPreferences (tryst_gallery: layout/columns/sort/date grouping/blur/slideshow). All SharedPreferences, non-sensitive; since v0.6.0 they ride the encrypted backup (`data/backup/PrefsBackup`, container v2) and are excluded from Android auto-backup like everything else
 data/
   db/         TrystDatabase, TrystDatabaseFactory, entities, DAOs, Converters, Migrations, CatalogAdoption (v10–v12 removed-id → custom adoption for acts/kinks/positions/toys/occasions/ejaculation-locations; also run post-restore), CatalogSeeds (v12 fresh-install + upgrade seeding of the neutral starter rows), SqlCipherLibrary
-  repository/ Encounter / Partner / Profile / Position / Act / Kink / Toy / Occasion / EjaculationLocation / PersonPhoto repositories (read DAOs from the unlocked session)
+  repository/ Encounter / Partner / Profile / Position / Act / Kink / Toy / Occasion / EjaculationLocation / Orientation / PersonPhoto / RecentSearch / Cycle repositories (read DAOs from the unlocked session)
   filter/     EncounterFilter + matches() + EncounterQuery (shared JVM-tested filter layer — Search, Insights scope, Gallery all consume it)
   search/     EncounterSearch (accent-folded, AND-across-tokens over note + partner names + resolved category labels)
   gallery/    GalleryPhotos.build (pure fn folding encounter photos + person_photo portraits into the gallery pipeline, grouped by day/month/year via DateGrouping), GalleryModels
-  media/      ExifOrientation (turns sideways-tagged photos upright at decode), PhotoRevisions (shared edit counts so thumbnails refresh everywhere), EncryptedMediaStore (encrypted blobs + staging support for atomic restore), PhotoMetadata (androidx.exifinterface EXIF read at view time)
-  backup/     BackupManager (export/restore with progress, a result summary and specific errors; BackupReminder is the pure rule behind the back-up nudge, )atomic wipe+restore in one tx, PRAGMA table_info NOT-NULL backfill), Csv (importer)
+  media/      ExifOrientation (turns sideways-tagged photos upright at decode), PhotoRevisions (shared edit counts so thumbnails refresh everywhere), EncryptedMediaStore (encrypted blobs + staging support for atomic restore), PhotoMetadata (androidx.exifinterface EXIF read) + MediaMeta (folds it into the v18 media columns at import, META-2), PhotoTransforms (rotate/crop)
+  backup/     BackupManager (export/restore with progress, a result summary and specific errors; BackupReminder is the pure rule behind the back-up nudge; atomic wipe+restore in one tx, PRAGMA table_info NOT-NULL backfill), PrefsBackup (settings stores carried in the backup), Csv (importer)
   stats/      InsightsEngine + Insights model (pure Kotlin, scope-aware)
+  achievements/ AchievementEngine + Achievements catalog (pure; badges derived from the log, no storage)
+  cycle/      CycleDefaults ("most likely" length and per-day flow for a new period, estimates flagged) and CyclePredictor (cycle stats + next-period range), both pure and JVM-tested (CYC-1, D-64, D-65)
 di/           Hilt wiring (most types use @Inject constructors; module is minimal)
 ui/
   common/     SelectionField/Chips, MediaImages, TooltipIconButton (long-press labels on icon-only buttons, QOL-6), CoachTip (one-time dismissible tips), ImagePicker, Format, Position/Act/Kink/Toy options, ActVisuals, Haptics (LocalHapticsEnabled), WindowSize, AppVersion, DateScopeChips (shared by Search + Insights scope), EncounterCard, DateHeader, PersonPhotoStrip
@@ -50,6 +52,10 @@ ui/
   insights/    InsightsScreen, charts, StatTiles/InsightSections catalogs, TypeColors, ViewModel
   settings/    SettingsScreen (General/Security/Appearance/Insights/Categories/Backup/Danger/About) + ResetDataScreen (type-to-confirm wipe) + Appearance/General/Backup/CsvImport/CustomActs/CustomKinks/CustomPositions/CustomToys/CustomOccasions/CustomEjaculationLocations VMs
   whatsnew/    ReleaseNotes (bundled notes), WhatsNewScreen + WhatsNewDialog (post-update popup)
+  cycle/       CycleScreen (person cards with status + estimate), CyclePersonScreen (stats + period list), CyclePeriodScreen (dates, per-day flow, note); CycleViewModels, CycleSettingsViewModel
+  achievements/ AchievementsScreen + AchievementsViewModel
+  about/       AboutScreen + OssLicenses (the hand-kept third-party license list)
+  brand/       BrandMark
   theme/       Color, Theme, Type, Shape (brand purple/green; sleek-dark default)
 MainActivity   FragmentActivity; FLAG_SECURE; renders by LockState (Setup / Lock / Unlocked → TrystApp)
 ```
@@ -69,8 +75,11 @@ MainActivity   FragmentActivity; FLAG_SECURE; renders by LockState (Setup / Lock
 
 ## Navigation
 Compose Navigation (adaptive: bottom bar on compact, nav rail on medium/expanded). Top destinations:
-**Trysts** (history/calendar), **Insights**, **Partners**, **Settings**. Plus the encounter editor
-(`encounter/new`, `encounter/{id}`), the Insights customizer (`insights/customize`), the Achievements
+**Trysts** (history/calendar), **Photos** (`gallery`), **Insights**, **Partners**, **Cycle** (only while Settings → Cycle
+tracking is on; with six tabs the bar labels only the selected one) and **Settings**. Plus Search (`search`), the cycle
+person and period screens (`cycle/person/{kind}/{id}`, `cycle/period/{periodId}`), the partner editor (`partner/{partnerId}`),
+the category manager (`settings/category/{category}`), CSV import, Photos settings, the encounter editor
+(`encounter/new`, `encounter/new/{date}`, `encounter/{encounterId}`), the Insights customizer (`insights/customize`), the Achievements
 screen, the About screen, the **Change-PIN** flow (`change-pin`), the **reset-all** page
 (`settings/reset`), the **What's-new** screen (`whats-new`), and the **self-profile** editor
 (`profile`, reached from both Settings → Your profile and the "You" card on Partners) — the Settings
@@ -79,13 +88,20 @@ sub-pages all reached from Settings. The whole graph is gated by the lock screen
 one-time **post-update What's-new popup** (installed `versionCode` vs `GeneralPreferences.lastSeenVersionCode`).
 
 ## Testing strategy
-- **JVM unit:** stats engine (`InsightsEngineTest`), Insights catalogs (`StatTilesTest`,
-  `InsightSectionsTest`), CSV parser (`CsvParseTest`).
+- **JVM unit:** stats and achievements engines (`InsightsEngineTest`, `AchievementEngineTest`), Insights catalogs
+  (`StatTilesTest`, `InsightSectionsTest`), filter/search/date scope (`EncounterFilterTest`, `EncounterSearchTest`,
+  `DateScopeTest`, `CalendarNavTest`), CSV parser (`CsvParseTest`), catalog adoption, gallery folding and photo
+  helpers (`GalleryPhotosTest`, `ExifOrientationTest`, `PhotoMetadataTest`, `PhotoTransformsTest`,
+  `PhotoDetailsFormatTest`), the backup reminder rule (`BackupReminderTest`), and cycle defaults and predictions
+  (`CycleDefaultsTest`, `CyclePredictorTest`).
 - **Instrumented (emulator, real Keystore/SQLCipher):** vault, DB-encrypted-on-disk, media crypto,
-  session lifecycle, Room migrations (v1→v15, incl. the v7→v8/v9→v10/v10→v11/v11→v12 data migrations plus additive v13/v14/v15 DDL), media attachment round-trip, backup round-trip, and
+  session lifecycle, Room migrations (v1→v20, incl. the v7→v8/v9→v10/v10→v11/v11→v12 data migrations plus additive DDL from v13 on), media attachment round-trip, backup round-trip, and
   backup/restore regression edge cases (`BackupRestoreRegressionTest`: restore-over-existing,
   restore-after-delete-all-data, partner-avatar-survives — the paths that produced the Pass-12 data-loss
   bugs).
+- **Compose UI (emulator):** gallery grid and viewer interaction, undo bar, coach tips, the bar chart
+  (`VerticalBarChartTest`) and an end-to-end app smoke test (`AppSmokeTest`: setup, lock, unlock, log a tryst).
+  Always run with `ANDROID_SERIAL` set to the emulator; the build refuses a physical device (`checkSafeTestDevice`).
 - **CI anti-leak guard:** fails the build if the *merged* manifest declares any network permission;
   runs locally (`checkNoNetwork*`) and in CI.
 

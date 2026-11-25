@@ -8,7 +8,8 @@ Contents: [Lock lifecycle](#1-app-lock-lifecycle-state-machine) ·
 [Key model](#2-key-model-dek-double-wrap) · [Unlock sequence](#3-unlock-sequence) ·
 [Layered data flow](#4-layered-architecture--data-flow) · [Encounter save](#5-encounter-save-flow) ·
 [Insights pipeline](#6-insights-pipeline) · [Backup export/import](#7-backup-export--import) ·
-[Auto-lock handoff](#8-auto-lock--picker-handoff) · [Achievements](#9-achievements-derivation).
+[Auto-lock handoff](#8-auto-lock--picker-handoff) · [Achievements](#9-achievements-derivation) ·
+[Cycle tracking](#10-cycle-tracking-log-defaults-predictions).
 
 ---
 
@@ -173,15 +174,20 @@ flowchart TD
     subgraph Export
         X1["BackupManager.export()"] --> X2["dump every table → data.json"]
         X1 --> X3["decrypt each media blob"]
-        X2 --> X4["ZIP (data.json + media/&lt;id&gt;)"]
+        X1 --> X7["PrefsBackup: settings stores → settings.json<br/>(if Include my settings)"]
+        X2 --> X4["ZIP (data.json + settings.json + media/&lt;id&gt;)"]
         X3 --> X4
+        X7 --> X4
         X4 --> X5["BackupCrypto: PBKDF2(password,salt,iter)<br/>→ Tink AES-GCM-HKDF stream"]
         X5 --> X6[(".tryst file via SAF")]
     end
     subgraph Import
         I1[(".tryst file")] --> I2["BackupCrypto: decrypt stream<br/>(wrong password → AEAD auth fail)"]
         I2 --> I3["unzip data.json + media"]
-        I3 --> I4["INSERT OR REPLACE rows<br/>(defer_foreign_keys)"]
+        I3 --> I8{"Replace my current data?<br/>(default on)"}
+        I8 -- yes --> I9["wipe + restore in one transaction<br/>(media staged, swapped in on success)"]
+        I8 -- no --> I4["INSERT OR REPLACE rows on top<br/>(defer_foreign_keys)"]
+        I3 --> I10["PrefsBackup: apply settings.json if present"]
         I3 --> I5["re-encrypt media under this device's key"]
     end
 ```
@@ -213,7 +219,7 @@ screen shows a teaser; the trophy icon opens the full screen.
 ```mermaid
 flowchart LR
     LOG["EncounterRepository.observeAll()"] -->|"map on Dispatchers.Default"| EV["AchievementEngine.evaluate()<br/>(sort by date, replay)"]
-    CAT["Achievements.catalog (~66 static defs)"] --> EV
+    CAT["Achievements.catalog (67 static defs)"] --> EV
     EV -->|"per def, by Rule"| RULES["Count / Sum / Distinct / Streak"]
     RULES --> ST["AchievementStatus<br/>(current · unlocked · unlockedAt)"]
     ST --> SUM["summarize() → teaser rollup"]
@@ -221,3 +227,33 @@ flowchart LR
     SUM --> TEASER["Insights teaser card → 'See all'"]
 ```
 
+
+## 10. Cycle tracking (log, defaults, predictions)
+
+Optional (Settings → Cycle tracking, CYC-1). One tap logs a whole period: `CycleDefaults` fills the most likely
+length and per-day flow from what was actually entered for that person, and flags every filled value as an
+estimate. `CyclePredictor` turns logged start dates into stats and a next-period range. Both are pure and
+JVM-tested (D-64, D-65). Estimates never feed the next guess.
+
+```mermaid
+flowchart TD
+    TAP["Started today / Another day<br/>(self or any partner)"] --> OV{"inside another period<br/>for this person?"}
+    OV -->|yes| REF["refuse · overlap dialog"]
+    OV -->|no| LEN{"2+ periods with a real end?"}
+    LEN -->|yes| MED["usual length = median of recent real lengths"]
+    LEN -->|no| STD["standard 5 days"]
+    MED --> FLOW["per day: most-entered flow on that day<br/>(ties → heavier), else standard pattern"]
+    STD --> FLOW
+    FLOW --> SAVE["cycle_period (endEstimated) + cycle_day rows (estimated)"]
+    SAVE --> EDIT["editing a day or picking the real end clears its flag"]
+
+    SAVE --> GAPS["cycles = gaps between logged starts<br/>(last 6, gaps over 90 days ignored)"]
+    GAPS --> N{"3+ cycles?"}
+    N -->|no| NEED["'Predictions start after N more cycles'"]
+    N -->|yes| SPR{"longest − shortest > 9 days?"}
+    SPR -->|yes| IRR["'Recent cycles vary too much'"]
+    SPR -->|no| RANGE["next start ≈ last + median<br/>range covers shortest..longest (≥ 2 days each side)"]
+    RANGE --> SHOW{"Show predictions on?"}
+    SHOW -->|yes| UI["Cycle card + person stats"]
+    SHOW -->|no| HIDE["stats only"]
+```

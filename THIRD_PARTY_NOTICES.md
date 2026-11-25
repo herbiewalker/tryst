@@ -13,7 +13,7 @@ component carries a known CVE at the audited versions, and there are no propriet
 
 | Component | Copyright | License |
 |-----------|-----------|---------|
-| AndroidX / Jetpack — Core, Activity, Compose, Material 3, Lifecycle, Navigation, Room, Biometric, Window, SQLite, … | © The Android Open Source Project | Apache-2.0 |
+| AndroidX / Jetpack — Core, Activity, Compose, Material 3, Lifecycle, Navigation, Room, Biometric, ExifInterface, Window, SQLite, … | © The Android Open Source Project | Apache-2.0 |
 | Kotlin standard library & kotlinx (Coroutines, Serialization) | © JetBrains s.r.o. and contributors | Apache-2.0 |
 | Dagger & Hilt | © Google LLC | Apache-2.0 |
 | Google Tink (`tink-android`) | © Google LLC | Apache-2.0 |

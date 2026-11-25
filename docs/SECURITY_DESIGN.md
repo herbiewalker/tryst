@@ -80,10 +80,12 @@ guarantee against forensic seizure in exchange for not having to remember a pass
 - **Media (photos):** never via MediaStore. Stored in app-internal storage as
   **AES-256-GCM** streams (Google Tink) under a media key derived/wrapped from the DEK.
   Decrypted only in-memory for display; no decrypted temp files.
-- **Preferences:** non-sensitive prefs in plain `SharedPreferences`, excluded from backup/transfer like
-  everything else: `tryst_appearance` (theme / Material You), `tryst_insights` (Insights layout), and
-  `tryst_general` (auto-lock timeout, haptics, calendar week-start). Anything sensitive would be
-  encrypted; none is stored in prefs.
+- **Preferences:** non-sensitive prefs in plain `SharedPreferences`: `tryst_appearance` (theme / Material You),
+  `tryst_insights` (Insights layout), `tryst_gallery` (Photos layout) and `tryst_general` (auto-lock timeout,
+  haptics, calendar week-start, backup reminder, cycle tracking switches). Android auto-backup never sees them
+  (`allowBackup=false`); since v0.6.0 they travel only inside the password-encrypted export as `settings.json`
+  (QOL-5), and only if the user leaves "Include my settings" on. Anything sensitive would be encrypted; none is
+  stored in prefs. Cycle data itself is health data and lives in the SQLCipher DB like every other entry.
 
 ## 3. App lock & UI hardening
 
@@ -107,7 +109,8 @@ guarantee against forensic seizure in exchange for not having to remember a pass
   stream. The container key is **PBKDF2-HMAC-SHA256** over the password (same `Pbkdf2` as the PIN, 600k;
   iteration count is in the header so it can rise — a future format version may switch to Argon2id, the
   strongest case for a memory-hard KDF being the offline-attackable backup).
-- Includes all tables (`data.json`) + decrypted media, re-encrypted under the device key on restore.
+- Includes all tables (`data.json`, cycle tables included), the settings stores (`settings.json`, container v2) +
+  decrypted media, re-encrypted under the device key on restore.
   Wrong password fails AEAD auth on first read. Round-trips losslessly.
 - **Import-side input validation (Pass 9):** a backup file is untrusted input, so import validates it
   defensively — magic + version check; the header's PBKDF2 iteration count is bounded (100k–5M) so a

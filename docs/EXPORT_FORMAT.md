@@ -1,6 +1,6 @@
 # Tryst — Backup / Export Format
 
-> **Status:** Live — container format **v2** (`TRYSTBK1`), current since **QOL-5** (v0.6.x).
+> **Status:** Live — container format **v2** (`TRYSTBK1`), current since **QOL-5** (v0.6.0).
 > v1 backups still import fine (the settings section is purely additive/optional). Produced/consumed
 > by `data/backup/BackupManager.kt` + `core/crypto/BackupCrypto.kt` + `data/backup/PrefsBackup.kt`.
 

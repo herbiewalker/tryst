@@ -38,6 +38,9 @@ If a request conflicts with the above, say so and propose an alternative — don
 - **App lock:** biometric / PIN (changeable in Settings → General), auto-lock on background
   (configurable delay; default immediate).
 - **Manual encrypted export/import** for migrating to a new phone.
+- **Photos tab** over every tryst photo and per-person portrait albums.
+- **Optional cycle tracking** (CYC-1, 7.x line, off by default): periods for self or any partner, "most likely"
+  defaults flagged as estimates, stats and a next-period range. Never fertility or contraception estimates.
 
 Out of scope for v1: cross-device sync, cloud anything, disguise/decoy mode (hook left
 for later), social/sharing features. See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).
@@ -92,6 +95,10 @@ See [docs/SETUP_WINDOWS.md](docs/SETUP_WINDOWS.md) for toolchain details.
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — stack & module layout
 - [docs/FLOWCHARTS.md](docs/FLOWCHARTS.md) — visual maps of the core logic flows
 - [docs/ROADMAP.md](docs/ROADMAP.md) — milestones
+- [docs/ROADMAP_FUTURE.md](docs/ROADMAP_FUTURE.md) — forward roadmap; its "Release plan" section (D-63) is the live ordering
+- [docs/ROADMAP_VIDEO.md](docs/ROADMAP_VIDEO.md) — video attachments, parked as their own theme
+- [docs/EXPORT_FORMAT.md](docs/EXPORT_FORMAT.md) — the `.tryst` backup container and what's inside it
+- [tools/dataset/README.md](tools/dataset/README.md) — the synthetic test dataset (`samples/tryst-test-dataset.tryst`)
 - [docs/DECISIONS.md](docs/DECISIONS.md) — decision log + open questions
 - [docs/RELEASE.md](docs/RELEASE.md) — cut-a-release checklist + F-Droid submission guide
 - [CHANGELOG.md](CHANGELOG.md) — per-release notes; kept in sync with the in-app "What's new" (`ui/whatsnew/ReleaseNotes.kt`) + the F-Droid changelog files

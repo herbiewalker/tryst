@@ -20,7 +20,7 @@ backup container that you restore through the normal import flow.
 |---|---|
 | Partners | **7** — 6 named + 1 anonymous. One **spouse** (Jordan); the rest are sensible for an open setup (poly partner, FWB, casual, ex, one-night-stand, anonymous stranger). |
 | Photos | A distinct avatar on each of the 6 named partners; the anonymous one has none (tests the no-avatar path). |
-| Encounters | **156**, spanning 2025-12 → 2026-06. |
+| Encounters | **156**, spanning 2026-05 → 2026-11 (see the date-shift note below). |
 | Solo | **13** solo encounters (no partner; partner-only fields omitted). |
 | Multi-partner | **7** encounters linked to 2 partners (tests the M:N path + group kinks). |
 | Same-day | **41** days carry 2+ encounters (tests multiple-per-day). |
@@ -38,6 +38,14 @@ Position (48), Initiator (3). Verified by the generator's coverage report.
 > pre-trim samples). The old samples still restore fine: import adopts their removed ids into custom
 > entries automatically. Regenerate to get samples that exercise the trimmed catalogs.
 
+## Date shift (2026-11-25)
+
+The committed sample was unpacked with `Extract`, every `createdAt` / `updatedAt` / `startAt` moved forward by
+**161 days** (23 whole weeks, so weekdays stay the same), and repacked with `Pack`. The newest tryst is now
+2026-11-20, which keeps the list, calendar and Insights looking current for screenshots. The generator itself still
+emits the original Dec 2025 to Jun 2026 dates, so a rebuild undoes the shift. The sample has no cycle data (it
+predates schema v20); log a few periods on the Cycle tab by hand when you need some.
+
 ## Rebuilding
 
 ```bash
@@ -54,6 +62,8 @@ The build is two stages:
    `Verify.java` then decrypts it back (mirrors import) as a self-check.
 
 Format reference: [`docs/EXPORT_FORMAT.md`](../../docs/EXPORT_FORMAT.md).
+
+On Windows the Java classpath separator is `;`, not `:` (for example `CP="$(printf '%s;' .tinklib/*.jar)"` in Git Bash).
 
 ## Inspecting an existing backup
 

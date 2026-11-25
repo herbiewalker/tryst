@@ -18,11 +18,12 @@ Inspired by other tracking apps you need to pay for, and built so privacy is the
 
 <a href="https://f-droid.org/packages/app.tryst/"><img src="https://f-droid.org/badge/get-it-on.png" alt="Get it on F-Droid" height="80" /></a>
 
-<a href="fastlane/metadata/android/en-US/images/phoneScreenshots/01_trysts_list.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01_trysts_list.png" width="18%" alt="Trysts list" /></a>
-<a href="fastlane/metadata/android/en-US/images/phoneScreenshots/02_trysts_calendar.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02_trysts_calendar.png" width="18%" alt="Calendar heatmap" /></a>
-<a href="fastlane/metadata/android/en-US/images/phoneScreenshots/03_photos_grid.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03_photos_grid.png" width="18%" alt="Photos gallery" /></a>
-<a href="fastlane/metadata/android/en-US/images/phoneScreenshots/05_insights.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/05_insights.png" width="18%" alt="Insights" /></a>
-<a href="fastlane/metadata/android/en-US/images/phoneScreenshots/06_partners.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/06_partners.png" width="18%" alt="Partners" /></a>
+<a href="fastlane/metadata/android/en-US/images/phoneScreenshots/01_trysts_list.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01_trysts_list.png" width="15%" alt="Trysts list" /></a>
+<a href="fastlane/metadata/android/en-US/images/phoneScreenshots/02_trysts_calendar.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02_trysts_calendar.png" width="15%" alt="Calendar heatmap" /></a>
+<a href="fastlane/metadata/android/en-US/images/phoneScreenshots/03_photos_grid.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03_photos_grid.png" width="15%" alt="Photos gallery" /></a>
+<a href="fastlane/metadata/android/en-US/images/phoneScreenshots/05_insights.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/05_insights.png" width="15%" alt="Insights" /></a>
+<a href="fastlane/metadata/android/en-US/images/phoneScreenshots/07_partners.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/07_partners.png" width="15%" alt="Partners" /></a>
+<a href="fastlane/metadata/android/en-US/images/phoneScreenshots/08_cycle.png"><img src="fastlane/metadata/android/en-US/images/phoneScreenshots/08_cycle.png" width="15%" alt="Cycle stats" /></a>
 
 <sub><i>Screenshots captured from a recent build on a synthetic dataset (no real data).</i></sub>
 
@@ -72,6 +73,10 @@ Privacy isn't a setting here — it's the architecture.
   (bars / line / donut), with stable per-type colors. Charts are **hand-drawn** — no chart dependency.
 - **Achievements** — dozens of milestones, streaks, and variety badges, derived from your log with
   progress bars and unlock dates. A Completionist badge rewards unlocking all the rest. No extra storage.
+- **Optional cycle tracking**: off until you turn it on in Settings. Log periods for yourself or any partner with
+  one tap; Tryst fills in the most likely length and flow for each day and marks them as estimates until you change
+  them. Each person shows their usual cycle and period length, and after three cycles the next period is estimated
+  as a range (hidden when cycles vary a lot, and switchable off). No fertility or contraception estimates.
 - **Calendar** — a tonal activity heatmap with per-day markers, month/week toggle, and swipe to
   page. Land on it by default if you like.
 - **Backup & import** — full-fidelity password-encrypted export/restore (photos included), plus a
@@ -164,7 +169,7 @@ which builds and signs from this source. Tryst ships no binary and commits no si
   encrypted-backup restore, inline add for every catalog category, and the fixes from a formal 7-lens
   post-release audit ([docs/audits/2026-07-30-triage.md](docs/audits/2026-07-30-triage.md)).
 
-Everything you had already logged is preserved across every schema bump (v13→v14→v15→v16→v17, all
+Everything you had already logged is preserved across every schema bump (v13 through v20, all
 additive-only).
 
 Full release notes are in [CHANGELOG.md](CHANGELOG.md); the milestone history and pre-release audit
@@ -178,7 +183,7 @@ program live in [docs/ROADMAP.md](docs/ROADMAP.md), and post-1.0 plans in
 | [REQUIREMENTS.md](docs/REQUIREMENTS.md) | Functional & non-functional requirements |
 | [THREAT_MODEL.md](docs/THREAT_MODEL.md) | Adversaries, mitigations, residual risk |
 | [SECURITY_DESIGN.md](docs/SECURITY_DESIGN.md) | Encryption & key management |
-| [DATA_MODEL.md](docs/DATA_MODEL.md) | Entities & fields (schema v19) |
+| [DATA_MODEL.md](docs/DATA_MODEL.md) | Entities & fields (schema v20) |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack & module layout |
 | [FLOWCHARTS.md](docs/FLOWCHARTS.md) | Visual maps of the core logic flows |
 | [ROADMAP.md](docs/ROADMAP.md) | Milestones & the 12-pass pre-release audit |

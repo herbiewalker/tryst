@@ -38,7 +38,7 @@ object OssLicenses {
     val components: List<OssComponent> = listOf(
         OssComponent(
             name = "AndroidX / Jetpack (Core, Activity, Compose, Material 3, Lifecycle, " +
-                "Navigation, Room, Biometric, Window, SQLite, …)",
+                "Navigation, Room, Biometric, ExifInterface, Window, SQLite, …)",
             copyright = "© The Android Open Source Project",
             license = APACHE_2,
         ),
