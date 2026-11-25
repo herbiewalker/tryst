@@ -1,6 +1,6 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v19** (latest: **D-61**, album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
+> **Status:** Live — decisions through **schema v19** (latest: **D-63**, release lines: 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
 > presence-only re-auth via BiometricPrompt with device-credential fallback — no CryptoObject,
 > no DEK touch, v0.5.7).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
@@ -715,6 +715,28 @@
   `defaultValue` per D-53) and a nullable `person_photo.caption`, rather than a shared photo table, which would be a far
   bigger migration. The gallery, favourites filter, bulk favourite and search read them through one `GalleryPhoto.caption`.
   A pre-v19 backup restores with favourite off and no caption. Multi-person tagging (PPL-1) stays separate.
+
+- **D-62 (2026-11-24) No translations for now; the app stays English-only.**
+  Two requests came in (French, issue #6; Chinese, issue #11), both closed as not planned with a pointer to
+  forking. A good part of the visible text (achievement names, mood and place labels, some Insights text) lives
+  in code as English identity keys rather than in `strings.xml`, so a translation can't be complete without a
+  larger extraction pass. This settles the "Insights localization decision" pre-work item: the Insights rework
+  keeps English labels and does not take on the extraction. New strings still go in `strings.xml` as usual, so
+  the door stays open. Revisit only as its own Localization milestone.
+
+- **D-63 (2026-11-24) Release lines: 0.6.6 closes 6.x, 7.x is cycle tracking only, everything else is 8.x or later.**
+  0.6.6 is the INS-3 chart fixes for issue #9 plus TEST-1 (the #9 fix was pulled forward so the reporter isn't
+  left waiting on the rework). **7.x carries CYC-1 alone**, split into six releases: 0.7.0 foundation + period
+  log (schema v20), 0.7.1 stats + predictions (closes issue #8), 0.7.2 calendar overlay, 0.7.3 user-defined
+  daily symptoms, 0.7.4 read-side encounter integration, 0.7.5 a Cycle section in Insights on today's charts.
+  **8.x and later**: 0.8.0 Insights rework (INS-1 drill-down pages for every section, the Cycle one
+  included), 0.8.1 BKP-1 + SEC-1 (issue #5, oldest open request; the backup now holds health data), 0.8.2
+  DEL-1 (covers cycle data too), 0.8.3 PPL-1 with the META-2 portrait-details follow-up (same table). Owner choices that reverse earlier plans:
+  (1) CYC-1 no longer waits for the Insights rework; it ships its own Insights section in 0.7.5 so there is
+  something to see before 8.x, and the rework adds the drill-down on top. (2) DEL-1 no longer lands before health data; CYC-1's own
+  "Delete cycle data" action covers the cycle tables. (3) BKP-1 / SEC-1 come after cycle data exists; cycle
+  tables join the backup through the generic dump (additive, no format change) and the SEC-1 KDF change lands
+  later, versioned so older `.tryst` files still restore. MAP-1 stays unscheduled pending a threat-model call.
 
 > **Standing follow-ups (not blockers, tracked here as pointers):**
 > **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;
