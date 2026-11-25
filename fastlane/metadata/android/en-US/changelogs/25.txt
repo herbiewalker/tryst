@@ -1,0 +1,7 @@
+Periods on the calendar, person colors, safer restores
+
+* Optional: show period days on the Trysts calendar, one strip per person.
+* Pick a color for each partner and yourself.
+* Restore shows what a backup holds first, and warns before Replace would delete data an older backup lacks.
+* New: Check a backup reads a backup file without restoring it.
+* Restored settings apply right away; newer backups are refused clearly.

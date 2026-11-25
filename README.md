@@ -133,9 +133,12 @@ Screenshots are black by design on-device (`FLAG_SECURE`).
 
 ## Status
 
-✅ **Shipped.** Current release **v0.7.1** (versionCode 24, schema v20). Distribution is **F-Droid**,
+✅ **Shipped.** Current release **v0.7.2** (versionCode 25, schema v21). Distribution is **F-Droid**,
 which builds and signs from this source. Tryst ships no binary and commits no signing key.
 
+- **0.7.2** can show period days on the Trysts calendar, one colored strip per person, and lets you pick a color for
+  each partner and yourself. Restores are safer: Tryst shows what a backup holds before changing anything, warns when
+  Replace would delete data an older backup lacks, and a new Check a backup reads a file without restoring it.
 - **0.7.1** adds cycle stats and predictions. Each person shows their usual cycle and period length, and after three
   cycles Tryst estimates the next period as a range. It stays hidden when cycles vary a lot and can be switched off.
 - **0.7.0** adds optional cycle tracking, off by default. Turn it on in Settings to get a Cycle tab, then log periods

@@ -13,6 +13,8 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.7.2] — 2026-11-25 (versionCode 25)
+
 ### Added
 
 - **See a backup before you restore it.** After you enter the password, Tryst now shows what the backup holds (when it was made and by which version, how many trysts, partners, photos and periods, and whether your settings are in it) and asks before changing anything.

@@ -1,8 +1,12 @@
 # Tryst — Roadmap / Milestones
 
-> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.7.1**
-> (schema v20). Each milestone ended runnable & tested. This file is the milestone *history* (see
+> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.7.2**
+> (schema v21). Each milestone ended runnable & tested. This file is the milestone *history* (see
 > the dated notes below); forward work lives in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
+
+> **Update (2026-11-25, evening):** **v0.7.2** shipped: periods on the Trysts calendar (CYC-1, D-66), pickable person
+> colors (D-67, schema v21), and safer restores (BKP-3, D-68: preview, data-loss warning, Check a backup, newer-backup
+> refusal, restored settings apply at once). BKP-4 (foreign-key check, merge overlaps) is queued for 0.8.1.
 
 > **Update (2026-11-25, later):** **v0.7.1** shipped: cycle stats and next-period predictions (CYC-1, D-65; issue #8).
 > Median of recent cycles shown as a range, hidden when irregular, switchable off. No schema change; still v20.

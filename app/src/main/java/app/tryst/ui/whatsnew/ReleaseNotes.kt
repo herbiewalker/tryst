@@ -33,6 +33,17 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.7.2",
+            versionCode = 25,
+            date = "2026-11-25",
+            highlights = listOf(
+                "Period days can show on the Trysts calendar, one colored strip per person. Turn it on in Settings, Cycle tracking.",
+                "Pick a color for each partner and for yourself. It's used on the calendar and in Insights.",
+                "Restoring a backup now shows what it holds first, and warns if Replace would delete anything an older backup doesn't have.",
+                "New in Settings: Check a backup reads a backup file and makes sure it opens, without restoring anything.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.7.1",
             versionCode = 24,
             date = "2026-11-25",
