@@ -93,6 +93,16 @@ with deeply personal data. Inspired by the iOS app *Nice*.
 - **FR-20** In-app **release notes**: a "What's new" screen and a one-time popup after each app update
   (bundled, no network — D-35).
 
+### 4.8 Cycle tracking (0.7.x, optional)
+- **FR-28** **Optional cycle tracking** (CYC-1, schema v20). Off by default; a Settings switch adds a
+  Cycle tab, and turning it off hides the tab and keeps the data. Periods can be logged for the self
+  profile or any active partner, with a start, an end (inclusive), a flow level for each day (spotting,
+  light, medium, heavy) and a note. "Started today" (or another day) fills in the most likely length and
+  flow from that person's own entered history, falling back to a standard 5-day pattern, and marks every
+  filled-in value as estimated until someone enters it. Periods can't overlap for one person. Cycle data
+  rides the encrypted backup and has its own "Delete cycle data" action; it stays out of Search and
+  Photos. No fertile-window or contraception estimates, ever (not medical advice).
+
 ## 5. Non-functional requirements
 
 - **NFR-1 (privacy)** No `INTERNET` permission; no analytics/ads/crash SDKs; `allowBackup=false`.

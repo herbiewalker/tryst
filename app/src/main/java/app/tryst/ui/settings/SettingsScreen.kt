@@ -75,6 +75,7 @@ import app.tryst.core.prefs.WeekStart
 import app.tryst.ui.common.SingleSelectChips
 import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.rememberHaptics
+import app.tryst.ui.cycle.CycleSettingsViewModel
 import app.tryst.ui.lock.BiometricPromptHelper
 import app.tryst.ui.lock.LockViewModel
 import app.tryst.ui.lock.findFragmentActivity
@@ -171,6 +172,9 @@ fun SettingsScreen(
     val themeMode by appearanceViewModel.themeMode.collectAsStateWithLifecycle()
     val dynamicColor by appearanceViewModel.dynamicColor.collectAsStateWithLifecycle()
     val generalViewModel: GeneralSettingsViewModel = hiltViewModel()
+    val cycleViewModel: CycleSettingsViewModel = hiltViewModel()
+    val cycleEnabled by cycleViewModel.enabled.collectAsStateWithLifecycle()
+    var confirmDeleteCycle by remember { mutableStateOf(false) }
     val hapticsEnabled by generalViewModel.hapticsEnabled.collectAsStateWithLifecycle()
     val weekStart by generalViewModel.weekStart.collectAsStateWithLifecycle()
     val defaultToCalendar by generalViewModel.defaultToCalendar.collectAsStateWithLifecycle()
@@ -384,6 +388,17 @@ fun SettingsScreen(
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
+            // ─── Cycle tracking (CYC-1), optional and off by default ───────────────
+            Text(stringResource(R.string.settings_cycle), style = MaterialTheme.typography.titleMedium)
+            SettingsToggleRow(
+                title = stringResource(R.string.settings_cycle_enable),
+                description = stringResource(R.string.settings_cycle_enable_desc),
+                checked = cycleEnabled,
+                onCheckedChange = { cycleViewModel.setEnabled(it) },
+            )
+
+            HorizontalDivider(Modifier.padding(vertical = 8.dp))
+
             Text(stringResource(R.string.settings_categories), style = MaterialTheme.typography.titleMedium)
             Text(
                 stringResource(R.string.settings_categories_desc),
@@ -452,6 +467,28 @@ fun SettingsScreen(
                 tint = MaterialTheme.colorScheme.error,
                 onClick = onOpenReset,
             )
+            SettingsRow(
+                icon = Icons.Filled.DeleteForever,
+                title = stringResource(R.string.settings_cycle_delete),
+                description = stringResource(R.string.settings_cycle_delete_desc),
+                tint = MaterialTheme.colorScheme.error,
+                onClick = { confirmDeleteCycle = true },
+            )
+            if (confirmDeleteCycle) {
+                AlertDialog(
+                    onDismissRequest = { confirmDeleteCycle = false },
+                    title = { Text(stringResource(R.string.settings_cycle_delete_confirm_title)) },
+                    text = { Text(stringResource(R.string.settings_cycle_delete_confirm_body)) },
+                    confirmButton = {
+                        TextButton(onClick = { cycleViewModel.deleteAll { confirmDeleteCycle = false } }) {
+                            Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { confirmDeleteCycle = false }) { Text(stringResource(R.string.action_cancel)) }
+                    },
+                )
+            }
 
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
 

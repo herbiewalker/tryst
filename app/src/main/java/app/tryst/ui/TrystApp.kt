@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -45,6 +46,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -95,6 +97,11 @@ private object Routes {
     const val INSIGHTS_CUSTOMIZE = "insights/customize"
     const val ACHIEVEMENTS = "achievements"
     const val PARTNERS = "partners"
+    const val CYCLE = "cycle"
+    const val CYCLE_PERSON = "cycle/person/{kind}/{id}"
+    fun cyclePerson(kind: String, id: String) = "cycle/person/$kind/$id"
+    const val CYCLE_PERIOD = "cycle/period/{periodId}"
+    fun cyclePeriod(id: String) = "cycle/period/$id"
     const val SETTINGS = "settings"
     const val ABOUT = "about"
     const val GALLERY_SETTINGS = "settings/gallery"
@@ -123,11 +130,13 @@ private data class TopDestination(
     @param:StringRes val labelRes: Int,
 )
 
-private val topDestinations = listOf(
+private fun topDestinations(cycleEnabled: Boolean) = listOfNotNull(
     TopDestination(Routes.HISTORY, Icons.Filled.Favorite, R.string.nav_trysts),
     TopDestination(Routes.GALLERY, Icons.Filled.PhotoLibrary, R.string.nav_photos),
     TopDestination(Routes.INSIGHTS, Icons.Filled.Insights, R.string.nav_insights),
     TopDestination(Routes.PARTNERS, Icons.Filled.People, R.string.nav_partners),
+    // Optional cycle tracking (CYC-1): only when switched on in Settings.
+    if (cycleEnabled) TopDestination(Routes.CYCLE, Icons.Filled.WaterDrop, R.string.nav_cycle) else null,
     TopDestination(Routes.SETTINGS, Icons.Filled.Settings, R.string.nav_settings),
 )
 
@@ -147,6 +156,11 @@ fun TrystApp() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val cycleSettings: app.tryst.ui.cycle.CycleSettingsViewModel = hiltViewModel()
+    val cycleEnabled by cycleSettings.enabled.collectAsState()
+    val topDestinations = topDestinations(cycleEnabled)
+    // Six tabs don't fit a phone with every label showing; label only the selected one then.
+    val showAllLabels = topDestinations.size <= 5
     val isTopDestination = currentRoute in topDestinations.map { it.route }
 
     val width = widthClass()
@@ -184,6 +198,7 @@ fun TrystApp() {
                             onClick = { navController.navigateTop(dest.route) },
                             icon = { Icon(dest.icon, contentDescription = label) },
                             label = { Text(label) },
+                            alwaysShowLabel = showAllLabels,
                         )
                     }
                 }
@@ -267,6 +282,20 @@ fun TrystApp() {
                             onOpenGallery = { navController.navigateTop(Routes.GALLERY) },
                             onOpenPartnerEdit = { id -> navController.navigate(Routes.partnerEdit(id)) },
                         )
+                    }
+                    composable(Routes.CYCLE) {
+                        app.tryst.ui.cycle.CycleScreen(
+                            onOpenPerson = { owner -> navController.navigate(Routes.cyclePerson(owner.kind, owner.id)) },
+                        )
+                    }
+                    composable(Routes.CYCLE_PERSON) {
+                        app.tryst.ui.cycle.CyclePersonScreen(
+                            onBack = { navController.popBackStack() },
+                            onOpenPeriod = { id -> navController.navigate(Routes.cyclePeriod(id)) },
+                        )
+                    }
+                    composable(Routes.CYCLE_PERIOD) {
+                        app.tryst.ui.cycle.CyclePeriodScreen(onBack = { navController.popBackStack() })
                     }
                     composable(Routes.PARTNER_EDIT) {
                         app.tryst.ui.partner.PartnerEditScreen(onClose = { navController.popBackStack() })

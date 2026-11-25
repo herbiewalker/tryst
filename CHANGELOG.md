@@ -13,6 +13,14 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+### Added
+
+- **Optional cycle tracking (CYC-1).** Off by default. Settings → Cycle tracking → Track periods adds a Cycle tab. Log a period for yourself or any partner with one tap ("Started today" or "Another day"). Tryst fills in the most likely length and flow for each day from that person's own history, or a standard 5-day pattern until there's enough, and marks those days as estimated. Tap a person to see their periods, and open one to change the dates, set the flow for any day, or add a note. "Ended today" sets the real end. Cycle data is encrypted like everything else, is included in backups, and has its own Delete cycle data action in Settings. Turning tracking off hides the tab and keeps the data.
+
+### Changed
+
+- **Database schema v20.** Two new tables for cycle data; nothing existing changes. A backup made in this version won't restore into older versions of Tryst.
+
 ## [0.6.6] — 2026-11-24 (versionCode 22)
 
 ### Fixed

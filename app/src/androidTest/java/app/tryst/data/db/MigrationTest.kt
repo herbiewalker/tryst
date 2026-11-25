@@ -603,6 +603,40 @@ class MigrationTest {
             }
         }
     }
+
+    /** CYC-1: v20 adds the cycle tables; existing data is untouched and a period's days go with it. */
+    @Test
+    fun migrate19To20_addsCycleTables() {
+        helper.createDatabase(dbName, 19).use { db ->
+            db.execSQL("INSERT INTO partners (id, displayName, isAnonymous, createdAt, updatedAt) VALUES ('p1', 'Sam', 0, 1, 1)")
+        }
+
+        helper.runMigrationsAndValidate(dbName, 20, true, MIGRATION_19_20).use { db ->
+            db.query("SELECT displayName FROM partners WHERE id = 'p1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("Sam", c.getString(0))
+            }
+            db.execSQL(
+                "INSERT INTO cycle_period (id, ownerKind, ownerId, startEpochDay, endEpochDay, createdAt, updatedAt) " +
+                    "VALUES ('c1', 'partner', 'p1', 100, 104, 1, 1)",
+            )
+            db.execSQL("INSERT INTO cycle_day (periodId, epochDay, flow) VALUES ('c1', 100, 'HEAVY')")
+            db.query("SELECT endEstimated FROM cycle_period WHERE id = 'c1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("endEstimated defaults to false", 0, c.getInt(0))
+            }
+            db.query("SELECT estimated FROM cycle_day WHERE periodId = 'c1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("estimated defaults to false", 0, c.getInt(0))
+            }
+            db.execSQL("PRAGMA foreign_keys = ON")
+            db.execSQL("DELETE FROM cycle_period WHERE id = 'c1'")
+            db.query("SELECT COUNT(*) FROM cycle_day").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("days are deleted with their period", 0, c.getInt(0))
+            }
+        }
+    }
 }
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

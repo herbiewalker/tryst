@@ -354,6 +354,31 @@ val MIGRATION_18_19 = object : Migration(18, 19) {
     }
 }
 
+/**
+ * v19 → v20: optional cycle tracking (CYC-1, 0.7.0). Two new tables, nothing existing changes.
+ * `cycle_period` is one period for one person (owner pair as in `person_photo`); `cycle_day` is the
+ * flow for each day of it, deleted with its period. Older backups restore with no cycle data.
+ */
+val MIGRATION_19_20 = object : Migration(19, 20) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `cycle_period` (`id` TEXT NOT NULL, `ownerKind` TEXT NOT NULL, " +
+                "`ownerId` TEXT NOT NULL, `startEpochDay` INTEGER NOT NULL, `endEpochDay` INTEGER NOT NULL, " +
+                "`endEstimated` INTEGER NOT NULL DEFAULT 0, `note` TEXT, `createdAt` INTEGER NOT NULL, " +
+                "`updatedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_cycle_period_ownerKind_ownerId_startEpochDay` " +
+                "ON `cycle_period` (`ownerKind`, `ownerId`, `startEpochDay`)",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `cycle_day` (`periodId` TEXT NOT NULL, `epochDay` INTEGER NOT NULL, " +
+                "`flow` TEXT NOT NULL, `estimated` INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(`periodId`, `epochDay`), " +
+                "FOREIGN KEY(`periodId`) REFERENCES `cycle_period`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        )
+    }
+}
+
 /** All migrations, in order. */
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
@@ -374,6 +399,7 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_16_17,
     MIGRATION_17_18,
     MIGRATION_18_19,
+    MIGRATION_19_20,
 )
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

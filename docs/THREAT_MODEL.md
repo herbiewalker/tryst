@@ -18,6 +18,11 @@
 - **A5** The user's **own** identifying data — the single-row `profile` (name, photo, sex/gender,
   date of birth, ethnicity, height, body type, location). Self-identifying, so its disclosure also
   links the device owner to all of the above.
+- **A6** **Cycle data** (CYC-1, schema v20, optional): period dates and per-day flow for the self profile
+  or a partner. This is **health data** about a person who may not be the user. It lives only in the
+  encrypted DB and the encrypted backup, like A1, so the at-rest and backup protections are unchanged.
+  It adds no network, permission or export path; the feature is off by default and has its own
+  "Delete cycle data" action.
 
 ## Adversaries in scope
 
@@ -68,6 +73,10 @@
   else and ride the encrypted backup. They are shown only inside the unlocked app. The one way they can leave
   the device is **Open in Maps**, which hands the coordinates to the user's maps app after an explicit
   confirm; there is no reverse geocoding, map tile or other lookup, so the app itself stays offline.
+- **R-CYC** Cycle data describes someone's health, often a partner's, and can be logged without them
+  entering it. Tryst can't check consent; it keeps the data local, encrypted and off by default, and
+  offers a one-step delete. "Most likely" defaults are clearly marked as estimates, and the app makes
+  no fertility or contraception claims, so a wrong guess can't be mistaken for medical advice.
 - **R-LOCK** Auto-lock defaults to **immediate** on background. If the user raises the auto-lock timeout
   (Settings → General), the DEK and open DB stay in memory for that window while backgrounded, so a
   curious person (T1) who picks the phone up within the window finds it unlocked. Opt-in; the default

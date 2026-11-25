@@ -152,6 +152,33 @@ class BackupRoundTripTest {
         assertEquals(listOf("Label A"), db.orientationDao().observeAll().first().map { it.label })
     }
 
+    /** CYC-1: periods and their per-day flow survive export → wipe-first import, estimated flags included. */
+    @Test
+    fun export_wipe_import_roundTripsCycleData() = runBlocking<Unit> {
+        val cycles = app.tryst.data.repository.CycleRepository(manager)
+        val owner = app.tryst.data.repository.CycleOwner(app.tryst.data.db.entity.CyclePeriodEntity.OWNER_PROFILE, ProfileEntity.SELF_ID)
+        val id = checkNotNull(cycles.startPeriod(owner, startEpochDay = 20_000))
+        val period = checkNotNull(cycles.getPeriod(id))
+        val days = cycles.getDays(id).toMutableList()
+        days[1] = days[1].copy(flow = app.tryst.data.db.entity.CycleFlow.HEAVY.name, estimated = false)
+        cycles.save(period.copy(note = "n"), days)
+
+        val bytes = exportedBytes()
+        cycles.deleteAll()
+        assertNull(cycles.getPeriod(id))
+
+        backup.import(password, ByteArrayInputStream(bytes), wipeFirst = true)
+
+        val restored = checkNotNull(cycles.getPeriod(id))
+        assertEquals(period.startEpochDay, restored.startEpochDay)
+        assertEquals(period.endEpochDay, restored.endEpochDay)
+        assertEquals(true, restored.endEstimated)
+        assertEquals("n", restored.note)
+        val restoredDays = cycles.getDays(id)
+        assertEquals(days.map { it.epochDay to it.flow }, restoredDays.map { it.epochDay to it.flow })
+        assertEquals(days.map { it.estimated }, restoredDays.map { it.estimated })
+    }
+
     /** DEMO-1: deleting a label clears it from partners and the profile instead of leaving a dangling id. */
     @Test
     fun deletingOrientation_clearsPartnerAndProfileRefs() = runBlocking<Unit> {

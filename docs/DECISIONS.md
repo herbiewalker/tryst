@@ -1,6 +1,6 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v19** (latest: **D-63**, release lines: 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
+> **Status:** Live — decisions through **schema v20** (latest: **D-64**, cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
 > presence-only re-auth via BiometricPrompt with device-credential fallback — no CryptoObject,
 > no DEK touch, v0.5.7).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
@@ -737,6 +737,20 @@
   "Delete cycle data" action covers the cycle tables. (3) BKP-1 / SEC-1 come after cycle data exists; cycle
   tables join the backup through the generic dump (additive, no format change) and the SEC-1 KDF change lands
   later, versioned so older `.tryst` files still restore. MAP-1 stays unscheduled pending a threat-model call.
+
+- **D-64 (2026-11-24) Cycle tracking foundation: per-day flow with "most likely" defaults (CYC-1, 0.7.0, schema v20).**
+  Owner call: flow is recorded **per day**, but one tap must be enough, for example a partner logging only
+  "it started" for someone else. Chosen: (1) "Started today" (or another day) creates the whole period at once,
+  with the person's usual length (median of their recent periods with a real end, needs 2) and usual flow per
+  day (most-entered flow on that day across recent periods, ties to the heavier), else a standard 5-day
+  pattern (medium, heavy, medium, light, light). (2) Every filled-in value is flagged (`endEstimated`,
+  `cycle_day.estimated`); entering a value clears the flag, and estimates never feed the next guess.
+  (3) Placement: a **Cycle tab** that appears only when Settings → Cycle tracking is on (6 tabs, so the bar labels
+  only the selected tab). (4) People: the self profile plus active partners; partners are archived, never
+  deleted, so cycle rows carry no partner FK and archived partners keep theirs. (5) Dates are local epoch
+  days, end inclusive; one person's periods can't overlap. (6) "Delete cycle data" in the danger zone wipes
+  both tables. Predictions (0.7.1), calendar overlay, symptoms and encounter links come later; no fertility
+  or contraception estimates, ever.
 
 > **Standing follow-ups (not blockers, tracked here as pointers):**
 > **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;

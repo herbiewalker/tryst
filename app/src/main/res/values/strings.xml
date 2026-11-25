@@ -695,4 +695,48 @@
     <string name="about_maker_credit">⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣</string>
     <string name="about_egg_found">you found it</string>
     <string name="search_egg_greeting">hi 👋</string>
+
+    <!-- Cycle tracking (CYC-1, 0.7.0). Optional, off by default. -->
+    <string name="nav_cycle">Cycle</string>
+    <string name="cycle_title">Cycle</string>
+    <string name="cycle_intro">Log when a period starts. Tryst fills in the most likely length and flow, and you can change any day later. Estimates are only a guide, not medical advice.</string>
+    <string name="cycle_status_none">Nothing logged yet</string>
+    <string name="cycle_status_on">On period, day %1$d. Last day %2$s</string>
+    <string name="cycle_status_on_estimated">On period, day %1$d. Likely ends around %2$s</string>
+    <string name="cycle_status_between">Last period started %1$s (cycle day %2$d)</string>
+    <string name="cycle_started_today">Started today</string>
+    <string name="cycle_started_other_day">Another day</string>
+    <string name="cycle_ended_today">Ended today</string>
+    <string name="cycle_log_period">Log a period</string>
+    <string name="cycle_person_empty">No periods logged yet. Tap Log a period to add one.</string>
+    <string name="cycle_period_range">%1$s to %2$s</string>
+    <plurals name="cycle_period_days">
+        <item quantity="one">%1$d day</item>
+        <item quantity="other">%1$d days</item>
+    </plurals>
+    <plurals name="cycle_period_days_estimated">
+        <item quantity="one">%1$d day (end is an estimate)</item>
+        <item quantity="other">%1$d days (end is an estimate)</item>
+    </plurals>
+    <string name="cycle_period_title">Period</string>
+    <string name="cycle_start_on">Start: %1$s</string>
+    <string name="cycle_end_on">End: %1$s</string>
+    <string name="cycle_end_estimated_hint">The end date is an estimate. Pick the real end, or tap Ended today on the Cycle tab.</string>
+    <string name="cycle_flow_hint">Flow for each day. Days marked estimated were filled in for you.</string>
+    <string name="cycle_day_estimated">estimated</string>
+    <string name="cycle_flow_spotting">Spotting</string>
+    <string name="cycle_flow_light">Light</string>
+    <string name="cycle_flow_medium">Medium</string>
+    <string name="cycle_flow_heavy">Heavy</string>
+    <string name="cycle_delete_period">Delete this period</string>
+    <string name="cycle_delete_period_confirm">Delete this period and its days?</string>
+    <string name="cycle_problem_overlap">That overlaps a period already logged for this person.</string>
+    <string name="cycle_problem_end_before_start">The end can\'t be before the start.</string>
+    <string name="settings_cycle">Cycle tracking</string>
+    <string name="settings_cycle_enable">Track periods</string>
+    <string name="settings_cycle_enable_desc">Adds a Cycle tab to log periods for you or a partner. Turning it off hides the tab and keeps the data.</string>
+    <string name="settings_cycle_delete">Delete cycle data</string>
+    <string name="settings_cycle_delete_desc">Removes every logged period, for everyone. Trysts are not touched.</string>
+    <string name="settings_cycle_delete_confirm_title">Delete all cycle data?</string>
+    <string name="settings_cycle_delete_confirm_body">Every period and flow entry for every person will be removed. This can\'t be undone.</string>
 </resources>

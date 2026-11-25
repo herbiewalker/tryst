@@ -427,6 +427,8 @@ class BackupManager @Inject constructor(
             "occasions", "ejaculation_locations", "orientations",
             "encounters", "media", "person_photo",
             "encounter_partner", "encounter_position", "encounter_tag",
+            // CYC-1 (v20). A period before its days, so the days' foreign key resolves on restore.
+            "cycle_period", "cycle_day",
         )
     }
 }

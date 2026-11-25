@@ -1,6 +1,6 @@
 # Tryst — Data Model
 
-> **Status:** Live — **schema v19** (v18 and v19 shipped in v0.6.4; v17 in v0.6.2; v16 in v0.5.3), Room over SQLCipher. Matches the entities in
+> **Status:** Live — **schema v20** (v20 in v0.7.0; v18 and v19 shipped in v0.6.4; v17 in v0.6.2; v16 in v0.5.3), Room over SQLCipher. Matches the entities in
 > `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change ships a
 > non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 >
@@ -236,5 +236,14 @@ storage — likely a small row in the encrypted DB.)
   `defaultValue` per D-53) and a nullable **`caption`** to `person_photo`, so album photos can be favourited and
   captioned like encounter photos. Both silently did nothing for album photos before. Pre-v19 backups restore with
   favourite off and no caption.
+- **v20 (`MIGRATION_19_20`, CYC-1, 0.7.0)** adds two tables for optional cycle tracking, nothing existing changes.
+  **`cycle_period`**: `id`, `ownerKind` + `ownerId` (the `person_photo` owner pair: `partner` + partner id, or
+  `profile` + `self`), `startEpochDay` / `endEpochDay` (local calendar days as `LocalDate.toEpochDay()`, end
+  inclusive, so a period never shifts with the time zone), `endEstimated` (NOT NULL DEFAULT 0; true while the
+  end is still the filled-in guess), `note`, `createdAt`, `updatedAt`; indexed on (ownerKind, ownerId,
+  startEpochDay). **`cycle_day`**: (`periodId`, `epochDay`) primary key, `flow` (a `CycleFlow` name kept as text
+  so an unknown value reads as "not set"), `estimated` (NOT NULL DEFAULT 0); FK to `cycle_period` with
+  `ON DELETE CASCADE`. No FK to partners: partners are archived, not deleted, and archived partners keep
+  their cycle data. Both tables ride the generic backup dump; a pre-v20 backup restores with no cycle data.
 - Export format (M5) is decoupled from the live schema and versioned independently
   (see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §4).

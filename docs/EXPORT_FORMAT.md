@@ -55,7 +55,8 @@ associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, i
 - **Wrong password** ⇒ the AEAD stream fails authentication on first read (import aborts cleanly).
 - **Tables** (insert order respects FKs; `PRAGMA defer_foreign_keys` also guards it): partners,
   profile, locations, tags, positions, acts, kinks, toys, occasions, ejaculation_locations, orientations, encounters,
-  media, person_photo (v15 portrait-album rows), encounter_partner, encounter_position, encounter_tag.
+  media, person_photo (v15 portrait-album rows), encounter_partner, encounter_position, encounter_tag,
+  cycle_period, cycle_day (v20 cycle tracking; a period before its days).
   Rows are inserted with `INSERT OR REPLACE` (idempotent re-import).
 - **`recent_searches` is deliberately EXCLUDED** (v13 / SRCH-1 / D-42). Search history is
   among the most sensitive text in the app, so it lives only on the local device; an export

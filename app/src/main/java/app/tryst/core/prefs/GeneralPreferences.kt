@@ -72,7 +72,8 @@ class GeneralPreferences @Inject constructor(
 
     /** Resets the user-facing settings only — [KEY_LAST_SEEN_VERSION] is internal What's-new state, not a preference. */
     fun resetToDefaults() {
-        prefs.edit().remove(KEY_AUTO_LOCK_MS).remove(KEY_HAPTICS).remove(KEY_WEEK_START).remove(KEY_DEFAULT_CALENDAR).apply()
+        prefs.edit().remove(KEY_AUTO_LOCK_MS).remove(KEY_HAPTICS).remove(KEY_WEEK_START).remove(KEY_DEFAULT_CALENDAR).remove(KEY_CYCLE_ENABLED).apply()
+        _cycleEnabled.value = false
         _autoLockTimeoutMs.value = 0L
         _hapticsEnabled.value = true
         _weekStart.value = WeekStart.SUNDAY
@@ -108,6 +109,18 @@ class GeneralPreferences @Inject constructor(
         _backupSnoozedUntil.value = until
     }
 
+    /**
+     * Optional cycle tracking (CYC-1). Off by default; turning it on adds the Cycle tab. Turning it off
+     * hides the tab but keeps the data (Settings → "Delete cycle data" removes it). Rides the settings backup.
+     */
+    private val _cycleEnabled = MutableStateFlow(prefs.getBoolean(KEY_CYCLE_ENABLED, false))
+    val cycleEnabled: StateFlow<Boolean> = _cycleEnabled.asStateFlow()
+
+    fun setCycleEnabled(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_CYCLE_ENABLED, enabled).apply()
+        _cycleEnabled.value = enabled
+    }
+
     /** Coach-mark ids the user has dismissed (QOL-6); each tip shows once. */
     private val _seenTips = MutableStateFlow(prefs.getStringSet(KEY_SEEN_TIPS, emptySet()).orEmpty().toSet())
     val seenTips: StateFlow<Set<String>> = _seenTips.asStateFlow()
@@ -131,6 +144,7 @@ class GeneralPreferences @Inject constructor(
         const val KEY_SEEN_TIPS = "seen_tips"
         const val KEY_LAST_BACKUP_AT = "last_backup_at"
         const val KEY_BACKUP_SNOOZED_UNTIL = "backup_snoozed_until"
+        const val KEY_CYCLE_ENABLED = "cycle_enabled"
     }
 }
 
