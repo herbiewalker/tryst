@@ -279,7 +279,7 @@ private fun InsightsList(
                             )
                         }
                         else -> SectionCard(section.title) {
-                            SectionContent(section.id, insights, sectionStyles[section.id] ?: ChartStyle.BARS)
+                            SectionContent(section.id, insights, section.resolve(sectionStyles[section.id]))
                         }
                     }
                 }
@@ -483,7 +483,7 @@ private fun SectionsEditor(
             onMove = { from, to -> onMove(order, from, to) },
         ) { section, dragging, handle ->
             val isHidden = section.id in hidden
-            val style = styles[section.id] ?: ChartStyle.BARS
+            val style = section.resolve(styles[section.id])
             Card(
                 modifier = Modifier.fillMaxWidth().height(112.dp),
                 colors = CardDefaults.cardColors(
@@ -522,7 +522,7 @@ private fun SectionsEditor(
                             modifier = Modifier.padding(start = 40.dp, top = 4.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            ChartStyle.entries.forEach { s ->
+                            section.styles.forEach { s ->
                                 FilterChip(
                                     selected = style == s,
                                     onClick = { onSetStyle(section.id, s) },

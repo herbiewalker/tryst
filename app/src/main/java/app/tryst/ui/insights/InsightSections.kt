@@ -13,6 +13,7 @@
 // ╰──────────────────────────────────────────────────────────────────╯
 package app.tryst.ui.insights
 
+import app.tryst.core.prefs.ChartStyle
 import app.tryst.data.stats.Insights
 
 /**
@@ -27,8 +28,16 @@ data class InsightSection(
     val hasChart: Boolean = true,
     /** Caption shown in the customizer for a non-chart card (in place of the style chips). */
     val editorNote: String? = null,
+    /**
+     * Chart styles this section can actually draw, in chip order. A time series can't be a donut and
+     * a category breakdown can't be a line, so offering those would only show a silent fallback.
+     */
+    val styles: List<ChartStyle> = ChartStyle.entries,
     val hasData: (Insights) -> Boolean,
-)
+) {
+    /** The saved [style] if this section can draw it, otherwise the first style it offers. */
+    fun resolve(style: ChartStyle?): ChartStyle = if (style != null && style in styles) style else styles.firstOrNull() ?: ChartStyle.BARS
+}
 
 object InsightSections {
 
@@ -43,25 +52,36 @@ object InsightSections {
     const val ORGASMS = "orgasms"
     const val DETAILS = "details"
 
+    /** Ordered time/ordinal series (months, weekdays, ratings). */
+    private val TREND_STYLES = listOf(ChartStyle.BARS, ChartStyle.LINE)
+
+    /** Categorical breakdowns (partners, acts, moods, ...). */
+    private val BREAKDOWN_STYLES = listOf(ChartStyle.BARS, ChartStyle.DONUT)
+
     /** Catalog order = the default layout for a fresh install. */
     val catalog: List<InsightSection> = listOf(
         InsightSection(OVERVIEW, "Overview", hasChart = false, editorNote = "Drag the stat tiles below to arrange them.") { it.totalCount > 0 },
         InsightSection(ACHIEVEMENTS, "Achievements", hasChart = false, editorNote = "Opens the Achievements screen.") { it.totalCount > 0 },
-        InsightSection(ACTIVITY, "Activity") { it.totalCount > 0 },
-        InsightSection(SATISFACTION, "Satisfaction") { i -> i.ratingHistogram.any { it > 0 } },
-        InsightSection(PEOPLE, "People") { it.topPartners.isNotEmpty() },
-        InsightSection(ACTS_POSITIONS, "What you did") { it.topActs.isNotEmpty() || it.topPositions.isNotEmpty() },
-        InsightSection(VIBE, "Vibe & context") {
+        InsightSection(ACTIVITY, "Activity", styles = TREND_STYLES) { it.totalCount > 0 },
+        InsightSection(SATISFACTION, "Satisfaction", styles = TREND_STYLES) { i -> i.ratingHistogram.any { it > 0 } },
+        InsightSection(PEOPLE, "People", styles = BREAKDOWN_STYLES) { it.topPartners.isNotEmpty() },
+        InsightSection(ACTS_POSITIONS, "What you did", styles = BREAKDOWN_STYLES) {
+            it.topActs.isNotEmpty() || it.topPositions.isNotEmpty()
+        },
+        InsightSection(VIBE, "Vibe & context", styles = BREAKDOWN_STYLES) {
             it.topMoods.isNotEmpty() ||
                 it.topKinks.isNotEmpty() ||
                 it.topSettings.isNotEmpty() ||
                 it.topOccasions.isNotEmpty()
         },
-        InsightSection(INITIATOR, "Initiator") { it.topInitiators.isNotEmpty() },
+        InsightSection(INITIATOR, "Initiator", styles = BREAKDOWN_STYLES) { it.topInitiators.isNotEmpty() },
+        // Mixed: breakdowns plus an over-time series, so every style draws something.
         InsightSection(ORGASMS, "Orgasms") {
             it.totalSelfOrgasms > 0 || it.totalPartnerOrgasms > 0 || it.topEjaculation.isNotEmpty()
         },
-        InsightSection(DETAILS, "Details") { it.topToys.isNotEmpty() || it.topProtection.isNotEmpty() },
+        InsightSection(DETAILS, "Details", styles = BREAKDOWN_STYLES) {
+            it.topToys.isNotEmpty() || it.topProtection.isNotEmpty()
+        },
     )
 
     private val byId = catalog.associateBy { it.id }

@@ -13,6 +13,15 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+### Fixed
+
+- **Bar charts in Insights show the real heights (issue #9).** Every bar used to fill the chart, so the bars all looked the same even though the numbers above them differed. Each bar is now sized against the tallest one.
+- **Each Insights section only offers chart styles it can draw (issue #9).** Activity and Satisfaction are over time, so they offer Bars and Line. People, What you did, Vibe, Initiator and Details are breakdowns, so they offer Bars and Donut. Orgasms mixes both and keeps all three. Picking Donut on Activity used to quietly show bars instead. A saved style a section no longer offers shows as Bars.
+
+### Internal
+
+- **App smoke test (TEST-1).** An end-to-end Compose test runs the real app on the emulator: first-run setup, lock, a wrong PIN refused, unlock, log a tryst, and check it was saved. Plus a test that bar heights follow the counts and unit tests for the per-section chart styles.
+
 ## [0.6.5] — 2026-11-03 (versionCode 21)
 
 ### Added

@@ -50,6 +50,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -115,6 +116,18 @@ private fun rememberChartReveal(): Float {
 // Bars
 // ---------------------------------------------------------------------------------------
 
+/** Smallest weight Compose accepts in practice; keeps an all-max column from a zero-weight spacer. */
+private const val MIN_WEIGHT = 0.0001f
+
+/** A zero-count bar still shows a sliver so the baseline reads as a bar slot. */
+private const val MIN_BAR_WEIGHT = 0.012f
+
+/** Test tag on each bar in [VerticalBarChart]. */
+internal const val BAR_TEST_TAG = "insights_bar"
+
+/** A bucket's height as a share of the tallest bucket, 0..1. */
+internal fun barFraction(count: Int, max: Int): Float = if (max <= 0) 0f else (count.toFloat() / max).coerceIn(0f, 1f)
+
 /** Vertical bar chart in plain Compose layout (no chart dependency). */
 @Composable
 fun VerticalBarChart(
@@ -132,11 +145,16 @@ fun VerticalBarChart(
         verticalAlignment = Alignment.Bottom,
     ) {
         data.forEach { bucket ->
+            // A weight only shares space among weighted siblings, so the bar needs a weighted
+            // spacer above it: bar : spacer = fraction : (1 - fraction) of the free height.
+            // Both are floored above zero (Compose rejects a zero weight).
+            val fraction = barFraction(bucket.count, max) * reveal
             Column(
                 modifier = Modifier.weight(1f).fillMaxHeight(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Bottom,
             ) {
+                Spacer(Modifier.weight((1f - fraction).coerceAtLeast(MIN_WEIGHT)))
                 if (bucket.count > 0) {
                     Text(
                         bucket.count.toString(),
@@ -145,12 +163,12 @@ fun VerticalBarChart(
                     )
                 }
                 // Bars grow up from the baseline on first reveal.
-                val fraction = bucket.count.toFloat() / max * reveal
                 Box(
                     modifier = Modifier
                         .padding(top = 2.dp)
                         .fillMaxWidth(0.68f)
-                        .weight(fraction.coerceAtLeast(0.012f))
+                        .weight(fraction.coerceAtLeast(MIN_BAR_WEIGHT))
+                        .testTag(BAR_TEST_TAG)
                         .clip(RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp))
                         .background(
                             if (bucket.count > 0) {
