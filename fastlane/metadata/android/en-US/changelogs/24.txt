@@ -1,0 +1,5 @@
+Cycle stats and predictions
+
+* Each person in the Cycle tab shows their usual cycle and period length.
+* After three cycles, Tryst estimates when the next period starts and shows it as a range. It stays hidden when cycles vary a lot.
+* Settings, Cycle tracking, Show predictions turns estimates off. No fertile-window or contraception estimates.

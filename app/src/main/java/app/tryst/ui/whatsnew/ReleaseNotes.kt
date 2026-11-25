@@ -33,6 +33,15 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.7.1",
+            versionCode = 24,
+            date = "2026-11-25",
+            highlights = listOf(
+                "Each person in the Cycle tab now shows their usual cycle length and usual period length.",
+                "After three cycles, Tryst estimates when the next period will start and shows it as a range. It stays hidden when recent cycles vary a lot, and Settings, Show predictions turns it off.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.7.0",
             versionCode = 23,
             date = "2026-11-25",

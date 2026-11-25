@@ -1,8 +1,11 @@
 # Tryst — Roadmap / Milestones
 
-> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.7.0**
+> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.7.1**
 > (schema v20). Each milestone ended runnable & tested. This file is the milestone *history* (see
 > the dated notes below); forward work lives in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
+
+> **Update (2026-11-25, later):** **v0.7.1** shipped: cycle stats and next-period predictions (CYC-1, D-65; issue #8).
+> Median of recent cycles shown as a range, hidden when irregular, switchable off. No schema change; still v20.
 
 > **Update (2026-11-25):** **v0.7.0** shipped: the cycle tracking foundation (CYC-1, D-64). Optional Cycle tab, period
 > log for self or any partner with "most likely" defaults marked as estimates, Delete cycle data. Schema v20.

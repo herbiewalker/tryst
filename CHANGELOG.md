@@ -13,6 +13,8 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.7.1] — 2026-11-25 (versionCode 24)
+
 ### Added
 
 - **Cycle stats and predictions (CYC-1, closes issue #8).** Each person in the Cycle tab now shows their usual cycle length (with the shortest and longest recent cycle) and their usual period length. Once three cycles are logged, Tryst estimates when the next period will start and shows it as a range, labelled an estimate. It stays hidden when recent cycles vary by more than 9 days, and says so. If the range has passed, it says how many days ago the period was expected. Settings → Cycle tracking → Show predictions turns estimates off. There are no fertile-window or contraception estimates.
