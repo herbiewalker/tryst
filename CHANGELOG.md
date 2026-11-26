@@ -13,11 +13,13 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.7.3] — 2026-11-25 (versionCode 26)
+
 ### Changed
 
 - **Everyone gets their own color.** Each person now has a color of their own, so two people's periods in the same month never show up in the same color on the calendar. People who don't have one yet get the next unused color when you unlock or restore, and a new partner starts on one. Colors never change on their own. The editors show one Color row; tap it to pick from a pop-up, where a color someone else already has shows their initial; you can still pick it if you want two people to share. Automatic is gone.
-- **The Cycle tab skips people set as Male.** Anyone whose sex is set to Male no longer shows on the Cycle tab or in "Whose periods to show". People with no sex set, and anyone who already has periods logged, still show. A short note says how many were left off.
 - **A new set of person colors.** Twenty-four colors: twelve bold ones spread out so the first few people get the most different ones (blue, orange, green, pink, then the rest), then twelve deeper or lighter shades for when more people come and go over the years. If you need more, Custom shade at the bottom of the pop-up lets you slide to any hue. Partners you've archived keep their color, but someone new can be given it once every color is in use by people you still see. Insights charts use the bold twelve. A color picked from the old set shows as "Custom shade" until you change it.
+- **The Cycle tab skips people set as Male.** Anyone whose sex is set to Male no longer shows on the Cycle tab or in "Whose periods to show". People with no sex set, and anyone who already has periods logged, still show. A short note says how many were left off.
 
 ## [0.7.2] — 2026-11-25 (versionCode 25)
 

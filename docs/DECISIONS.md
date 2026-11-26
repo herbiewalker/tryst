@@ -1,6 +1,6 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v20** (latest: **D-71**, the cycle screens leave off people set as Male; D-70: everyone gets their own color; D-69: orgasm details added as 0.7.6; D-68: restore preview and data-loss warning; D-67: pickable person colors; D-66: periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
+> **Status:** Live — decisions through **schema v20** (latest: **D-72**, 0.7.3 slotted in and the rest of 7.x moves up one; D-71: the cycle screens leave off people set as Male; D-70: everyone gets their own color; D-69: orgasm details added as 0.7.6; D-68: restore preview and data-loss warning; D-67: pickable person colors; D-66: periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
 > presence-only re-auth via BiometricPrompt with device-credential fallback — no CryptoObject,
 > no DEK touch, v0.5.7).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
@@ -819,6 +819,12 @@
   Anyone with periods already logged always shows, so changing someone's sex later never hides data. The Cycle tab
   says how many people were left off and how to bring someone back if their sex was set wrong; if nobody is left,
   it says that instead of showing an empty list.
+
+- **D-72 (2026-11-25) 0.7.3 is person colors and cycle eligibility; the rest of 7.x moves up one.**
+  The owner released D-70 (everyone gets their own color) and D-71 (cycle screens skip people set as Male) as 0.7.3
+  rather than holding them for symptoms. The plan from D-63 and D-69 keeps its order and shifts by one: 0.7.4 daily
+  symptoms (schema v22 est.), 0.7.5 encounter integration, 0.7.6 cycle Insights, 0.7.7 orgasm details (ORG-1,
+  schema v23 est.). 8.x is unchanged. Older entries keep the numbers they were written with.
 
 > **Standing follow-ups (not blockers, tracked here as pointers):**
 > **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;

@@ -1,6 +1,6 @@
 # Tryst — Security & Encryption Design
 
-> **Status:** Live — v0.7.2 / schema v21. The implemented security design. Key model = **Keystore-only** with a
+> **Status:** Live — v0.7.3 / schema v21. The implemented security design. Key model = **Keystore-only** with a
 > distinct app PIN (§1 Decision); the rest of this doc describes what ships.
 
 ---

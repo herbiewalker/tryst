@@ -1,6 +1,6 @@
 # Tryst — Requirements
 
-> **Status:** Live — shipped through **v0.7.2** (schema v21). The v1 scope below is fully
+> **Status:** Live — shipped through **v0.7.3** (schema v21). The v1 scope below is fully
 > implemented; post-1.0 work is tracked in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
 
 ## 1. Vision
@@ -109,9 +109,13 @@ with deeply personal data. Inspired by the iOS app *Nice*.
 - **FR-30** **Periods on the calendar** (CYC-1, 0.7.2). Behind its own Settings switch (off by default), the Trysts
   calendar marks logged period days per person in that person's Insights color and, with predictions on, the likely
   start range of the next period from today on. The user picks whose periods show (none picked means everyone).
-- **FR-31** **Person colors** (0.7.2, schema v21). Each partner and the self profile can have a color picked from the
-  16-color palette, or Automatic (from the name). The picked color is used on the calendar strip and the Insights
-  People chart.
+- **FR-31** **Person colors** (0.7.2, schema v21; reworked in 0.7.3, D-70). Every partner and the self profile has a
+  color of their own, filled in automatically with the color fewest current people have and never changed after.
+  The editors pick from a 24-color pop-up (colors someone else has show their initial and stay pickable) or a
+  custom hue. The color is used on the calendar strip and the Insights People chart.
+- **FR-32** **Who the cycle screens list** (0.7.3, D-71). People whose sex is set to Male are left off the Cycle tab
+  and the calendar's "whose periods" choice, unless they already have periods logged. The Cycle tab says how many
+  were left off.
 
 ## 5. Non-functional requirements
 

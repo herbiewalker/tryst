@@ -33,6 +33,16 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.7.3",
+            versionCode = 26,
+            date = "2026-11-25",
+            highlights = listOf(
+                "Everyone now gets their own color, so two people's periods never look alike on the calendar.",
+                "Colors are picked from a small pop-up: 24 colors, or slide to any custom shade. A letter marks a color someone else has.",
+                "The Cycle tab leaves off people set as Male. Anyone with periods already logged still shows.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.7.2",
             versionCode = 25,
             date = "2026-11-25",

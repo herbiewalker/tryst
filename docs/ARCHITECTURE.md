@@ -1,6 +1,6 @@
 # Tryst — Architecture
 
-> **Status:** Live — v0.7.2 / schema v21. Reflects the actual code. See [FLOWCHARTS.md](FLOWCHARTS.md) for visual
+> **Status:** Live — v0.7.3 / schema v21. Reflects the actual code. See [FLOWCHARTS.md](FLOWCHARTS.md) for visual
 > flows and [CLAUDE.md](../CLAUDE.md) for the stack rationale and hard constraints.
 
 ## Stack

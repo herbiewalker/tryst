@@ -1,8 +1,13 @@
 # Tryst — Roadmap / Milestones
 
-> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.7.2**
+> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.7.3**
 > (schema v21). Each milestone ended runnable & tested. This file is the milestone *history* (see
 > the dated notes below); forward work lives in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
+
+> **Update (2026-11-25, late):** **v0.7.3** shipped: everyone gets their own color (D-70: 24-color palette, compact
+> pop-up with a custom shade, archived partners' colors reused last) and the cycle screens leave off people set as
+> Male (D-71). No schema change. The owner slotted this in ahead of symptoms, so the rest of 7.x moves up one
+> (D-72): 0.7.4 symptoms, 0.7.5 encounter integration, 0.7.6 cycle Insights, 0.7.7 orgasm details.
 
 > **Update (2026-11-25, evening):** **v0.7.2** shipped: periods on the Trysts calendar (CYC-1, D-66), pickable person
 > colors (D-67, schema v21), and safer restores (BKP-3, D-68: preview, data-loss warning, Check a backup, newer-backup

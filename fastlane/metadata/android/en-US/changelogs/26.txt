@@ -1,0 +1,6 @@
+Everyone gets their own color
+
+* Each person gets a color of their own, so two people's periods never look alike on the calendar.
+* Pick from 24 colors in a small pop-up, or slide to any custom shade.
+* Colors never change on their own; a letter marks a color someone else already has.
+* The Cycle tab leaves off people set as Male, unless they already have periods logged.
