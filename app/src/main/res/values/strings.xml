@@ -755,6 +755,11 @@
     <string name="cycle_ended_today">Ended today</string>
     <string name="cycle_log_period">Log a period</string>
     <string name="cycle_person_empty">No periods logged yet. Tap Log a period to add one.</string>
+    <string name="cycle_nobody">Nobody here can have a period: you and every partner are set as Male. If that\'s wrong for someone, change their sex in their profile and they\'ll show up here.</string>
+    <plurals name="cycle_hidden_male">
+        <item quantity="one">%1$d person set as Male isn\'t listed. Change their sex in their profile if that\'s wrong.</item>
+        <item quantity="other">%1$d people set as Male aren\'t listed. Change their sex in their profile if that\'s wrong.</item>
+    </plurals>
     <string name="cycle_period_range">%1$s to %2$s</string>
     <plurals name="cycle_period_days">
         <item quantity="one">%1$d day</item>

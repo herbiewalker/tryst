@@ -144,7 +144,8 @@ private fun ProblemDialog(problem: CycleProblem?, onDismiss: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CycleScreen(onOpenPerson: (CycleOwner) -> Unit, viewModel: CycleViewModel = hiltViewModel()) {
-    val people by viewModel.people.collectAsStateWithLifecycle()
+    val tab by viewModel.tab.collectAsStateWithLifecycle()
+    val people = tab.people
     var pickFor by remember { mutableStateOf<CycleOwner?>(null) }
 
     Scaffold(topBar = { TopAppBar(title = { Text(stringResource(R.string.cycle_title)) }) }) { padding ->
@@ -168,6 +169,20 @@ fun CycleScreen(onOpenPerson: (CycleOwner) -> Unit, viewModel: CycleViewModel = 
                     onStartOtherDay = { pickFor = person.owner },
                     onEndToday = { viewModel.endToday(it) },
                 )
+            }
+            if (tab.hiddenMale > 0) {
+                // Says why someone's missing, and how to bring them back if their sex was set wrong (D-71).
+                item {
+                    Text(
+                        if (people.isEmpty()) {
+                            stringResource(R.string.cycle_nobody)
+                        } else {
+                            pluralStringResource(R.plurals.cycle_hidden_male, tab.hiddenMale, tab.hiddenMale)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }

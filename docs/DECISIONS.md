@@ -1,6 +1,6 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v20** (latest: **D-70**, everyone gets their own color; D-69: orgasm details added as 0.7.6; D-68: restore preview and data-loss warning; D-67: pickable person colors; D-66: periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
+> **Status:** Live — decisions through **schema v20** (latest: **D-71**, the cycle screens leave off people set as Male; D-70: everyone gets their own color; D-69: orgasm details added as 0.7.6; D-68: restore preview and data-loss warning; D-67: pickable person colors; D-66: periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
 > presence-only re-auth via BiometricPrompt with device-credential fallback — no CryptoObject,
 > no DEK touch, v0.5.7).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
@@ -811,6 +811,14 @@
   hue at fixed saturation and brightness, so a custom pick stays as readable as the palette; custom shades don't
   count as taken. A new partner opens with the next free color already selected. Automatic is gone. Off-palette
   colors (custom, older versions, imports) are kept and shown as "Custom shade". No schema change.
+
+- **D-71 (2026-11-25) The cycle screens leave off people set as Male.**
+  The Cycle tab and the calendar's "Whose periods to show" listed everyone, so male partners showed up with an empty
+  period card. Now anyone whose sex is set to Male is left off both (`CycleEligibility`, JVM-tested). Sex decides
+  it, not gender, because a trans man can have periods. No sex set and Intersex still show, since Tryst can't tell.
+  Anyone with periods already logged always shows, so changing someone's sex later never hides data. The Cycle tab
+  says how many people were left off and how to bring someone back if their sex was set wrong; if nobody is left,
+  it says that instead of showing an empty list.
 
 > **Standing follow-ups (not blockers, tracked here as pointers):**
 > **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;

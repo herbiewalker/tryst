@@ -20,6 +20,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tryst.core.prefs.GeneralPreferences
+import app.tryst.data.cycle.CycleEligibility
 import app.tryst.data.cycle.CyclePrediction
 import app.tryst.data.cycle.CyclePredictor
 import app.tryst.data.cycle.CycleStats
@@ -46,6 +47,9 @@ import kotlinx.coroutines.launch
 
 internal fun todayEpochDay(): Long = LocalDate.now().toEpochDay()
 
+/** The Cycle tab's list, and how many people were left off because they're set as Male (D-71). */
+data class CycleTab(val people: List<CyclePerson>, val hiddenMale: Int)
+
 /** One person on the Cycle tab. [name] is null for the self profile with no name (the UI says "You"). */
 data class CyclePerson(
     val owner: CycleOwner,
@@ -66,7 +70,8 @@ class CycleViewModel @Inject constructor(
     prefs: GeneralPreferences,
 ) : ViewModel() {
 
-    val people: StateFlow<List<CyclePerson>> = combine(
+    /** Everyone who can have a period (D-71), plus how many were left off for being set as Male. */
+    val tab: StateFlow<CycleTab> = combine(
         profileRepository.observe(),
         partnerRepository.observeActive(),
         repository.observeAllPeriods(),
@@ -80,15 +85,22 @@ class CycleViewModel @Inject constructor(
             val prediction = if (predict) CyclePredictor.predict(mine, today) else null
             return CyclePerson(owner, name, CycleStatus.of(mine, today), prediction)
         }
-        buildList {
-            add(person(self, profile?.displayName?.takeIf { it.isNotBlank() }))
+        var hidden = 0
+        val people = buildList {
+            if (CycleEligibility.shows(profile?.sex, byOwner.containsKey(self))) {
+                add(person(self, profile?.displayName?.takeIf { it.isNotBlank() }))
+            } else {
+                hidden++
+            }
             for (p in partners) {
-                add(person(CycleOwner(CyclePeriodEntity.OWNER_PARTNER, p.id), Format.partnerName(p)))
+                val owner = CycleOwner(CyclePeriodEntity.OWNER_PARTNER, p.id)
+                if (CycleEligibility.shows(p.sex, byOwner.containsKey(owner))) add(person(owner, Format.partnerName(p))) else hidden++
             }
         }
+        CycleTab(people, hidden)
     }
-        .catch { emit(emptyList()) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+        .catch { emit(CycleTab(emptyList(), 0)) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CycleTab(emptyList(), 0))
 
     /** Set when the last quick action was refused; the screen shows it once then clears it. */
     var problem by mutableStateOf<CycleProblem?>(null)

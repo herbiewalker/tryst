@@ -16,6 +16,7 @@ package app.tryst.ui.cycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tryst.core.prefs.GeneralPreferences
+import app.tryst.data.cycle.CycleEligibility
 import app.tryst.data.cycle.CycleOverlay
 import app.tryst.data.db.entity.CyclePeriodEntity
 import app.tryst.data.db.entity.ProfileEntity
@@ -62,16 +63,23 @@ class CycleSettingsViewModel @Inject constructor(
 
     fun setCalendarOwners(keys: Set<String>) = prefs.setCycleCalendarOwners(keys)
 
-    /** You plus every active partner, in the order the Cycle tab lists them. */
+    /** You plus every active partner who can have a period (D-71), in the order the Cycle tab lists them. */
     val people: StateFlow<List<CyclePersonChoice>> = combine(
         profileRepository.observe(),
         partnerRepository.observeActive(),
-    ) { profile, partners ->
+        repository.observeAllPeriods(),
+    ) { profile, partners, periods ->
+        val logged = periods.mapTo(HashSet()) { CycleOwner(it.ownerKind, it.ownerId) }
         buildList {
             val self = CycleOwner(CyclePeriodEntity.OWNER_PROFILE, ProfileEntity.SELF_ID)
-            add(CyclePersonChoice(CycleOverlay.key(self), profile?.displayName?.takeIf { it.isNotBlank() }))
+            if (CycleEligibility.shows(profile?.sex, self in logged)) {
+                add(CyclePersonChoice(CycleOverlay.key(self), profile?.displayName?.takeIf { it.isNotBlank() }))
+            }
             partners.forEach {
-                add(CyclePersonChoice(CycleOverlay.key(CycleOwner(CyclePeriodEntity.OWNER_PARTNER, it.id)), Format.partnerName(it)))
+                val owner = CycleOwner(CyclePeriodEntity.OWNER_PARTNER, it.id)
+                if (CycleEligibility.shows(it.sex, owner in logged)) {
+                    add(CyclePersonChoice(CycleOverlay.key(owner), Format.partnerName(it)))
+                }
             }
         }
     }
