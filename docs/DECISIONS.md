@@ -1,6 +1,6 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v20** (latest: **D-68**, restore preview and data-loss warning; D-67: pickable person colors; D-66: periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
+> **Status:** Live — decisions through **schema v20** (latest: **D-69**, orgasm details added as 0.7.6; D-68: restore preview and data-loss warning; D-67: pickable person colors; D-66: periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
 > presence-only re-auth via BiometricPrompt with device-credential fallback — no CryptoObject,
 > no DEK touch, v0.5.7).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
@@ -787,6 +787,12 @@
   before anything is written and names the version it needs. Exports now carry `meta` (app version, code, time)
   for this. "Check a backup" reads every byte without restoring. Deliberately not done here: an explicit foreign
   key check and merge-overlap handling, tracked as BKP-4.
+
+- **D-69 (2026-11-25) ORG-1 orgasm details closes 7.x as 0.7.6 (owner exception to D-63).**
+  D-63 kept 7.x to cycle tracking alone; the owner added one release at the end for orgasm details, since the test
+  dataset made the gap obvious: partners only have a count, with no finish location and no orgasm types for anyone. Shape: an `orgasm` table (self or partner owner, index, type ids, finish ids), a user-built type catalog
+  (nothing explicit preset, D-41), finishes reusing the existing catalog, existing data migrated in. Schema v23 if
+  0.7.3 takes v22. Ships after the 0.7.5 cycle Insights section; 8.x is unchanged.
 
 > **Standing follow-ups (not blockers, tracked here as pointers):**
 > **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;
