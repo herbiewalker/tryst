@@ -60,10 +60,10 @@ import app.tryst.ui.common.TooltipIconButton
 private const val AVATAR_PX = 320
 
 /**
- * Full-screen add/edit for a partner (QOL-3 Ã¢â‚¬â€ was an AlertDialog). Includes a **photo strip** backed by
+ * Full-screen add/edit for a partner (QOL-3 — was an AlertDialog). Includes a **photo strip** backed by
  * the v15+ `person_photo` table: attach several photos to a partner, tap one to promote it as the
  * current avatar, or delete individual portraits. Photo actions auto-save (they're separate from the
- * field edits), so a discard-changes prompt only guards the fields Ã¢â‚¬â€ you never lose photos.
+ * field edits), so a discard-changes prompt only guards the fields — you never lose photos.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

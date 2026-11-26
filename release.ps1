@@ -36,7 +36,9 @@ Step 'Version bump'
 # Single source of truth: app/build.gradle.kts. Write it only if it doesn't already match —
 # idempotent, so running this after a hand-edit (or a previous partial run) is safe.
 $gradlePath = 'app\build.gradle.kts'
-$gradleText = Get-Content $gradlePath -Raw
+# -Encoding UTF8 matters: PS 5.1 reads a BOM-less file as ANSI, and writing that back as UTF-8
+# double-encoded the banner on every release until the file reached 4 MB (fixed in 0.7.4).
+$gradleText = Get-Content $gradlePath -Raw -Encoding UTF8
 $wantCode = "versionCode = $VersionCode"
 $wantName = "versionName = `"$Version`""
 if ($gradleText -notmatch [regex]::Escape($wantCode) -or $gradleText -notmatch [regex]::Escape($wantName)) {
@@ -58,7 +60,7 @@ if (-not (Select-String -Path CHANGELOG.md -Pattern "\[$([regex]::Escape($Versio
 $fastlanePath = "fastlane\metadata\android\en-US\changelogs\$VersionCode.txt"
 if (-not (Test-Path $fastlanePath)) { Fail "missing $fastlanePath" }
 $notesPath = 'app\src\main\java\app\tryst\ui\whatsnew\ReleaseNotes.kt'
-$notesText = Get-Content $notesPath -Raw
+$notesText = Get-Content $notesPath -Raw -Encoding UTF8
 $firstEntry = [regex]::Match($notesText, 'ReleaseNote\(\s*versionName = "([^"]+)",\s*versionCode = (\d+),')
 if (-not $firstEntry.Success -or $firstEntry.Groups[1].Value -ne $Version -or [int]$firstEntry.Groups[2].Value -ne $VersionCode) {
     Fail "ReleaseNotes.kt's first (newest) entry doesn't match $Version / versionCode $VersionCode"
