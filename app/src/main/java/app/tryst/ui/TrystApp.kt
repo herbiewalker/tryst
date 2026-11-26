@@ -102,6 +102,8 @@ private object Routes {
     fun cyclePerson(kind: String, id: String) = "cycle/person/$kind/$id"
     const val CYCLE_PERIOD = "cycle/period/{periodId}"
     fun cyclePeriod(id: String) = "cycle/period/$id"
+    const val CYCLE_SYMPTOMS = "cycle/symptoms/{kind}/{id}"
+    fun cycleSymptoms(kind: String, id: String) = "cycle/symptoms/$kind/$id"
     const val SETTINGS = "settings"
     const val ABOUT = "about"
     const val GALLERY_SETTINGS = "settings/gallery"
@@ -294,10 +296,17 @@ fun TrystApp() {
                         app.tryst.ui.cycle.CyclePersonScreen(
                             onBack = { navController.popBackStack() },
                             onOpenPeriod = { id -> navController.navigate(Routes.cyclePeriod(id)) },
+                            onManageSymptoms = { owner -> navController.navigate(Routes.cycleSymptoms(owner.kind, owner.id)) },
                         )
                     }
                     composable(Routes.CYCLE_PERIOD) {
-                        app.tryst.ui.cycle.CyclePeriodScreen(onBack = { navController.popBackStack() })
+                        app.tryst.ui.cycle.CyclePeriodScreen(
+                            onBack = { navController.popBackStack() },
+                            onManageSymptoms = { owner -> navController.navigate(Routes.cycleSymptoms(owner.kind, owner.id)) },
+                        )
+                    }
+                    composable(Routes.CYCLE_SYMPTOMS) {
+                        app.tryst.ui.cycle.CycleSymptomsScreen(onBack = { navController.popBackStack() })
                     }
                     composable(Routes.PARTNER_EDIT) {
                         app.tryst.ui.partner.PartnerEditScreen(onClose = { navController.popBackStack() })

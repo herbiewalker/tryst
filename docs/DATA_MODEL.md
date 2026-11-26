@@ -1,6 +1,6 @@
 # Tryst — Data Model
 
-> **Status:** Live — **schema v21** (current through v0.7.3; v21 in v0.7.2, profile color; v20 in v0.7.0; v18 and v19 shipped in v0.6.4; v17 in v0.6.2; v16 in v0.5.3), Room over SQLCipher. Matches the entities in
+> **Status:** Live — **schema v22** (current through v0.7.4 in progress; v22 in v0.7.4, daily symptoms; v21 in v0.7.2, profile color; v20 in v0.7.0; v18 and v19 shipped in v0.6.4; v17 in v0.6.2; v16 in v0.5.3), Room over SQLCipher. Matches the entities in
 > `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change ships a
 > non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 >
@@ -249,5 +249,12 @@ storage — likely a small row in the encrypted DB.)
 - **v21 (`MIGRATION_20_21`, 0.7.2)** adds `profile.color TEXT NULL`, the self profile's picked accent color, matching the
   `partners.color` column that has existed since v1 and is now set from the partner editor. Additive and nullable; a
   pre-v21 backup restores with no profile color.
+- **v22 (`MIGRATION_21_22`, 0.7.4, D-73)** adds two tables for daily symptoms, nothing existing changes.
+  **`cycle_symptom`**: `id`, `ownerKind` + `ownerId` (same owner pair as `cycle_period`), `label`; unique on
+  (ownerKind, ownerId, label). Each person keeps their own list and nothing is preset. **`cycle_symptom_log`**:
+  (`periodId`, `epochDay`, `symptomId`) primary key, `strength` (1 mild, 2 medium, 3 strong; an unknown value reads
+  as mild); FKs to `cycle_period` and `cycle_symptom`, both `ON DELETE CASCADE`, so a log goes with its period or
+  its symptom; indexed on `symptomId`. Symptoms are only logged on days inside a period. Both tables ride the
+  generic backup dump; a pre-v22 backup restores with no symptoms.
 - Export format (M5) is decoupled from the live schema and versioned independently
   (see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §4).

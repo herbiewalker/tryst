@@ -35,6 +35,8 @@ import app.tryst.data.db.dao.ToyDao
 import app.tryst.data.db.entity.ActEntity
 import app.tryst.data.db.entity.CycleDayEntity
 import app.tryst.data.db.entity.CyclePeriodEntity
+import app.tryst.data.db.entity.CycleSymptomEntity
+import app.tryst.data.db.entity.CycleSymptomLogEntity
 import app.tryst.data.db.entity.EjaculationLocationEntity
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.EncounterPartnerCrossRef
@@ -75,8 +77,10 @@ import app.tryst.data.db.entity.ToyEntity
         EncounterTagCrossRef::class,
         CyclePeriodEntity::class,
         CycleDayEntity::class,
+        CycleSymptomEntity::class,
+        CycleSymptomLogEntity::class,
     ],
-    version = 21,
+    version = 22,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)

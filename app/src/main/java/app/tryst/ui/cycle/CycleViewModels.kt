@@ -28,7 +28,10 @@ import app.tryst.data.cycle.CycleStatus
 import app.tryst.data.db.entity.CycleDayEntity
 import app.tryst.data.db.entity.CycleFlow
 import app.tryst.data.db.entity.CyclePeriodEntity
+import app.tryst.data.db.entity.CycleSymptomEntity
+import app.tryst.data.db.entity.CycleSymptomLogEntity
 import app.tryst.data.db.entity.ProfileEntity
+import app.tryst.data.db.entity.SymptomStrength
 import app.tryst.data.repository.CycleOwner
 import app.tryst.data.repository.CycleRepository
 import app.tryst.data.repository.PartnerRepository
@@ -37,10 +40,14 @@ import app.tryst.ui.common.Format
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import javax.inject.Inject
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -187,7 +194,18 @@ class CyclePersonViewModel @Inject constructor(
 data class PeriodDraft(
     val period: CyclePeriodEntity,
     val days: List<CycleDayEntity>,
-)
+    /** Day → symptom id → strength (D-73). A symptom missing from a day's map wasn't logged that day. */
+    val symptoms: Map<Long, Map<String, SymptomStrength>> = emptyMap(),
+) {
+    /** The draft's symptoms as rows, keeping only days still inside the period. */
+    fun symptomLogs(): List<CycleSymptomLogEntity> = symptoms
+        .filterKeys { it in period.startEpochDay..period.endEpochDay }
+        .flatMap { (day, byId) -> byId.map { (id, s) -> CycleSymptomLogEntity(period.id, day, id, s.level) } }
+
+    companion object {
+        fun symptomsOf(logs: List<CycleSymptomLogEntity>): Map<Long, Map<String, SymptomStrength>> = logs.groupBy { it.epochDay }.mapValues { (_, rows) -> rows.associate { it.symptomId to it.strengthLevel } }
+    }
+}
 
 @HiltViewModel
 class CyclePeriodViewModel @Inject constructor(
@@ -211,11 +229,38 @@ class CyclePeriodViewModel @Inject constructor(
     var missing by mutableStateOf(false)
         private set
 
+    private val owner = MutableStateFlow<CycleOwner?>(null)
+
+    /** This person's own symptom list; live, so edits on the Symptoms screen show up on return. */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val symptomList: StateFlow<List<CycleSymptomEntity>> = owner.filterNotNull()
+        .flatMapLatest { repository.observeSymptoms(it) }
+        .catch { emit(emptyList()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
     init {
         viewModelScope.launch {
             val period = repository.getPeriod(periodId)
-            if (period == null) missing = true else draft = PeriodDraft(period, repository.getDays(periodId))
+            if (period == null) {
+                missing = true
+            } else {
+                owner.value = CycleOwner(period.ownerKind, period.ownerId)
+                draft = PeriodDraft(
+                    period,
+                    repository.getDays(periodId),
+                    PeriodDraft.symptomsOf(repository.getSymptomLogs(periodId)),
+                )
+            }
         }
+    }
+
+    /** One tap on a symptom chip for [epochDay]: off, mild, medium, strong, off. */
+    fun cycleSymptom(epochDay: Long, symptomId: String) {
+        val d = draft ?: return
+        val today = d.symptoms[epochDay].orEmpty()
+        val next = SymptomStrength.next(today[symptomId])
+        val updated = if (next == null) today - symptomId else today + (symptomId to next)
+        draft = d.copy(symptoms = if (updated.isEmpty()) d.symptoms - epochDay else d.symptoms + (epochDay to updated))
     }
 
     fun setStart(epochDay: Long) = reshape { it.copy(startEpochDay = epochDay) }
@@ -241,7 +286,7 @@ class CyclePeriodViewModel @Inject constructor(
             problem = CycleProblem.END_BEFORE_START
             return
         }
-        viewModelScope.launch { draft = PeriodDraft(next, repository.refitDays(next, d.days)) }
+        viewModelScope.launch { draft = d.copy(period = next, days = repository.refitDays(next, d.days)) }
     }
 
     fun save(onDone: () -> Unit) {
@@ -252,7 +297,7 @@ class CyclePeriodViewModel @Inject constructor(
                 problem = CycleProblem.OVERLAP
                 return@launch
             }
-            repository.save(period, d.days)
+            repository.save(period, d.days, d.copy(period = period).symptomLogs())
             onDone()
         }
     }

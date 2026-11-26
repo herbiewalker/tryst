@@ -58,7 +58,8 @@ associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, i
 - **Tables** (insert order respects FKs; `PRAGMA defer_foreign_keys` also guards it): partners,
   profile, locations, tags, positions, acts, kinks, toys, occasions, ejaculation_locations, orientations, encounters,
   media, person_photo (v15 portrait-album rows), encounter_partner, encounter_position, encounter_tag,
-  cycle_period, cycle_day (v20 cycle tracking; a period before its days).
+  cycle_period, cycle_day (v20 cycle tracking; a period before its days), cycle_symptom, cycle_symptom_log
+  (v22 symptoms; a symptom list before its log).
   Rows are inserted with `INSERT OR REPLACE` (idempotent re-import).
 - **Inspect before restore (0.7.2, BKP-3):** `BackupManager.inspect()` reads a backup without writing anything.
   The quick form decrypts only `data.json` (and notes whether `settings.json` follows); the restore preview uses

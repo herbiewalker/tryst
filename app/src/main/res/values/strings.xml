@@ -322,6 +322,10 @@
     <string name="backup_preview_restore">Restore</string>
     <string name="backup_preview_replace_anyway">Replace anyway</string>
     <string name="backup_preview_merge_instead">Merge instead</string>
+    <plurals name="backup_loss_symptoms">
+        <item quantity="one">%d symptom</item>
+        <item quantity="other">%d symptoms</item>
+    </plurals>
     <plurals name="backup_loss_periods">
         <item quantity="one">%d period</item>
         <item quantity="other">%d periods</item>
@@ -775,12 +779,25 @@
     <string name="cycle_end_estimated_hint">The end date is an estimate. Pick the real end, or tap Ended today on the Cycle tab.</string>
     <string name="cycle_flow_hint">Flow for each day. Days marked estimated were filled in for you.</string>
     <string name="cycle_day_estimated">estimated</string>
+    <!-- Daily symptoms (0.7.4, D-73): each person has their own list, nothing preset. -->
+    <string name="cycle_symptoms_title">Symptoms</string>
+    <string name="cycle_symptoms_desc">The symptoms you track for this person. Nothing is preset, so add the ones that matter. Renaming one keeps every day it was logged on. Removing one also removes it from those days.</string>
+    <string name="cycle_symptoms_add_label">New symptom</string>
+    <string name="cycle_symptoms_empty">No symptoms yet.</string>
+    <string name="cycle_symptoms_hint">Tap a symptom to log it as mild. Tap again for medium, then strong, then off.</string>
+    <string name="cycle_symptoms_none">No symptoms set up for this person yet.</string>
+    <string name="cycle_symptoms_edit">Edit symptoms</string>
+    <string name="cycle_symptoms_add">Add symptoms</string>
+    <string name="cycle_symptom_chip">%1$s · %2$s</string>
+    <string name="symptom_strength_mild">Mild</string>
+    <string name="symptom_strength_medium">Medium</string>
+    <string name="symptom_strength_strong">Strong</string>
     <string name="cycle_flow_spotting">Spotting</string>
     <string name="cycle_flow_light">Light</string>
     <string name="cycle_flow_medium">Medium</string>
     <string name="cycle_flow_heavy">Heavy</string>
     <string name="cycle_delete_period">Delete this period</string>
-    <string name="cycle_delete_period_confirm">Delete this period and its days?</string>
+    <string name="cycle_delete_period_confirm">Delete this period, its days and their symptoms?</string>
     <string name="cycle_problem_overlap">That overlaps a period already logged for this person.</string>
     <string name="cycle_problem_end_before_start">The end can\'t be before the start.</string>
     <string name="settings_cycle">Cycle tracking</string>
@@ -828,7 +845,7 @@
     <string name="person_color_use">Use</string>
     <string name="person_color_custom_preview">Slide to any shade, then tap Use.</string>
     <string name="settings_cycle_delete">Delete cycle data</string>
-    <string name="settings_cycle_delete_desc">Removes every logged period, for everyone. Trysts are not touched.</string>
+    <string name="settings_cycle_delete_desc">Removes every logged period and symptom list, for everyone. Trysts are not touched.</string>
     <string name="settings_cycle_delete_confirm_title">Delete all cycle data?</string>
-    <string name="settings_cycle_delete_confirm_body">Every period and flow entry for every person will be removed. This can\'t be undone.</string>
+    <string name="settings_cycle_delete_confirm_body">Every period, flow entry and symptom for every person will be removed. This can\'t be undone.</string>
 </resources>

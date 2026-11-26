@@ -64,9 +64,12 @@ import app.tryst.data.cycle.CycleStatus
 import app.tryst.data.db.entity.CycleDayEntity
 import app.tryst.data.db.entity.CycleFlow
 import app.tryst.data.db.entity.CyclePeriodEntity
+import app.tryst.data.db.entity.CycleSymptomEntity
+import app.tryst.data.db.entity.SymptomStrength
 import app.tryst.data.repository.CycleOwner
 import app.tryst.ui.common.TooltipIconButton
 import app.tryst.ui.common.adaptiveContentWidth
+import app.tryst.ui.settings.CatalogManageScreen
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -297,6 +300,7 @@ private fun StatsCard(stats: CycleStats, prediction: CyclePrediction?) {
 fun CyclePersonScreen(
     onBack: () -> Unit,
     onOpenPeriod: (String) -> Unit,
+    onManageSymptoms: (CycleOwner) -> Unit,
     viewModel: CyclePersonViewModel = hiltViewModel(),
 ) {
     val name by viewModel.name.collectAsStateWithLifecycle()
@@ -312,6 +316,11 @@ fun CyclePersonScreen(
                 navigationIcon = {
                     TooltipIconButton(label = stringResource(R.string.cd_back), onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
+                    }
+                },
+                actions = {
+                    TextButton(onClick = { onManageSymptoms(viewModel.owner) }) {
+                        Text(stringResource(R.string.cycle_symptoms_title))
                     }
                 },
             )
@@ -374,8 +383,13 @@ private enum class DateField { START, END }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CyclePeriodScreen(onBack: () -> Unit, viewModel: CyclePeriodViewModel = hiltViewModel()) {
+fun CyclePeriodScreen(
+    onBack: () -> Unit,
+    onManageSymptoms: (CycleOwner) -> Unit,
+    viewModel: CyclePeriodViewModel = hiltViewModel(),
+) {
     val draft = viewModel.draft
+    val symptomList by viewModel.symptomList.collectAsStateWithLifecycle()
     var picking by remember { mutableStateOf<DateField?>(null) }
     var confirmDelete by remember { mutableStateOf(false) }
 
@@ -429,7 +443,21 @@ fun CyclePeriodScreen(onBack: () -> Unit, viewModel: CyclePeriodViewModel = hilt
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-            items(draft.days, key = { it.epochDay }) { day -> DayRow(day, onFlow = { viewModel.setFlow(day.epochDay, it) }) }
+            item {
+                SymptomsHeader(
+                    hasSymptoms = symptomList.isNotEmpty(),
+                    onManage = { onManageSymptoms(CycleOwner(draft.period.ownerKind, draft.period.ownerId)) },
+                )
+            }
+            items(draft.days, key = { it.epochDay }) { day ->
+                DayRow(
+                    day = day,
+                    symptomList = symptomList,
+                    logged = draft.symptoms[day.epochDay].orEmpty(),
+                    onFlow = { viewModel.setFlow(day.epochDay, it) },
+                    onSymptom = { viewModel.cycleSymptom(day.epochDay, it) },
+                )
+            }
             item {
                 OutlinedTextField(
                     value = draft.period.note.orEmpty(),
@@ -469,9 +497,39 @@ fun CyclePeriodScreen(onBack: () -> Unit, viewModel: CyclePeriodViewModel = hilt
     ProblemDialog(viewModel.problem, viewModel::clearProblem)
 }
 
+/** The line above the days: how symptom chips work, and the way to this person's symptom list. */
+@Composable
+private fun SymptomsHeader(hasSymptoms: Boolean, onManage: () -> Unit) {
+    Column {
+        Text(
+            stringResource(if (hasSymptoms) R.string.cycle_symptoms_hint else R.string.cycle_symptoms_none),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        TextButton(onClick = onManage) {
+            Text(stringResource(if (hasSymptoms) R.string.cycle_symptoms_edit else R.string.cycle_symptoms_add))
+        }
+    }
+}
+
+@Composable
+private fun strengthLabel(strength: SymptomStrength): String = stringResource(
+    when (strength) {
+        SymptomStrength.MILD -> R.string.symptom_strength_mild
+        SymptomStrength.MEDIUM -> R.string.symptom_strength_medium
+        SymptomStrength.STRONG -> R.string.symptom_strength_strong
+    },
+)
+
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun DayRow(day: CycleDayEntity, onFlow: (CycleFlow) -> Unit) {
+private fun DayRow(
+    day: CycleDayEntity,
+    symptomList: List<CycleSymptomEntity>,
+    logged: Map<String, SymptomStrength>,
+    onFlow: (CycleFlow) -> Unit,
+    onSymptom: (String) -> Unit,
+) {
     Column {
         Row {
             Text(
@@ -498,7 +556,40 @@ private fun DayRow(day: CycleDayEntity, onFlow: (CycleFlow) -> Unit) {
                 )
             }
         }
+        if (symptomList.isNotEmpty()) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                symptomList.forEach { symptom ->
+                    val strength = logged[symptom.id]
+                    FilterChip(
+                        selected = strength != null,
+                        onClick = { onSymptom(symptom.id) },
+                        label = {
+                            Text(
+                                if (strength == null) {
+                                    symptom.label
+                                } else {
+                                    stringResource(R.string.cycle_symptom_chip, symptom.label, strengthLabel(strength))
+                                },
+                            )
+                        },
+                    )
+                }
+            }
+        }
     }
+}
+
+// ---------------------------------------------------------------------------------------
+// One person's symptom list (0.7.4, D-73)
+// ---------------------------------------------------------------------------------------
+
+@Composable
+fun CycleSymptomsScreen(onBack: () -> Unit, viewModel: CycleSymptomsViewModel = hiltViewModel()) {
+    val rows by viewModel.symptoms.collectAsStateWithLifecycle()
+    CatalogManageScreen(
+        R.string.cycle_symptoms_title, R.string.cycle_symptoms_desc, R.string.cycle_symptoms_add_label, R.string.cycle_symptoms_empty,
+        rows.map { it.id to it.label }, viewModel::add, viewModel::rename, viewModel::delete, onBack,
+    )
 }
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

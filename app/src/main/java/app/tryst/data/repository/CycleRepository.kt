@@ -18,6 +18,8 @@ import app.tryst.data.cycle.CycleDefaults
 import app.tryst.data.cycle.CycleHistory
 import app.tryst.data.db.entity.CycleDayEntity
 import app.tryst.data.db.entity.CyclePeriodEntity
+import app.tryst.data.db.entity.CycleSymptomEntity
+import app.tryst.data.db.entity.CycleSymptomLogEntity
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -95,10 +97,37 @@ class CycleRepository @Inject constructor(
 
     suspend fun save(period: CyclePeriodEntity, days: List<CycleDayEntity>) = dao.savePeriodWithDays(period, days)
 
+    /** Saves a period with its days and the symptoms logged on them; logs outside the period are dropped. */
+    suspend fun save(period: CyclePeriodEntity, days: List<CycleDayEntity>, logs: List<CycleSymptomLogEntity>) = dao.savePeriodWithDaysAndSymptoms(period, days, logs)
+
     suspend fun deletePeriod(id: String) = dao.deletePeriod(id)
 
-    /** Settings → danger zone "Delete cycle data": every period and day, for everyone. */
-    suspend fun deleteAll() = dao.deleteAllPeriods()
+    /** Settings → danger zone "Delete cycle data": every period, day, symptom and symptom list, for everyone. */
+    suspend fun deleteAll() = dao.deleteAllCycleData()
+
+    // ---- Symptoms (0.7.4, D-73): each person keeps their own list, nothing preset ----
+
+    fun observeSymptoms(owner: CycleOwner): Flow<List<CycleSymptomEntity>> = dao.observeSymptoms(owner.kind, owner.id)
+
+    suspend fun getSymptomLogs(periodId: String): List<CycleSymptomLogEntity> = dao.getSymptomLogs(periodId)
+
+    /** Adds a symptom to [owner]'s list. Returns its id, or null when blank or already on their list. */
+    suspend fun addSymptom(owner: CycleOwner, label: String): String? {
+        val trimmed = label.trim()
+        if (trimmed.isEmpty()) return null
+        val id = UUID.randomUUID().toString()
+        return runCatching { dao.insertSymptom(CycleSymptomEntity(id, owner.kind, owner.id, trimmed)) }.map { id }.getOrNull()
+    }
+
+    /** Renames in place, so every logged day keeps it. A name already on the same list is quietly refused. */
+    suspend fun renameSymptom(id: String, label: String) {
+        val trimmed = label.trim()
+        if (trimmed.isEmpty()) return
+        runCatching { dao.renameSymptom(id, trimmed) }
+    }
+
+    /** Removes the symptom and every day it was logged on. */
+    suspend fun deleteSymptom(id: String) = dao.deleteSymptom(id)
 }
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

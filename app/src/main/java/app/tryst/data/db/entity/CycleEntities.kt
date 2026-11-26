@@ -88,4 +88,69 @@ enum class CycleFlow {
     }
 }
 
+/**
+ * One symptom on one person's own list (CYC-1 symptoms, schema v22, D-73). Nothing is preset: every row
+ * is something the user typed, so the APK ships no symptom names. The owner pair matches
+ * [CyclePeriodEntity]. Deleting a symptom removes every day it was logged on.
+ */
+@Entity(tableName = "cycle_symptom", indices = [Index(value = ["ownerKind", "ownerId", "label"], unique = true)])
+data class CycleSymptomEntity(
+    @PrimaryKey val id: String,
+    val ownerKind: String,
+    val ownerId: String,
+    val label: String,
+)
+
+/**
+ * A symptom logged on one day of a period, with how strong it was ([strength] is a [SymptomStrength]
+ * level). Symptoms are only logged inside a period, so the row hangs off the period and goes with it.
+ */
+@Entity(
+    tableName = "cycle_symptom_log",
+    primaryKeys = ["periodId", "epochDay", "symptomId"],
+    foreignKeys = [
+        ForeignKey(
+            entity = CyclePeriodEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["periodId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = CycleSymptomEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["symptomId"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index(value = ["symptomId"])],
+)
+data class CycleSymptomLogEntity(
+    val periodId: String,
+    val epochDay: Long,
+    val symptomId: String,
+    val strength: Int,
+) {
+    val strengthLevel: SymptomStrength get() = SymptomStrength.fromLevel(strength)
+}
+
+/** How strong a symptom was on a day, weakest first. Stored as [level]; an unknown level reads as mild. */
+enum class SymptomStrength(val level: Int) {
+    MILD(1),
+    MEDIUM(2),
+    STRONG(3),
+    ;
+
+    companion object {
+        fun fromLevel(level: Int): SymptomStrength = entries.firstOrNull { it.level == level } ?: MILD
+
+        /** One tap on a symptom chip: off, then mild, medium, strong, and back to off. */
+        fun next(current: SymptomStrength?): SymptomStrength? = when (current) {
+            null -> MILD
+            MILD -> MEDIUM
+            MEDIUM -> STRONG
+            STRONG -> null
+        }
+    }
+}
+
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

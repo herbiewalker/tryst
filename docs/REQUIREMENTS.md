@@ -116,6 +116,9 @@ with deeply personal data. Inspired by the iOS app *Nice*.
 - **FR-32** **Who the cycle screens list** (0.7.3, D-71). People whose sex is set to Male are left off the Cycle tab
   and the calendar's "whose periods" choice, unless they already have periods logged. The Cycle tab says how many
   were left off.
+- **FR-33** **Daily symptoms** (0.7.4, schema v22, D-73). Each person has their own symptom list, built by the user with
+  nothing preset. On each day of a period a symptom can be logged as mild, medium or strong by tapping its chip.
+  Symptoms are kept with their period, ride in the backup and are cleared by "Delete cycle data".
 
 ## 5. Non-functional requirements
 

@@ -13,6 +13,19 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+### Added
+- **Daily symptoms** (0.7.4, D-73, schema v22). Each person has their own symptom list, built by you with
+  nothing preset, from the Symptoms button on their cycle page or on a period. On each day of a period, tap a
+  symptom to log it as mild, again for medium, then strong, then off. Symptoms are kept with the period, so
+  deleting a period deletes them, and removing a symptom from the list removes it from every day. They ride in
+  the encrypted backup, and "Delete cycle data" clears them too.
+
+### Fixed
+- **Release script encoding.** `release.ps1` read `app/build.gradle.kts` as ANSI under Windows PowerShell 5.1
+  and wrote it back as UTF-8, so the file's banner was double-encoded on every release and the file grew to
+  4 MB, too large for lint. The file is restored and the script now reads it as UTF-8. Two comments in
+  `PartnerEditScreen.kt` with the same damage are fixed too.
+
 ## [0.7.3] — 2026-11-25 (versionCode 26)
 
 ### Changed

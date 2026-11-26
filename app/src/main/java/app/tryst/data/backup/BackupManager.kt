@@ -615,6 +615,8 @@ class BackupManager @Inject constructor(
             "encounter_partner", "encounter_position", "encounter_tag",
             // CYC-1 (v20). A period before its days, so the days' foreign key resolves on restore.
             "cycle_period", "cycle_day",
+            // Symptoms (v22): the list before the log, so both foreign keys resolve on restore.
+            "cycle_symptom", "cycle_symptom_log",
         )
     }
 }

@@ -125,7 +125,7 @@ fun CatalogManageRoute(category: String?, onBack: () -> Unit) {
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CatalogManageScreen(
+internal fun CatalogManageScreen(
     @StringRes title: Int,
     @StringRes description: Int,
     @StringRes addLabel: Int,

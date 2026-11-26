@@ -657,6 +657,40 @@ class MigrationTest {
             }
         }
     }
+
+    /** D-73: v22 adds per-person symptom lists and a per-day log that goes with its period or symptom. */
+    @Test
+    fun migrate21To22_addsSymptomTables() {
+        helper.createDatabase(dbName, 21).use { db ->
+            db.execSQL(
+                "INSERT INTO cycle_period (id, ownerKind, ownerId, startEpochDay, endEpochDay, createdAt, updatedAt) " +
+                    "VALUES ('c1', 'profile', 'self', 100, 104, 1, 1)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(dbName, 22, true, MIGRATION_21_22).use { db ->
+            db.execSQL("INSERT INTO cycle_symptom (id, ownerKind, ownerId, label) VALUES ('s1', 'profile', 'self', 'Cramps')")
+            db.execSQL("INSERT INTO cycle_symptom (id, ownerKind, ownerId, label) VALUES ('s2', 'partner', 'p1', 'Cramps')")
+            db.execSQL("INSERT INTO cycle_symptom (id, ownerKind, ownerId, label) VALUES ('s3', 'profile', 'self', 'Headache')")
+            db.execSQL("INSERT INTO cycle_symptom_log (periodId, epochDay, symptomId, strength) VALUES ('c1', 100, 's1', 3)")
+            db.execSQL("INSERT INTO cycle_symptom_log (periodId, epochDay, symptomId, strength) VALUES ('c1', 101, 's3', 1)")
+            db.execSQL("PRAGMA foreign_keys = ON")
+            db.execSQL("DELETE FROM cycle_symptom WHERE id = 's3'")
+            db.query("SELECT COUNT(*) FROM cycle_symptom_log").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("a removed symptom leaves its days", 1, c.getInt(0))
+            }
+            db.execSQL("DELETE FROM cycle_period WHERE id = 'c1'")
+            db.query("SELECT COUNT(*) FROM cycle_symptom_log").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("logs are deleted with their period", 0, c.getInt(0))
+            }
+            db.query("SELECT COUNT(*) FROM cycle_symptom").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("the lists themselves stay", 2, c.getInt(0))
+            }
+        }
+    }
 }
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

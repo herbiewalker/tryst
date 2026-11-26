@@ -160,6 +160,7 @@ private val madeOnFormatter: DateTimeFormatter = DateTimeFormatter.ofLocalizedDa
 @Composable
 private fun lossText(removals: Map<String, Int>): String = buildList {
     removals["cycle_period"]?.let { add(pluralStringResource(R.plurals.backup_loss_periods, it, it)) }
+    removals["cycle_symptom"]?.let { add(pluralStringResource(R.plurals.backup_loss_symptoms, it, it)) }
     removals["person_photo"]?.let { add(pluralStringResource(R.plurals.backup_loss_album_photos, it, it)) }
     removals["orientations"]?.let { add(pluralStringResource(R.plurals.backup_loss_orientations, it, it)) }
     removals["profile"]?.let { add(stringResource(R.string.backup_loss_profile)) }
@@ -172,7 +173,10 @@ private fun lossText(removals: Map<String, Int>): String = buildList {
 // The user-built category lists (D-41). A restore re-adopts the ones its own trysts use, so name them plainly.
 private val CATALOG_TABLES = setOf("acts", "kinks", "positions", "toys", "occasions", "ejaculation_locations", "locations", "tags")
 
-private val NAMED_LOSSES = setOf("cycle_period", "cycle_day", "person_photo", "orientations", "profile") + CATALOG_TABLES
+// Rows that only exist as part of a period; losing them is already said by "N periods".
+private val PERIOD_CHILDREN = setOf("cycle_day", "cycle_symptom_log")
+
+private val NAMED_LOSSES = setOf("cycle_period", "cycle_day", "cycle_symptom", "cycle_symptom_log", "person_photo", "orientations", "profile") + CATALOG_TABLES
 
 /**
  * The go-ahead for a restore (BKP-3): what the backup holds and what the chosen mode will do. When a "replace"
@@ -181,7 +185,7 @@ private val NAMED_LOSSES = setOf("cycle_period", "cycle_day", "person_photo", "o
 @Composable
 fun RestorePreviewDialog(preview: RestorePreview, onRestore: (wipeFirst: Boolean) -> Unit, onCancel: () -> Unit) {
     val s = preview.summary
-    val losing = preview.wipeFirst && s.replaceWouldRemove.keys.any { it != "cycle_day" }
+    val losing = preview.wipeFirst && s.replaceWouldRemove.keys.any { it !in PERIOD_CHILDREN }
     AlertDialog(
         onDismissRequest = onCancel,
         title = { Text(stringResource(R.string.backup_preview_title)) },

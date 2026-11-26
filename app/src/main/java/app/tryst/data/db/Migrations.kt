@@ -387,6 +387,33 @@ val MIGRATION_20_21 = object : Migration(20, 21) {
     }
 }
 
+/**
+ * v21 → v22: daily symptoms (0.7.4, D-73). Two new tables, nothing existing changes. `cycle_symptom` is
+ * each person's own symptom list (nothing preset); `cycle_symptom_log` is a symptom and its strength on
+ * one day of a period, deleted with the period or the symptom.
+ */
+val MIGRATION_21_22 = object : Migration(21, 22) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `cycle_symptom` (`id` TEXT NOT NULL, `ownerKind` TEXT NOT NULL, " +
+                "`ownerId` TEXT NOT NULL, `label` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        )
+        db.execSQL(
+            "CREATE UNIQUE INDEX IF NOT EXISTS `index_cycle_symptom_ownerKind_ownerId_label` " +
+                "ON `cycle_symptom` (`ownerKind`, `ownerId`, `label`)",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `cycle_symptom_log` (`periodId` TEXT NOT NULL, `epochDay` INTEGER NOT NULL, " +
+                "`symptomId` TEXT NOT NULL, `strength` INTEGER NOT NULL, PRIMARY KEY(`periodId`, `epochDay`, `symptomId`), " +
+                "FOREIGN KEY(`periodId`) REFERENCES `cycle_period`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , " +
+                "FOREIGN KEY(`symptomId`) REFERENCES `cycle_symptom`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        )
+        db.execSQL(
+            "CREATE INDEX IF NOT EXISTS `index_cycle_symptom_log_symptomId` ON `cycle_symptom_log` (`symptomId`)",
+        )
+    }
+}
+
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
     MIGRATION_2_3,
@@ -408,6 +435,7 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_18_19,
     MIGRATION_19_20,
     MIGRATION_20_21,
+    MIGRATION_21_22,
 )
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

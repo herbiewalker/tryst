@@ -18,7 +18,7 @@
 - **A5** The user's **own** identifying data — the single-row `profile` (name, photo, sex/gender,
   date of birth, ethnicity, height, body type, location). Self-identifying, so its disclosure also
   links the device owner to all of the above.
-- **A6** **Cycle data** (CYC-1, schema v20, optional): period dates and per-day flow for the self profile
+- **A6** **Cycle data** (CYC-1, schema v20, optional; symptoms in v22): period dates, per-day flow and symptoms for the self profile
   or a partner. This is **health data** about a person who may not be the user. It lives only in the
   encrypted DB and the encrypted backup, like A1, so the at-rest and backup protections are unchanged.
   It adds no network, permission or export path; the feature is off by default and has its own
