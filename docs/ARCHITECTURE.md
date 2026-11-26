@@ -41,7 +41,7 @@ data/
   cycle/      CycleDefaults ("most likely" length and per-day flow for a new period, estimates flagged) , CyclePredictor (cycle stats + next-period range) and CycleOverlay (period and predicted days for the Trysts calendar), all pure and JVM-tested (CYC-1, D-64, D-65, D-66)
 di/           Hilt wiring (most types use @Inject constructors; module is minimal)
 ui/
-  common/     PersonColorPicker (16-color palette + Automatic, D-67), SelectionField/Chips, MediaImages, TooltipIconButton (long-press labels on icon-only buttons, QOL-6), CoachTip (one-time dismissible tips), ImagePicker, Format, Position/Act/Kink/Toy options, ActVisuals, Haptics (LocalHapticsEnabled), WindowSize, AppVersion, DateScopeChips (shared by Search + Insights scope), EncounterCard, DateHeader, PersonPhotoStrip
+  common/     PersonColorPicker (one Color row opening a 24-color pop-up with a custom hue slider, taken colors marked with the owner's initial, D-70; assignment in data/color/PersonColorAssigner), SelectionField/Chips, MediaImages, TooltipIconButton (long-press labels on icon-only buttons, QOL-6), CoachTip (one-time dismissible tips), ImagePicker, Format, Position/Act/Kink/Toy options, ActVisuals, Haptics (LocalHapticsEnabled), WindowSize, AppVersion, DateScopeChips (shared by Search + Insights scope), EncounterCard, DateHeader, PersonPhotoStrip
   lock/        SetupScreen, LockScreen, ChangePinScreen, LockViewModel, BiometricPromptHelper, PinPad
   history/     HistoryScreen (list + calendar), HistoryViewModel
   encounter/   EncounterEditScreen + ViewModel

@@ -58,7 +58,6 @@ import app.tryst.ui.common.PersonPhotoStrip
 import app.tryst.ui.common.TooltipIconButton
 import app.tryst.ui.common.adaptiveContentWidth
 import app.tryst.ui.common.rememberHaptics
-import app.tryst.ui.insights.TypeColors
 
 private const val AVATAR_PX = 320
 
@@ -75,11 +74,13 @@ fun ProfileScreen(onBack: () -> Unit, viewModel: ProfileViewModel = hiltViewMode
     val photos by viewModel.photos.collectAsStateWithLifecycle()
     val photoRevisions by viewModel.photoRevisionMap.collectAsStateWithLifecycle()
     val orientations by viewModel.orientations.collectAsStateWithLifecycle()
+    val colorOwners by viewModel.colorOwners.collectAsStateWithLifecycle()
     key(profile) {
         ProfileEditor(
             initial = profile,
             photos = photos,
             orientations = orientations,
+            colorOwners = colorOwners,
             onSuppressAutoLock = { viewModel.suppressAutoLock() },
             onAddPhotos = viewModel::addPhotos,
             onDeletePhoto = viewModel::deletePhoto,
@@ -100,6 +101,7 @@ private fun ProfileEditor(
     initial: ProfileEntity?,
     photos: List<app.tryst.data.db.entity.PersonPhotoEntity>,
     orientations: List<Pair<String, String>>,
+    colorOwners: Map<String, List<app.tryst.data.color.ColorOwner>>,
     onSuppressAutoLock: () -> Unit,
     onAddPhotos: (List<android.net.Uri>) -> Unit,
     onDeletePhoto: (app.tryst.data.db.entity.PersonPhotoEntity) -> Unit,
@@ -231,7 +233,8 @@ private fun ProfileEditor(
             )
             PersonColorPicker(
                 selectedHex = color,
-                autoColor = TypeColors.colorFor(displayName.trim().ifBlank { stringResource(R.string.profile_you) }),
+                ownerId = app.tryst.data.db.entity.ProfileEntity.SELF_ID,
+                owners = colorOwners,
                 onPick = { color = it },
             )
             Spacer(Modifier.height(8.dp))

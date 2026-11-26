@@ -56,7 +56,6 @@ import app.tryst.ui.common.OptionalChips
 import app.tryst.ui.common.PersonColorPicker
 import app.tryst.ui.common.PersonPhotoStrip
 import app.tryst.ui.common.TooltipIconButton
-import app.tryst.ui.insights.TypeColors
 
 private const val AVATAR_PX = 320
 
@@ -77,6 +76,7 @@ fun PartnerEditScreen(
     val photos by viewModel.photos.collectAsStateWithLifecycle()
     val revisions by viewModel.photoRevisionMap.collectAsStateWithLifecycle()
     val orientations by viewModel.orientations.collectAsStateWithLifecycle()
+    val colorOwners by viewModel.colorOwners.collectAsStateWithLifecycle()
     var showDiscardConfirm by remember { mutableStateOf(false) }
     val attemptClose = { if (viewModel.hasUnsavedChanges()) showDiscardConfirm = true else onClose() }
     BackHandler(enabled = viewModel.hasUnsavedChanges()) { showDiscardConfirm = true }
@@ -175,7 +175,8 @@ fun PartnerEditScreen(
             )
             PersonColorPicker(
                 selectedHex = ui.color,
-                autoColor = TypeColors.colorFor(if (ui.anonymous) "Anonymous" else ui.name.trim().ifBlank { "Anonymous" }),
+                ownerId = viewModel.partnerId,
+                owners = colorOwners,
                 onPick = viewModel::setColor,
             )
         }

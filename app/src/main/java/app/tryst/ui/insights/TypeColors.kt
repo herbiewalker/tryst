@@ -14,6 +14,7 @@
 package app.tryst.ui.insights
 
 import androidx.compose.ui.graphics.Color
+import app.tryst.data.color.PersonPalette
 
 /** One palette entry: its stored form ("#RRGGBB"), an English name for screen readers, and the color. */
 data class NamedColor(val hex: String, val name: String, val color: Color)
@@ -32,25 +33,11 @@ data class NamedColor(val hex: String, val name: String, val color: Color)
  */
 object TypeColors {
 
-    // Vivid, high-contrast on near-black surfaces. First three match the reference screenshot.
-    val palette: List<NamedColor> = listOf(
-        NamedColor("#FF2D6F", "Hot pink", Color(0xFFFF2D6F)),
-        NamedColor("#2D9CFF", "Azure", Color(0xFF2D9CFF)),
-        NamedColor("#B14EF5", "Violet", Color(0xFFB14EF5)),
-        NamedColor("#00C2A8", "Teal", Color(0xFF00C2A8)),
-        NamedColor("#FFB02E", "Amber", Color(0xFFFFB02E)),
-        NamedColor("#34D399", "Emerald", Color(0xFF34D399)),
-        NamedColor("#FF7A45", "Orange", Color(0xFFFF7A45)),
-        NamedColor("#22D3EE", "Cyan", Color(0xFF22D3EE)),
-        NamedColor("#F472B6", "Soft pink", Color(0xFFF472B6)),
-        NamedColor("#A3E635", "Lime", Color(0xFFA3E635)),
-        NamedColor("#E879F9", "Magenta", Color(0xFFE879F9)),
-        NamedColor("#60A5FA", "Blue", Color(0xFF60A5FA)),
-        NamedColor("#FBBF24", "Gold", Color(0xFFFBBF24)),
-        NamedColor("#4ADE80", "Green", Color(0xFF4ADE80)),
-        NamedColor("#FB7185", "Rose", Color(0xFFFB7185)),
-        NamedColor("#818CF8", "Indigo", Color(0xFF818CF8)),
-    )
+    // The shared people palette (D-70): twenty-four hues, readable on both themes.
+    val palette: List<NamedColor> = PersonPalette.entries.map { NamedColor(it.hex, it.name, parse(it.hex) ?: Color.Gray) }
+
+    // Categories only use the bold first tier, so charts never get the darker or paler shades.
+    private val categories: List<NamedColor> = palette.take(PersonPalette.FIRST_TIER)
 
     /** Neutral colour for an aggregated "Other" bucket. */
     val other = Color(0xFF6B7280)
@@ -60,8 +47,8 @@ object TypeColors {
         val h = label.hashCode()
         // Mix the bits a little so similar labels don't cluster onto the same hue.
         val mixed = h xor (h ushr 16)
-        val idx = ((mixed % palette.size) + palette.size) % palette.size
-        return palette[idx].color
+        val idx = ((mixed % categories.size) + categories.size) % categories.size
+        return categories[idx].color
     }
 
     /** "#RRGGBB" or "#AARRGGBB" to a color; null for null, blank or malformed input. */

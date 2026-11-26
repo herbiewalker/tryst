@@ -55,7 +55,7 @@ data class ProfileDraft(
     val orientation: String?,
     val location: String,
     val note: String,
-    /** Picked "#RRGGBB", or null for the name-based color. */
+    /** "#RRGGBB"; null only before the first automatic color lands (D-70). */
     val color: String?,
     val newPhotoUri: Uri?,
     val removePhoto: Boolean,
@@ -63,6 +63,7 @@ data class ProfileDraft(
 )
 
 @HiltViewModel
+@Suppress("LongParameterList") // Hilt-injected repos, one per concern.
 class ProfileViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val session: SessionManager,
@@ -70,6 +71,7 @@ class ProfileViewModel @Inject constructor(
     private val personPhotoRepository: PersonPhotoRepository,
     private val photoRevisions: app.tryst.data.media.PhotoRevisions,
     orientationRepository: OrientationRepository,
+    private val colors: app.tryst.data.color.PersonColorAssigner,
 ) : ViewModel() {
 
     /** Edit counts per photo, so a rotated thumbnail reloads (shared with the Photos tab). */
@@ -85,6 +87,10 @@ class ProfileViewModel @Inject constructor(
             }
         }
     }
+
+    /** Who already has which color, so the picker can mark taken swatches (D-70). */
+    val colorOwners: StateFlow<Map<String, List<app.tryst.data.color.ColorOwner>>> =
+        colors.observeOwners().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     /** The user's orientation labels, as `id → label` pairs for the chip row. */
     val orientations: StateFlow<List<Pair<String, String>>> =
@@ -193,6 +199,7 @@ class ProfileViewModel @Inject constructor(
                 ),
             )
             draft.captureTempFile?.delete() // plaintext camera temp, now encrypted into the blob
+            if (draft.color == null) runCatching { colors.fillMissing() }
             onDone()
         }
     }

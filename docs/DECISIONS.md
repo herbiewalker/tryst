@@ -1,6 +1,6 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v20** (latest: **D-69**, orgasm details added as 0.7.6; D-68: restore preview and data-loss warning; D-67: pickable person colors; D-66: periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
+> **Status:** Live — decisions through **schema v20** (latest: **D-70**, everyone gets their own color; D-69: orgasm details added as 0.7.6; D-68: restore preview and data-loss warning; D-67: pickable person colors; D-66: periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
 > presence-only re-auth via BiometricPrompt with device-credential fallback — no CryptoObject,
 > no DEK touch, v0.5.7).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
@@ -793,6 +793,24 @@
   dataset made the gap obvious: partners only have a count, with no finish location and no orgasm types for anyone. Shape: an `orgasm` table (self or partner owner, index, type ids, finish ids), a user-built type catalog
   (nothing explicit preset, D-41), finishes reusing the existing catalog, existing data migrated in. Schema v23 if
   0.7.3 takes v22. Ships after the 0.7.5 cycle Insights section; 8.x is unchanged.
+
+- **D-70 (2026-11-25) Everyone gets their own color; only a manual pick can share one (replaces Automatic, D-67).**
+  Name-based colors could land two people on the same color, so two periods in the same month on the calendar
+  looked like one person's. Now every person has a stored color. Anyone without one (older data, older backups,
+  a new partner) gets the palette color the fewest *current* people have (the profile and partners not archived),
+  then the fewest people overall, then the earliest in the palette, taking the self profile first and then
+  partners in the order they were added (`ColorAssignment`, pure and JVM-tested; `PersonColorAssigner` runs it
+  after unlock, after a restore and after a save that left a color empty). Nothing that already has a color is
+  ever changed by this. Archived partners keep their color, but it only counts once current people have used every
+  color, so over the years someone new can take the color of a partner who left long ago before two current people
+  ever share. The palette was redone at the same time: twenty-four colors, twelve bold hues spread around the wheel
+  and ordered so early picks differ the most (blue, orange, green, pink, then the rest), then twelve deeper or
+  lighter shades. Insights category colors use only the bold twelve. The editors show one compact Color row that
+  opens a pop-up; swatches someone else has show that person's initial ("Blue, used by Riley" for screen readers)
+  and stay pickable, so sharing is a deliberate choice. A "Custom shade" hue slider below the swatches allows any
+  hue at fixed saturation and brightness, so a custom pick stays as readable as the palette; custom shades don't
+  count as taken. A new partner opens with the next free color already selected. Automatic is gone. Off-palette
+  colors (custom, older versions, imports) are kept and shown as "Custom shade". No schema change.
 
 > **Standing follow-ups (not blockers, tracked here as pointers):**
 > **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;

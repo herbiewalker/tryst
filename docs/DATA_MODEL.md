@@ -80,7 +80,7 @@ position/tag cross-refs are legacy/unused (positions live in the `positions` col
 | bodyType | BodyType? | **v7** demographic |
 | orientation | String? | **v17** id of an `orientations` row (user-defined label); null = unset |
 | location | String? | **v7** free-text city |
-| color | String? | picked accent color `#RRGGBB` (set from the partner editor since 0.7.2, D-67); null = color from the name |
+| color | String? | picked accent color `#RRGGBB` (set from the partner editor since 0.7.2, D-67); always filled in since D-70 (the next unused palette color); null only until that runs |
 | note | String? | |
 | archivedAt | Long? | soft-archive |
 | createdAt / updatedAt | Long | |
@@ -104,7 +104,7 @@ Partners.
 | orientation | String? | **v17** id of an `orientations` row; null = unset |
 | location | String? | free-text city |
 | note | String? | "about you" |
-| color | String? | **v21** picked accent color `#RRGGBB` for the calendar and charts; null = color from the name |
+| color | String? | **v21** picked accent color `#RRGGBB` for the calendar and charts; filled in the same way as partners (D-70) |
 | updatedAt | Long | |
 
 ## Category tables (fully user-owned)

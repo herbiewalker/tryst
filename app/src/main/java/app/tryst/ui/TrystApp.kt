@@ -172,6 +172,8 @@ fun TrystApp() {
     // shows nothing — there's no prior version to announce — it just records the current code.
     val context = LocalContext.current
     val generalViewModel: GeneralSettingsViewModel = hiltViewModel()
+    // Everyone gets a color of their own on unlock (D-70); the VM does it once, in its init.
+    hiltViewModel<app.tryst.ui.common.PersonColorsViewModel>()
     var whatsNewNotes by remember { mutableStateOf<List<ReleaseNote>>(emptyList()) }
     LaunchedEffect(Unit) {
         val lastSeen = generalViewModel.lastSeenVersionCode()

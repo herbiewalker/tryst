@@ -66,6 +66,7 @@ class BackupViewModel @Inject constructor(
     private val backup: BackupManager,
     private val generalPreferences: GeneralPreferences,
     private val preferenceStores: PreferenceStores,
+    private val colors: app.tryst.data.color.PersonColorAssigner,
 ) : ViewModel() {
 
     /** When the last backup was exported from this install (BKP-2); null if never. */
@@ -208,6 +209,7 @@ class BackupViewModel @Inject constructor(
                 // The restore wrote the settings stores directly; refresh what the app holds in memory so the
                 // restored theme, cycle switches and the rest apply now rather than after a restart.
                 if (result.withSettings) preferenceStores.reloadAll()
+                runCatching { colors.fillMissing() } // a restored backup may have people without a color (D-70)
                 outcome = BackupOutcome.Restored(result)
             } catch (e: Exception) {
                 outcome = failure(BackupRun.IMPORT, e)

@@ -23,6 +23,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tryst.core.session.SessionManager
+import app.tryst.data.color.ColorOwner
+import app.tryst.data.color.PersonColorAssigner
 import app.tryst.data.db.entity.BodyType
 import app.tryst.data.db.entity.Ethnicity
 import app.tryst.data.db.entity.Gender
@@ -66,7 +68,7 @@ data class PartnerEditUiState(
     val bodyType: BodyType? = null,
     val orientation: String? = null,
     val location: String = "",
-    /** Picked "#RRGGBB", or null for the name-based color. */
+    /** "#RRGGBB"; a new partner starts on the next free color, and null is only seen until that loads (D-70). */
     val color: String? = null,
     val existing: PartnerEntity? = null,
 ) {
@@ -83,7 +85,12 @@ class PartnerEditViewModel @Inject constructor(
     private val personPhotoRepository: PersonPhotoRepository,
     private val photoRevisions: app.tryst.data.media.PhotoRevisions,
     orientationRepository: OrientationRepository,
+    private val colors: PersonColorAssigner,
 ) : ViewModel() {
+
+    /** Who already has which color, so the picker can mark taken swatches (D-70). */
+    val colorOwners: StateFlow<Map<String, List<ColorOwner>>> =
+        colors.observeOwners().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     /** Edit counts per photo, so a rotated thumbnail reloads (shared with the Photos tab). */
     val photoRevisionMap: kotlinx.coroutines.flow.StateFlow<Map<String, Int>> get() = photoRevisions.revisions
@@ -126,6 +133,14 @@ class PartnerEditViewModel @Inject constructor(
     fun suppressAutoLock() = session.suppressNextAutoLock()
 
     init {
+        if (partnerId == null) {
+            // A new partner starts on a color nobody has yet. Set into the baseline too, so it isn't an "unsaved change".
+            viewModelScope.launch {
+                val hex = runCatching { colors.suggestionForNew() }.getOrNull() ?: return@launch
+                if (uiState.color == null) uiState = uiState.copy(color = hex)
+                baseline = baseline.copy(color = hex)
+            }
+        }
         viewModelScope.launch {
             val id = partnerId ?: return@launch
             val existing = partnerRepository.getById(id) ?: return@launch
@@ -231,6 +246,7 @@ class PartnerEditViewModel @Inject constructor(
                     updatedAt = now,
                 ),
             )
+            if (s.color == null) runCatching { colors.fillMissing() }
             baseline = uiState
             onDone(id)
         }
