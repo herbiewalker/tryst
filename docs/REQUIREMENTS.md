@@ -122,6 +122,9 @@ with deeply personal data. Inspired by the iOS app *Nice*.
 - **FR-34** **Cycle days on trysts** (0.7.5, D-74, no schema change). A tryst shows, under its date, the cycle day of each
   person in it who has periods logged (the user plus its partners), marked when it fell on a period. Search's More filters
   gain Period: any day, during a period, or not during one. All hidden while cycle tracking is off.
+- **FR-35** **Cycle Insights** (0.7.6, D-75, no schema change). A hideable, reorderable Cycle card in Insights shows, for
+  one person at a time (picked by chip), cycle and period length trends, flow mix, symptom counts and trysts during a
+  period or not, under the Insights time window. Hidden while cycle tracking is off.
 
 ## 5. Non-functional requirements
 

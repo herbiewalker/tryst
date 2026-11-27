@@ -16,9 +16,18 @@ package app.tryst.ui.insights
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tryst.core.prefs.ChartStyle
+import app.tryst.core.prefs.GeneralPreferences
 import app.tryst.core.prefs.InsightsPreferences
+import app.tryst.data.db.entity.CycleDayEntity
+import app.tryst.data.db.entity.CyclePeriodEntity
+import app.tryst.data.db.entity.CycleSymptomLogEntity
+import app.tryst.data.db.entity.PartnerEntity
+import app.tryst.data.db.entity.ProfileEntity
+import app.tryst.data.db.relation.EncounterWithDetails
 import app.tryst.data.filter.DateScope
 import app.tryst.data.repository.ActRepository
+import app.tryst.data.repository.CycleOwner
+import app.tryst.data.repository.CycleRepository
 import app.tryst.data.repository.EjaculationLocationRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.KinkRepository
@@ -26,20 +35,33 @@ import app.tryst.data.repository.OccasionRepository
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.data.repository.PositionRepository
 import app.tryst.data.repository.ToyRepository
+import app.tryst.data.stats.CycleStats
+import app.tryst.data.stats.CycleStatsEngine
 import app.tryst.data.stats.Insights
 import app.tryst.data.stats.InsightsEngine
+import app.tryst.ui.common.Format
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Instant
 import java.time.ZoneId
 import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
+
+/** One person with periods logged, as a chip on the Cycle card. [name] is null for the user ("You"). */
+data class CyclePerson(val owner: CycleOwner, val name: String?)
+
+/** The Insights Cycle card (0.7.6): whose charts show and their figures. */
+data class CycleCard(val people: List<CyclePerson>, val selected: CycleOwner?, val stats: CycleStats)
 
 @HiltViewModel
 @Suppress("LongParameterList") // Hilt-injected repositories; each is a distinct custom-catalog source.
@@ -51,8 +73,10 @@ class InsightsViewModel @Inject constructor(
     toyRepository: ToyRepository,
     occasionRepository: OccasionRepository,
     ejaculationLocationRepository: EjaculationLocationRepository,
-    partnerRepository: PartnerRepository,
+    private val partnerRepository: PartnerRepository,
     private val prefs: InsightsPreferences,
+    private val cycleRepository: CycleRepository,
+    generalPreferences: GeneralPreferences,
 ) : ViewModel() {
 
     /** Picked partner colors by the label People shows ("Anonymous" for unnamed), for the People chart. */
@@ -114,6 +138,73 @@ class InsightsViewModel @Inject constructor(
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Insights.EMPTY)
 
     fun setScope(scope: DateScope) = prefs.setScope(scope)
+
+    // --- Cycle section (CYC-1, 0.7.6, D-75) ---
+
+    private val pickedCycleOwner = MutableStateFlow<CycleOwner?>(null)
+
+    /** Picks whose charts the Cycle card shows. */
+    fun selectCycleOwner(owner: CycleOwner) {
+        pickedCycleOwner.value = owner
+    }
+
+    private data class CycleData(
+        val periods: List<CyclePeriodEntity>,
+        val days: List<CycleDayEntity>,
+        val logs: List<CycleSymptomLogEntity>,
+        val symptomLabels: Map<String, String>,
+    )
+
+    /**
+     * The Cycle card: everyone with periods logged (the user first), whose charts are showing, and their
+     * figures under the current scope. Null while cycle tracking is off, which hides the card everywhere.
+     */
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val cycleCard: StateFlow<CycleCard?> = generalPreferences.cycleEnabled.flatMapLatest { enabled ->
+        if (!enabled) {
+            flowOf(null)
+        } else {
+            combine(
+                combine(
+                    cycleRepository.observeAllPeriods(),
+                    cycleRepository.observeAllDays(),
+                    cycleRepository.observeAllSymptomLogs(),
+                    cycleRepository.observeSymptoms(),
+                ) { periods, days, logs, symptoms -> CycleData(periods, days, logs, symptoms.associate { it.id to it.label }) },
+                encounters,
+                prefs.scope,
+                pickedCycleOwner,
+                partnerRepository.observeAll(),
+            ) { data, encounters, scope, picked, partners ->
+                withContext(Dispatchers.Default) { buildCycleCard(data, encounters, scope, picked, partners) }
+            }
+        }
+    }
+        .catch { emit(null) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    private fun buildCycleCard(
+        data: CycleData,
+        encounters: List<EncounterWithDetails>,
+        scope: DateScope,
+        picked: CycleOwner?,
+        partners: List<PartnerEntity>,
+    ): CycleCard {
+        val owners = data.periods.mapTo(HashSet()) { CycleOwner(it.ownerKind, it.ownerId) }
+        val self = CycleOwner(CyclePeriodEntity.OWNER_PROFILE, ProfileEntity.SELF_ID)
+        val people = buildList {
+            if (self in owners) add(CyclePerson(self, null))
+            partners.sortedBy { Format.partnerName(it).lowercase() }.forEach { p ->
+                val owner = CycleOwner(CyclePeriodEntity.OWNER_PARTNER, p.id)
+                if (owner in owners) add(CyclePerson(owner, Format.partnerName(p)))
+            }
+        }
+        val selected = picked?.takeIf { p -> people.any { it.owner == p } } ?: people.firstOrNull()?.owner
+        val stats = selected?.let {
+            CycleStatsEngine.compute(it, data.periods, data.days, data.logs, data.symptomLabels, encounters, scope.range())
+        } ?: CycleStats.EMPTY
+        return CycleCard(people, selected, stats)
+    }
 
     // --- Customization (persisted via InsightsPreferences) ---
     val statOrder: StateFlow<List<String>> = prefs.statOrder

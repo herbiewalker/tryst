@@ -67,8 +67,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
 import app.tryst.core.prefs.ChartStyle
+import app.tryst.data.db.entity.CycleFlow
 import app.tryst.data.filter.DateRange
 import app.tryst.data.filter.DateScope
+import app.tryst.data.repository.CycleOwner
 import app.tryst.data.stats.Bucket
 import app.tryst.data.stats.Insights
 import app.tryst.data.stats.Tally
@@ -221,6 +223,7 @@ private fun InsightsList(
     onOpenAchievements: () -> Unit,
     viewModel: InsightsViewModel,
 ) {
+    val cycleCard by viewModel.cycleCard.collectAsStateWithLifecycle()
     LazyColumn(
         // Cap + centre on wide windows so the stacked cards don't stretch (Pass 5); no-op on phones.
         modifier = Modifier.fillMaxSize().wrapContentWidth().adaptiveContentWidth(),
@@ -230,9 +233,12 @@ private fun InsightsList(
         if (editMode) {
             item(key = "sections-editor") {
                 SectionsEditor(
-                    order = InsightSections.ordered(sectionOrder).map { it.id },
+                    order = InsightSections.ordered(sectionOrder)
+                        .filter { cycleCard != null || it.id != InsightSections.CYCLE }
+                        .map { it.id },
                     hidden = hiddenSections,
                     styles = sectionStyles,
+                    showCycle = cycleCard != null,
                     onMove = viewModel::moveSection,
                     onToggleHidden = viewModel::setSectionHidden,
                     onSetStyle = viewModel::setSectionStyle,
@@ -258,7 +264,7 @@ private fun InsightsList(
             // the answer — "nothing logged in 2024" — and dropping it would silently reflow the page
             // as the window changes. So under a scope every visible card stays put.
             val sections = InsightSections.ordered(sectionOrder)
-                .filter { it.id !in hiddenSections && (insights.isScoped || it.hasData(insights)) }
+                .filter { it.id !in hiddenSections && shows(it, insights, cycleCard) }
             items(sections, key = { it.id }) { section ->
                 Box(Modifier.animateItem()) {
                     when {
@@ -274,6 +280,14 @@ private fun InsightsList(
                                 )
                             }
                             AchievementsTeaser(onSeeAll = onOpenAchievements)
+                        }
+                        section.id == InsightSections.CYCLE -> SectionCard(section.title) {
+                            CycleContent(
+                                card = cycleCard ?: return@SectionCard,
+                                style = section.resolve(sectionStyles[section.id]),
+                                scopeLabel = scopeLabel,
+                                onSelect = viewModel::selectCycleOwner,
+                            )
                         }
                         !section.hasData(insights) -> SectionCard(section.title) {
                             Text(
@@ -291,6 +305,16 @@ private fun InsightsList(
             item(key = "footer-space") { Box(Modifier.height(64.dp)) }
         }
     }
+}
+
+/**
+ * Whether a card shows in view mode. Unscoped, a card with no data is dropped; scoped, every card stays put
+ * (see above). The Cycle card needs cycle tracking on, and someone with periods unless a scope is set.
+ */
+private fun shows(section: InsightSection, insights: Insights, cycleCard: CycleCard?): Boolean = if (section.id == InsightSections.CYCLE) {
+    cycleCard != null && (insights.isScoped || cycleCard.people.isNotEmpty())
+} else {
+    insights.isScoped || section.hasData(insights)
 }
 
 @Composable
@@ -421,6 +445,57 @@ private fun SectionContent(id: String, insights: Insights, style: ChartStyle, pa
     }
 }
 
+/**
+ * The Cycle card (CYC-1, 0.7.6): a chip per person with periods logged when there's more than one, then
+ * that person's charts. Lengths are trends; flow, symptoms and trysts are breakdowns.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CycleContent(card: CycleCard, style: ChartStyle, scopeLabel: String, onSelect: (CycleOwner) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (card.people.size > 1) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                card.people.forEach { person ->
+                    FilterChip(
+                        selected = person.owner == card.selected,
+                        onClick = { onSelect(person.owner) },
+                        label = { Text(person.name ?: stringResource(R.string.insights_cycle_you)) },
+                    )
+                }
+            }
+        }
+        val stats = card.stats
+        if (!stats.hasData) {
+            Text(
+                stringResource(R.string.insights_section_empty, scopeLabel),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            return@Column
+        }
+        val flowLabels = mapOf(
+            CycleFlow.SPOTTING to stringResource(R.string.cycle_flow_spotting),
+            CycleFlow.LIGHT to stringResource(R.string.cycle_flow_light),
+            CycleFlow.MEDIUM to stringResource(R.string.cycle_flow_medium),
+            CycleFlow.HEAVY to stringResource(R.string.cycle_flow_heavy),
+        )
+        val trysts = listOf(
+            Tally(stringResource(R.string.insights_cycle_trysts_on), stats.trystsOnPeriod),
+            Tally(stringResource(R.string.insights_cycle_trysts_off), stats.trystsNotOnPeriod),
+        ).filter { it.count > 0 }
+        GroupedSubCharts(
+            style,
+            listOf(
+                TrendSub(stringResource(R.string.insights_sub_cycle_length), stats.cycleLengths),
+                TrendSub(stringResource(R.string.insights_sub_period_length), stats.periodLengths),
+                BreakSub(stringResource(R.string.insights_sub_flow), stats.flowMix.map { (flow, n) -> Tally(flowLabels.getValue(flow), n) }),
+                BreakSub(stringResource(R.string.insights_sub_symptoms), stats.symptoms),
+                BreakSub(stringResource(R.string.insights_sub_cycle_trysts), trysts),
+            ),
+        )
+    }
+}
+
 /** Renders each non-empty sub-chart, separated by a divider + accent sub-label. */
 @Composable
 private fun GroupedSubCharts(style: ChartStyle, subs: List<Sub>) {
@@ -474,11 +549,14 @@ private fun SectionsEditor(
     order: List<String>,
     hidden: Set<String>,
     styles: Map<String, ChartStyle>,
+    showCycle: Boolean,
     onMove: (order: List<String>, from: Int, to: Int) -> Unit,
     onToggleHidden: (id: String, hidden: Boolean) -> Unit,
     onSetStyle: (id: String, style: ChartStyle) -> Unit,
 ) {
-    val sections = remember(order) { InsightSections.ordered(order) }
+    val sections = remember(order, showCycle) {
+        InsightSections.ordered(order).filter { showCycle || it.id != InsightSections.CYCLE }
+    }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(stringResource(R.string.insights_sections_header), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         Text(

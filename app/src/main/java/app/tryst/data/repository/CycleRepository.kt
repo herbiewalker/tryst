@@ -47,6 +47,11 @@ class CycleRepository @Inject constructor(
 
     fun observePeriodCount(): Flow<Int> = dao.observePeriodCount()
 
+    /** Every logged day and symptom log, for the Insights Cycle section (0.7.6). */
+    fun observeAllDays(): Flow<List<CycleDayEntity>> = dao.observeAllDays()
+
+    fun observeAllSymptomLogs(): Flow<List<CycleSymptomLogEntity>> = dao.observeAllSymptomLogs()
+
     suspend fun getPeriod(id: String): CyclePeriodEntity? = dao.getPeriod(id)
 
     suspend fun getDays(periodId: String): List<CycleDayEntity> = dao.getDays(periodId)

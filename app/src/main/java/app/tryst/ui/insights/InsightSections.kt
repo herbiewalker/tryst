@@ -52,6 +52,9 @@ object InsightSections {
     const val ORGASMS = "orgasms"
     const val DETAILS = "details"
 
+    /** CYC-1 (0.7.6). Its data lives outside [Insights], so the screen decides when it shows (see `CycleCard`). */
+    const val CYCLE = "cycle"
+
     /** Ordered time/ordinal series (months, weekdays, ratings). */
     private val TREND_STYLES = listOf(ChartStyle.BARS, ChartStyle.LINE)
 
@@ -82,6 +85,8 @@ object InsightSections {
         InsightSection(DETAILS, "Details", styles = BREAKDOWN_STYLES) {
             it.topToys.isNotEmpty() || it.topProtection.isNotEmpty()
         },
+        // Mixed like Orgasms: length trends plus breakdowns. Shown only while cycle tracking is on.
+        InsightSection(CYCLE, "Cycle") { false },
     )
 
     private val byId = catalog.associateBy { it.id }

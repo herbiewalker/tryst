@@ -687,6 +687,14 @@
     <string name="insights_sub_finish">Finish / ejaculation</string>
     <string name="insights_sub_toys">Toys</string>
     <string name="insights_sub_protection">Protection</string>
+    <string name="insights_cycle_you">You</string>
+    <string name="insights_sub_cycle_length">Cycle length (days)</string>
+    <string name="insights_sub_period_length">Period length (days)</string>
+    <string name="insights_sub_flow">Flow (days logged)</string>
+    <string name="insights_sub_symptoms">Symptoms (days logged)</string>
+    <string name="insights_sub_cycle_trysts">Trysts</string>
+    <string name="insights_cycle_trysts_on">During a period</string>
+    <string name="insights_cycle_trysts_off">Not during a period</string>
 
     <!-- ============================================================= -->
     <!-- Achievements (AchievementsScreen, AchievementsTeaser)         -->

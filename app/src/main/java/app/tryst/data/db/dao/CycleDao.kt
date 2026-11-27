@@ -49,6 +49,12 @@ abstract class CycleDao {
     @Query("SELECT * FROM cycle_day WHERE periodId = :periodId ORDER BY epochDay")
     abstract suspend fun getDays(periodId: String): List<CycleDayEntity>
 
+    @Query("SELECT * FROM cycle_day ORDER BY epochDay")
+    abstract fun observeAllDays(): Flow<List<CycleDayEntity>>
+
+    @Query("SELECT * FROM cycle_symptom_log ORDER BY epochDay")
+    abstract fun observeAllSymptomLogs(): Flow<List<CycleSymptomLogEntity>>
+
     @Query(
         "SELECT d.* FROM cycle_day d JOIN cycle_period p ON p.id = d.periodId " +
             "WHERE p.ownerKind = :ownerKind AND p.ownerId = :ownerId ORDER BY d.epochDay",
