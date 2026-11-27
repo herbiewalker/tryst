@@ -1,8 +1,8 @@
 # Tryst — Future Roadmap (post-v0.1.0)
 
-> **Current state (2026-11-27):** **v0.7.5** is out (versionCode 28, schema v22). The live ordering is the
-> **Release plan** section below (D-63): 7.x is cycle tracking only (0.7.0 to 0.7.5 shipped; 0.7.6 cycle
-> Insights is next); 0.7.7 adds orgasm details (ORG-1, D-69, D-72) to close 7.x, then 8.x (Insights drill-downs, BKP-1 + SEC-1, DEL-1, PPL-1 + META-2 portraits). The history below is
+> **Current state (2026-11-27):** **v0.7.6** is out (versionCode 29, schema v22). The live ordering is the
+> **Release plan** section below (D-63): 7.x is cycle tracking only (0.7.0 to 0.7.6 shipped);
+> 0.7.7 adds orgasm details (ORG-1, D-69, D-72) to close 7.x, then 8.x (Insights drill-downs, BKP-1 + SEC-1, DEL-1, PPL-1 + META-2 portraits). The history below is
 > kept for context; where it disagrees with the release plan, the plan wins.
 
 > **Status: ACTIVE roadmap (last reviewed 2026-11-25).** Originally a raw idea dump (2026-06-14).
@@ -275,7 +275,7 @@ update `tools/dataset/generate_dataset.py` (drop `ORAL_69_SIDE`, move `WATCHING_
 | **0.7.3** | ✅ **SHIPPED 2026-11-25** (D-70, D-71). **Person colors and who the cycle screens list**, added by the owner ahead of symptoms (D-72): everyone gets their own color from a 24-color palette plus a custom shade, picked from a compact pop-up; people set as Male are left off the cycle screens. | (none) | v21 |
 | **0.7.4** | ✅ **SHIPPED 2026-11-27** (D-73). **Daily symptoms.** One shared symptom list (nothing preset, managed through `CatalogManageScreen`), logged on period days as mild, medium or strong. | (none) | v22 |
 | **0.7.5** | ✅ **SHIPPED 2026-11-27** (D-74). **Encounter integration, read-side only.** Cycle day shown on an encounter; an "on period" filter through the FILT-1 layer in Search and History. Uses "on period or not" and cycle day, not medical phase names. | (none) | v22 |
-| **0.7.6** | 🚧 **Built 2026-11-27, not released** (D-75). **Cycle Insights.** A hideable, reorderable Cycle section in Insights built on today's charts: cycle-length and period-length trend, flow mix, symptom counts, and encounters on period vs not (from 0.7.5). Hidden when the module is off. Ships something to look at before 8.x; the 0.8.0 rework later gives it a drill-down page like every other section. | (none) | v22 |
+| **0.7.6** | ✅ **SHIPPED 2026-11-27** (D-75). **Cycle Insights.** A hideable, reorderable Cycle section in Insights built on today's charts: cycle-length and period-length trend, flow mix, symptom counts, and encounters on period vs not (from 0.7.5). Hidden when the module is off. Ships something to look at before 8.x; the 0.8.0 rework later gives it a drill-down page like every other section. | (none) | v22 |
 | **0.7.7** | **Orgasm details (ORG-1)**, added to the end of 7.x by the owner (D-69; renumbered from 0.7.6 by D-72). Every orgasm, yours and each partner's, can carry one or more **types** from a user-built list and **finish locations** from the existing finish list, for partners as well as you. Per-orgasm rows under each person's count in the editor; Insights breakdowns of types per person and partner finishes; the test data fills them in consistently. | (none) | v23 (est.) |
 
 **8.x and later**

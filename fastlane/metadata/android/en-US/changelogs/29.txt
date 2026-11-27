@@ -1,0 +1,7 @@
+Cycle Insights
+
+* A new Cycle card in Insights, shown while cycle tracking is on.
+* Pick a person to see their cycle and period lengths over time.
+* See how their logged days split by flow and which symptoms came up most.
+* See how many trysts with them fell during a period.
+* The Insights time window applies, and the card can be hidden, moved and restyled.

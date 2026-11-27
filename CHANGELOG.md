@@ -13,11 +13,17 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.7.6] — 2026-11-27 (versionCode 29)
+
 ### Added
 - **Cycle Insights** (0.7.6, D-75). A new Cycle card in Insights, shown while cycle tracking is on. Pick a person
   with the chips at the top to see their cycle and period lengths over time, how their logged days split by flow,
   which symptoms came up most, and how many trysts with them fell during a period. The Insights time window
   applies, and the card can be hidden, moved and restyled like the others.
+
+### Fixed
+- **Bar chart labels.** Labels in a bar chart may take two lines, and when any can, all do, so the bars keep
+  one baseline.
 
 ## [0.7.5] — 2026-11-27 (versionCode 28)
 

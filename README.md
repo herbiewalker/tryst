@@ -133,9 +133,11 @@ Screenshots are black by design on-device (`FLAG_SECURE`).
 
 ## Status
 
-✅ **Shipped.** Current release **v0.7.5** (versionCode 28, schema v22). Distribution is **F-Droid**,
+✅ **Shipped.** Current release **v0.7.6** (versionCode 29, schema v22). Distribution is **F-Droid**,
 which builds and signs from this source. Tryst ships no binary and commits no signing key.
 
+- **0.7.6** adds a Cycle card to Insights: for one person at a time, cycle and period lengths over time, flow mix,
+  symptom counts, and trysts during a period or not.
 - **0.7.5** shows each person's cycle day on a tryst, marked when it fell on a period, and adds a Period filter
   to Search: any day, during a period, or not during one.
 - **0.7.4** adds daily symptoms. Build one symptom list for everyone, with nothing preset, and log each one on a
