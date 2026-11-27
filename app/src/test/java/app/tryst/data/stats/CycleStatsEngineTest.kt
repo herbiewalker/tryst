@@ -78,7 +78,8 @@ class CycleStatsEngineTest {
         val periods = listOf(period(a, jan1 + 28), period(a, jan1), period(a, jan1 + 58), period(a, jan1 + 200))
         val stats = compute(a, periods)
         assertEquals(listOf(28, 30), stats.cycleLengths.map { it.count })
-        assertEquals("Jan '26", stats.cycleLengths.first().label)
+        assertEquals(listOf("Jan 1", "Jan 29"), stats.cycleLengths.map { it.label })
+        assertEquals(2026..2026, stats.cycleYears)
         assertEquals(4, stats.periodLengths.size)
     }
 
@@ -94,6 +95,8 @@ class CycleStatsEngineTest {
         val stats = compute(a, periods)
         assertEquals(CycleStatsEngine.MAX_BARS, stats.periodLengths.size)
         assertEquals(CycleStatsEngine.MAX_BARS, stats.cycleLengths.size)
+        // 20 periods 28 days apart from Jan 2026: the newest 12 start in 2026 and 2027.
+        assertEquals(2026..2027, stats.periodYears)
     }
 
     @Test
@@ -102,6 +105,7 @@ class CycleStatsEngineTest {
         val scope = DateRange(LocalDate.of(2026, 1, 1), LocalDate.of(2026, 1, 31))
         val stats = compute(a, periods, scope = scope)
         assertEquals(1, stats.periodLengths.size)
+        assertEquals(2026..2026, stats.periodYears)
         assertEquals(listOf(30), stats.cycleLengths.map { it.count })
     }
 

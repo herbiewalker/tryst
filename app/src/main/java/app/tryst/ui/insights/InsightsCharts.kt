@@ -189,7 +189,7 @@ fun VerticalBarChart(
                     bucket.label,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
+                    maxLines = 2,
                     textAlign = TextAlign.Center,
                 )
             }

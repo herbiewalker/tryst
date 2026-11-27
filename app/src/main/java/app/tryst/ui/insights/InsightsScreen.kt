@@ -486,14 +486,22 @@ private fun CycleContent(card: CycleCard, style: ChartStyle, scopeLabel: String,
         GroupedSubCharts(
             style,
             listOf(
-                TrendSub(stringResource(R.string.insights_sub_cycle_length), stats.cycleLengths),
-                TrendSub(stringResource(R.string.insights_sub_period_length), stats.periodLengths),
+                TrendSub(withYears(stringResource(R.string.insights_sub_cycle_length), stats.cycleYears), stats.cycleLengths),
+                TrendSub(withYears(stringResource(R.string.insights_sub_period_length), stats.periodYears), stats.periodLengths),
                 BreakSub(stringResource(R.string.insights_sub_flow), stats.flowMix.map { (flow, n) -> Tally(flowLabels.getValue(flow), n) }),
                 BreakSub(stringResource(R.string.insights_sub_symptoms), stats.symptoms),
                 BreakSub(stringResource(R.string.insights_sub_cycle_trysts), trysts),
             ),
         )
     }
+}
+
+/** A trend title with the years its bars start in, since each bar is labelled with a month and day only. */
+@Composable
+private fun withYears(title: String, years: IntRange?): String = when {
+    years == null -> title
+    years.first == years.last -> stringResource(R.string.insights_cycle_title_year, title, years.first)
+    else -> stringResource(R.string.insights_cycle_title_years, title, years.first, years.last)
 }
 
 /** Renders each non-empty sub-chart, separated by a divider + accent sub-label. */

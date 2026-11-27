@@ -33,6 +33,10 @@ data class CycleStats(
     val cycleLengths: List<Bucket> = emptyList(),
     /** Each period's length in days, oldest first, newest [CycleStatsEngine.MAX_BARS]. */
     val periodLengths: List<Bucket> = emptyList(),
+    /** Calendar years the [cycleLengths] bars start in, for the chart title; null when there are none. */
+    val cycleYears: IntRange? = null,
+    /** Calendar years the [periodLengths] bars start in. */
+    val periodYears: IntRange? = null,
     /** Logged days per flow level, lightest first; levels never logged are left out. */
     val flowMix: List<Pair<CycleFlow, Int>> = emptyList(),
     /** How many period days each symptom was logged on, most first. */
@@ -66,7 +70,8 @@ object CycleStatsEngine {
     /** Trend charts show at most this many of the newest cycles or periods, so the bars stay readable. */
     const val MAX_BARS = 12
 
-    private val MONTH = DateTimeFormatter.ofPattern("MMM ''yy")
+    /** Month and day of the start, e.g. "Dec 29": two periods can start in one month. The year goes in the title. */
+    private val DAY = DateTimeFormatter.ofPattern("MMM d")
 
     @Suppress("LongParameterList")
     fun compute(
@@ -84,14 +89,15 @@ object CycleStatsEngine {
         val scoped = own.filter { inScope(it.startEpochDay) }
         val scopedIds = scoped.mapTo(HashSet()) { it.id }
 
-        val cycleLengths = own.zipWithNext()
+        val cycles = own.zipWithNext()
             .filter { (a, _) -> a.id in scopedIds }
             .map { (a, b) -> a to (b.startEpochDay - a.startEpochDay).toInt() }
             .filter { (_, length) -> length in 1..CycleDays.MAX_CYCLE_DAY }
             .takeLast(MAX_BARS)
-            .map { (a, length) -> Bucket(label(a), length) }
+        val cycleLengths = cycles.map { (a, length) -> Bucket(label(a), length) }
 
-        val periodLengths = scoped.takeLast(MAX_BARS).map { Bucket(label(it), it.lengthDays) }
+        val shownPeriods = scoped.takeLast(MAX_BARS)
+        val periodLengths = shownPeriods.map { Bucket(label(it), it.lengthDays) }
 
         val flowCounts = days.filter { it.periodId in scopedIds }
             .mapNotNull { it.flowLevel }
@@ -110,10 +116,24 @@ object CycleStatsEngine {
             .filter(::inScope)
         val on = trystDays.count { cycle.on(owner, it) is CycleDayInfo.OnPeriod }
 
-        return CycleStats(cycleLengths, periodLengths, flowMix, symptoms, on, trystDays.size - on)
+        return CycleStats(
+            cycleLengths = cycleLengths,
+            periodLengths = periodLengths,
+            cycleYears = years(cycles.map { it.first }),
+            periodYears = years(shownPeriods),
+            flowMix = flowMix,
+            symptoms = symptoms,
+            trystsOnPeriod = on,
+            trystsNotOnPeriod = trystDays.size - on,
+        )
     }
 
-    private fun label(period: CyclePeriodEntity): String = LocalDate.ofEpochDay(period.startEpochDay).format(MONTH)
+    private fun label(period: CyclePeriodEntity): String = LocalDate.ofEpochDay(period.startEpochDay).format(DAY)
+
+    private fun years(periods: List<CyclePeriodEntity>): IntRange? {
+        if (periods.isEmpty()) return null
+        return LocalDate.ofEpochDay(periods.first().startEpochDay).year..LocalDate.ofEpochDay(periods.last().startEpochDay).year
+    }
 }
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣
