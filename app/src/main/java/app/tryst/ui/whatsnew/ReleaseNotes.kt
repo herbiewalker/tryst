@@ -33,6 +33,16 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.7.4",
+            versionCode = 27,
+            date = "2026-11-27",
+            highlights = listOf(
+                "Log symptoms on period days. Build one list for everyone you track, with nothing preset.",
+                "Tap a symptom on a period day for mild, again for medium, then strong, then off.",
+                "Manage the list under Settings, Cycle tracking, Symptoms, or from Edit symptoms on a period.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.7.3",
             versionCode = 26,
             date = "2026-11-25",

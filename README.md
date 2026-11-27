@@ -133,9 +133,11 @@ Screenshots are black by design on-device (`FLAG_SECURE`).
 
 ## Status
 
-✅ **Shipped.** Current release **v0.7.3** (versionCode 26, schema v21). Distribution is **F-Droid**,
+✅ **Shipped.** Current release **v0.7.4** (versionCode 27, schema v22). Distribution is **F-Droid**,
 which builds and signs from this source. Tryst ships no binary and commits no signing key.
 
+- **0.7.4** adds daily symptoms. Build one symptom list for everyone, with nothing preset, and log each one on a
+  period day as mild, medium or strong.
 - **0.7.3** gives everyone their own color, so two people's periods never look alike on the calendar. Pick from 24
   colors or a custom shade in a small pop-up. The Cycle tab now leaves off people set as Male.
 - **0.7.2** can show period days on the Trysts calendar, one colored strip per person, and lets you pick a color for

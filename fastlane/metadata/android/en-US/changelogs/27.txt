@@ -1,0 +1,6 @@
+Log symptoms on period days
+
+* Build one symptom list for everyone you track. Nothing is preset, so add the ones that matter.
+* On each period day, tap a symptom for mild, again for medium, then strong, then off.
+* Manage the list under Settings, Cycle tracking, Symptoms, or from Edit symptoms on a period.
+* Symptoms go with their period, ride in the encrypted backup, and Delete cycle data clears them.

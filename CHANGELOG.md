@@ -13,6 +13,8 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.7.4] — 2026-11-27 (versionCode 27)
+
 ### Added
 - **Daily symptoms** (0.7.4, D-73, schema v22). One symptom list for everyone, built by you with nothing
   preset, under Settings → Cycle tracking → Symptoms or from "Edit symptoms" on a period. On each day of a period, tap a
