@@ -1,0 +1,6 @@
+See your cycle day on each tryst
+
+* A tryst shows, under its date, where each person in it was in their cycle that day.
+* Days that fell on a period are marked, for you and for each partner with periods logged.
+* Search's More filters gain Period: any day, during a period, or not during one.
+* Nothing new is stored, and it all hides when cycle tracking is off.
