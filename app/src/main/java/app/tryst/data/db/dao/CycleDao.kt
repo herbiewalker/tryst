@@ -83,11 +83,11 @@ abstract class CycleDao {
 
     // ---- Symptoms (0.7.4, D-73) ----
 
-    @Query("SELECT * FROM cycle_symptom WHERE ownerKind = :ownerKind AND ownerId = :ownerId ORDER BY label COLLATE NOCASE")
-    abstract fun observeSymptoms(ownerKind: String, ownerId: String): Flow<List<CycleSymptomEntity>>
+    @Query("SELECT * FROM cycle_symptom ORDER BY label COLLATE NOCASE")
+    abstract fun observeSymptoms(): Flow<List<CycleSymptomEntity>>
 
-    @Query("SELECT id FROM cycle_symptom WHERE ownerKind = :ownerKind AND ownerId = :ownerId")
-    abstract suspend fun getSymptomIds(ownerKind: String, ownerId: String): List<String>
+    @Query("SELECT id FROM cycle_symptom")
+    abstract suspend fun getSymptomIds(): List<String>
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
     abstract suspend fun insertSymptom(symptom: CycleSymptomEntity)
@@ -120,7 +120,7 @@ abstract class CycleDao {
         savePeriodWithDays(period, days)
         deleteSymptomLogs(period.id)
         // A symptom removed from the list while this period was open is skipped, not a foreign-key failure.
-        val known = getSymptomIds(period.ownerKind, period.ownerId).toSet()
+        val known = getSymptomIds().toSet()
         upsertSymptomLogs(
             logs.filter {
                 it.periodId == period.id && it.symptomId in known && it.epochDay in period.startEpochDay..period.endEpochDay
@@ -128,7 +128,7 @@ abstract class CycleDao {
         )
     }
 
-    /** Settings → danger zone: every period (days and symptom logs go with them) and every symptom list. */
+    /** Settings → danger zone: every period (days and symptom logs go with them) and the symptom list. */
     @Transaction
     open suspend fun deleteAllCycleData() {
         deleteAllPeriods()

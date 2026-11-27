@@ -102,24 +102,24 @@ class CycleRepository @Inject constructor(
 
     suspend fun deletePeriod(id: String) = dao.deletePeriod(id)
 
-    /** Settings → danger zone "Delete cycle data": every period, day, symptom and symptom list, for everyone. */
+    /** Settings → danger zone "Delete cycle data": every period, day and logged symptom, for everyone, plus the symptom list. */
     suspend fun deleteAll() = dao.deleteAllCycleData()
 
-    // ---- Symptoms (0.7.4, D-73): each person keeps their own list, nothing preset ----
+    // ---- Symptoms (0.7.4, D-73): one shared list for everyone, nothing preset ----
 
-    fun observeSymptoms(owner: CycleOwner): Flow<List<CycleSymptomEntity>> = dao.observeSymptoms(owner.kind, owner.id)
+    fun observeSymptoms(): Flow<List<CycleSymptomEntity>> = dao.observeSymptoms()
 
     suspend fun getSymptomLogs(periodId: String): List<CycleSymptomLogEntity> = dao.getSymptomLogs(periodId)
 
-    /** Adds a symptom to [owner]'s list. Returns its id, or null when blank or already on their list. */
-    suspend fun addSymptom(owner: CycleOwner, label: String): String? {
+    /** Adds a symptom to the list. Returns its id, or null when blank or already on the list. */
+    suspend fun addSymptom(label: String): String? {
         val trimmed = label.trim()
         if (trimmed.isEmpty()) return null
         val id = UUID.randomUUID().toString()
-        return runCatching { dao.insertSymptom(CycleSymptomEntity(id, owner.kind, owner.id, trimmed)) }.map { id }.getOrNull()
+        return runCatching { dao.insertSymptom(CycleSymptomEntity(id, trimmed)) }.map { id }.getOrNull()
     }
 
-    /** Renames in place, so every logged day keeps it. A name already on the same list is quietly refused. */
+    /** Renames in place, so every logged day keeps it. A name already on the list is quietly refused. */
     suspend fun renameSymptom(id: String, label: String) {
         val trimmed = label.trim()
         if (trimmed.isEmpty()) return

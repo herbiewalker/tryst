@@ -165,6 +165,7 @@ fun SettingsScreen(
     onManageCategory: (String) -> Unit = {},
     onCustomizeGallery: () -> Unit = {},
     onOpenCsvImport: () -> Unit = {},
+    onManageSymptoms: () -> Unit = {},
     viewModel: LockViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -415,6 +416,12 @@ fun SettingsScreen(
                     description = stringResource(R.string.settings_cycle_predictions_desc),
                     checked = cyclePredictions,
                     onCheckedChange = { cycleViewModel.setPredictions(it) },
+                )
+                SettingsRow(
+                    icon = Icons.Filled.Category,
+                    title = stringResource(R.string.cycle_symptoms_title),
+                    description = stringResource(R.string.settings_cycle_symptoms_desc),
+                    onClick = onManageSymptoms,
                 )
                 SettingsToggleRow(
                     title = stringResource(R.string.settings_cycle_calendar),

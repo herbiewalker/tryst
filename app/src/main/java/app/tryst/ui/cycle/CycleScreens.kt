@@ -301,7 +301,6 @@ private fun StatsCard(stats: CycleStats, prediction: CyclePrediction?) {
 fun CyclePersonScreen(
     onBack: () -> Unit,
     onOpenPeriod: (String) -> Unit,
-    onManageSymptoms: (CycleOwner) -> Unit,
     viewModel: CyclePersonViewModel = hiltViewModel(),
 ) {
     val name by viewModel.name.collectAsStateWithLifecycle()
@@ -317,11 +316,6 @@ fun CyclePersonScreen(
                 navigationIcon = {
                     TooltipIconButton(label = stringResource(R.string.cd_back), onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))
-                    }
-                },
-                actions = {
-                    TextButton(onClick = { onManageSymptoms(viewModel.owner) }) {
-                        Text(stringResource(R.string.cycle_symptoms_title))
                     }
                 },
             )
@@ -386,7 +380,7 @@ private enum class DateField { START, END }
 @Composable
 fun CyclePeriodScreen(
     onBack: () -> Unit,
-    onManageSymptoms: (CycleOwner) -> Unit,
+    onManageSymptoms: () -> Unit,
     viewModel: CyclePeriodViewModel = hiltViewModel(),
 ) {
     val draft = viewModel.draft
@@ -447,7 +441,7 @@ fun CyclePeriodScreen(
             item {
                 SymptomsHeader(
                     hasSymptoms = symptomList.isNotEmpty(),
-                    onManage = { onManageSymptoms(CycleOwner(draft.period.ownerKind, draft.period.ownerId)) },
+                    onManage = onManageSymptoms,
                 )
             }
             items(draft.days, key = { it.epochDay }) { day ->
@@ -498,7 +492,7 @@ fun CyclePeriodScreen(
     ProblemDialog(viewModel.problem, viewModel::clearProblem)
 }
 
-/** The line above the days: how symptom chips work, and the way to this person's symptom list. */
+/** The line above the days: how symptom chips work, and the way to the shared symptom list. */
 @Composable
 private fun SymptomsHeader(hasSymptoms: Boolean, onManage: () -> Unit) {
     Column {
@@ -587,22 +581,15 @@ private fun DayRow(
 }
 
 // ---------------------------------------------------------------------------------------
-// One person's symptom list (0.7.4, D-73)
+// The shared symptom list (0.7.4, D-73)
 // ---------------------------------------------------------------------------------------
 
 @Composable
 fun CycleSymptomsScreen(onBack: () -> Unit, viewModel: CycleSymptomsViewModel = hiltViewModel()) {
     val rows by viewModel.symptoms.collectAsStateWithLifecycle()
-    val partnerName = viewModel.partnerName.collectAsStateWithLifecycle().value
-    val title = when {
-        viewModel.isSelf -> stringResource(R.string.cycle_symptoms_title_self)
-        partnerName != null -> stringResource(R.string.cycle_symptoms_title_for, partnerName)
-        else -> null
-    }
     CatalogManageScreen(
         R.string.cycle_symptoms_title, R.string.cycle_symptoms_desc, R.string.cycle_symptoms_add_label, R.string.cycle_symptoms_empty,
         rows.map { it.id to it.label }, viewModel::add, viewModel::rename, viewModel::delete, onBack,
-        titleText = title,
     )
 }
 

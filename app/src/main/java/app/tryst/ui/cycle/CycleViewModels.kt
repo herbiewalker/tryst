@@ -40,14 +40,10 @@ import app.tryst.ui.common.Format
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.LocalDate
 import javax.inject.Inject
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -229,12 +225,8 @@ class CyclePeriodViewModel @Inject constructor(
     var missing by mutableStateOf(false)
         private set
 
-    private val owner = MutableStateFlow<CycleOwner?>(null)
-
-    /** This person's own symptom list; live, so edits on the Symptoms screen show up on return. */
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val symptomList: StateFlow<List<CycleSymptomEntity>> = owner.filterNotNull()
-        .flatMapLatest { repository.observeSymptoms(it) }
+    /** The shared symptom list; live, so edits on the Symptoms screen show up on return. */
+    val symptomList: StateFlow<List<CycleSymptomEntity>> = repository.observeSymptoms()
         .catch { emit(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -244,7 +236,6 @@ class CyclePeriodViewModel @Inject constructor(
             if (period == null) {
                 missing = true
             } else {
-                owner.value = CycleOwner(period.ownerKind, period.ownerId)
                 draft = PeriodDraft(
                     period,
                     repository.getDays(periodId),

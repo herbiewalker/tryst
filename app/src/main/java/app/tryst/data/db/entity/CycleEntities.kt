@@ -89,15 +89,13 @@ enum class CycleFlow {
 }
 
 /**
- * One symptom on one person's own list (CYC-1 symptoms, schema v22, D-73). Nothing is preset: every row
- * is something the user typed, so the APK ships no symptom names. The owner pair matches
- * [CyclePeriodEntity]. Deleting a symptom removes every day it was logged on.
+ * One symptom on the shared symptom list (CYC-1 symptoms, schema v22, D-73), offered on every person's
+ * period days. Nothing is preset: every row is something the user typed, so the APK ships no symptom
+ * names. Deleting a symptom removes every day it was logged on.
  */
-@Entity(tableName = "cycle_symptom", indices = [Index(value = ["ownerKind", "ownerId", "label"], unique = true)])
+@Entity(tableName = "cycle_symptom", indices = [Index(value = ["label"], unique = true)])
 data class CycleSymptomEntity(
     @PrimaryKey val id: String,
-    val ownerKind: String,
-    val ownerId: String,
     val label: String,
 )
 

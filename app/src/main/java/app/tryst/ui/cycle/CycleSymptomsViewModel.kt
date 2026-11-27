@@ -13,55 +13,30 @@
 // ╰──────────────────────────────────────────────────────────────────╯
 package app.tryst.ui.cycle
 
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tryst.data.db.entity.CycleSymptomEntity
-import app.tryst.data.repository.CycleOwner
 import app.tryst.data.repository.CycleRepository
-import app.tryst.data.repository.PartnerRepository
-import app.tryst.ui.common.Format
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-/** One person's own symptom list (0.7.4, D-73), edited on the shared catalog screen. Nothing is preset. */
+/** The one shared symptom list (0.7.4, D-73), edited on the shared catalog screen. Nothing is preset. */
 @HiltViewModel
 class CycleSymptomsViewModel @Inject constructor(
-    savedStateHandle: SavedStateHandle,
     private val repository: CycleRepository,
-    partnerRepository: PartnerRepository,
 ) : ViewModel() {
 
-    private val owner = CycleOwner(
-        kind = checkNotNull(savedStateHandle.get<String>(CyclePersonViewModel.ARG_KIND)),
-        id = checkNotNull(savedStateHandle.get<String>(CyclePersonViewModel.ARG_ID)),
-    )
-
-    /** True for the self profile, so the title says "Your symptoms" whatever name is set. */
-    val isSelf: Boolean = owner.isSelf
-
-    /** The partner's name for the title; null until loaded (and always for self). */
-    val partnerName: StateFlow<String?> = if (owner.isSelf) {
-        flowOf(null)
-    } else {
-        partnerRepository.observeActive().map { list -> list.firstOrNull { it.id == owner.id }?.let(Format::partnerName) }
-    }
-        .catch { emit(null) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-
-    val symptoms: StateFlow<List<CycleSymptomEntity>> = repository.observeSymptoms(owner)
+    val symptoms: StateFlow<List<CycleSymptomEntity>> = repository.observeSymptoms()
         .catch { emit(emptyList()) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun add(label: String) {
-        viewModelScope.launch { repository.addSymptom(owner, label) }
+        viewModelScope.launch { repository.addSymptom(label) }
     }
 
     fun rename(id: String, label: String) {

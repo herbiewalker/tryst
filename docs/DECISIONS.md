@@ -1,6 +1,6 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v22** (latest: **D-73**, daily symptoms, a list per person logged on period days with a strength; D-72: 0.7.3 slotted in and the rest of 7.x moves up one; D-71: the cycle screens leave off people set as Male; D-70: everyone gets their own color; D-69: orgasm details added as 0.7.6; D-68: restore preview and data-loss warning; D-67: pickable person colors; D-66: periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
+> **Status:** Live — decisions through **schema v22** (latest: **D-73**, daily symptoms, one shared list logged on period days with a strength; D-72: 0.7.3 slotted in and the rest of 7.x moves up one; D-71: the cycle screens leave off people set as Male; D-70: everyone gets their own color; D-69: orgasm details added as 0.7.6; D-68: restore preview and data-loss warning; D-67: pickable person colors; D-66: periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
 > presence-only re-auth via BiometricPrompt with device-credential fallback — no CryptoObject,
 > no DEK touch, v0.5.7).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
@@ -825,17 +825,18 @@
   rather than holding them for symptoms. The plan from D-63 and D-69 keeps its order and shifts by one: 0.7.4 daily
   symptoms (schema v22 est.), 0.7.5 encounter integration, 0.7.6 cycle Insights, 0.7.7 orgasm details (ORG-1,
   schema v23 est.). 8.x is unchanged. Older entries keep the numbers they were written with.
-- **D-73 (2026-11-26) Daily symptoms: a list per person, logged on period days, with a strength.** Schema v22 adds
-  `cycle_symptom` (each person's own list; owner pair as in `cycle_period`; label unique per person; nothing
-  preset, so the APK ships no symptom names) and `cycle_symptom_log` (period, day, symptom, strength 1 to 3).
-  Owner choices: **per person** rather than one shared list, so each list only holds what applies to that
-  person; **only inside a period**, so a log row hangs off its period and is deleted with it, and symptoms sit
+- **D-73 (2026-11-26) Daily symptoms: one shared list, logged on period days, with a strength.** Schema v22 adds
+  `cycle_symptom` (one list for everyone; label unique; nothing preset, so the APK ships no symptom names) and
+  `cycle_symptom_log` (period, day, symptom, strength 1 to 3). Owner choices: **one shared list**, managed from
+  Settings → Cycle tracking (first built per person, then switched the same day before release, since the same
+  symptoms apply to everyone, typing them per person invites near-duplicates, and the 0.7.6 Insights can compare
+  people; a per-person "hide" can come later without a schema change); **only inside a period**, so a log row hangs off its period and is deleted with it, and symptoms sit
   next to flow on the period screen; **mild / medium / strong**, set by tapping the chip again (off, mild,
   medium, strong, off), so the 0.7.6 Insights section has something to chart. The period screen's Save writes
   the period, its days and its symptoms in one transaction and drops logs that fall outside a shortened
   period. Removing a symptom removes it from every day (FK cascade); renaming keeps them. Both tables join
-  `BackupManager.TABLES`, a "replace" restore names lost symptom lists, and "Delete cycle data" clears the
-  lists too. Kept out of Search like the rest of the cycle data.
+  `BackupManager.TABLES`, a "replace" restore names lost symptoms, and "Delete cycle data" clears the
+  list too. Kept out of Search like the rest of the cycle data.
 
 > **Standing follow-ups (not blockers, tracked here as pointers):**
 > **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;

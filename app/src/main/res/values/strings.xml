@@ -781,13 +781,11 @@
     <string name="cycle_day_estimated">estimated</string>
     <!-- Daily symptoms (0.7.4, D-73): each person has their own list, nothing preset. -->
     <string name="cycle_symptoms_title">Symptoms</string>
-    <string name="cycle_symptoms_title_self">Your symptoms</string>
-    <string name="cycle_symptoms_title_for">%1$s\'s symptoms</string>
-    <string name="cycle_symptoms_desc">The symptoms you track for this person. Nothing is preset, so add the ones that matter. Renaming one keeps every day it was logged on. Removing one also removes it from those days.</string>
+    <string name="cycle_symptoms_desc">One list for everyone you track. Each period day offers these symptoms. Nothing is preset, so add the ones that matter. Renaming one keeps every day it was logged on. Removing one also removes it from those days.</string>
     <string name="cycle_symptoms_add_label">New symptom</string>
     <string name="cycle_symptoms_empty">No symptoms yet.</string>
     <string name="cycle_symptoms_hint">Tap a symptom to log it as mild. Tap again for medium, then strong, then off.</string>
-    <string name="cycle_symptoms_none">No symptoms set up for this person yet.</string>
+    <string name="cycle_symptoms_none">No symptoms set up yet.</string>
     <string name="cycle_symptoms_edit">Edit symptoms</string>
     <string name="cycle_symptoms_add">Add symptoms</string>
     <string name="cycle_symptom_chip">%1$s · %2$s</string>
@@ -828,6 +826,7 @@
     </plurals>
     <string name="settings_cycle_predictions">Show predictions</string>
     <string name="settings_cycle_predictions_desc">Estimates the next period from the cycles you\'ve logged. Needs 3 cycles and stays hidden when they vary a lot. A guide only, not medical advice.</string>
+    <string name="settings_cycle_symptoms_desc">The symptoms you can log on period days, shared by everyone.</string>
     <string name="settings_cycle_calendar">Show on the Trysts calendar</string>
     <string name="settings_cycle_calendar_desc">Marks period days along the bottom of each day, in each person\'s color. With predictions on, a faint outline marks when the next one is likely.</string>
     <string name="settings_cycle_calendar_people">Whose periods to show</string>
@@ -847,7 +846,7 @@
     <string name="person_color_use">Use</string>
     <string name="person_color_custom_preview">Slide to any shade, then tap Use.</string>
     <string name="settings_cycle_delete">Delete cycle data</string>
-    <string name="settings_cycle_delete_desc">Removes every logged period and symptom list, for everyone. Trysts are not touched.</string>
+    <string name="settings_cycle_delete_desc">Removes every logged period and the symptom list, for everyone. Trysts are not touched.</string>
     <string name="settings_cycle_delete_confirm_title">Delete all cycle data?</string>
     <string name="settings_cycle_delete_confirm_body">Every period, flow entry and symptom for every person will be removed. This can\'t be undone.</string>
 </resources>

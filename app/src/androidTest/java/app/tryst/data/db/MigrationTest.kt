@@ -658,7 +658,7 @@ class MigrationTest {
         }
     }
 
-    /** D-73: v22 adds per-person symptom lists and a per-day log that goes with its period or symptom. */
+    /** D-73: v22 adds a shared symptom list and a per-day log that goes with its period or symptom. */
     @Test
     fun migrate21To22_addsSymptomTables() {
         helper.createDatabase(dbName, 21).use { db ->
@@ -669,9 +669,11 @@ class MigrationTest {
         }
 
         helper.runMigrationsAndValidate(dbName, 22, true, MIGRATION_21_22).use { db ->
-            db.execSQL("INSERT INTO cycle_symptom (id, ownerKind, ownerId, label) VALUES ('s1', 'profile', 'self', 'Cramps')")
-            db.execSQL("INSERT INTO cycle_symptom (id, ownerKind, ownerId, label) VALUES ('s2', 'partner', 'p1', 'Cramps')")
-            db.execSQL("INSERT INTO cycle_symptom (id, ownerKind, ownerId, label) VALUES ('s3', 'profile', 'self', 'Headache')")
+            db.execSQL("INSERT INTO cycle_symptom (id, label) VALUES ('s1', 'Cramps')")
+            db.execSQL("INSERT INTO cycle_symptom (id, label) VALUES ('s2', 'Bloating')")
+            db.execSQL("INSERT INTO cycle_symptom (id, label) VALUES ('s3', 'Headache')")
+            val duplicate = runCatching { db.execSQL("INSERT INTO cycle_symptom (id, label) VALUES ('s4', 'Cramps')") }
+            assertTrue("one list, so a name can't appear twice", duplicate.isFailure)
             db.execSQL("INSERT INTO cycle_symptom_log (periodId, epochDay, symptomId, strength) VALUES ('c1', 100, 's1', 3)")
             db.execSQL("INSERT INTO cycle_symptom_log (periodId, epochDay, symptomId, strength) VALUES ('c1', 101, 's3', 1)")
             db.execSQL("PRAGMA foreign_keys = ON")
