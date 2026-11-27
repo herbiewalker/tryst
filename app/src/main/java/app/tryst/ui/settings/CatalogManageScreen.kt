@@ -135,13 +135,14 @@ internal fun CatalogManageScreen(
     onRename: (String, String) -> Unit,
     onDelete: (String) -> Unit,
     onBack: () -> Unit,
+    titleText: String? = null,
 ) {
     var newLabel by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(title)) },
+                title = { Text(titleText ?: stringResource(title)) },
                 navigationIcon = {
                     TooltipIconButton(label = stringResource(R.string.cd_back), onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cd_back))

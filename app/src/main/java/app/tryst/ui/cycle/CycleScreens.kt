@@ -34,6 +34,7 @@ import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -563,6 +564,12 @@ private fun DayRow(
                     FilterChip(
                         selected = strength != null,
                         onClick = { onSymptom(symptom.id) },
+                        // Tertiary tones keep symptoms apart from the flow chips above them.
+                        colors = FilterChipDefaults.filterChipColors(
+                            labelColor = MaterialTheme.colorScheme.tertiary,
+                            selectedContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            selectedLabelColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                        ),
                         label = {
                             Text(
                                 if (strength == null) {
@@ -586,9 +593,16 @@ private fun DayRow(
 @Composable
 fun CycleSymptomsScreen(onBack: () -> Unit, viewModel: CycleSymptomsViewModel = hiltViewModel()) {
     val rows by viewModel.symptoms.collectAsStateWithLifecycle()
+    val partnerName = viewModel.partnerName.collectAsStateWithLifecycle().value
+    val title = when {
+        viewModel.isSelf -> stringResource(R.string.cycle_symptoms_title_self)
+        partnerName != null -> stringResource(R.string.cycle_symptoms_title_for, partnerName)
+        else -> null
+    }
     CatalogManageScreen(
         R.string.cycle_symptoms_title, R.string.cycle_symptoms_desc, R.string.cycle_symptoms_add_label, R.string.cycle_symptoms_empty,
         rows.map { it.id to it.label }, viewModel::add, viewModel::rename, viewModel::delete, onBack,
+        titleText = title,
     )
 }
 

@@ -781,6 +781,8 @@
     <string name="cycle_day_estimated">estimated</string>
     <!-- Daily symptoms (0.7.4, D-73): each person has their own list, nothing preset. -->
     <string name="cycle_symptoms_title">Symptoms</string>
+    <string name="cycle_symptoms_title_self">Your symptoms</string>
+    <string name="cycle_symptoms_title_for">%1$s\'s symptoms</string>
     <string name="cycle_symptoms_desc">The symptoms you track for this person. Nothing is preset, so add the ones that matter. Renaming one keeps every day it was logged on. Removing one also removes it from those days.</string>
     <string name="cycle_symptoms_add_label">New symptom</string>
     <string name="cycle_symptoms_empty">No symptoms yet.</string>
