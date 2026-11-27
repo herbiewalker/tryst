@@ -139,6 +139,9 @@ fun VerticalBarChart(
     if (data.isEmpty()) return
     val max = (data.maxOf { it.count }).coerceAtLeast(1)
     val barBrush = Brush.verticalGradient(listOf(barColor, barColor.copy(alpha = 0.55f)))
+    // Labels like "Dec 29" wrap in narrow bars. If any label might wrap, every label gets two lines so a
+    // label that happens to fit on one doesn't give its bar extra height and break the shared baseline.
+    val labelLines = if (data.any { ' ' in it.label }) 2 else 1
     val reveal = rememberChartReveal()
     Row(
         modifier = modifier.fillMaxWidth().height(140.dp),
@@ -189,7 +192,8 @@ fun VerticalBarChart(
                     bucket.label,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
+                    minLines = labelLines,
+                    maxLines = labelLines,
                     textAlign = TextAlign.Center,
                 )
             }
