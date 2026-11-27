@@ -117,6 +117,7 @@ fun SearchScreen(
     viewModel: SearchViewModel = hiltViewModel(),
 ) {
     val query by viewModel.query.collectAsStateWithLifecycle()
+    val cycleEnabled by viewModel.cycleEnabled.collectAsStateWithLifecycle()
     val ui by viewModel.uiState.collectAsStateWithLifecycle()
     val partners by viewModel.partners.collectAsStateWithLifecycle()
     val availableYears by viewModel.availableYears.collectAsStateWithLifecycle()
@@ -259,7 +260,7 @@ fun SearchScreen(
         MoreFiltersSheet(
             advanced = advanced,
             catalogLabels = catalogLabels,
-            actions = remember(viewModel) {
+            actions = remember(viewModel, cycleEnabled) {
                 MoreFiltersActions(
                     toggleAct = viewModel::toggleAct,
                     togglePosition = viewModel::togglePosition,
@@ -276,6 +277,7 @@ fun SearchScreen(
                     setHasNote = viewModel::setHasNote,
                     setIncludeSolo = viewModel::setIncludeSolo,
                     reset = viewModel::clearAdvanced,
+                    setOnPeriod = viewModel::setOnPeriod.takeIf { cycleEnabled },
                 )
             },
             resultCount = ui.hits.size,

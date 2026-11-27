@@ -13,6 +13,8 @@
 // ╰──────────────────────────────────────────────────────────────────╯
 package app.tryst.data.filter
 
+import app.tryst.data.cycle.CycleDays
+import app.tryst.data.db.entity.CyclePeriodEntity
 import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.MediaEntity
@@ -273,6 +275,38 @@ class EncounterFilterTest {
         )
         val result = EncounterQuery.filter(log, EncounterFilter(ratingRange = 4..5), zone)
         assertEquals(listOf("a", "c"), result.map { it.encounter.id })
+    }
+
+    @Test
+    fun onPeriodMatchesWhenAnyoneInTheTrystWasOnAPeriod() {
+        val day = LocalDate.of(2026, 6, 7).toEpochDay()
+        val cycle = CycleDays.from(
+            listOf(
+                CyclePeriodEntity(
+                    id = "p",
+                    ownerKind = CyclePeriodEntity.OWNER_PARTNER,
+                    ownerId = "a",
+                    startEpochDay = day - 1,
+                    endEpochDay = day + 2,
+                    createdAt = 0,
+                    updatedAt = 0,
+                ),
+            ),
+        )
+        val withA = encounter(partners = listOf(partner("a")))
+        val withB = encounter(partners = listOf(partner("b")))
+        val solo = encounter()
+        val on = EncounterFilter(onPeriod = true)
+        val off = EncounterFilter(onPeriod = false)
+        assertTrue(on.isActive)
+        assertTrue(on.matches(withA, zone, cycle))
+        assertFalse(on.matches(withB, zone, cycle))
+        assertFalse(on.matches(solo, zone, cycle))
+        assertFalse(off.matches(withA, zone, cycle))
+        assertTrue(off.matches(withB, zone, cycle))
+        // Without period data nobody is on a period.
+        assertFalse(on.matches(withA, zone))
+        assertTrue(off.matches(withA, zone))
     }
 }
 

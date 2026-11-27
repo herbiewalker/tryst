@@ -119,6 +119,9 @@ with deeply personal data. Inspired by the iOS app *Nice*.
 - **FR-33** **Daily symptoms** (0.7.4, schema v22, D-73). One shared symptom list, built by the user with nothing preset
   and managed from Settings → Cycle tracking. On each day of a period a symptom can be logged as mild, medium or strong by tapping its chip.
   Symptoms are kept with their period, ride in the backup and are cleared by "Delete cycle data".
+- **FR-34** **Cycle days on trysts** (0.7.5, D-74, no schema change). A tryst shows, under its date, the cycle day of each
+  person in it who has periods logged (the user plus its partners), marked when it fell on a period. Search's More filters
+  gain Period: any day, during a period, or not during one. All hidden while cycle tracking is off.
 
 ## 5. Non-functional requirements
 

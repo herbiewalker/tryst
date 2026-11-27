@@ -16,6 +16,8 @@ package app.tryst.ui.search
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.tryst.core.prefs.GeneralPreferences
+import app.tryst.data.cycle.CycleDays
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.Mood
@@ -27,6 +29,7 @@ import app.tryst.data.filter.DateScope
 import app.tryst.data.filter.EncounterFilter
 import app.tryst.data.filter.TimeOfDay
 import app.tryst.data.repository.ActRepository
+import app.tryst.data.repository.CycleRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.KinkRepository
 import app.tryst.data.repository.OccasionRepository
@@ -53,6 +56,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -124,7 +129,18 @@ class SearchViewModel @Inject constructor(
     toyRepository: ToyRepository,
     occasionRepository: OccasionRepository,
     partnerRepository: PartnerRepository,
+    cycleRepository: CycleRepository,
+    generalPreferences: GeneralPreferences,
 ) : ViewModel() {
+
+    /** Cycle tracking is on (CYC-1). The "Period" filter only shows, and only applies, while it is. */
+    val cycleEnabled: StateFlow<Boolean> = generalPreferences.cycleEnabled
+
+    /** Cycle days for the "Period" filter (0.7.5); [CycleDays.NONE] while cycle tracking is off. */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    private val cycleDays: Flow<CycleDays> = generalPreferences.cycleEnabled.flatMapLatest { enabled ->
+        if (enabled) cycleRepository.observeAllPeriods().map(CycleDays::from) else flowOf(CycleDays.NONE)
+    }.catch { emit(CycleDays.NONE) }
 
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query.asStateFlow()
@@ -210,6 +226,7 @@ class SearchViewModel @Inject constructor(
                 timesOfDay = adv.timesOfDay,
                 durationRange = adv.durationRange,
                 hasNote = adv.hasNote,
+                onPeriod = adv.onPeriod,
                 includeSolo = adv.includeSolo,
             )
         }
@@ -250,10 +267,12 @@ class SearchViewModel @Inject constructor(
      * typing stays instant.)
      */
     val uiState: StateFlow<SearchUiState> =
-        combine(index, _query, filter, _sortOrder) { searchable, query, filter, sortOrder ->
+        combine(index, _query, filter, _sortOrder, cycleDays) { searchable, query, rawFilter, sortOrder, cycle ->
             withContext(Dispatchers.Default) {
+                // With cycle tracking off the Period filter is hidden, so a leftover pick must not narrow results.
+                val filter = if (cycle === CycleDays.NONE) rawFilter.copy(onPeriod = null) else rawFilter
                 val tokens = EncounterSearch.tokenize(query)
-                val filtered = searchable.filter { filter.matches(it.encounter) }
+                val filtered = searchable.filter { filter.matches(it.encounter, cycle = cycle) }
                 SearchUiState(
                     tokens = tokens,
                     hits = sortOrder.sort(EncounterSearch.search(filtered, tokens)),
@@ -319,6 +338,7 @@ class SearchViewModel @Inject constructor(
 
     fun setDurationRange(range: IntRange?) = _advanced.update { it.copy(durationRange = range) }
     fun setHasNote(value: Boolean?) = _advanced.update { it.copy(hasNote = value) }
+    fun setOnPeriod(value: Boolean?) = _advanced.update { it.copy(onPeriod = value) }
     fun setIncludeSolo(value: Boolean) = _advanced.update { it.copy(includeSolo = value) }
 
     /** Clears the advanced sheet only, leaving the base chips (date/rating/partners/photos) untouched. */
@@ -344,7 +364,7 @@ class SearchViewModel @Inject constructor(
         actIds.isNotEmpty(), positionIds.isNotEmpty(), kinkIds.isNotEmpty(), toyIds.isNotEmpty(),
         occasionIds.isNotEmpty(), places.isNotEmpty(), protection.isNotEmpty(), moods.isNotEmpty(),
         initiators.isNotEmpty(), weekdays.isNotEmpty(), timesOfDay.isNotEmpty(),
-        durationRange != null, hasNote != null, includeSolo,
+        durationRange != null, hasNote != null, onPeriod != null, includeSolo,
     ).count { it }
 }
 

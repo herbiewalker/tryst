@@ -18,12 +18,16 @@ import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.tryst.R
 import app.tryst.core.prefs.GalleryPreferences
+import app.tryst.core.prefs.GeneralPreferences
 import app.tryst.core.session.SessionManager
+import app.tryst.data.cycle.CycleDayInfo
+import app.tryst.data.cycle.CycleDays
 import app.tryst.data.db.entity.ActEntity
 import app.tryst.data.db.entity.EjaculationLocationEntity
 import app.tryst.data.db.entity.EncounterEntity
@@ -38,6 +42,7 @@ import app.tryst.data.db.entity.PositionEntity
 import app.tryst.data.db.entity.Protection
 import app.tryst.data.db.entity.ToyEntity
 import app.tryst.data.repository.ActRepository
+import app.tryst.data.repository.CycleRepository
 import app.tryst.data.repository.EjaculationLocationRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.KinkRepository
@@ -46,6 +51,7 @@ import app.tryst.data.repository.PartnerRepository
 import app.tryst.data.repository.PositionRepository
 import app.tryst.data.repository.ToyRepository
 import app.tryst.data.stats.OptionUsage
+import app.tryst.ui.common.Format
 import app.tryst.ui.common.MediaImages
 import app.tryst.ui.common.PhotoSource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -57,6 +63,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -104,6 +113,9 @@ data class EncounterEditUiState(
     val solo: Boolean get() = selectedPartnerIds.isEmpty()
 }
 
+/** One person's cycle day on a tryst (CYC-1, 0.7.5). [name] is null for the user, shown as "You". */
+data class PersonCycleDay(val name: String?, val info: CycleDayInfo)
+
 @HiltViewModel
 @Suppress("LongParameterList") // Hilt-injected repositories; each is a distinct dependency.
 class EncounterEditViewModel @Inject constructor(
@@ -118,6 +130,8 @@ class EncounterEditViewModel @Inject constructor(
     private val toys: ToyRepository,
     private val occasions: OccasionRepository,
     private val ejaculationLocations: EjaculationLocationRepository,
+    cycleRepository: CycleRepository,
+    generalPreferences: GeneralPreferences,
 ) : ViewModel() {
 
     /** Keep the app unlocked across the photo-picker/camera handoff. */
@@ -174,6 +188,28 @@ class EncounterEditViewModel @Inject constructor(
 
     var uiState by mutableStateOf(EncounterEditUiState())
         private set
+
+    /**
+     * Cycle days for everyone in this tryst on its date (CYC-1, 0.7.5, D-74): the user first, then each
+     * selected partner with periods logged. Read-side only and follows the form live, so changing the date
+     * or the partners updates it. Empty while cycle tracking is off.
+     */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    val cycleDays: StateFlow<List<PersonCycleDay>> = combine(
+        generalPreferences.cycleEnabled.flatMapLatest { enabled ->
+            if (enabled) cycleRepository.observeAllPeriods().map(CycleDays::from) else flowOf(CycleDays.NONE)
+        },
+        snapshotFlow { uiState.startAt to uiState.selectedPartnerIds },
+        partners.observeAll(),
+    ) { cycle, (startAt, partnerIds), allPartners ->
+        val names = allPartners.associate { it.id to Format.partnerName(it) }
+        val ordered = allPartners.map { it.id }.filter { it in partnerIds }
+        cycle.forTryst(ordered, Format.localDate(startAt).toEpochDay()).map { (owner, info) ->
+            PersonCycleDay(name = if (owner.isSelf) null else names[owner.id], info = info)
+        }
+    }
+        .catch { emit(emptyList()) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     // The form as it stood when first shown (a blank new entry, or the loaded encounter). Edits are
     // compared against this so an accidental back-press / swipe on an *untouched* form closes silently,

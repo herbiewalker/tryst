@@ -189,6 +189,13 @@
     <string name="search_note_any">Any</string>
     <string name="search_note_with">With note</string>
     <string name="search_note_without">Without note</string>
+    <string name="encounter_cycle_you">You</string>
+    <string name="encounter_cycle_on_period">%1$s: day %2$d of a period</string>
+    <string name="encounter_cycle_between">%1$s: cycle day %2$d</string>
+    <string name="search_section_period">Period</string>
+    <string name="search_period_any">Any day</string>
+    <string name="search_period_on">During a period</string>
+    <string name="search_period_off">Not during a period</string>
     <string name="search_include_solo">Include solo trysts</string>
     <string name="search_duration_any">Any duration</string>
     <string name="search_duration_value">%1$d–%2$s min</string>

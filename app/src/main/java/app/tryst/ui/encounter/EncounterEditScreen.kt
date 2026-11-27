@@ -85,6 +85,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
+import app.tryst.data.cycle.CycleDayInfo
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.Place
@@ -141,6 +142,7 @@ fun EncounterEditScreen(
     val customEjaculations by viewModel.customEjaculations.collectAsStateWithLifecycle()
     // Per-category pick frequency, used to surface the user's most-used options inline (ENC-1).
     val usage by viewModel.optionUsage.collectAsStateWithLifecycle()
+    val cycleDays by viewModel.cycleDays.collectAsStateWithLifecycle()
     // Solo = no partner selected (matches the history "Solo" badge). Partner-only fields are hidden so
     // the editor reads cleanly as a solo entry; the per-partner orgasm counters already auto-hide.
     val solo = ui.solo
@@ -231,6 +233,7 @@ fun EncounterEditScreen(
                             Text(Format.time(ui.startAt))
                         }
                     }
+                    CycleDayLines(cycleDays)
                 }
 
                 Field(stringResource(R.string.encounter_field_duration)) {
@@ -544,6 +547,24 @@ fun EncounterEditScreen(
                 )
             }
         }
+    }
+}
+
+/** Where each person in the tryst was in their cycle that day (CYC-1, 0.7.5). Shows nothing when empty. */
+@Composable
+private fun CycleDayLines(days: List<PersonCycleDay>) {
+    days.forEach { (name, info) ->
+        val who = name ?: stringResource(R.string.encounter_cycle_you)
+        val onPeriod = info is CycleDayInfo.OnPeriod
+        Text(
+            text = stringResource(
+                if (onPeriod) R.string.encounter_cycle_on_period else R.string.encounter_cycle_between,
+                who,
+                info.day,
+            ),
+            style = MaterialTheme.typography.bodySmall,
+            color = if (onPeriod) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

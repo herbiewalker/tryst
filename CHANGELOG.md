@@ -13,6 +13,12 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+### Added
+- **Cycle days on trysts** (0.7.5, D-74). A tryst now shows, under its date, where each person in it was in their
+  cycle that day: "day 2 of a period" or "cycle day 14", for you and for each partner on it with periods logged.
+  Search's More filters gain **Period**: any day, during a period, or not during one, where "during" means anyone
+  in the tryst was on a logged period. Nothing new is stored, and it all hides when cycle tracking is off.
+
 ## [0.7.4] — 2026-11-27 (versionCode 27)
 
 ### Added

@@ -86,6 +86,8 @@ class MoreFiltersActions(
     val setHasNote: (Boolean?) -> Unit,
     val setIncludeSolo: (Boolean) -> Unit,
     val reset: () -> Unit,
+    /** The "Period" filter (CYC-1, 0.7.5); null hides it, as when cycle tracking is off or in the gallery. */
+    val setOnPeriod: ((Boolean?) -> Unit)? = null,
 )
 
 /**
@@ -168,6 +170,7 @@ fun MoreFiltersColumn(
 
         DurationSection(advanced.durationRange, actions.setDuration)
         NoteSection(advanced.hasNote, actions.setHasNote)
+        actions.setOnPeriod?.let { PeriodSection(advanced.onPeriod, it) }
 
         FilterSection(stringResource(R.string.search_section_solo)) {
             SelectChip(
@@ -248,6 +251,15 @@ private fun NoteSection(hasNote: Boolean?, onSet: (Boolean?) -> Unit) {
         SelectChip(stringResource(R.string.search_note_any), hasNote == null, { onSet(null) })
         SelectChip(stringResource(R.string.search_note_with), hasNote == true, { onSet(true) })
         SelectChip(stringResource(R.string.search_note_without), hasNote == false, { onSet(false) })
+    }
+}
+
+@Composable
+private fun PeriodSection(onPeriod: Boolean?, onSet: (Boolean?) -> Unit) {
+    FilterSection(stringResource(R.string.search_section_period)) {
+        SelectChip(stringResource(R.string.search_period_any), onPeriod == null, { onSet(null) })
+        SelectChip(stringResource(R.string.search_period_on), onPeriod == true, { onSet(true) })
+        SelectChip(stringResource(R.string.search_period_off), onPeriod == false, { onSet(false) })
     }
 }
 

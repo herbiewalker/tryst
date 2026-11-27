@@ -13,6 +13,7 @@
 // ╰──────────────────────────────────────────────────────────────────╯
 package app.tryst.data.filter
 
+import app.tryst.data.cycle.CycleDays
 import app.tryst.data.db.entity.DisplayLabel
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
@@ -97,6 +98,11 @@ data class EncounterFilter(
     val hasNote: Boolean? = null,
     /** Case-insensitive substring on the note; blank/null = no constraint. */
     val noteContains: String? = null,
+    /**
+     * null = don't care; true = someone in the tryst was on a logged period that day; false = nobody was
+     * (CYC-1, 0.7.5). Needs period data, so it is checked against the [CycleDays] passed to [matches].
+     */
+    val onPeriod: Boolean? = null,
 ) {
     /** True when at least one constraint is set (i.e. this filter would narrow the log). */
     val isActive: Boolean
@@ -104,10 +110,15 @@ data class EncounterFilter(
 
     /**
      * Whether [e] satisfies every set category. [zone] resolves the stored epoch-millis start into a
-     * local date/hour for the date, weekday, and time-of-day checks (default: the system zone).
+     * local date/hour for the date, weekday, and time-of-day checks (default: the system zone). [cycle]
+     * answers [onPeriod]; with the default [CycleDays.NONE] nobody is ever on a period.
      */
     @Suppress("CyclomaticComplexMethod", "ReturnCount")
-    fun matches(e: EncounterWithDetails, zone: ZoneId = ZoneId.systemDefault()): Boolean {
+    fun matches(
+        e: EncounterWithDetails,
+        zone: ZoneId = ZoneId.systemDefault(),
+        cycle: CycleDays = CycleDays.NONE,
+    ): Boolean {
         val enc = e.encounter
         val zoned = Instant.ofEpochMilli(enc.startAt).atZone(zone)
         val date = zoned.toLocalDate()
@@ -151,6 +162,9 @@ data class EncounterFilter(
         if (hasPhoto != null && e.media.isNotEmpty() != hasPhoto) return false
         if (hasNote != null && !enc.note.isNullOrBlank() != hasNote) return false
         if (!noteContains.isNullOrBlank() && enc.note?.contains(noteContains, ignoreCase = true) != true) return false
+
+        // Cycle — anyone in the tryst (the user plus its partners) on a logged period that day.
+        if (onPeriod != null && cycle.anyOnPeriod(e.partners.map { it.id }, date.toEpochDay()) != onPeriod) return false
 
         return true
     }
