@@ -118,15 +118,19 @@ Notes:
 - Screenshots + store `icon.png` live under `fastlane/metadata/android/en-US/images/`.
   Capturing them needs the temporary FLAG_SECURE-off procedure from pre-release Pass 5. The
   set was pulled 2026-08-19 pending a design refresh (QOL-4), reshipped 2026-08-31 from a v0.5.2 build, and
-  refreshed 2026-11-25 from v0.7.1 (nine shots). The fresh `icon.png` shipped in v0.5.8 (T-heart on pink-to-purple
+  refreshed 2026-11-25 from v0.7.1 (nine shots), and again 2026-11-28 from v0.7.7 (eleven shots, adding the
+  Insights Cycle section and the tryst editor). The fresh `icon.png` shipped in v0.5.8 (T-heart on pink-to-purple
   gradient). A designer framing pass remains as STORE-1.
-- **Screenshot recipe (2026-11-25):** restore `samples/tryst-test-dataset.tryst` (see `tools/dataset/README.md`)
+- **Screenshot recipe (updated 2026-11-28):** restore a **store-safe dataset**, not the regular test data. It is
+  built by an allow-list pass over the synthetic data (neutral lists, notes, places, moods and partner types only;
+  one partner per tryst; no orgasm types), kept outside the repo. Restore it
   into a fresh emulator install with `FLAG_SECURE` temporarily off, turn on the system UI demo mode for a clean
   status bar (`adb shell settings put global sysui_demo_allowed 1`, then `am broadcast -a com.android.systemui.demo
   -e command enter`, `-e command clock -e hhmm 0930`, `-e command network -e wifi show -e level 4 -e fully true
   -e mobile hide`, `-e command notifications -e visible false`), capture with `adb exec-out screencap -p`, and keep
   every shot all-ages (issue #3): no explicit catalog labels on screen. Exit demo mode and restore `FLAG_SECURE`
-  before committing.
+  before committing. If captures come back black after turning `FLAG_SECURE` off, force-stop the app
+  (`adb shell am force-stop app.tryst`) so the old window goes away, then start it again.
 
 ## Ongoing releases (post-first-submission)
 
