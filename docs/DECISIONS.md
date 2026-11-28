@@ -873,7 +873,12 @@
   **start empty**; **all three extras**: Insights (your types, partners' types and where partners finished, in the
   Orgasms card), a Search filter and search text for types, and the local test data filled in. Lowering a count
   or removing a partner drops the details past it. A deleted type drops out of charts and search rather than
-  showing as an id.
+  showing as an id. **Review changes (2026-11-28), replacing the two inline rows:** each orgasm gets **one chip row**
+  mixing types and finish locations, like the old single Ejaculation row; More… opens both lists as separate
+  sections, each with its own add field, so picks still save and chart separately. With more than one orgasm each
+  row gets a "1st orgasm", "2nd orgasm" heading. Finish locations are left out for anyone set as Female (partners by
+  their sex, you by your profile) unless one was already saved there. Suggestions **learn per person**: each
+  person's own picks drive their inline chips once they have 3 picks, before that everyone's counts are used.
 
 > **Standing follow-ups (not blockers, tracked here as pointers):**
 > **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;

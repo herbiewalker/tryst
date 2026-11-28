@@ -91,6 +91,7 @@ import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.Protection
+import app.tryst.data.db.entity.Sex
 import app.tryst.data.stats.mostUsedCommon
 import app.tryst.ui.common.ActOptions
 import app.tryst.ui.common.DecodedImage
@@ -142,6 +143,7 @@ fun EncounterEditScreen(
     val customOccasions by viewModel.customOccasions.collectAsStateWithLifecycle()
     val customEjaculations by viewModel.customEjaculations.collectAsStateWithLifecycle()
     val customOrgasmTypes by viewModel.customOrgasmTypes.collectAsStateWithLifecycle()
+    val selfSex by viewModel.selfSex.collectAsStateWithLifecycle()
     // Per-category pick frequency, used to surface the user's most-used options inline (ENC-1).
     val usage by viewModel.optionUsage.collectAsStateWithLifecycle()
     val cycleDays by viewModel.cycleDays.collectAsStateWithLifecycle()
@@ -369,32 +371,48 @@ fun EncounterEditScreen(
                     Stepper(value = ui.orgasmCountSelf, onChange = { viewModel.setSelfOrgasms(it) })
                 }
 
-                // Orgasm details (ORG-1): a type row and a finish row per orgasm, for you and each partner.
+                // Orgasm details (ORG-1): one chip row per orgasm mixing types and finish locations, for you
+                // and each partner. Suggestions learn from that person's own picks (OptionUsage.*For).
                 val typeOptions = EjaculationOptions.orgasmTypes(customOrgasmTypes)
-                val typeCommon = mostUsedCommon(emptyList(), typeOptions) { usage.orgasmTypes[it.id] ?: 0 }
-                val ejaculationOptions = EjaculationOptions.builtIns + EjaculationOptions.custom(customEjaculations)
-                val ejaculationCommon = mostUsedCommon(ejaculationOptions, ejaculationOptions) { usage.ejaculation[it.id] ?: 0 }
-                repeat(ui.orgasmCountSelf) { i ->
-                    val n = if (ui.orgasmCountSelf > 1) i + 1 else null
-                    MultiSelectField(
-                        label = orgasmLabel(R.string.encounter_orgasm_type, R.string.encounter_orgasm_type_n, n),
-                        all = typeOptions,
-                        common = typeCommon,
-                        selected = typeOptions.filter { it.id in ui.orgasmTypes[EncounterEntity.SELF_KEY]?.get(i).orEmpty() }.toSet(),
-                        labelOf = { it.label },
-                        onToggle = { viewModel.toggleOrgasmType(EncounterEntity.SELF_KEY, i, it.id) },
-                        onAddNew = { viewModel.addOrgasmType(EncounterEntity.SELF_KEY, i, it) },
-                    )
-                    MultiSelectField(
-                        label = orgasmLabel(R.string.encounter_ejaculation, R.string.encounter_ejaculation_n, n),
-                        all = ejaculationOptions,
-                        common = ejaculationCommon,
-                        selected = ejaculationOptions.filter { it.id in (ui.ejaculations[i] ?: emptySet()) }.toSet(),
-                        labelOf = { it.label },
-                        onToggle = { viewModel.toggleEjaculation(i, it.id) },
-                        onAddNew = { viewModel.addCustomEjaculation(i, it) },
+                val finishOptions = EjaculationOptions.builtIns + EjaculationOptions.custom(customEjaculations)
+                val typeTitle = stringResource(R.string.encounter_orgasm_type)
+                val finishTitle = stringResource(R.string.encounter_ejaculation)
+                val sectionsFor: (String, Sex?, Int) -> List<OrgasmChipSection> = { person, sex, i ->
+                    val isSelf = person == EncounterEntity.SELF_KEY
+                    val typeUse = usage.orgasmTypesFor(person)
+                    val finishUse = usage.finishesFor(person)
+                    val finishPicked = if (isSelf) ui.ejaculations[i].orEmpty() else ui.partnerFinishes[person]?.get(i).orEmpty()
+                    listOfNotNull(
+                        OrgasmChipSection(
+                            title = typeTitle,
+                            all = typeOptions,
+                            common = mostUsedCommon(emptyList(), typeOptions, target = ORGASM_INLINE_TARGET) { typeUse[it.id] ?: 0 },
+                            selectedIds = ui.orgasmTypes[person]?.get(i).orEmpty(),
+                            onToggle = { viewModel.toggleOrgasmType(person, i, it) },
+                            onAddNew = { viewModel.addOrgasmType(person, i, it) },
+                        ),
+                        // No finish locations for a female body, unless one was already saved here.
+                        if (sex == Sex.FEMALE && finishPicked.isEmpty()) {
+                            null
+                        } else {
+                            OrgasmChipSection(
+                                title = finishTitle,
+                                all = finishOptions,
+                                common = mostUsedCommon(EjaculationOptions.common, finishOptions, target = ORGASM_INLINE_TARGET) {
+                                    finishUse[it.id] ?: 0
+                                },
+                                selectedIds = finishPicked,
+                                onToggle = {
+                                    if (isSelf) viewModel.toggleEjaculation(i, it) else viewModel.togglePartnerFinish(person, i, it)
+                                },
+                                onAddNew = {
+                                    if (isSelf) viewModel.addCustomEjaculation(i, it) else viewModel.addPartnerFinish(person, i, it)
+                                },
+                            )
+                        },
                     )
                 }
+                OrgasmRows(ui.orgasmCountSelf) { i -> sectionsFor(EncounterEntity.SELF_KEY, selfSex, i) }
 
                 // One orgasm counter per selected partner, ordered by name, each with its own detail rows.
                 partners
@@ -408,27 +426,7 @@ fun EncounterEditScreen(
                                 onChange = { viewModel.setPartnerOrgasms(partner.id, it) },
                             )
                         }
-                        repeat(count) { i ->
-                            val n = if (count > 1) i + 1 else null
-                            MultiSelectField(
-                                label = orgasmLabel(R.string.encounter_orgasm_type, R.string.encounter_orgasm_type_n, n),
-                                all = typeOptions,
-                                common = typeCommon,
-                                selected = typeOptions.filter { it.id in ui.orgasmTypes[partner.id]?.get(i).orEmpty() }.toSet(),
-                                labelOf = { it.label },
-                                onToggle = { viewModel.toggleOrgasmType(partner.id, i, it.id) },
-                                onAddNew = { viewModel.addOrgasmType(partner.id, i, it) },
-                            )
-                            MultiSelectField(
-                                label = orgasmLabel(R.string.encounter_ejaculation, R.string.encounter_ejaculation_n, n),
-                                all = ejaculationOptions,
-                                common = ejaculationCommon,
-                                selected = ejaculationOptions.filter { it.id in ui.partnerFinishes[partner.id]?.get(i).orEmpty() }.toSet(),
-                                labelOf = { it.label },
-                                onToggle = { viewModel.togglePartnerFinish(partner.id, i, it.id) },
-                                onAddNew = { viewModel.addPartnerFinish(partner.id, i, it) },
-                            )
-                        }
+                        OrgasmRows(count) { i -> sectionsFor(partner.id, partner.sex, i) }
                     }
 
                 SingleSelectField(
@@ -600,9 +598,32 @@ private fun CycleDayLines(days: List<PersonCycleDay>) {
     }
 }
 
-/** "Type" or "Type 2": numbered only when the person had more than one orgasm. */
+/** Inline suggestions per list in the combined orgasm row, so types plus finishes stay about one row's worth. */
+private const val ORGASM_INLINE_TARGET = 4
+
+/**
+ * One combined chip row per orgasm (ORG-1). A lone orgasm has no heading, since the person's count sits
+ * right above it; several get "1st orgasm", "2nd orgasm".
+ */
 @Composable
-private fun orgasmLabel(single: Int, numbered: Int, n: Int?): String = if (n == null) stringResource(single) else stringResource(numbered, n)
+private fun OrgasmRows(count: Int, sections: (Int) -> List<OrgasmChipSection>) {
+    repeat(count) { i ->
+        val label = if (count > 1) stringResource(R.string.encounter_orgasm_nth, ordinal(i + 1)) else null
+        OrgasmChipsField(label = label, sections = sections(i))
+    }
+}
+
+/** 1st, 2nd, 3rd, 4th … 11th, 12th, 13th, 21st. */
+private fun ordinal(n: Int): String {
+    val suffix = when {
+        n % 100 in 11..13 -> "th"
+        n % 10 == 1 -> "st"
+        n % 10 == 2 -> "nd"
+        n % 10 == 3 -> "rd"
+        else -> "th"
+    }
+    return "$n$suffix"
+}
 
 @Composable
 private fun Field(label: String, content: @Composable () -> Unit) {

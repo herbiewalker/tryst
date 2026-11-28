@@ -138,6 +138,43 @@ class OptionUsageTest {
         // All tied at 3 → `all` order (e before g before h) decides the cut deterministically.
         assertEquals(listOf("e", "g"), result)
     }
-}
 
-// ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣
+    private fun orgasms(
+        id: String,
+        types: Map<String, Map<Int, Set<String>>>? = null,
+        selfFinish: Map<Int, Set<String>>? = null,
+        partnerFinish: Map<String, Map<Int, Set<String>>>? = null,
+    ) = encounter(id, ejaculation = selfFinish).copy(orgasmTypes = types, partnerFinishes = partnerFinish)
+
+    @Test
+    fun orgasmSuggestionsLearnPerPersonOnceTheyHaveEnoughPicks() {
+        val self = EncounterEntity.SELF_KEY
+        val usage = OptionUsage.from(
+            listOf(
+                orgasms("a", types = mapOf(self to mapOf(0 to setOf("P")), "j" to mapOf(0 to setOf("C"), 1 to setOf("C", "G")))),
+                orgasms("b", types = mapOf(self to mapOf(0 to setOf("P")), "j" to mapOf(0 to setOf("C")))),
+                orgasms("c", types = mapOf(self to mapOf(0 to setOf("P")), "j" to mapOf(0 to setOf("G")))),
+                orgasms("d", types = mapOf("s" to mapOf(0 to setOf("P")))),
+            ),
+        )
+        // Same type twice in one tryst counts once for that person.
+        assertEquals(mapOf("P" to 3), usage.orgasmTypesFor(self))
+        assertEquals(mapOf("C" to 2, "G" to 2), usage.orgasmTypesFor("j"))
+        // One pick is not enough to learn from, so Sam falls back to everyone's counts.
+        assertEquals(usage.orgasmTypes, usage.orgasmTypesFor("s"))
+        assertEquals(usage.orgasmTypes, usage.orgasmTypesFor("nobody"))
+    }
+
+    @Test
+    fun finishSuggestionsSplitYoursFromPartners() {
+        val usage = OptionUsage.from(
+            listOf(
+                orgasms("a", selfFinish = mapOf(0 to setOf("CHEST")), partnerFinish = mapOf("s" to mapOf(0 to setOf("CONDOM")))),
+                orgasms("b", selfFinish = mapOf(0 to setOf("CHEST"), 1 to setOf("MOUTH")), partnerFinish = mapOf("s" to mapOf(0 to setOf("CONDOM")))),
+                orgasms("c", partnerFinish = mapOf("s" to mapOf(0 to setOf("HAND")))),
+            ),
+        )
+        assertEquals(mapOf("CHEST" to 2, "MOUTH" to 1), usage.finishesFor(EncounterEntity.SELF_KEY))
+        assertEquals(mapOf("CONDOM" to 2, "HAND" to 1), usage.finishesFor("s"))
+    }
+}

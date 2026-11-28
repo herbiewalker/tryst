@@ -41,6 +41,7 @@ import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.PositionEntity
 import app.tryst.data.db.entity.Protection
+import app.tryst.data.db.entity.Sex
 import app.tryst.data.db.entity.ToyEntity
 import app.tryst.data.repository.ActRepository
 import app.tryst.data.repository.CycleRepository
@@ -51,6 +52,7 @@ import app.tryst.data.repository.OccasionRepository
 import app.tryst.data.repository.OrgasmTypeRepository
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.data.repository.PositionRepository
+import app.tryst.data.repository.ProfileRepository
 import app.tryst.data.repository.ToyRepository
 import app.tryst.data.stats.OptionUsage
 import app.tryst.ui.common.Format
@@ -139,6 +141,7 @@ class EncounterEditViewModel @Inject constructor(
     private val orgasmTypeRepository: OrgasmTypeRepository,
     cycleRepository: CycleRepository,
     generalPreferences: GeneralPreferences,
+    profileRepository: ProfileRepository,
 ) : ViewModel() {
 
     /** Keep the app unlocked across the photo-picker/camera handoff. */
@@ -182,6 +185,13 @@ class EncounterEditViewModel @Inject constructor(
         orgasmTypeRepository.observeAll()
             .catch { emit(emptyList()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Your own sex from the profile, so the editor can leave out Finish rows for a female body (ORG-1). */
+    val selfSex: StateFlow<Sex?> =
+        profileRepository.observe()
+            .map { it?.sex }
+            .catch { emit(null) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val customEjaculations: StateFlow<List<EjaculationLocationEntity>> =
         ejaculationLocations.observeCustom()

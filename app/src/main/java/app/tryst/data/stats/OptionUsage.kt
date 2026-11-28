@@ -39,7 +39,22 @@ data class OptionUsage(
     val toys: Map<String, Int> = emptyMap(),
     /** Orgasm types (ORG-1), counted once per tryst whoever had them. */
     val orgasmTypes: Map<String, Int> = emptyMap(),
+    /** Orgasm types per person ([EncounterEntity.SELF_KEY] or a partner id), once per tryst each. */
+    val orgasmTypesByPerson: Map<String, Map<String, Int>> = emptyMap(),
+    /** Finish locations per person: yours under [EncounterEntity.SELF_KEY], partners' by id. */
+    val finishesByPerson: Map<String, Map<String, Int>> = emptyMap(),
 ) {
+    /**
+     * The orgasm-type counts to learn from for [person]: their own once they have [PERSON_MIN_PICKS]
+     * picks, otherwise everyone's, so a new partner still gets sensible suggestions.
+     */
+    fun orgasmTypesFor(person: String): Map<String, Int> = ownOrShared(orgasmTypesByPerson[person], orgasmTypes)
+
+    /** Same as [orgasmTypesFor], for finish locations. */
+    fun finishesFor(person: String): Map<String, Int> = ownOrShared(finishesByPerson[person], ejaculation)
+
+    private fun ownOrShared(own: Map<String, Int>?, shared: Map<String, Int>): Map<String, Int> = if (own != null && own.values.sum() >= PERSON_MIN_PICKS) own else shared
+
     companion object {
         val EMPTY = OptionUsage()
 
@@ -62,7 +77,27 @@ data class OptionUsage(
                 occasions = tally { it.occasions ?: emptySet() },
                 toys = tally { it.toys ?: emptySet() },
                 orgasmTypes = tally { e -> e.orgasmTypes?.values?.flatMap { m -> m.values.flatten() }.orEmpty().toSet() },
+                orgasmTypesByPerson = tallyByPerson(encounters) { it.orgasmTypes },
+                finishesByPerson = tallyByPerson(encounters) { e ->
+                    val self = e.ejaculationLocations?.let { mapOf(EncounterEntity.SELF_KEY to it) }.orEmpty()
+                    self + e.partnerFinishes.orEmpty()
+                },
             )
+        }
+
+        /** Per person, how many trysts each option was picked in for them (any of their orgasms). */
+        private fun tallyByPerson(
+            encounters: List<EncounterEntity>,
+            select: (EncounterEntity) -> Map<String, Map<Int, Set<String>>>?,
+        ): Map<String, Map<String, Int>> {
+            val out = HashMap<String, HashMap<String, Int>>()
+            encounters.forEach { e ->
+                select(e)?.forEach { (person, perOrgasm) ->
+                    val counts = out.getOrPut(person) { HashMap() }
+                    perOrgasm.values.flatten().toSet().forEach { id -> counts.merge(id, 1, Int::plus) }
+                }
+            }
+            return out
         }
     }
 }
@@ -72,6 +107,9 @@ const val INLINE_TARGET = 8
 
 /** An option must have been picked at least this many times before it auto-surfaces inline. */
 const val INLINE_MIN_COUNT = 2
+
+/** A person needs this many picks of their own before their orgasm chips learn from them alone (ORG-1). */
+const val PERSON_MIN_PICKS = 3
 
 /**
  * The inline option set for one editor category (ENC-1): the user's most-frequently-picked options

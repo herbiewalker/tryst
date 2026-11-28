@@ -127,7 +127,9 @@ with deeply personal data. Inspired by the iOS app *Nice*.
   period or not, under the Insights time window. Hidden while cycle tracking is off.
 - **FR-36** **Orgasm details** (0.7.7, D-76, schema v23). Each orgasm, yours and each partner's, can carry one or more
   types from a user-built list (nothing preset) and finish locations from the shared finish list. Insights shows your
-  types, partners' types and where partners finished; Search can filter and find trysts by type.
+  types, partners' types and where partners finished; Search can filter and find trysts by type. The editor gives
+  each orgasm one combined chip row, leaves out finish locations for anyone set as Female, and suggests chips from
+  each person's own picks.
 
 ## 5. Non-functional requirements
 

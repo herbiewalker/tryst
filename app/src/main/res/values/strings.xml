@@ -92,9 +92,9 @@
     <string name="encounter_field_mood">Mood</string>
     <string name="encounter_orgasms_you">Orgasms — you</string>
     <string name="encounter_ejaculation">Finish</string>
-    <string name="encounter_ejaculation_n">Finish %1$d</string>
     <string name="encounter_orgasm_type">Type</string>
-    <string name="encounter_orgasm_type_n">Type %1$d</string>
+    <string name="encounter_orgasm_nth">%1$s orgasm</string>
+    <string name="encounter_orgasm_details">Orgasm details</string>
     <string name="encounter_orgasms_partner">Orgasms — %1$s</string>
     <string name="encounter_field_positions">Positions</string>
     <string name="encounter_field_acts_gave">Acts — gave</string>
