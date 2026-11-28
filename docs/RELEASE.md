@@ -16,6 +16,11 @@ large-file warning on stderr (the archived R8 mappings are big), and Windows Pow
 command as an error. Check with `git ls-remote origin refs/heads/main "refs/tags/vX.Y.Z^{}"`: both should show the
 release commit.
 
+**Not covered by the script:** its gates are `assembleRelease checkNoNetworkRelease ktlintCheck detekt
+testDebugUnitTest`. Android Lint (`lintDebug`) and the instrumented tests (`connectedDebugAndroidTest`) are not
+run, so run both before the script, on the emulator only (`$env:ANDROID_SERIAL="emulator-5554"`). The
+instrumented tests uninstall the app, so restore the test dataset afterwards.
+
 ## Prerequisites (one-time — all satisfied for the live app)
 
 - [x] **The source repository is public.** `herbiewalker/tryst` has been public since the F-Droid
@@ -31,8 +36,8 @@ release commit.
 ## Per-release steps
 
 1. **Bump the version** in [`app/build.gradle.kts`](../app/build.gradle.kts):
-   - `versionCode` — integer, +1 every release (currently `24`).
-   - `versionName` — human string (currently `0.7.1`).
+   - `versionCode` — integer, +1 every release (currently `30`).
+   - `versionName` — human string (currently `0.7.7`).
 2. **Add the release notes in all three synced places** (kept in lock-step on purpose — see D-35):
    - `fastlane/metadata/android/en-US/changelogs/<versionCode>.txt` (e.g. `2.txt`) — F-Droid's "What's New"
      text. Keep the existing `1.txt` for the first release.

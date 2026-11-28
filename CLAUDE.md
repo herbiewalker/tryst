@@ -40,7 +40,10 @@ If a request conflicts with the above, say so and propose an alternative — don
 - **Manual encrypted export/import** for migrating to a new phone.
 - **Photos tab** over every tryst photo and per-person portrait albums.
 - **Optional cycle tracking** (CYC-1, 7.x line, off by default): periods for self or any partner, "most likely"
-  defaults flagged as estimates, stats and a next-period range. Never fertility or contraception estimates.
+  defaults flagged as estimates, stats and a next-period range, daily symptoms, cycle days on trysts, a Period
+  filter and a Cycle section in Insights. Never fertility or contraception estimates.
+- **Orgasm details** (ORG-1, 0.7.7): a type and finish location per orgasm for you and each partner, one chip row
+  per orgasm with suggestions learned per person, no finish locations for anyone set as Female.
 
 Out of scope for v1: cross-device sync, cloud anything, disguise/decoy mode (hook left
 for later), social/sharing features. See [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md).

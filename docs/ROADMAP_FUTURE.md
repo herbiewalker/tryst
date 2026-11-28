@@ -5,7 +5,7 @@
 > 0.7.7 added orgasm details (ORG-1, D-69, D-72, D-76) and closed 7.x; next is 8.x (Insights drill-downs, BKP-1 + SEC-1, DEL-1, PPL-1 + META-2 portraits). The history below is
 > kept for context; where it disagrees with the release plan, the plan wins.
 
-> **Status: ACTIVE roadmap (last reviewed 2026-11-25).** Originally a raw idea dump (2026-06-14).
+> **Status: ACTIVE roadmap (last reviewed 2026-11-28).** Originally a raw idea dump (2026-06-14).
 > The **v0.5.x line is closed** — everything through v0.5.8 has shipped. Since the 2026-07-30
 > review: **v0.5.3** CAP-1 captions (schema v16), **v0.5.4** EDIT-1 in-app rotate/crop,
 > **v0.5.5** QOL-7 dialog→route conversions, **v0.5.6** CAP-1b tile caption preview,

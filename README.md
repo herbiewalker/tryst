@@ -54,13 +54,16 @@ Privacy isn't a setting here — it's the architecture.
 ## Features
 
 - **Rich encounter logging** — date, time, duration, partners, acts, positions, protection, mood,
-  place, occasion, toys, kinks, a 1–5 rating, orgasms, notes, and encrypted photo attachments.
+  place, occasion, toys, kinks, a 1–5 rating, orgasms (with a type and finish location per orgasm, for you and each
+  partner), notes, and encrypted photo attachments. Suggested chips learn from what you pick, per person for orgasms.
 - **Every category is yours** — Tryst ships **no predefined catalogs**; the handful of neutral starter
   entries (Kissing, Date night, …) are just editable rows, and you **add, rename, or remove your own**
-  acts, kinks, positions, toys, occasions, and finish locations on a dedicated management page per
+  acts, kinks, positions, toys, occasions, finish locations, orgasm types, orientations and symptoms on a
+  dedicated management page per
   category. Everything you add — or had already logged — counts fully across Insights and Achievements.
 - **Partners & a self profile** — named or anonymous partners with relationship type and optional
-  demographics (age, ethnicity, height, body type, orientation from labels you write yourself, location) and a **portrait album per person** (a set
+  demographics (age, ethnicity, height, body type, orientation from labels you write yourself, location), their own
+  color, and a **portrait album per person** (a set
   of photos you can rotate the current avatar from), plus your own profile.
 - **Photos gallery** — a browsable Photos tab over every image attached to a tryst plus every person's
   portrait album, with layouts (date grid, mosaic, by-partner, People avatars, feed), search, filters,
@@ -76,9 +79,12 @@ Privacy isn't a setting here — it's the architecture.
 - **Optional cycle tracking**: off until you turn it on in Settings. Log periods for yourself or any partner with
   one tap; Tryst fills in the most likely length and flow for each day and marks them as estimates until you change
   them. Each person shows their usual cycle and period length, and after three cycles the next period is estimated
-  as a range (hidden when cycles vary a lot, and switchable off). No fertility or contraception estimates.
+  as a range (hidden when cycles vary a lot, and switchable off). Period days can carry symptoms, each tryst shows
+  where everyone in it was in their cycle, Search can filter by period, and Insights has a Cycle section. No
+  fertility or contraception estimates.
 - **Calendar** — a tonal activity heatmap with per-day markers, month/week toggle, and swipe to
-  page. Land on it by default if you like.
+  page. Land on it by default if you like. With cycle tracking on it can also show logged periods and the
+  predicted range, per person, in their colors.
 - **Backup & import** — full-fidelity password-encrypted export/restore (photos included), plus a
   CSV importer with column mapping to bring history in from other apps.
 - **Thoughtful polish** — light/dark themes + Material You, tablet/foldable adaptive layouts, a
@@ -182,7 +188,7 @@ which builds and signs from this source. Tryst ships no binary and commits no si
   encrypted-backup restore, inline add for every catalog category, and the fixes from a formal 7-lens
   post-release audit ([docs/audits/2026-07-30-triage.md](docs/audits/2026-07-30-triage.md)).
 
-Everything you had already logged is preserved across every schema bump (v13 through v20, all
+Everything you had already logged is preserved across every schema bump (v13 through v23, all
 additive-only).
 
 Full release notes are in [CHANGELOG.md](CHANGELOG.md); the milestone history and pre-release audit
@@ -196,7 +202,7 @@ program live in [docs/ROADMAP.md](docs/ROADMAP.md), and post-1.0 plans in
 | [REQUIREMENTS.md](docs/REQUIREMENTS.md) | Functional & non-functional requirements |
 | [THREAT_MODEL.md](docs/THREAT_MODEL.md) | Adversaries, mitigations, residual risk |
 | [SECURITY_DESIGN.md](docs/SECURITY_DESIGN.md) | Encryption & key management |
-| [DATA_MODEL.md](docs/DATA_MODEL.md) | Entities & fields (schema v20) |
+| [DATA_MODEL.md](docs/DATA_MODEL.md) | Entities & fields (schema v23) |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Stack & module layout |
 | [FLOWCHARTS.md](docs/FLOWCHARTS.md) | Visual maps of the core logic flows |
 | [ROADMAP.md](docs/ROADMAP.md) | Milestones & the 12-pass pre-release audit |

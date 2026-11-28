@@ -1,8 +1,18 @@
 # Tryst — Roadmap / Milestones
 
-> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.7.3**
-> (schema v21). Each milestone ended runnable & tested. This file is the milestone *history* (see
+> **Status:** Live — all milestones **M0–M8 complete**; the app has shipped through **v0.7.7**
+> (schema v23). Each milestone ended runnable & tested. This file is the milestone *history* (see
 > the dated notes below); forward work lives in [ROADMAP_FUTURE.md](ROADMAP_FUTURE.md).
+
+> **Update (2026-11-28):** **v0.7.7** shipped and closes 7.x: orgasm details (ORG-1, D-76, schema v23). Each orgasm,
+> yours and each partner's, can carry types from a user-built list and finish locations, in one chip row per orgasm
+> whose suggestions learn per person; no finish locations for anyone set as Female. Insights adds types and partner
+> finishes; Search filters by type. The review also added **ENC-2** (a person-aware options review) to the backlog.
+> Next is 8.x, starting with 0.8.0 (Insights drill-down pages).
+
+> **Update (2026-11-27):** **v0.7.4** to **v0.7.6** shipped: one shared daily-symptom list logged on period days
+> (D-73, schema v22), each person's cycle day on a tryst plus a Period filter in Search (D-74), and a Cycle section
+> in Insights (D-75).
 
 > **Update (2026-11-25, late):** **v0.7.3** shipped: everyone gets their own color (D-70: 24-color palette, compact
 > pop-up with a custom shade, archived partners' colors reused last) and the cycle screens leave off people set as

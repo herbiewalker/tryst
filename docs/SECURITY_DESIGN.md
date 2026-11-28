@@ -1,6 +1,6 @@
 # Tryst — Security & Encryption Design
 
-> **Status:** Live — v0.7.3 / schema v21. The implemented security design. Key model = **Keystore-only** with a
+> **Status:** Live — v0.7.7 / schema v23. The implemented security design. Key model = **Keystore-only** with a
 > distinct app PIN (§1 Decision); the rest of this doc describes what ships.
 
 ---
@@ -85,7 +85,8 @@ guarantee against forensic seizure in exchange for not having to remember a pass
   haptics, calendar week-start, backup reminder, cycle tracking switches). Android auto-backup never sees them
   (`allowBackup=false`); since v0.6.0 they travel only inside the password-encrypted export as `settings.json`
   (QOL-5), and only if the user leaves "Include my settings" on. Anything sensitive would be encrypted; none is
-  stored in prefs. Cycle data itself is health data and lives in the SQLCipher DB like every other entry.
+  stored in prefs. Cycle data (periods, per-day flow, daily symptoms) is health data and lives in the SQLCipher DB
+  like every other entry.
 
 ## 3. App lock & UI hardening
 
@@ -121,6 +122,10 @@ guarantee against forensic seizure in exchange for not having to remember a pass
   from the backup JSON are also validated against a plain SQL-identifier pattern before reaching the
   framework's unquoted `INSERT` column list, so a crafted backup can't inject SQL (`BackupManager.restoreDatabase`;
   added in the M8 security self-review). Regression-tested in `BackupRoundTripTest`.
+- **Restore preview and newer-backup refusal (BKP-3, v0.7.2):** after the password, `BackupManager.inspect()`
+  shows what the file holds before anything is replaced, and a backup written by a newer Tryst (higher schema
+  or container version) is refused rather than half-restored, since it can carry tables and columns this build
+  does not know.
 - The format is documented and auditable in [EXPORT_FORMAT.md](EXPORT_FORMAT.md). Importing *other
   apps'* data is a separate generic **CSV importer** (M5b).
 

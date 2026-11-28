@@ -1,6 +1,6 @@
 # Tryst — Threat Model
 
-> **Status:** Live — **v0.7.3 / schema v21**, aligned with the *implemented* security model
+> **Status:** Live — **v0.7.7 / schema v23**, aligned with the *implemented* security model
 > (Keystore-only + distinct app PIN; see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §1, Option B). The
 > v9–v11 changes (kinks then toys made id-based, and the acts/kinks then positions/toys catalog trims —
 > FDP-2/FDP-4, D-41) are category-data only and add **no new attack surface** over the v7 demographics +
@@ -8,7 +8,9 @@
 
 ## Assets to protect
 
-- **A1** Encounter records (the highly sensitive content).
+- **A1** Encounter records (the highly sensitive content), including since v0.7.7 per-orgasm types and finish
+  locations for the user and each partner (ORG-1, D-76). The type list is user-built, so its labels are sensitive
+  too; it lives only in the encrypted DB and backup.
 - **A2** Partner identities — including the v7 **demographics** (date of birth, ethnicity, height,
   body type, location, and the optional user-labelled **orientation**) attached to each partner. The
   orientation labels and the chosen id live only in the encrypted DB and the encrypted backup, so

@@ -1,6 +1,6 @@
 # Tryst — Logic Flowcharts
 
-> **Status:** Live — v0.7.3 / schema v21. Visual maps of how the app's core logic works, so a change can be
+> **Status:** Live — v0.7.7 / schema v23. Visual maps of how the app's core logic works, so a change can be
 > reasoned about before touching code. Diagrams are [Mermaid](https://mermaid.js.org/) — they render on
 > GitHub and in most Markdown viewers. Keep these in sync when the corresponding code changes.
 
@@ -135,7 +135,7 @@ flowchart TD
     B --> C{"staged photos?"}
     C -->|yes| D["repository.attachMedia()<br/>encrypt via Tink → app-internal"]
     C -->|no| E
-    D --> E["build EncounterEntity"]
+    D --> E["build EncounterEntity<br/>(incl. per-orgasm types and finishes, D-76)"]
     E --> F["EncounterRepository.save()"]
     F --> G["EncounterDao.upsertWithRelations()<br/>(@Transaction: encounter + partner/position/tag refs)"]
     G --> H[("SQLCipher DB")]
@@ -143,7 +143,7 @@ flowchart TD
 
 ## 6. Insights pipeline
 
-Seven reactive sources — the encounter log plus the six custom-catalog label streams — are combined
+Eight reactive sources (the encounter log plus seven custom-catalog label streams, orgasm types included) are combined
 and folded into an immutable `Insights` off the main thread; the screen layers user customization
 (order/hidden/per-card chart style) on top, with stable per-type colors. The engine is pure Kotlin
 (JVM-unit-tested, no Android).
@@ -157,11 +157,15 @@ flowchart LR
     R5["ToyRepository.observeCustom()"] --> CMB
     R6["OccasionRepository.observeCustom()"] --> CMB
     R7["EjaculationLocationRepository.observeCustom()"] --> CMB
+    R8["OrgasmTypeRepository.observeAll()"] --> CMB
     CMB -->|"map on Dispatchers.Default"| ENG["InsightsEngine.compute()"]
     ENG --> INS["Insights (totals, streaks, tallies, trends)"]
     INS --> SCR["InsightsScreen"]
     PREFS["InsightsPreferences<br/>(stat/section order · hidden · per-card style)"] --> SCR
     SCR --> CH["TrendChart / BreakdownChart<br/>+ TypeColors.colorFor(label)"]
+    CYC["CycleRepository (periods, days, symptoms)"] -->|"chosen person + time window"| CSE["CycleStatsEngine.compute()"]
+    CSE --> CC["Cycle section (only while cycle tracking is on)"]
+    CC --> SCR
 ```
 
 ## 7. Backup export / import
@@ -238,7 +242,9 @@ flowchart LR
 Optional (Settings → Cycle tracking, CYC-1). One tap logs a whole period: `CycleDefaults` fills the most likely
 length and per-day flow from what was actually entered for that person, and flags every filled value as an
 estimate. `CyclePredictor` turns logged start dates into stats and a next-period range. Both are pure and
-JVM-tested (D-64, D-65). Estimates never feed the next guess.
+JVM-tested (D-64, D-65). Estimates never feed the next guess. From 0.7.4 on, period days can carry symptoms
+(D-73), and `CycleDays` puts each person's cycle day on trysts, the Search Period filter and the Insights Cycle
+section (D-74, D-75).
 
 ```mermaid
 flowchart TD
@@ -263,4 +269,14 @@ flowchart TD
     SHOW -->|yes, and calendar switch on| CAL["Trysts calendar: outlined strip<br/>on likely days from today on"]
     SAVE --> LOGCAL["Trysts calendar (if its switch is on):<br/>solid strip per person on logged days"]
     SHOW -->|no| HIDE["stats only"]
+    SAVE --> SYM["daily symptoms on period days<br/>(one shared list, mild / medium / strong)"]
+    SAVE --> CD["CycleDays.from(periods)"]
+    CD --> TRY["tryst screen: each person's cycle day,<br/>marked when on a period"]
+    CD --> FIL["Search Period filter:<br/>any · during a period · not"]
+    CD --> INS2["Insights Cycle section:<br/>trysts on period or not"]
+    SAVE --> SYM["daily symptoms on period days<br/>(one shared list, mild / medium / strong)"]
+    SAVE --> CD["CycleDays.from(periods)"]
+    CD --> TRY["tryst screen: each person's cycle day,<br/>marked when on a period"]
+    CD --> FIL["Search Period filter:<br/>any · during a period · not"]
+    CD --> INS2["Insights Cycle section:<br/>trysts on period or not"]
 ```
