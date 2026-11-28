@@ -13,6 +13,8 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+## [0.7.7] — 2026-11-28 (versionCode 30)
+
 ### Added
 - **Orgasm details** (0.7.7, D-76, schema v23). Each orgasm, yours and each partner's, can now have one or more
   types and finish locations. Types come from your own list, with nothing preset, under Settings, Manage orgasm types,

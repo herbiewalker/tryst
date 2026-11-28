@@ -33,6 +33,16 @@ object ReleaseNotes {
     /** Newest first. The first entry is treated as the current release. */
     val all: List<ReleaseNote> = listOf(
         ReleaseNote(
+            versionName = "0.7.7",
+            versionCode = 30,
+            date = "2026-11-28",
+            highlights = listOf(
+                "Each orgasm, yours and each partner's, can now have a type and a finish location, in one row of chips.",
+                "Build your own list of orgasm types under Settings. Suggestions learn from each person's own picks.",
+                "Insights shows your types, partners' types and where partners finished, and Search can filter by type.",
+            ),
+        ),
+        ReleaseNote(
             versionName = "0.7.6",
             versionCode = 29,
             date = "2026-11-27",

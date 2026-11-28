@@ -1,0 +1,8 @@
+Orgasm details
+
+* Each orgasm, yours and each partner's, can now have a type and a finish location.
+* Build your own list of orgasm types under Settings, Manage orgasm types. Nothing is preset.
+* One row of chips per orgasm in the editor, with suggestions learned from each person's own picks.
+* Finish locations are left out for anyone set as Female.
+* Insights shows your types, partners' types and where partners finished.
+* Search can filter by orgasm type.

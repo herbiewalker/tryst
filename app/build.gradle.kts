@@ -30,8 +30,8 @@ android {
         applicationId = "app.tryst"
         minSdk = 31
         targetSdk = 36
-        versionCode = 29
-        versionName = "0.7.6"
+        versionCode = 30
+        versionName = "0.7.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
