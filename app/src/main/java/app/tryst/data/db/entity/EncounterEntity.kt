@@ -72,10 +72,23 @@ data class EncounterEntity(
     // --- added in schema v6 ---
     /** Per-partner orgasm counts: partnerId -> count. */
     val partnerOrgasms: Map<String, Int>? = null,
+    // --- added in schema v23 (ORG-1, D-76) ---
+    /**
+     * Orgasm types per person and orgasm: person key ([SELF_KEY] or a partner id) → orgasm index (0-based) →
+     * type refs ("custom:<id>" of an [OrgasmTypeEntity]).
+     */
+    val orgasmTypes: Map<String, Map<Int, Set<String>>>? = null,
+    /** Each partner's finish locations per orgasm: partner id → orgasm index → finish refs, like [ejaculationLocations]. */
+    val partnerFinishes: Map<String, Map<Int, Set<String>>>? = null,
     // ---------------------------
     val locationId: String? = null,
     val createdAt: Long,
     val updatedAt: Long,
-)
+) {
+    companion object {
+        /** The user's key in [orgasmTypes]; partners use their id. */
+        const val SELF_KEY = "self"
+    }
+}
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

@@ -56,7 +56,7 @@ associated data = "tryst-backup-v1"), key = PBKDF2-HMAC-SHA256(password, salt, i
   otherwise freeze the app deriving the key (DoS).
 - **Wrong password** ⇒ the AEAD stream fails authentication on first read (import aborts cleanly).
 - **Tables** (insert order respects FKs; `PRAGMA defer_foreign_keys` also guards it): partners,
-  profile, locations, tags, positions, acts, kinks, toys, occasions, ejaculation_locations, orientations, encounters,
+  profile, locations, tags, positions, acts, kinks, toys, occasions, ejaculation_locations, orgasm_types (v23), orientations, encounters,
   media, person_photo (v15 portrait-album rows), encounter_partner, encounter_position, encounter_tag,
   cycle_period, cycle_day (v20 cycle tracking; a period before its days), cycle_symptom, cycle_symptom_log
   (v22 symptoms; a symptom list before its log).

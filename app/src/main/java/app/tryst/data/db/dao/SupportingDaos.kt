@@ -24,6 +24,7 @@ import app.tryst.data.db.entity.KinkEntity
 import app.tryst.data.db.entity.LocationEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.OccasionEntity
+import app.tryst.data.db.entity.OrgasmTypeEntity
 import app.tryst.data.db.entity.OrientationEntity
 import app.tryst.data.db.entity.PersonPhotoEntity
 import app.tryst.data.db.entity.PositionEntity
@@ -194,6 +195,21 @@ interface EjaculationLocationDao {
     suspend fun rename(id: String, label: String)
 
     @Query("DELETE FROM ejaculation_locations WHERE id = :id")
+    suspend fun deleteById(id: String)
+}
+
+@Dao
+interface OrgasmTypeDao {
+    @Upsert
+    suspend fun upsert(type: OrgasmTypeEntity)
+
+    @Query("SELECT * FROM orgasm_types ORDER BY label COLLATE NOCASE")
+    fun observeAll(): Flow<List<OrgasmTypeEntity>>
+
+    @Query("UPDATE orgasm_types SET label = :label WHERE id = :id")
+    suspend fun rename(id: String, label: String)
+
+    @Query("DELETE FROM orgasm_types WHERE id = :id")
     suspend fun deleteById(id: String)
 }
 

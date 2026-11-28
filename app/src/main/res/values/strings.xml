@@ -91,8 +91,10 @@
     <string name="encounter_field_protection">Protection</string>
     <string name="encounter_field_mood">Mood</string>
     <string name="encounter_orgasms_you">Orgasms — you</string>
-    <string name="encounter_ejaculation">Ejaculation</string>
-    <string name="encounter_ejaculation_n">Ejaculation %1$d</string>
+    <string name="encounter_ejaculation">Finish</string>
+    <string name="encounter_ejaculation_n">Finish %1$d</string>
+    <string name="encounter_orgasm_type">Type</string>
+    <string name="encounter_orgasm_type_n">Type %1$d</string>
     <string name="encounter_orgasms_partner">Orgasms — %1$s</string>
     <string name="encounter_field_positions">Positions</string>
     <string name="encounter_field_acts_gave">Acts — gave</string>
@@ -192,6 +194,7 @@
     <string name="encounter_cycle_you">You</string>
     <string name="encounter_cycle_on_period">%1$s: day %2$d of a period</string>
     <string name="encounter_cycle_between">%1$s: cycle day %2$d</string>
+    <string name="search_section_orgasm_types">Orgasm types</string>
     <string name="search_section_period">Period</string>
     <string name="search_period_any">Any day</string>
     <string name="search_period_on">During a period</string>
@@ -629,6 +632,11 @@
     <string name="custom_ejaculation_desc">Add your own finish locations — they show up per orgasm when logging a tryst. Tap an entry to rename it, or remove ones you don\'t use.</string>
     <string name="custom_ejaculation_add_label">Add a finish location</string>
     <string name="custom_ejaculation_empty">No finish locations yet — add your first one above.</string>
+    <string name="settings_manage_orgasm_types">Manage orgasm types</string>
+    <string name="orgasm_types_title">Orgasm types</string>
+    <string name="orgasm_types_desc">Your own list of orgasm types, for you and your partners. Nothing is preset, so add the ones you want to track. They show up for each orgasm when logging a tryst. Tap one to rename it, or remove ones you don\'t use.</string>
+    <string name="orgasm_types_add_label">Add an orgasm type</string>
+    <string name="orgasm_types_empty">No orgasm types yet. Add your first one above.</string>
 
     <!-- ============================================================= -->
     <!-- Insights (InsightsScreen, InsightsCharts)                     -->
@@ -685,6 +693,9 @@
     <string name="insights_sub_orgasms_per_partner">Orgasms per partner</string>
     <string name="insights_sub_over_time">Over time</string>
     <string name="insights_sub_finish">Finish / ejaculation</string>
+    <string name="insights_sub_your_types">Your orgasm types</string>
+    <string name="insights_sub_partner_types">Partners\' orgasm types</string>
+    <string name="insights_sub_partner_finish">Where partners finished</string>
     <string name="insights_sub_toys">Toys</string>
     <string name="insights_sub_protection">Protection</string>
     <string name="insights_cycle_you">You</string>

@@ -70,6 +70,7 @@ class EncounterFilterTest {
         occasions: Set<String> = emptySet(),
         kinks: Set<String> = emptySet(),
         toys: Set<String> = emptySet(),
+        orgasmTypes: Map<String, Map<Int, Set<String>>>? = null,
         partners: List<PartnerEntity> = emptyList(),
         media: List<MediaEntity> = emptyList(),
     ) = EncounterWithDetails(
@@ -89,6 +90,7 @@ class EncounterFilterTest {
             occasions = occasions.ifEmpty { null },
             kinks = kinks.ifEmpty { null },
             toys = toys.ifEmpty { null },
+            orgasmTypes = orgasmTypes,
             createdAt = 0,
             updatedAt = 0,
         ),
@@ -307,6 +309,19 @@ class EncounterFilterTest {
         // Without period data nobody is on a period.
         assertFalse(on.matches(withA, zone))
         assertTrue(off.matches(withA, zone))
+    }
+
+    @Test
+    fun orgasmTypeMatchesAnyoneInTheTryst() {
+        val mine = encounter(id = "a", orgasmTypes = mapOf("self" to mapOf(0 to setOf("custom:t1"))))
+        val theirs = encounter(id = "b", orgasmTypes = mapOf("p1" to mapOf(1 to setOf("custom:t2"))))
+        val none = encounter(id = "c")
+        val filter = EncounterFilter(orgasmTypeIds = setOf("custom:t2"))
+        assertTrue(filter.isActive)
+        assertFalse(filter.matches(mine, zone))
+        assertTrue(filter.matches(theirs, zone))
+        assertFalse(filter.matches(none, zone))
+        assertTrue(EncounterFilter(orgasmTypeIds = setOf("custom:t1", "custom:t2")).matches(mine, zone))
     }
 }
 

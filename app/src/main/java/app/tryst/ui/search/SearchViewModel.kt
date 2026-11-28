@@ -33,6 +33,7 @@ import app.tryst.data.repository.CycleRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.KinkRepository
 import app.tryst.data.repository.OccasionRepository
+import app.tryst.data.repository.OrgasmTypeRepository
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.data.repository.PositionRepository
 import app.tryst.data.repository.RecentSearchRepository
@@ -130,6 +131,7 @@ class SearchViewModel @Inject constructor(
     occasionRepository: OccasionRepository,
     partnerRepository: PartnerRepository,
     cycleRepository: CycleRepository,
+    orgasmTypeRepository: OrgasmTypeRepository,
     generalPreferences: GeneralPreferences,
 ) : ViewModel() {
 
@@ -219,6 +221,7 @@ class SearchViewModel @Inject constructor(
                 occasionIds = adv.occasionIds,
                 kinkIds = adv.kinkIds,
                 toyIds = adv.toyIds,
+                orgasmTypeIds = adv.orgasmTypeIds,
                 protection = adv.protection,
                 moods = adv.moods,
                 initiators = adv.initiators,
@@ -244,6 +247,9 @@ class SearchViewModel @Inject constructor(
     ) { acts, positions, kinks, toys, occasions ->
         CatalogLabels(acts = acts, positions = positions, kinks = kinks, toys = toys, occasions = occasions)
     }
+        .combine(orgasmTypeRepository.observeAll().map { rows -> rows.associate { it.id to it.label } }) { labels, types ->
+            labels.copy(orgasmTypes = types)
+        }
         .catch { emit(CatalogLabels.EMPTY) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CatalogLabels.EMPTY)
 
@@ -329,6 +335,7 @@ class SearchViewModel @Inject constructor(
     fun toggleKink(id: String) = _advanced.update { it.copy(kinkIds = it.kinkIds.toggled(id)) }
     fun toggleToy(id: String) = _advanced.update { it.copy(toyIds = it.toyIds.toggled(id)) }
     fun toggleOccasion(id: String) = _advanced.update { it.copy(occasionIds = it.occasionIds.toggled(id)) }
+    fun toggleOrgasmType(id: String) = _advanced.update { it.copy(orgasmTypeIds = it.orgasmTypeIds.toggled(id)) }
     fun togglePlace(value: Place) = _advanced.update { it.copy(places = it.places.toggled(value)) }
     fun toggleProtection(value: Protection) = _advanced.update { it.copy(protection = it.protection.toggled(value)) }
     fun toggleMood(value: Mood) = _advanced.update { it.copy(moods = it.moods.toggled(value)) }
@@ -362,7 +369,7 @@ class SearchViewModel @Inject constructor(
     /** How many advanced dimensions are set (each category counts once), for the "Filters" chip badge. */
     private fun EncounterFilter.advancedCount(): Int = listOf(
         actIds.isNotEmpty(), positionIds.isNotEmpty(), kinkIds.isNotEmpty(), toyIds.isNotEmpty(),
-        occasionIds.isNotEmpty(), places.isNotEmpty(), protection.isNotEmpty(), moods.isNotEmpty(),
+        occasionIds.isNotEmpty(), orgasmTypeIds.isNotEmpty(), places.isNotEmpty(), protection.isNotEmpty(), moods.isNotEmpty(),
         initiators.isNotEmpty(), weekdays.isNotEmpty(), timesOfDay.isNotEmpty(),
         durationRange != null, hasNote != null, onPeriod != null, includeSolo,
     ).count { it }

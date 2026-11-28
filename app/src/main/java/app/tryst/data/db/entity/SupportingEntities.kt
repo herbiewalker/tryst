@@ -87,6 +87,16 @@ data class EjaculationLocationEntity(
 )
 
 /**
+ * A user-built orgasm type (ORG-1, 0.7.7, schema v23). Nothing is preset (D-41). Trysts refer to one as
+ * "custom:<id>" in [EncounterEntity.orgasmTypes], the same ref form as every other catalog.
+ */
+@Entity(tableName = "orgasm_types", indices = [Index(value = ["label"], unique = true)])
+data class OrgasmTypeEntity(
+    @PrimaryKey val id: String,
+    val label: String,
+)
+
+/**
  * A search query the user submitted, most-recent-first (SRCH-1). Lives **in the encrypted DB**, not in
  * the `SharedPreferences` stores: a search history is some of the most sensitive text in the app, and
  * the prefs files are the one part of Tryst that is *not* encrypted at rest (D-42).

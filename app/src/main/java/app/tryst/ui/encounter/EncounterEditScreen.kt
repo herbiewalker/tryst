@@ -86,6 +86,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.tryst.R
 import app.tryst.data.cycle.CycleDayInfo
+import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Initiator
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.Place
@@ -140,6 +141,7 @@ fun EncounterEditScreen(
     val customToys by viewModel.customToys.collectAsStateWithLifecycle()
     val customOccasions by viewModel.customOccasions.collectAsStateWithLifecycle()
     val customEjaculations by viewModel.customEjaculations.collectAsStateWithLifecycle()
+    val customOrgasmTypes by viewModel.customOrgasmTypes.collectAsStateWithLifecycle()
     // Per-category pick frequency, used to surface the user's most-used options inline (ENC-1).
     val usage by viewModel.optionUsage.collectAsStateWithLifecycle()
     val cycleDays by viewModel.cycleDays.collectAsStateWithLifecycle()
@@ -367,16 +369,24 @@ fun EncounterEditScreen(
                     Stepper(value = ui.orgasmCountSelf, onChange = { viewModel.setSelfOrgasms(it) })
                 }
 
-                // Ejaculation location(s) per orgasm you had — multi-select (e.g. chest + stomach).
+                // Orgasm details (ORG-1): a type row and a finish row per orgasm, for you and each partner.
+                val typeOptions = EjaculationOptions.orgasmTypes(customOrgasmTypes)
+                val typeCommon = mostUsedCommon(emptyList(), typeOptions) { usage.orgasmTypes[it.id] ?: 0 }
                 val ejaculationOptions = EjaculationOptions.builtIns + EjaculationOptions.custom(customEjaculations)
                 val ejaculationCommon = mostUsedCommon(ejaculationOptions, ejaculationOptions) { usage.ejaculation[it.id] ?: 0 }
                 repeat(ui.orgasmCountSelf) { i ->
+                    val n = if (ui.orgasmCountSelf > 1) i + 1 else null
                     MultiSelectField(
-                        label = if (ui.orgasmCountSelf > 1) {
-                            stringResource(R.string.encounter_ejaculation_n, i + 1)
-                        } else {
-                            stringResource(R.string.encounter_ejaculation)
-                        },
+                        label = orgasmLabel(R.string.encounter_orgasm_type, R.string.encounter_orgasm_type_n, n),
+                        all = typeOptions,
+                        common = typeCommon,
+                        selected = typeOptions.filter { it.id in ui.orgasmTypes[EncounterEntity.SELF_KEY]?.get(i).orEmpty() }.toSet(),
+                        labelOf = { it.label },
+                        onToggle = { viewModel.toggleOrgasmType(EncounterEntity.SELF_KEY, i, it.id) },
+                        onAddNew = { viewModel.addOrgasmType(EncounterEntity.SELF_KEY, i, it) },
+                    )
+                    MultiSelectField(
+                        label = orgasmLabel(R.string.encounter_ejaculation, R.string.encounter_ejaculation_n, n),
                         all = ejaculationOptions,
                         common = ejaculationCommon,
                         selected = ejaculationOptions.filter { it.id in (ui.ejaculations[i] ?: emptySet()) }.toSet(),
@@ -386,15 +396,37 @@ fun EncounterEditScreen(
                     )
                 }
 
-                // One orgasm counter per selected partner, ordered by name.
+                // One orgasm counter per selected partner, ordered by name, each with its own detail rows.
                 partners
                     .filter { it.id in ui.selectedPartnerIds }
                     .sortedBy { Format.partnerName(it).lowercase() }
                     .forEach { partner ->
+                        val count = ui.partnerOrgasms[partner.id] ?: 0
                         Field(stringResource(R.string.encounter_orgasms_partner, Format.partnerName(partner))) {
                             Stepper(
-                                value = ui.partnerOrgasms[partner.id] ?: 0,
+                                value = count,
                                 onChange = { viewModel.setPartnerOrgasms(partner.id, it) },
+                            )
+                        }
+                        repeat(count) { i ->
+                            val n = if (count > 1) i + 1 else null
+                            MultiSelectField(
+                                label = orgasmLabel(R.string.encounter_orgasm_type, R.string.encounter_orgasm_type_n, n),
+                                all = typeOptions,
+                                common = typeCommon,
+                                selected = typeOptions.filter { it.id in ui.orgasmTypes[partner.id]?.get(i).orEmpty() }.toSet(),
+                                labelOf = { it.label },
+                                onToggle = { viewModel.toggleOrgasmType(partner.id, i, it.id) },
+                                onAddNew = { viewModel.addOrgasmType(partner.id, i, it) },
+                            )
+                            MultiSelectField(
+                                label = orgasmLabel(R.string.encounter_ejaculation, R.string.encounter_ejaculation_n, n),
+                                all = ejaculationOptions,
+                                common = ejaculationCommon,
+                                selected = ejaculationOptions.filter { it.id in ui.partnerFinishes[partner.id]?.get(i).orEmpty() }.toSet(),
+                                labelOf = { it.label },
+                                onToggle = { viewModel.togglePartnerFinish(partner.id, i, it.id) },
+                                onAddNew = { viewModel.addPartnerFinish(partner.id, i, it) },
                             )
                         }
                     }
@@ -567,6 +599,10 @@ private fun CycleDayLines(days: List<PersonCycleDay>) {
         )
     }
 }
+
+/** "Type" or "Type 2": numbered only when the person had more than one orgasm. */
+@Composable
+private fun orgasmLabel(single: Int, numbered: Int, n: Int?): String = if (n == null) stringResource(single) else stringResource(numbered, n)
 
 @Composable
 private fun Field(label: String, content: @Composable () -> Unit) {

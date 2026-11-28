@@ -49,6 +49,8 @@ class InsightsEngineTest {
         ejaculation: Map<Int, Set<String>>? = null,
         initiator: Initiator? = null,
         partners: List<PartnerEntity> = emptyList(),
+        orgasmTypes: Map<String, Map<Int, Set<String>>>? = null,
+        partnerFinishes: Map<String, Map<Int, Set<String>>>? = null,
     ) = EncounterWithDetails(
         encounter = EncounterEntity(
             id = id,
@@ -61,6 +63,8 @@ class InsightsEngineTest {
             orgasmCountSelf = orgasmCountSelf,
             partnerOrgasms = partnerOrgasms,
             ejaculationLocations = ejaculation,
+            orgasmTypes = orgasmTypes,
+            partnerFinishes = partnerFinishes,
             practicesPerformed = acts,
             kinks = kinks,
             createdAt = 0,
@@ -336,6 +340,29 @@ class InsightsEngineTest {
         assertTrue(r.topEjaculation.any { it.label == "On face" })
         // multi-select: both locations of a single orgasm are counted
         assertTrue(r.topEjaculation.any { it.label == "On stomach" })
+    }
+
+    @Test
+    fun orgasmTypesSplitYoursFromPartnersAndSkipDeletedTypes() {
+        val log = listOf(
+            encounter(
+                "e1",
+                LocalDate.of(2026, 3, 1),
+                orgasmTypes = mapOf(
+                    EncounterEntity.SELF_KEY to mapOf(0 to setOf("custom:t1"), 1 to setOf("custom:t1", "custom:t2")),
+                    "p1" to mapOf(0 to setOf("custom:t2", "custom:gone")),
+                ),
+                partnerFinishes = mapOf("p1" to mapOf(0 to setOf("custom:f1")), "p2" to mapOf(0 to setOf("custom:f1"))),
+            ),
+        )
+        val insights = InsightsEngine.compute(
+            log,
+            customEjaculationLabels = mapOf("f1" to "Chest"),
+            customOrgasmTypeLabels = mapOf("t1" to "Blended", "t2" to "Quiet"),
+        )
+        assertEquals(listOf(Tally("Blended", 2), Tally("Quiet", 1)), insights.yourOrgasmTypes)
+        assertEquals(listOf(Tally("Quiet", 1)), insights.partnerOrgasmTypes)
+        assertEquals(listOf(Tally("Chest", 2)), insights.partnerFinishes)
     }
 }
 

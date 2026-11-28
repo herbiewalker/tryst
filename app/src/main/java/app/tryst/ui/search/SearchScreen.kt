@@ -278,6 +278,7 @@ fun SearchScreen(
                     setIncludeSolo = viewModel::setIncludeSolo,
                     reset = viewModel::clearAdvanced,
                     setOnPeriod = viewModel::setOnPeriod.takeIf { cycleEnabled },
+                    toggleOrgasmType = viewModel::toggleOrgasmType,
                 )
             },
             resultCount = ui.hits.size,

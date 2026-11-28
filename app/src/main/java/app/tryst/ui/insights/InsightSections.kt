@@ -80,7 +80,12 @@ object InsightSections {
         InsightSection(INITIATOR, "Initiator", styles = BREAKDOWN_STYLES) { it.topInitiators.isNotEmpty() },
         // Mixed: breakdowns plus an over-time series, so every style draws something.
         InsightSection(ORGASMS, "Orgasms") {
-            it.totalSelfOrgasms > 0 || it.totalPartnerOrgasms > 0 || it.topEjaculation.isNotEmpty()
+            it.totalSelfOrgasms > 0 ||
+                it.totalPartnerOrgasms > 0 ||
+                it.topEjaculation.isNotEmpty() ||
+                it.yourOrgasmTypes.isNotEmpty() ||
+                it.partnerOrgasmTypes.isNotEmpty() ||
+                it.partnerFinishes.isNotEmpty()
         },
         InsightSection(DETAILS, "Details", styles = BREAKDOWN_STYLES) {
             it.topToys.isNotEmpty() || it.topProtection.isNotEmpty()

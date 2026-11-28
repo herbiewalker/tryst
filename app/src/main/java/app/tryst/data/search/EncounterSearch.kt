@@ -27,6 +27,8 @@ data class CatalogLabels(
     val kinks: Map<String, String> = emptyMap(),
     val toys: Map<String, String> = emptyMap(),
     val occasions: Map<String, String> = emptyMap(),
+    /** User-built orgasm types (ORG-1). */
+    val orgasmTypes: Map<String, String> = emptyMap(),
 ) {
     companion object {
         val EMPTY = CatalogLabels()
@@ -43,6 +45,7 @@ enum class SearchField(val label: String) {
     OCCASION("Occasion"),
     KINK("Kinks"),
     TOY("Toys"),
+    ORGASM_TYPE("Orgasm types"),
     MOOD("Mood"),
 
     /** Captions on the encounter's photos (CAP-1). Aggregated across every photo the tryst carries. */
@@ -181,6 +184,12 @@ object EncounterSearch {
             putIfNotEmpty(SearchField.OCCASION, resolveAll(enc.occasions, labels.occasions))
             putIfNotEmpty(SearchField.KINK, resolveAll(enc.kinks, labels.kinks))
             putIfNotEmpty(SearchField.TOY, resolveAll(enc.toys, labels.toys))
+            // Any person's orgasm types, listed once each. Deleted types are left out rather than shown as raw ids.
+            putIfNotEmpty(
+                SearchField.ORGASM_TYPE,
+                enc.orgasmTypes.orEmpty().values.flatMap { it.values.flatten() }.toSet()
+                    .mapNotNull { labels.orgasmTypes[it.removePrefix(CUSTOM_PREFIX)] }.sorted(),
+            )
             putIfNotEmpty(SearchField.MOOD, listOfNotNull(enc.mood?.label))
             putIfNotEmpty(SearchField.PHOTO_CAPTION, captions)
         }

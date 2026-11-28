@@ -125,6 +125,9 @@ with deeply personal data. Inspired by the iOS app *Nice*.
 - **FR-35** **Cycle Insights** (0.7.6, D-75, no schema change). A hideable, reorderable Cycle card in Insights shows, for
   one person at a time (picked by chip), cycle and period length trends, flow mix, symptom counts and trysts during a
   period or not, under the Insights time window. Hidden while cycle tracking is off.
+- **FR-36** **Orgasm details** (0.7.7, D-76, schema v23). Each orgasm, yours and each partner's, can carry one or more
+  types from a user-built list (nothing preset) and finish locations from the shared finish list. Insights shows your
+  types, partners' types and where partners finished; Search can filter and find trysts by type.
 
 ## 5. Non-functional requirements
 

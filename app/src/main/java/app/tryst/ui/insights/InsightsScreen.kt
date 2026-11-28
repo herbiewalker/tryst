@@ -432,6 +432,9 @@ private fun SectionContent(id: String, insights: Insights, style: ChartStyle, pa
                     BreakSub(stringResource(R.string.insights_sub_orgasms_per_partner), insights.orgasmsPerPartner),
                     TrendSub(stringResource(R.string.insights_sub_over_time), insights.orgasmsMonthly),
                     BreakSub(stringResource(R.string.insights_sub_finish), insights.topEjaculation),
+                    BreakSub(stringResource(R.string.insights_sub_your_types), insights.yourOrgasmTypes),
+                    BreakSub(stringResource(R.string.insights_sub_partner_types), insights.partnerOrgasmTypes),
+                    BreakSub(stringResource(R.string.insights_sub_partner_finish), insights.partnerFinishes),
                 ),
             )
         }

@@ -88,6 +88,8 @@ class MoreFiltersActions(
     val reset: () -> Unit,
     /** The "Period" filter (CYC-1, 0.7.5); null hides it, as when cycle tracking is off or in the gallery. */
     val setOnPeriod: ((Boolean?) -> Unit)? = null,
+    /** The orgasm type filter (ORG-1); null hides it, as in the gallery. */
+    val toggleOrgasmType: ((String) -> Unit)? = null,
 )
 
 /**
@@ -159,6 +161,9 @@ fun MoreFiltersColumn(
         CatalogSection(stringResource(R.string.search_section_kinks), catalogLabels.kinks, advanced.kinkIds, actions.toggleKink)
         CatalogSection(stringResource(R.string.search_section_toys), catalogLabels.toys, advanced.toyIds, actions.toggleToy)
         CatalogSection(stringResource(R.string.search_section_occasions), catalogLabels.occasions, advanced.occasionIds, actions.toggleOccasion)
+        actions.toggleOrgasmType?.let {
+            CatalogSection(stringResource(R.string.search_section_orgasm_types), catalogLabels.orgasmTypes, advanced.orgasmTypeIds, it)
+        }
 
         EnumSection(stringResource(R.string.search_section_places), Place.entries, advanced.places, actions.togglePlace)
         EnumSection(stringResource(R.string.search_section_protection), Protection.entries, advanced.protection, actions.toggleProtection)

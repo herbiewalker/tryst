@@ -89,6 +89,29 @@ class Converters {
             idx to ids
         }?.toMap()
 
+    // Person key -> orgasm index -> ids (ORG-1, v23): "key~idx=ID1|ID2,key~idx=ID3". A key is "self" or a
+    // partner uuid; ids are "custom:<uuid>" or a built-in name. None contain '~', '=', '|' or ',', so this
+    // round-trips. Empty sets and empty people are dropped, and an empty map is stored as NULL.
+    @TypeConverter
+    fun personOrgasmMapToString(value: Map<String, Map<Int, Set<String>>>?): String? = value?.entries
+        ?.flatMap { (key, perOrgasm) -> perOrgasm.filterValues { it.isNotEmpty() }.map { (idx, ids) -> "$key~$idx=${ids.joinToString("|")}" } }
+        ?.takeIf { it.isNotEmpty() }
+        ?.joinToString(SEP)
+
+    @TypeConverter
+    fun stringToPersonOrgasmMap(value: String?): Map<String, Map<Int, Set<String>>>? = value?.takeIf { it.isNotBlank() }
+        ?.split(SEP)
+        ?.mapNotNull { token ->
+            val (head, tail) = token.split("=", limit = 2).takeIf { it.size == 2 } ?: return@mapNotNull null
+            val key = head.substringBefore('~').takeIf { it.isNotBlank() && '~' in head } ?: return@mapNotNull null
+            val idx = head.substringAfter('~').toIntOrNull() ?: return@mapNotNull null
+            val ids = tail.split("|").filter { it.isNotBlank() }.toSet()
+            if (ids.isEmpty()) null else Triple(key, idx, ids)
+        }
+        ?.groupBy({ it.first }, { it.second to it.third })
+        ?.mapValues { (_, pairs) -> pairs.toMap() }
+        ?.takeIf { it.isNotEmpty() }
+
     @TypeConverter
     fun partnerOrgasmsToString(value: Map<String, Int>?): String? = value?.entries?.joinToString(SEP) { "${it.key}=${it.value}" }
 

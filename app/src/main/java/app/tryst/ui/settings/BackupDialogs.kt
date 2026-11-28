@@ -171,7 +171,7 @@ private fun lossText(removals: Map<String, Int>): String = buildList {
 }.joinToString(", ")
 
 // The user-built category lists (D-41). A restore re-adopts the ones its own trysts use, so name them plainly.
-private val CATALOG_TABLES = setOf("acts", "kinks", "positions", "toys", "occasions", "ejaculation_locations", "locations", "tags")
+private val CATALOG_TABLES = setOf("acts", "kinks", "positions", "toys", "occasions", "ejaculation_locations", "orgasm_types", "locations", "tags")
 
 // Rows that only exist as part of a period; losing them is already said by "N periods".
 private val PERIOD_CHILDREN = setOf("cycle_day", "cycle_symptom_log")

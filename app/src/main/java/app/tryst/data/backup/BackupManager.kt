@@ -610,7 +610,7 @@ class BackupManager @Inject constructor(
         // drives restore, an import leaves the local search history untouched rather than wiping it.
         val TABLES = listOf(
             "partners", "profile", "locations", "tags", "positions", "acts", "kinks", "toys",
-            "occasions", "ejaculation_locations", "orientations",
+            "occasions", "ejaculation_locations", "orgasm_types", "orientations",
             "encounters", "media", "person_photo",
             "encounter_partner", "encounter_position", "encounter_tag",
             // CYC-1 (v20). A period before its days, so the days' foreign key resolves on restore.

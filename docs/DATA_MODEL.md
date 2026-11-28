@@ -1,6 +1,6 @@
 # Tryst — Data Model
 
-> **Status:** Live — **schema v22** (current through v0.7.4 in progress; v22 in v0.7.4, daily symptoms; v21 in v0.7.2, profile color; v20 in v0.7.0; v18 and v19 shipped in v0.6.4; v17 in v0.6.2; v16 in v0.5.3), Room over SQLCipher. Matches the entities in
+> **Status:** Live — **schema v23** (v23 in v0.7.7, orgasm details; v22 in v0.7.4, daily symptoms; v21 in v0.7.2, profile color; v20 in v0.7.0; v18 and v19 shipped in v0.6.4; v17 in v0.6.2; v16 in v0.5.3), Room over SQLCipher. Matches the entities in
 > `app/src/main/java/app/tryst/data/db/`. Exported schemas live in `app/schemas/`; every change ships a
 > non-destructive `MIGRATION_x_y` validated by `MigrationTest`.
 >
@@ -51,6 +51,8 @@ The central record.
 | orgasmCountSelf | Int? | times the user came |
 | partnerOrgasms | Map\<String,Int\>? | **per-partner** orgasm counts (partnerId → count) |
 | ejaculationLocations | Map\<Int,Set\<EjaculationLocation\>\>? | **per-orgasm** location(s) — multi-select per orgasm |
+| orgasmTypes | Map\<String,Map\<Int,Set\<String\>\>\>? | orgasm types per person (`self` or partner id) and orgasm (v23) |
+| partnerFinishes | Map\<String,Map\<Int,Set\<String\>\>\>? | each partner's finish locations per orgasm (v23) |
 | practicesPerformed / practicesReceived | Set\<String\>? | **Acts** gave/received (built-in `Act` name, or `custom:<id>`) |
 | positions | Set\<String\>? | built-in `Position` name or `custom:<uuid>` |
 | kinks | Set\<String\>? | **Kink & BDSM** (built-in `Kink` name, or `custom:<id>`) |
@@ -255,5 +257,10 @@ storage — likely a small row in the encrypted DB.)
   as mild); FKs to `cycle_period` and `cycle_symptom`, both `ON DELETE CASCADE`, so a log goes with its period or
   its symptom; indexed on `symptomId`. Symptoms are only logged on days inside a period. Both tables ride the
   generic backup dump; a pre-v22 backup restores with no symptoms.
+- **v23 (`MIGRATION_22_23`, 0.7.7, D-76)** adds orgasm details. A new **`orgasm_types`** table (`id`, `label`;
+  unique on `label`; nothing preset) and two nullable TEXT columns on `encounters`: **`orgasmTypes`** (person key, `self`
+  or a partner id, → orgasm index → type refs `custom:<id>`) and **`partnerFinishes`** (partner id → orgasm index →
+  finish refs, the same finish list as yours). Both encode as `key~idx=ID1|ID2,key~idx=ID3`. Your own finishes stay
+  in `ejaculationLocations`, so no data moves; a pre-v23 backup restores with no types and no partner finishes.
 - Export format (M5) is decoupled from the live schema and versioned independently
   (see [SECURITY_DESIGN.md](SECURITY_DESIGN.md) §4).

@@ -1,6 +1,6 @@
 # Tryst — Decision Log
 
-> **Status:** Live — decisions through **schema v22** (latest: **D-75**, a Cycle section in Insights; D-74: cycle days on trysts and a Period filter in Search; D-73: daily symptoms, one shared list logged on period days with a strength; D-72: 0.7.3 slotted in and the rest of 7.x moves up one; D-71: the cycle screens leave off people set as Male; D-70: everyone gets their own color; D-69: orgasm details added as 0.7.6; D-68: restore preview and data-loss warning; D-67: pickable person colors; D-66: periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
+> **Status:** Live — decisions through **schema v23** (latest: **D-76**, orgasm details, types for everyone and partner finishes; D-75: a Cycle section in Insights; D-74: cycle days on trysts and a Period filter in Search; D-73: daily symptoms, one shared list logged on period days with a strength; D-72: 0.7.3 slotted in and the rest of 7.x moves up one; D-71: the cycle screens leave off people set as Male; D-70: everyone gets their own color; D-69: orgasm details added as 0.7.6; D-68: restore preview and data-loss warning; D-67: pickable person colors; D-66: periods on the Trysts calendar; D-65: cycle predictions as a range, hidden when irregular; D-64: cycle tracking foundation with per-day flow and "most likely" defaults; D-63: release lines, 7.x is cycle tracking only; D-62: English-only, no translations for now; D-61: album photos get favourite and caption; D-60: photo details captured at import; D-59: orientation as a user-defined catalog; D-58: SEC-2 tier 2 is a
 > presence-only re-auth via BiometricPrompt with device-credential fallback — no CryptoObject,
 > no DEK touch, v0.5.7).
 > D-42 records storing the search history in the encrypted DB rather than prefs.
@@ -861,6 +861,19 @@
   when that falls outside the window, and gaps over 90 days are left out, as in D-74. Pure
   `data/stats/CycleStatsEngine`, unit-tested; two read queries (`observeAllDays`, `observeAllSymptomLogs`).
   The 0.8.0 Insights rework gives it a drill-down page like every other section.
+
+- **D-76 (2026-11-27) Orgasm details: types for everyone and partner finishes (ORG-1, 0.7.7, schema v23).**
+  Built as two columns on `encounters` instead of the separate `orgasm` table D-69 sketched: `orgasmTypes`
+  (person, `self` or a partner id, → orgasm index → type refs) and `partnerFinishes` (partner id → orgasm index →
+  finish refs). That matches how `ejaculationLocations` and `partnerOrgasms` already live on the tryst, keeps your
+  own finishes where they are so no data moves, and lets older backups restore unchanged (they just have no
+  types). The type list is a new user-built `orgasm_types` table with **nothing preset** (D-41), managed under
+  Settings like the other lists. Owner choices: **inline rows** in the editor (under each person's orgasm count, a
+  Type row and a Finish row per orgasm; the self "Ejaculation" rows are now called "Finish", the catalog's name);
+  **start empty**; **all three extras**: Insights (your types, partners' types and where partners finished, in the
+  Orgasms card), a Search filter and search text for types, and the local test data filled in. Lowering a count
+  or removing a partner drops the details past it. A deleted type drops out of charts and search rather than
+  showing as an id.
 
 > **Standing follow-ups (not blockers, tracked here as pointers):**
 > **history filters/search** (deferred features, ROADMAP M3 — **filters/search shipped in v0.4.0**;

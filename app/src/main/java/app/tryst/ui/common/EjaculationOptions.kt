@@ -15,6 +15,7 @@ package app.tryst.ui.common
 
 import app.tryst.data.db.entity.EjaculationLocation
 import app.tryst.data.db.entity.EjaculationLocationEntity
+import app.tryst.data.db.entity.OrgasmTypeEntity
 
 /** A selectable finish location in the editor: a built-in or a custom one, unified by [id]. */
 data class EjaculationOption(val id: String, val label: String)
@@ -30,6 +31,9 @@ object EjaculationOptions {
     val common: List<EjaculationOption> = builtIns
 
     fun custom(rows: List<EjaculationLocationEntity>): List<EjaculationOption> = rows.map { EjaculationOption(CUSTOM_PREFIX + it.id, it.label) }
+
+    /** The user-built orgasm types (ORG-1) as options; there are no built-ins, so every one is "custom:<id>". */
+    fun orgasmTypes(rows: List<OrgasmTypeEntity>): List<EjaculationOption> = rows.map { EjaculationOption(CUSTOM_PREFIX + it.id, it.label) }
 }
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

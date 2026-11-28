@@ -36,6 +36,7 @@ import app.tryst.data.db.entity.KinkEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.Mood
 import app.tryst.data.db.entity.OccasionEntity
+import app.tryst.data.db.entity.OrgasmTypeEntity
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.Place
 import app.tryst.data.db.entity.PositionEntity
@@ -47,6 +48,7 @@ import app.tryst.data.repository.EjaculationLocationRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.KinkRepository
 import app.tryst.data.repository.OccasionRepository
+import app.tryst.data.repository.OrgasmTypeRepository
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.data.repository.PositionRepository
 import app.tryst.data.repository.ToyRepository
@@ -94,6 +96,10 @@ data class EncounterEditUiState(
     val ejaculations: Map<Int, Set<String>> = emptyMap(),
     /** Per-partner orgasm counts: partnerId -> count. */
     val partnerOrgasms: Map<String, Int> = emptyMap(),
+    /** Orgasm types per person and orgasm (ORG-1): [EncounterEntity.SELF_KEY] or partner id → index → type refs. */
+    val orgasmTypes: Map<String, Map<Int, Set<String>>> = emptyMap(),
+    /** Each partner's finish locations per orgasm: partner id → index → finish refs. */
+    val partnerFinishes: Map<String, Map<Int, Set<String>>> = emptyMap(),
     val practicesPerformed: Set<String> = emptySet(),
     val practicesReceived: Set<String> = emptySet(),
     val selectedPositionIds: Set<String> = emptySet(),
@@ -130,6 +136,7 @@ class EncounterEditViewModel @Inject constructor(
     private val toys: ToyRepository,
     private val occasions: OccasionRepository,
     private val ejaculationLocations: EjaculationLocationRepository,
+    private val orgasmTypeRepository: OrgasmTypeRepository,
     cycleRepository: CycleRepository,
     generalPreferences: GeneralPreferences,
 ) : ViewModel() {
@@ -167,6 +174,12 @@ class EncounterEditViewModel @Inject constructor(
 
     val customOccasions: StateFlow<List<OccasionEntity>> =
         occasions.observeCustom()
+            .catch { emit(emptyList()) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** The user-built orgasm types (ORG-1). */
+    val customOrgasmTypes: StateFlow<List<OrgasmTypeEntity>> =
+        orgasmTypeRepository.observeAll()
             .catch { emit(emptyList()) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
@@ -253,6 +266,8 @@ class EncounterEditViewModel @Inject constructor(
                 orgasmCountSelf = e.orgasmCountSelf ?: 0,
                 ejaculations = e.ejaculationLocations ?: emptyMap(),
                 partnerOrgasms = e.partnerOrgasms ?: emptyMap(),
+                orgasmTypes = e.orgasmTypes ?: emptyMap(),
+                partnerFinishes = e.partnerFinishes ?: emptyMap(),
                 practicesPerformed = e.practicesPerformed ?: emptySet(),
                 practicesReceived = e.practicesReceived ?: emptySet(),
                 selectedPositionIds = e.positions ?: emptySet(),
@@ -324,6 +339,8 @@ class EncounterEditViewModel @Inject constructor(
             uiState.copy(
                 selectedPartnerIds = uiState.selectedPartnerIds - id,
                 partnerOrgasms = uiState.partnerOrgasms - id, // drop orgasm count for a de-selected partner
+                orgasmTypes = uiState.orgasmTypes - id,
+                partnerFinishes = uiState.partnerFinishes - id,
             )
         } else {
             uiState.copy(selectedPartnerIds = uiState.selectedPartnerIds + id)
@@ -335,6 +352,7 @@ class EncounterEditViewModel @Inject constructor(
         uiState = uiState.copy(
             orgasmCountSelf = count,
             ejaculations = uiState.ejaculations.filterKeys { it < count },
+            orgasmTypes = uiState.orgasmTypes.trimmed(EncounterEntity.SELF_KEY, count),
         )
     }
 
@@ -347,7 +365,46 @@ class EncounterEditViewModel @Inject constructor(
     fun setPartnerOrgasms(id: String, count: Int) {
         uiState = uiState.copy(
             partnerOrgasms = if (count <= 0) uiState.partnerOrgasms - id else uiState.partnerOrgasms + (id to count),
+            orgasmTypes = uiState.orgasmTypes.trimmed(id, count),
+            partnerFinishes = uiState.partnerFinishes.trimmed(id, count),
         )
+    }
+
+    // --- Orgasm details (ORG-1, 0.7.7, D-76) ---
+    // Keys are EncounterEntity.SELF_KEY for you, or a partner id.
+
+    /** Toggles an orgasm type on one person's orgasm. */
+    fun toggleOrgasmType(person: String, index: Int, id: String) {
+        uiState = uiState.copy(orgasmTypes = uiState.orgasmTypes.toggled(person, index, id))
+    }
+
+    /** Adds a new orgasm type and selects it on that orgasm. */
+    fun addOrgasmType(person: String, index: Int, label: String) = viewModelScope.launch {
+        val id = orgasmTypeRepository.add(label) ?: return@launch
+        uiState = uiState.copy(orgasmTypes = uiState.orgasmTypes.toggled(person, index, "custom:$id"))
+    }
+
+    /** Toggles a finish location on one of a partner's orgasms. */
+    fun togglePartnerFinish(partnerId: String, index: Int, id: String) {
+        uiState = uiState.copy(partnerFinishes = uiState.partnerFinishes.toggled(partnerId, index, id))
+    }
+
+    /** Adds a finish location and selects it on one of a partner's orgasms. */
+    fun addPartnerFinish(partnerId: String, index: Int, label: String) = viewModelScope.launch {
+        val id = ejaculationLocations.addCustom(label) ?: return@launch
+        uiState = uiState.copy(partnerFinishes = uiState.partnerFinishes.toggled(partnerId, index, "custom:$id"))
+    }
+
+    private fun Map<String, Map<Int, Set<String>>>.toggled(person: String, index: Int, id: String): Map<String, Map<Int, Set<String>>> {
+        val perOrgasm = this[person].orEmpty()
+        val current = perOrgasm[index].orEmpty()
+        return this + (person to (perOrgasm + (index to if (id in current) current - id else current + id)))
+    }
+
+    /** Drops [person]'s details for orgasms at or past [count]. */
+    private fun Map<String, Map<Int, Set<String>>>.trimmed(person: String, count: Int): Map<String, Map<Int, Set<String>>> {
+        val kept = this[person].orEmpty().filterKeys { it < count }
+        return if (kept.isEmpty()) this - person else this + (person to kept)
     }
 
     fun toggleProtection(value: Protection) {
@@ -452,6 +509,8 @@ class EncounterEditViewModel @Inject constructor(
                 contexts = s.contexts,
                 occasions = s.occasions,
                 partnerOrgasms = s.partnerOrgasms.ifEmpty { null },
+                orgasmTypes = s.orgasmTypes.cleaned(),
+                partnerFinishes = s.partnerFinishes.cleaned(),
                 toys = s.toys,
                 locationId = null,
                 createdAt = if (s.isEditing) createdAt else now,
@@ -501,5 +560,8 @@ class EncounterEditViewModel @Inject constructor(
 
 /** Add [value] to the set if absent, remove it if present. */
 private fun <T> Set<T>.toggle(value: T): Set<T> = if (value in this) this - value else this + value
+
+/** Empty sets and people dropped; null when nothing is left, so an untouched tryst stores NULL. */
+private fun Map<String, Map<Int, Set<String>>>.cleaned(): Map<String, Map<Int, Set<String>>>? = mapValues { (_, m) -> m.filterValues { it.isNotEmpty() } }.filterValues { it.isNotEmpty() }.ifEmpty { null }
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

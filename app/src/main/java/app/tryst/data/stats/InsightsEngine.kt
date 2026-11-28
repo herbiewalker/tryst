@@ -15,6 +15,7 @@ package app.tryst.data.stats
 
 import app.tryst.data.db.entity.Act
 import app.tryst.data.db.entity.EjaculationLocation
+import app.tryst.data.db.entity.EncounterEntity
 import app.tryst.data.db.entity.Kink
 import app.tryst.data.db.entity.Occasion
 import app.tryst.data.db.entity.Position
@@ -84,6 +85,12 @@ data class Insights(
     val orgasmsPerPartner: List<Tally>,
     /** Total orgasms (yours + partners') over the same month buckets as [monthly]. */
     val orgasmsMonthly: List<Bucket>,
+    /** Your orgasm types (ORG-1), one count per orgasm that had the type. Deleted types are left out. */
+    val yourOrgasmTypes: List<Tally> = emptyList(),
+    /** Partners' orgasm types, all partners together. */
+    val partnerOrgasmTypes: List<Tally> = emptyList(),
+    /** Where partners finished (ORG-1), next to [topEjaculation] for yours. */
+    val partnerFinishes: List<Tally> = emptyList(),
     /** True when a time scope narrowed the log (INS-2) — some tiles are meaningless then. */
     val isScoped: Boolean = false,
 ) {
@@ -154,6 +161,7 @@ object InsightsEngine {
         customToyLabels: Map<String, String> = emptyMap(),
         customOccasionLabels: Map<String, String> = emptyMap(),
         customEjaculationLabels: Map<String, String> = emptyMap(),
+        customOrgasmTypeLabels: Map<String, String> = emptyMap(),
         zone: ZoneId = ZoneId.systemDefault(),
         today: LocalDate = LocalDate.now(zone),
         /** The INS-2 window; null = all time. */
@@ -275,6 +283,20 @@ object InsightsEngine {
         )
         val topInitiators = tallyLabels(encounters.mapNotNull { it.encounter.initiator?.label })
 
+        // --- orgasm details (ORG-1): types for you and for partners, and where partners finished ---
+        fun typeLabels(select: (Map<String, Map<Int, Set<String>>>) -> List<Set<String>>) = tallyLabels(
+            encounters.flatMap { e -> select(e.encounter.orgasmTypes.orEmpty()).flatten() }
+                .mapNotNull { customOrgasmTypeLabels[it.removePrefix(CUSTOM_PREFIX)] },
+        )
+        val yourOrgasmTypes = typeLabels { it[EncounterEntity.SELF_KEY].orEmpty().values.toList() }
+        val partnerOrgasmTypes = typeLabels { m -> m.filterKeys { it != EncounterEntity.SELF_KEY }.values.flatMap { it.values } }
+        val partnerFinishes = tallyLabels(
+            encounters.flatMap { e ->
+                e.encounter.partnerFinishes.orEmpty().values.flatMap { it.values.flatten() }
+                    .map { resolveEjaculation(it, customEjaculationLabels) }
+            },
+        )
+
         // --- per-partner orgasms (resolve partner ids -> names from the embedded partner rows) ---
         val partnerNames = encounters.flatMap { it.partners }.associate { it.id to partnerName(it.displayName) }
         val orgasmsPerPartner = encounters
@@ -326,6 +348,9 @@ object InsightsEngine {
             topInitiators = topInitiators,
             orgasmsPerPartner = orgasmsPerPartner,
             orgasmsMonthly = orgasmsMonthly,
+            yourOrgasmTypes = yourOrgasmTypes,
+            partnerOrgasmTypes = partnerOrgasmTypes,
+            partnerFinishes = partnerFinishes,
             isScoped = scoped,
         )
     }

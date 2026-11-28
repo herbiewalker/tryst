@@ -13,6 +13,16 @@ On every release: bump `versionCode`/`versionName` in `app/build.gradle.kts`, ad
 
 ## [Unreleased]
 
+### Added
+- **Orgasm details** (0.7.7, D-76, schema v23). Each orgasm, yours and each partner's, can now have one or more
+  types and finish locations. Types come from your own list, with nothing preset, under Settings, Manage orgasm types,
+  or added right from the editor. Partners use the same finish list as you. In the editor, each person's orgasm count
+  has a Type row and a Finish row per orgasm. Insights' Orgasms card adds your types, partners' types and where
+  partners finished, and Search can filter by type and finds types by name. Older backups restore as before.
+
+### Changed
+- The per-orgasm "Ejaculation" rows in the editor are now called "Finish", the same name as the list they use.
+
 ## [0.7.6] — 2026-11-27 (versionCode 29)
 
 ### Added

@@ -83,6 +83,8 @@ data class EncounterFilter(
     val occasionIds: Set<String> = emptySet(),
     val kinkIds: Set<String> = emptySet(),
     val toyIds: Set<String> = emptySet(),
+    /** Orgasm type refs (ORG-1); matches when anyone in the tryst had any of them. */
+    val orgasmTypeIds: Set<String> = emptySet(),
     val protection: Set<Protection> = emptySet(),
     val moods: Set<Mood> = emptySet(),
     val initiators: Set<Initiator> = emptySet(),
@@ -142,6 +144,7 @@ data class EncounterFilter(
         if (!anyOf(occasionIds, enc.occasions ?: emptySet())) return false
         if (!anyOf(kinkIds, enc.kinks ?: emptySet())) return false
         if (!anyOf(toyIds, enc.toys ?: emptySet())) return false
+        if (orgasmTypeIds.isNotEmpty() && !anyOf(orgasmTypeIds, allOrgasmTypes(e))) return false
         if (!anyOf(protection, enc.protectionUsed)) return false
 
         // Single-value categories — membership in the selected set.
@@ -170,6 +173,9 @@ data class EncounterFilter(
     }
 
     private fun <T> anyOf(selected: Set<T>, values: Set<T>): Boolean = selected.isEmpty() || selected.any { it in values }
+
+    /** Every orgasm type anyone had in the tryst (ORG-1). */
+    private fun allOrgasmTypes(e: EncounterWithDetails): Set<String> = e.encounter.orgasmTypes.orEmpty().values.flatMapTo(HashSet()) { it.values.flatten() }
 
     companion object {
         val EMPTY = EncounterFilter()

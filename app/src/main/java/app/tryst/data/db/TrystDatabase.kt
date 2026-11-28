@@ -24,6 +24,7 @@ import app.tryst.data.db.dao.KinkDao
 import app.tryst.data.db.dao.LocationDao
 import app.tryst.data.db.dao.MediaDao
 import app.tryst.data.db.dao.OccasionDao
+import app.tryst.data.db.dao.OrgasmTypeDao
 import app.tryst.data.db.dao.OrientationDao
 import app.tryst.data.db.dao.PartnerDao
 import app.tryst.data.db.dao.PersonPhotoDao
@@ -46,6 +47,7 @@ import app.tryst.data.db.entity.KinkEntity
 import app.tryst.data.db.entity.LocationEntity
 import app.tryst.data.db.entity.MediaEntity
 import app.tryst.data.db.entity.OccasionEntity
+import app.tryst.data.db.entity.OrgasmTypeEntity
 import app.tryst.data.db.entity.OrientationEntity
 import app.tryst.data.db.entity.PartnerEntity
 import app.tryst.data.db.entity.PersonPhotoEntity
@@ -68,6 +70,7 @@ import app.tryst.data.db.entity.ToyEntity
         ToyEntity::class,
         OccasionEntity::class,
         EjaculationLocationEntity::class,
+        OrgasmTypeEntity::class,
         OrientationEntity::class,
         MediaEntity::class,
         PersonPhotoEntity::class,
@@ -80,7 +83,7 @@ import app.tryst.data.db.entity.ToyEntity
         CycleSymptomEntity::class,
         CycleSymptomLogEntity::class,
     ],
-    version = 22,
+    version = 23,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -97,6 +100,7 @@ abstract class TrystDatabase : RoomDatabase() {
     abstract fun orientationDao(): OrientationDao
     abstract fun occasionDao(): OccasionDao
     abstract fun ejaculationLocationDao(): EjaculationLocationDao
+    abstract fun orgasmTypeDao(): OrgasmTypeDao
     abstract fun locationDao(): LocationDao
     abstract fun recentSearchDao(): RecentSearchDao
     abstract fun personPhotoDao(): PersonPhotoDao

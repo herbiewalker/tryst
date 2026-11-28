@@ -412,6 +412,21 @@ val MIGRATION_21_22 = object : Migration(21, 22) {
     }
 }
 
+/**
+ * v22 → v23: orgasm details (ORG-1, 0.7.7, D-76). A user-built `orgasm_types` list (nothing preset) and two
+ * nullable columns on `encounters`: `orgasmTypes` (person "self" or partner id → orgasm index → type refs)
+ * and `partnerFinishes` (partner id → orgasm index → finish refs). Your own finishes stay in
+ * `ejaculationLocations`, so no existing data moves and older backups restore as they are.
+ */
+val MIGRATION_22_23 = object : Migration(22, 23) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS `orgasm_types` (`id` TEXT NOT NULL, `label` TEXT NOT NULL, PRIMARY KEY(`id`))")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_orgasm_types_label` ON `orgasm_types` (`label`)")
+        db.execSQL("ALTER TABLE `encounters` ADD COLUMN `orgasmTypes` TEXT")
+        db.execSQL("ALTER TABLE `encounters` ADD COLUMN `partnerFinishes` TEXT")
+    }
+}
+
 val ALL_MIGRATIONS = arrayOf(
     MIGRATION_1_2,
     MIGRATION_2_3,
@@ -434,6 +449,7 @@ val ALL_MIGRATIONS = arrayOf(
     MIGRATION_19_20,
     MIGRATION_20_21,
     MIGRATION_21_22,
+    MIGRATION_22_23,
 )
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣

@@ -114,6 +114,14 @@ fun CatalogManageRoute(category: String?, onBack: () -> Unit) {
                 rows.map { it.id to it.label }, vm::add, vm::rename, vm::delete, onBack,
             )
         }
+        CatalogCategory.ORGASM_TYPES -> {
+            val vm: OrgasmTypesViewModel = hiltViewModel()
+            val rows by vm.orgasmTypes.collectAsStateWithLifecycle()
+            CatalogManageScreen(
+                R.string.orgasm_types_title, R.string.orgasm_types_desc, R.string.orgasm_types_add_label, R.string.orgasm_types_empty,
+                rows.map { it.id to it.label }, vm::add, vm::rename, vm::delete, onBack,
+            )
+        }
         else -> onBack()
     }
 }

@@ -32,6 +32,7 @@ import app.tryst.data.repository.EjaculationLocationRepository
 import app.tryst.data.repository.EncounterRepository
 import app.tryst.data.repository.KinkRepository
 import app.tryst.data.repository.OccasionRepository
+import app.tryst.data.repository.OrgasmTypeRepository
 import app.tryst.data.repository.PartnerRepository
 import app.tryst.data.repository.PositionRepository
 import app.tryst.data.repository.ToyRepository
@@ -73,6 +74,7 @@ class InsightsViewModel @Inject constructor(
     toyRepository: ToyRepository,
     occasionRepository: OccasionRepository,
     ejaculationLocationRepository: EjaculationLocationRepository,
+    orgasmTypeRepository: OrgasmTypeRepository,
     private val partnerRepository: PartnerRepository,
     private val prefs: InsightsPreferences,
     private val cycleRepository: CycleRepository,
@@ -107,7 +109,7 @@ class InsightsViewModel @Inject constructor(
 
     val insights: StateFlow<Insights> =
         // Each custom catalog → its id→label map, then combined into one array so we stay within
-        // combine's typed arity (all six are Flow<Map<String, String>>); order matches the compute() call.
+        // combine's typed arity (all seven are Flow<Map<String, String>>); order matches the compute() call.
         combine(
             actRepository.observeCustom().map { rows -> rows.associate { it.id to it.label } },
             positionRepository.observeCustom().map { rows -> rows.associate { it.id to it.label } },
@@ -115,6 +117,7 @@ class InsightsViewModel @Inject constructor(
             toyRepository.observeCustom().map { rows -> rows.associate { it.id to it.label } },
             occasionRepository.observeCustom().map { rows -> rows.associate { it.id to it.label } },
             ejaculationLocationRepository.observeCustom().map { rows -> rows.associate { it.id to it.label } },
+            orgasmTypeRepository.observeAll().map { rows -> rows.associate { it.id to it.label } },
         ) { maps -> maps.toList() }
             .let { labelMaps ->
                 combine(encounters, labelMaps, prefs.scope) { encounters, maps, scope ->
@@ -128,6 +131,7 @@ class InsightsViewModel @Inject constructor(
                             customToyLabels = maps[3],
                             customOccasionLabels = maps[4],
                             customEjaculationLabels = maps[5],
+                            customOrgasmTypeLabels = maps[6],
                             scope = scope.range(),
                         )
                     }

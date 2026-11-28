@@ -37,6 +37,8 @@ data class OptionUsage(
     val places: Map<Place, Int> = emptyMap(),
     val occasions: Map<String, Int> = emptyMap(),
     val toys: Map<String, Int> = emptyMap(),
+    /** Orgasm types (ORG-1), counted once per tryst whoever had them. */
+    val orgasmTypes: Map<String, Int> = emptyMap(),
 ) {
     companion object {
         val EMPTY = OptionUsage()
@@ -50,11 +52,16 @@ data class OptionUsage(
                 positions = tally { it.positions ?: emptySet() },
                 protection = tally { it.protectionUsed },
                 moods = tally { listOfNotNull(it.mood) },
-                ejaculation = tally { it.ejaculationLocations?.values?.flatten()?.toSet() ?: emptySet() },
+                // Your finishes and partners' (ORG-1) share one list, so both count toward its inline chips.
+                ejaculation = tally {
+                    it.ejaculationLocations?.values?.flatten().orEmpty().toSet() +
+                        it.partnerFinishes?.values?.flatMap { m -> m.values.flatten() }.orEmpty()
+                },
                 kinks = tally { it.kinks ?: emptySet() },
                 places = tally { it.contexts ?: emptySet() },
                 occasions = tally { it.occasions ?: emptySet() },
                 toys = tally { it.toys ?: emptySet() },
+                orgasmTypes = tally { e -> e.orgasmTypes?.values?.flatMap { m -> m.values.flatten() }.orEmpty().toSet() },
             )
         }
     }

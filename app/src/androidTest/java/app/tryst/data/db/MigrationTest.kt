@@ -693,6 +693,35 @@ class MigrationTest {
             }
         }
     }
+
+    /** D-76: v23 adds a user-built orgasm type list and two nullable detail columns on trysts; nothing moves. */
+    @Test
+    fun migrate22To23_addsOrgasmDetails() {
+        helper.createDatabase(dbName, 22).use { db ->
+            db.execSQL(
+                "INSERT INTO encounters (id, startAt, protectionUsed, ejaculationLocations, partnerOrgasms, createdAt, updatedAt) " +
+                    "VALUES ('e1', 1000, '', '0=NONE', 'p1=2', 1, 1)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(dbName, 23, true, MIGRATION_22_23).use { db ->
+            db.query("SELECT ejaculationLocations, partnerOrgasms, orgasmTypes, partnerFinishes FROM encounters WHERE id = 'e1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("your finishes stay where they were", "0=NONE", c.getString(0))
+                assertEquals("partner counts stay too", "p1=2", c.getString(1))
+                assertTrue("no types yet", c.isNull(2))
+                assertTrue("no partner finishes yet", c.isNull(3))
+            }
+            db.execSQL("INSERT INTO orgasm_types (id, label) VALUES ('t1', 'Blended')")
+            val duplicate = runCatching { db.execSQL("INSERT INTO orgasm_types (id, label) VALUES ('t2', 'Blended')") }
+            assertTrue("a type name can't appear twice", duplicate.isFailure)
+            db.execSQL("UPDATE encounters SET orgasmTypes = 'self~0=custom:t1', partnerFinishes = 'p1~1=NONE' WHERE id = 'e1'")
+            db.query("SELECT orgasmTypes FROM encounters WHERE id = 'e1'").use { c ->
+                assertTrue(c.moveToFirst())
+                assertEquals("self~0=custom:t1", c.getString(0))
+            }
+        }
+    }
 }
 
 // ⏣ HW ⏣ · code · tools · homelab · ⏣ HW ⏣
